@@ -3,8 +3,9 @@
 @tailwind utilities;
 
 @layer base {
-  html { scroll-behavior: smooth; }
+  html { scroll-behavior: smooth; overflow-x: hidden; }
   body { background-image: url("/topography.svg"); }
+  img, video, iframe { max-width: 100%; height: auto; }
 }
 
 /* scrollbar */
@@ -68,6 +69,19 @@
   .prose-resource-list :where(th:first-child),
   .prose-resource-list :where(td:first-child) {
     position: sticky; left: 0; z-index: 5; background: oklch(var(--b1));
+  }
+}
+
+/* ── 移动端防溢出 ── */
+@media (max-width: 767px) {
+  .prose :where(table) {
+    display: block; width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch;
+  }
+  .prose :where(pre) {
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+  }
+  .mockup-code {
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
   }
 }
 
