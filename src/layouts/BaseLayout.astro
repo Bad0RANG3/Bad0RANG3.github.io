@@ -29,7 +29,6 @@ const socialImageUrl = new URL(ogImage, siteConfig.siteUrl).toString();
   <link rel="canonical" href={canonicalUrl}>
   <link rel="alternate" type="application/rss+xml" title={`${siteConfig.title} RSS`} href="/rss.xml">
   <link rel="icon" href="/ico.ico" type="image/x-icon">
-  <noscript><style>.page-enter,.reveal{opacity:1!important;transform:none!important}</style></noscript>
   <meta property="og:type" content={type}>
   <meta property="og:title" content={pageTitle}>
   <meta property="og:description" content={description}>
@@ -40,6 +39,8 @@ const socialImageUrl = new URL(ogImage, siteConfig.siteUrl).toString();
   <meta name="twitter:title" content={pageTitle}>
   <meta name="twitter:description" content={description}>
   <meta name="twitter:image" content={socialImageUrl}>
+
+  <!-- Theme init — must run before paint -->
   <script is:inline>
     (function(){
       var t=localStorage.getItem('theme');
@@ -48,27 +49,96 @@ const socialImageUrl = new URL(ogImage, siteConfig.siteUrl).toString();
     })();
   </script>
 </head>
+
 <body class="flex flex-col min-h-screen bg-base-100 text-base-content overflow-x-hidden">
   <SiteHeader currentPath={currentPath} />
-  <main class="page-enter flex-grow" data-page-enter data-reveal-root>
+  <main class="page-enter flex-grow">
     <slot />
   </main>
   <SiteFooter />
 
+  <!-- Back to top -->
   <button id="back-to-top" class="fixed bottom-6 right-6 z-50 btn btn-circle btn-primary shadow-lg" aria-label="回到顶部" title="回到顶部">
     <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 15l-6-6-6 6"/></svg>
   </button>
 
   <script is:inline>
-    var PAGE_EXIT_DURATION=160,navigationLocked=!1;
-    var getPageRoot=function(){var e=document.querySelector('[data-page-enter]');return e instanceof HTMLElement?e:null};
-    var initPageEnter=function(){var e=getPageRoot();if(!e)return;e.classList.remove('is-leaving','is-visible');void e.offsetWidth;e.classList.add('is-visible')};
-    var initReveal=function(){if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){document.querySelectorAll('[data-reveal]').forEach(function(e){e.classList.add('is-visible')});return}var e=new IntersectionObserver(function(t){t.forEach(function(t){if(t.isIntersecting){t.target.classList.add('is-visible');e.unobserve(t.target)}})},{threshold:0.1,rootMargin:'0px 0px -6% 0px'});document.querySelectorAll('[data-reveal]').forEach(function(t){e.observe(t)})};
-    var wrapTables=function(){document.querySelectorAll('.prose-resource-list table').forEach(function(e){if(e.parentElement&&e.parentElement.classList.contains('table-wrapper'))return;var t=document.createElement('div');t.className='table-wrapper';e.parentNode.insertBefore(t,e);t.appendChild(e)})};
-    var handleTransition=function(e){var t=e.target;if(!(t instanceof Element))return;var n=t.closest('a');if(!(n instanceof HTMLAnchorElement))return;if(navigationLocked||e.defaultPrevented)return;if(e.button!==0||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey)return;if(n.target&&n.target!=='_self')return;if(n.hasAttribute('download'))return;var o=n.getAttribute('href');if(!o||o.startsWith('#')||o.startsWith('mailto:')||o.startsWith('tel:'))return;var r=new URL(n.href,window.location.href);if(r.origin!==window.location.origin)return;if(r.pathname===window.location.pathname&&r.search===window.location.search)return;var i=getPageRoot();if(!i||window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;e.preventDefault();navigationLocked=!0;i.classList.remove('is-visible');i.classList.add('is-leaving');setTimeout(function(){window.location.assign(r.toString())},PAGE_EXIT_DURATION)};
-    var init=function(){navigationLocked=!1;initPageEnter();initReveal();wrapTables()};
-    document.addEventListener('click',handleTransition);document.addEventListener('astro:page-load',init);window.addEventListener('pageshow',function(){navigationLocked=!1});init();
-(function(){var b=document.getElementById('back-to-top');if(!b)return;var t=function(){b.classList.toggle('visible',window.scrollY>300)};window.addEventListener('scroll',t,{passive:!0});b.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'})})})();
+    /* ── Page transition for SPA-like navigation ── */
+    var PAGE_EXIT_DURATION = 140, navigationLocked = false;
+
+    var getPageRoot = function(){
+      var el = document.querySelector('.page-enter');
+      return el instanceof HTMLElement ? el : null;
+    };
+
+    var triggerPageEnter = function(){
+      var root = getPageRoot();
+      if (!root) return;
+      root.style.animation = 'none';
+      void root.offsetWidth;
+      root.style.animation = '';
+    };
+
+    /* ── Smooth SPA-like internal link navigation ── */
+    var handleTransition = function(e){
+      var t = e.target;
+      if (!(t instanceof Element)) return;
+      var a = t.closest('a');
+      if (!(a instanceof HTMLAnchorElement)) return;
+      if (navigationLocked || e.defaultPrevented) return;
+      if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      if (a.target && a.target !== '_self') return;
+      if (a.hasAttribute('download')) return;
+      var href = a.getAttribute('href');
+      if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:')) return;
+
+      var url;
+      try { url = new URL(a.href, window.location.href); } catch(_) { return; }
+      if (url.origin !== window.location.origin) return;
+      if (url.pathname === window.location.pathname && url.search === window.location.search) return;
+
+      var root = getPageRoot();
+      if (!root || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+      e.preventDefault();
+      navigationLocked = true;
+      root.classList.add('is-leaving');
+      setTimeout(function(){
+        window.location.assign(url.toString());
+      }, PAGE_EXIT_DURATION);
+    };
+
+    /* ── Table wrapping for resource-list ── */
+    var wrapTables = function(){
+      document.querySelectorAll('.prose-resource-list table').forEach(function(tbl){
+        if (tbl.parentElement && tbl.parentElement.classList.contains('table-wrapper')) return;
+        var wrapper = document.createElement('div');
+        wrapper.className = 'table-wrapper';
+        tbl.parentNode.insertBefore(wrapper, tbl);
+        wrapper.appendChild(tbl);
+      });
+    };
+
+    /* ── Init ── */
+    var init = function(){
+      navigationLocked = false;
+      triggerPageEnter();
+      wrapTables();
+    };
+
+    document.addEventListener('click', handleTransition);
+    document.addEventListener('astro:page-load', init);
+    window.addEventListener('pageshow', function(){ navigationLocked = false; });
+    init();
+
+    /* ── Back to top ── */
+    (function(){
+      var btn = document.getElementById('back-to-top');
+      if (!btn) return;
+      var toggle = function(){ btn.classList.toggle('visible', window.scrollY > 300); };
+      window.addEventListener('scroll', toggle, { passive: true });
+      btn.addEventListener('click', function(){ window.scrollTo({ top: 0, behavior: 'smooth' }); });
+    })();
   </script>
 </body>
 </html>

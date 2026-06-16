@@ -8,10 +8,10 @@ const rendered = await Promise.all(thoughts.map(async t => { const { Content } =
 <BaseLayout title="碎碎念" description="随手记录的想法、吐槽和日常。">
   <div class="mx-auto max-w-2xl px-4 py-8 sm:py-12">
     <div class="mb-10 space-y-3">
-      <p data-reveal class="reveal text-sm font-semibold uppercase tracking-[0.2em] text-primary">Thoughts</p>
-      <h1 data-reveal class="reveal text-4xl font-extrabold sm:text-5xl" style="--reveal-delay:80ms">碎碎念</h1>
-      <p data-reveal class="reveal text-base-content/60" style="--reveal-delay:150ms">随手记录的想法、吐槽和日常。<span class="font-semibold text-primary">{thoughts.length}</span> 条。</p>
+      <p class="reveal text-sm font-semibold uppercase tracking-[0.2em] text-primary">Thoughts</p>
+      <h1 class="reveal text-4xl font-extrabold sm:text-5xl" style="--reveal-delay:80ms">碎碎念</h1>
+      <p class="reveal text-base-content/60" style="--reveal-delay:150ms">随手记录的想法、吐槽和日常。<span class="font-semibold text-primary">{thoughts.length}</span> 条。</p>
     </div>
-    {rendered.length===0 ? <div class="card bg-base-100 shadow-sm"><div class="card-body items-center text-base-content/50">还没有碎碎念哦</div></div> : <div class="space-y-4">{rendered.map((t,i)=><div data-reveal class="reveal card bg-base-100 shadow-sm" style={`--reveal-delay:${i*60}ms`}><div class="card-body gap-3 p-5 sm:p-6"><div class="flex items-center gap-3 text-sm text-base-content/40"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><time datetime={t.data.date.toISOString()}>{formatDate(t.data.date)}</time></div><div class="prose max-w-none text-base-content/80"><t.Content /></div></div></div>)}</div>}
+    {rendered.length===0 ? <div class="card bg-base-100 shadow-sm"><div class="card-body items-center text-base-content/50">还没有碎碎念哦</div></div> : <div class="space-y-4">{rendered.map((t,i)=><div class="reveal card bg-base-100 shadow-sm" style={`--reveal-delay:${i*60}ms`}><div class="card-body gap-3 p-5 sm:p-6"><div class="flex items-center gap-3 text-sm text-base-content/40"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><time datetime={t.data.date.toISOString()}>{formatDate(t.data.date)}</time></div><div class="prose max-w-none text-base-content/80"><t.Content /></div></div></div>)}</div>}
   </div>
 </BaseLayout>

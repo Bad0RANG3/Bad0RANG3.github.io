@@ -34,28 +34,48 @@
   to   { transform: translateX(-100%); }
 }
 
-/* page transition */
+/* ═══════════════════════════════════════════
+   PAGE TRANSITION — CSS-only, auto-plays
+   ═══════════════════════════════════════════ */
 @keyframes page-enter-up {
-  0%   { opacity: 0; transform: translateY(16px); }
-  100% { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 @keyframes page-exit-up {
-  0%   { opacity: 1; transform: translateY(0); }
-  100% { opacity: 0; transform: translateY(-16px); }
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-12px); }
 }
-.page-enter { opacity: 0; transform: translateY(16px); }
-.page-enter.is-visible { animation: page-enter-up 500ms cubic-bezier(0.22,0.61,0.36,1) both; }
-.page-enter.is-leaving { animation: page-exit-up 180ms cubic-bezier(0.55,0.06,0.68,0.19) both; pointer-events: none; }
+.page-enter {
+  animation: page-enter-up 400ms cubic-bezier(0.22,0.61,0.36,1) both;
+}
+.page-enter.is-leaving {
+  animation: page-exit-up 160ms cubic-bezier(0.55,0.06,0.68,0.19) both;
+  pointer-events: none;
+}
 
-/* reveal */
+/* ═══════════════════════════════════════════
+   REVEAL — CSS-only staggered entrance
+   ═══════════════════════════════════════════ */
+@keyframes reveal-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
 .reveal {
-  opacity: 0; transform: translateY(12px);
-  transition: opacity 500ms cubic-bezier(0.22,0.61,0.36,1), transform 500ms cubic-bezier(0.22,0.61,0.36,1);
-  transition-delay: var(--reveal-delay, 0ms);
+  animation: reveal-up 450ms cubic-bezier(0.22,0.61,0.36,1) both;
+  animation-delay: var(--reveal-delay, 0ms);
 }
-.reveal.is-visible { opacity: 1; transform: translateY(0); }
 
-/* mobile table */
+/* ── Mobile: faster animations ── */
+@media (max-width: 767px) {
+  .page-enter { animation-duration: 300ms; }
+  .reveal { animation-duration: 350ms; }
+}
+
+/* ═══════════════════════════════════════════
+   MOBILE TABLE / OVERFLOW FIXES
+   ═══════════════════════════════════════════ */
+
+/* resource-list tables */
 .prose-resource-list .table-wrapper { position: relative; }
 .prose-resource-list .table-wrapper::after {
   content: '← 滑动查看 →'; display: block; text-align: center;
@@ -66,29 +86,32 @@
   .prose-resource-list .table-wrapper {
     overflow-x: auto; -webkit-overflow-scrolling: touch;
   }
-  .prose-resource-list :where(table) {
-    min-width: 100%;
-  }
+  .prose-resource-list :where(table) { min-width: 100%; }
   .prose-resource-list :where(th:first-child),
   .prose-resource-list :where(td:first-child) {
     position: sticky; left: 0; z-index: 5; background: oklch(var(--b1));
   }
 }
 
-/* ── 移动端防溢出 ── */
 @media (max-width: 767px) {
   .prose:not(.prose-resource-list) :where(table) {
     display: block; width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch;
   }
   .prose :where(pre) {
     overflow-x: auto; -webkit-overflow-scrolling: touch;
+    font-size: 0.8125rem;
   }
   .mockup-code {
     overflow-x: auto; -webkit-overflow-scrolling: touch;
   }
+  .mockup-code pre {
+    font-size: 0.75rem;
+  }
 }
 
-/* ── 额外动效 ── */
+/* ═══════════════════════════════════════════
+   EXTRA ANIMATIONS
+   ═══════════════════════════════════════════ */
 @keyframes float {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-4px); }
@@ -111,8 +134,8 @@
 }
 
 @keyframes scale-in {
-  0% { transform: scale(0.92); opacity: 0; }
-  100% { transform: scale(1); opacity: 1; }
+  from { transform: scale(0.92); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
 }
 .animate-scale-in { animation: scale-in 0.45s cubic-bezier(0.16,1,0.3,1) both; }
 
@@ -124,9 +147,7 @@
   box-shadow: 0 8px 20px -6px rgba(0,0,0,0.08);
 }
 
-.link-underline {
-  position: relative;
-}
+.link-underline { position: relative; }
 .link-underline::after {
   content: ''; position: absolute; bottom: -2px; left: 0; width: 0; height: 1.5px;
   background: linear-gradient(to right, oklch(45% .24 277), oklch(65% .241 354));
