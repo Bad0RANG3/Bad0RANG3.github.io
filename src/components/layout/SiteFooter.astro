@@ -1,0 +1,50 @@
+---
+import { siteConfig } from '../../config/site';
+const { author, socials } = siteConfig;
+const exploreLinks = [
+  { href: '/', text: '首页' }, { href: '/posts', text: '文章' }, { href: '/thoughts', text: '碎碎念' },
+  { href: '/archive', text: '归档' }, { href: '/about', text: '关于' },
+];
+---
+
+<footer class="bg-base-200 text-base-content mt-auto">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6">
+    <div class="grid sm:grid-cols-12 gap-8 py-8 md:py-12 border-t border-base-content/10">
+      <div class="sm:col-span-12 lg:col-span-5">
+        <div class="mb-4">
+          <a href="/" class="flex items-center space-x-2 group">
+            <div class="w-8 h-8 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center">
+              <svg class="w-4 h-4 text-primary-content" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            </div>
+            <span class="text-xl font-bold">{siteConfig.title}</span>
+          </a>
+        </div>
+        <div class="text-sm text-base-content/70">
+          <p>{siteConfig.description}</p>
+          <p>感谢你的到访，希望这里的文字能为你带来片刻的宁静或思考。</p>
+        </div>
+      </div>
+      <div class="sm:col-span-6 md:col-span-3 lg:col-span-2">
+        <h3 class="font-semibold text-base-content mb-2 text-base">探索</h3>
+        <ul class="text-sm space-y-2">
+          {exploreLinks.map(l => <li><a href={l.href} class="text-base-content/80 hover:text-primary transition-colors duration-200">{l.text}</a></li>)}
+        </ul>
+      </div>
+      <div class="sm:col-span-6 md:col-span-3 lg:col-span-2">
+        <h3 class="font-semibold text-base-content mb-2 text-base">关注</h3>
+        <ul class="text-sm space-y-2">
+          {socials.map(s => <li><a href={s.url} target="_blank" rel="noopener noreferrer" class="text-base-content/80 hover:text-primary transition-colors duration-200">{s.name}</a></li>)}
+        </ul>
+      </div>
+      <div class="sm:col-span-6 md:col-span-3 lg:col-span-3 flex items-start justify-center">
+        <figure class="w-full max-w-28 aspect-square rounded-2xl overflow-hidden ring-2 ring-base-content/10">
+          <img src={author.avatar} alt={author.name} class="w-full h-full object-cover" />
+        </figure>
+      </div>
+    </div>
+    <div class="md:flex md:items-center md:justify-between md:flex-wrap gap-2 py-4 border-t border-base-content/10">
+      <div class="text-sm text-base-content/70">&copy; {new Date().getFullYear()} {author.name}. All rights reserved.</div>
+      <div class="text-sm text-base-content/70">用 Astro 构建 &middot; 部署于 GitHub Pages</div>
+    </div>
+  </div>
+</footer>
