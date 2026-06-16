@@ -7,9 +7,9 @@ const posts = await getPublishedPosts();
 <BaseLayout title="文章" description="浏览博客中的全部文章。">
   <div class="mx-auto max-w-6xl px-4 py-8 sm:py-12">
     <div class="mb-10 space-y-3">
-      <p data-reveal class="reveal text-sm font-semibold uppercase tracking-[0.2em] text-primary">Posts</p>
-      <h1 data-reveal class="reveal text-4xl font-extrabold sm:text-5xl" style="--reveal-delay:80ms">全部文章</h1>
-      <p data-reveal class="reveal text-base-content/60" style="--reveal-delay:150ms">共发布 <span class="font-semibold text-primary">{posts.length}</span> 篇文章</p>
+      <p class="reveal text-sm font-semibold uppercase tracking-[0.2em] text-primary">Posts</p>
+      <h1 class="reveal text-4xl font-extrabold sm:text-5xl" style="--reveal-delay:80ms">全部文章</h1>
+      <p class="reveal text-base-content/60" style="--reveal-delay:150ms">共发布 <span class="font-semibold text-primary">{posts.length}</span> 篇文章</p>
     </div>
     {posts.length===0 ? <div class="card bg-base-100 shadow-sm"><div class="card-body items-center text-base-content/50">还没有文章哦</div></div> : <div class="grid gap-5 sm:gap-6 md:grid-cols-2 xl:grid-cols-3">{posts.map((p,i)=><div style={`--reveal-delay:${i*70}ms`}><PostCard post={p}/></div>)}</div>}
   </div>

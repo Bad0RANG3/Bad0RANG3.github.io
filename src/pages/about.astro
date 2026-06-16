@@ -29,7 +29,7 @@ const statusLines = about.currentStatus.split('\n');
 <BaseLayout title="关于" description="了解博主和常用技术栈。">
   <div class="mx-auto max-w-4xl space-y-8 px-4 py-8 sm:py-12">
 
-    <section data-reveal class="reveal card bg-base-100 shadow-sm overflow-hidden">
+    <section class="reveal card bg-base-100 shadow-sm overflow-hidden">
       <div class="card-body gap-6 p-6 sm:p-8">
         <div class="flex flex-col gap-5 sm:flex-row sm:items-start">
           <div class="relative shrink-0">
@@ -46,12 +46,12 @@ const statusLines = about.currentStatus.split('\n');
       </div>
     </section>
 
-    <section data-reveal class="reveal card bg-base-100 shadow-sm">
+    <section class="reveal card bg-base-100 shadow-sm">
       <div class="card-body p-6 sm:p-8">
         <div class="mb-5"><p class="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Online</p><h2 class="mt-2 text-xl font-bold">社交坐标</h2></div>
         <div class="grid gap-3 sm:grid-cols-2">
           {socialCards.map((s,i) => (
-            <a data-reveal href={s.url} target="_blank" rel="noopener noreferrer" style={`--reveal-delay:${i*45}ms`} class="reveal flex items-center gap-3 rounded-xl p-4 transition-colors hover:bg-base-200 group">
+            <a href={s.url} target="_blank" rel="noopener noreferrer" style={`--reveal-delay:${i*45}ms`} class="reveal flex items-center gap-3 rounded-xl p-4 transition-colors hover:bg-base-200 group">
               <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-base-200 transition-transform duration-300 group-hover:scale-110">
                 {s.iconSrc ? <img src={s.iconSrc} alt={s.name} class="h-6 w-6" loading="lazy" /> : <span class="text-xl">?</span>}
               </span>
@@ -62,19 +62,19 @@ const statusLines = about.currentStatus.split('\n');
       </div>
     </section>
 
-    <section data-reveal class="reveal card bg-base-100 shadow-sm">
+    <section class="reveal card bg-base-100 shadow-sm">
       <div class="card-body p-6 sm:p-8">
         <div class="mb-5"><p class="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Now</p><h2 class="mt-2 text-xl font-bold">当前状态</h2></div>
         <div class="mockup-code overflow-x-auto">{statusLines.map((l,i)=><pre data-prefix={i+1}><code>{l||' '}</code></pre>)}</div>
       </div>
     </section>
 
-    <section data-reveal class="reveal card bg-base-100 shadow-sm">
+    <section class="reveal card bg-base-100 shadow-sm">
       <div class="card-body p-6 sm:p-8">
         <div class="mb-5"><p class="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Stack</p><h2 class="mt-2 text-xl font-bold">技术栈</h2></div>
         <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {about.techStack.map((t,i) => { const u = getIconUrl(t.name); return (
-            <a data-reveal href={t.url} target="_blank" rel="noopener noreferrer" style={`--reveal-delay:${i*40}ms`} class="reveal flex items-center gap-3 rounded-xl p-3 transition-colors hover:bg-base-200 group">
+            <a href={t.url} target="_blank" rel="noopener noreferrer" style={`--reveal-delay:${i*40}ms`} class="reveal flex items-center gap-3 rounded-xl p-3 transition-colors hover:bg-base-200 group">
               <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-base-200 transition-transform duration-300 group-hover:scale-110">
                 {u ? <img src={u} alt={t.name} class="h-6 w-6" loading="lazy" /> : <span class="text-xs text-base-content/40">?</span>}
               </span>
@@ -85,12 +85,12 @@ const statusLines = about.currentStatus.split('\n');
       </div>
     </section>
 
-    <section data-reveal class="reveal card bg-base-100 shadow-sm">
+    <section class="reveal card bg-base-100 shadow-sm">
       <div class="card-body p-6 sm:p-8">
         <div class="mb-5"><p class="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Tools</p><h2 class="mt-2 text-xl font-bold">开发工具</h2></div>
         <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {about.devTools.map((t,i) => { const u = getIconUrl(t.name); return (
-            <a data-reveal href={t.url} target="_blank" rel="noopener noreferrer" style={`--reveal-delay:${i*35}ms`} class="reveal flex items-center gap-3 rounded-xl p-3 transition-colors hover:bg-base-200 group">
+            <a href={t.url} target="_blank" rel="noopener noreferrer" style={`--reveal-delay:${i*35}ms`} class="reveal flex items-center gap-3 rounded-xl p-3 transition-colors hover:bg-base-200 group">
               <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-base-200 transition-transform duration-300 group-hover:scale-110">
                 {u ? <img src={u} alt={t.name} class="h-6 w-6" loading="lazy" /> : <span class="text-xs text-base-content/40">?</span>}
               </span>
@@ -101,17 +101,17 @@ const statusLines = about.currentStatus.split('\n');
       </div>
     </section>
 
-    <section data-reveal class="reveal card bg-base-100 shadow-sm">
+    <section class="reveal card bg-base-100 shadow-sm">
       <div class="card-body p-6 sm:p-8">
         <div class="mb-5"><p class="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Fun</p><h2 class="mt-2 text-xl font-bold">兴趣与游戏</h2></div>
-        <div class="flex flex-wrap gap-3">{about.interests.map((x,i)=><span data-reveal style={`--reveal-delay:${i*50}ms`} class="reveal badge badge-lg badge-ghost">{x}</span>)}</div>
+        <div class="flex flex-wrap gap-3">{about.interests.map((x,i)=><span style={`--reveal-delay:${i*50}ms`} class="reveal badge badge-lg badge-ghost">{x}</span>)}</div>
       </div>
     </section>
 
-    <section data-reveal class="reveal card bg-base-100 shadow-sm">
+    <section class="reveal card bg-base-100 shadow-sm">
       <div class="card-body p-6 sm:p-8">
         <div class="mb-5"><p class="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Quotes</p><h2 class="mt-2 text-xl font-bold">语录</h2></div>
-        <div class="grid gap-3 sm:grid-cols-2">{about.quotes.map((q,i)=><div data-reveal style={`--reveal-delay:${i*55}ms`} class="reveal rounded-xl bg-base-200 p-4"><p class="text-sm italic leading-7 text-base-content/70">{q}</p></div>)}</div>
+        <div class="grid gap-3 sm:grid-cols-2">{about.quotes.map((q,i)=><div style={`--reveal-delay:${i*55}ms`} class="reveal rounded-xl bg-base-200 p-4"><p class="text-sm italic leading-7 text-base-content/70">{q}</p></div>)}</div>
       </div>
     </section>
 
