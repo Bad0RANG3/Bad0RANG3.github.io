@@ -65,7 +65,7 @@ const statusLines = about.currentStatus.split('\n');
     <section data-reveal class="reveal card bg-base-100 shadow-sm">
       <div class="card-body p-6 sm:p-8">
         <div class="mb-5"><p class="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Now</p><h2 class="mt-2 text-xl font-bold">当前状态</h2></div>
-        <div class="mockup-code">{statusLines.map((l,i)=><pre data-prefix={i+1}><code>{l||' '}</code></pre>)}</div>
+        <div class="mockup-code overflow-x-auto">{statusLines.map((l,i)=><pre data-prefix={i+1}><code>{l||' '}</code></pre>)}</div>
       </div>
     </section>
 

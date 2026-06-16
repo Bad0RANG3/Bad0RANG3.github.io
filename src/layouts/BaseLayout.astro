@@ -48,7 +48,7 @@ const socialImageUrl = new URL(ogImage, siteConfig.siteUrl).toString();
     })();
   </script>
 </head>
-<body class="flex flex-col min-h-screen bg-base-100 text-base-content">
+<body class="flex flex-col min-h-screen bg-base-100 text-base-content overflow-x-hidden">
   <SiteHeader currentPath={currentPath} />
   <main class="page-enter flex-grow" data-page-enter data-reveal-root>
     <slot />
