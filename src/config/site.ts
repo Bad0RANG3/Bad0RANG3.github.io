@@ -3,6 +3,12 @@ export const siteConfig = {
   description: '分享我在软件开发、技术和生活中的想法与经验。',
   siteUrl: 'https://bad0rang3.github.io',
   ogImage: '/HP.png',
+  giscus: {
+    repo: 'Bad0RANG3/Bad0RANG3.github.io',
+    repoId: 'R_kgDORyk8Fg',
+    category: 'Announcements',
+    categoryId: 'DIC_kwDORyk8Fs4C_VF9',
+  },
   author: {
     name: 'Bad0RANG3',
     intro: '喜欢在计算机方面折腾的一个普普通通的菜鸟，更倾向于视频特效的制作。',

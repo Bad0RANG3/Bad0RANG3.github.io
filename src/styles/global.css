@@ -8,13 +8,17 @@
   img, video, iframe { max-width: 100%; height: auto; }
 }
 
-/* scrollbar */
+/* =================================================================
+   SCROLLBAR
+   ================================================================= */
 .scrollbar-none {
   -ms-overflow-style: none; scrollbar-width: none;
   &::-webkit-scrollbar { display: none; }
 }
 
-/* blob */
+/* =================================================================
+   HERO BLOB — used on index page
+   ================================================================= */
 @keyframes blob {
   0%   { transform: translate(0,0) scale(1); }
   33%  { transform: translate(30px,-50px) scale(1.1); }
@@ -22,21 +26,10 @@
   100% { transform: translate(0,0) scale(1); }
 }
 .animate-blob { animation: blob 7s infinite; }
-.animation-delay-4000 { animation-delay: -4s; }
 
-/* drawer */
-@keyframes slideInDrawer {
-  from { transform: translateX(-100%); }
-  to   { transform: translateX(0); }
-}
-@keyframes slideOutDrawer {
-  from { transform: translateX(0); }
-  to   { transform: translateX(-100%); }
-}
-
-/* ═══════════════════════════════════════════
-   PAGE TRANSITION — CSS-only, auto-plays
-   ═══════════════════════════════════════════ */
+/* =================================================================
+   PAGE TRANSITION
+   ================================================================= */
 @keyframes page-enter-up {
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -53,9 +46,9 @@
   pointer-events: none;
 }
 
-/* ═══════════════════════════════════════════
-   REVEAL — CSS-only staggered entrance
-   ═══════════════════════════════════════════ */
+/* =================================================================
+   REVEAL — staggered entrance
+   ================================================================= */
 @keyframes reveal-up {
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -65,21 +58,13 @@
   animation-delay: var(--reveal-delay, 0ms);
 }
 
-/* ── Mobile: faster animations ── */
-@media (max-width: 767px) {
-  .page-enter { animation-duration: 300ms; }
-  .reveal { animation-duration: 350ms; }
-}
-
-/* ═══════════════════════════════════════════
+/* =================================================================
    MOBILE TABLE / OVERFLOW FIXES
-   ═══════════════════════════════════════════ */
-
-/* resource-list tables */
+   ================================================================= */
 .prose-resource-list .table-wrapper { position: relative; }
 .prose-resource-list .table-wrapper::after {
   content: '← 滑动查看 →'; display: block; text-align: center;
-  font-size: 0.75rem; color: #9ca3af; padding: 0.5rem 0 0.25rem;
+  font-size: 0.75rem; color: color-mix(in oklch, var(--color-base-content) 50%, transparent); padding: 0.5rem 0 0.25rem;
 }
 @media (min-width: 768px) { .prose-resource-list .table-wrapper::after { content: none; } }
 @media (max-width: 767px) {
@@ -89,7 +74,7 @@
   .prose-resource-list :where(table) { min-width: 100%; }
   .prose-resource-list :where(th:first-child),
   .prose-resource-list :where(td:first-child) {
-    position: sticky; left: 0; z-index: 5; background: oklch(var(--b1));
+    position: sticky; left: 0; z-index: 5; background: var(--color-base-100);
   }
 }
 
@@ -107,11 +92,32 @@
   .mockup-code pre {
     font-size: 0.75rem;
   }
+  .page-enter { animation-duration: 300ms; }
+  .reveal { animation-duration: 350ms; }
 }
 
-/* ═══════════════════════════════════════════
+/* =================================================================
+   HOVER EFFECTS
+   ================================================================= */
+.hover-lift {
+  transition: transform 0.35s cubic-bezier(0.25,0.46,0.45,0.94), box-shadow 0.35s cubic-bezier(0.25,0.46,0.45,0.94);
+}
+.hover-lift:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px -6px rgba(128,128,128,0.15);
+}
+
+.link-underline { position: relative; }
+.link-underline::after {
+  content: ''; position: absolute; bottom: -2px; left: 0; width: 0; height: 1.5px;
+  background: linear-gradient(to right, var(--color-primary), var(--color-secondary));
+  transition: width 0.35s cubic-bezier(0.25,0.46,0.45,0.94);
+}
+.link-underline:hover::after { width: 100%; }
+
+/* =================================================================
    EXTRA ANIMATIONS
-   ═══════════════════════════════════════════ */
+   ================================================================= */
 @keyframes float {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-4px); }
@@ -119,8 +125,8 @@
 .animate-float { animation: float 4s ease-in-out infinite; }
 
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(100,100,255,0.1); }
-  50% { box-shadow: 0 0 15px 2px rgba(100,100,255,0.05); }
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-primary) 10%, transparent); }
+  50% { box-shadow: 0 0 15px 2px color-mix(in srgb, var(--color-primary) 5%, transparent); }
 }
 .animate-pulse-glow { animation: pulse-glow 3s ease-in-out infinite; }
 
@@ -139,23 +145,9 @@
 }
 .animate-scale-in { animation: scale-in 0.45s cubic-bezier(0.16,1,0.3,1) both; }
 
-.hover-lift {
-  transition: transform 0.35s cubic-bezier(0.25,0.46,0.45,0.94), box-shadow 0.35s cubic-bezier(0.25,0.46,0.45,0.94);
-}
-.hover-lift:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 20px -6px rgba(0,0,0,0.08);
-}
-
-.link-underline { position: relative; }
-.link-underline::after {
-  content: ''; position: absolute; bottom: -2px; left: 0; width: 0; height: 1.5px;
-  background: linear-gradient(to right, oklch(45% .24 277), oklch(65% .241 354));
-  transition: width 0.35s cubic-bezier(0.25,0.46,0.45,0.94);
-}
-.link-underline:hover::after { width: 100%; }
-
-/* back-to-top */
+/* =================================================================
+   BACK TO TOP
+   ================================================================= */
 #back-to-top {
   opacity: 0; transform: scale(0.8); pointer-events: none;
   transition: opacity 0.35s cubic-bezier(0.25,0.46,0.45,0.94), transform 0.35s cubic-bezier(0.25,0.46,0.45,0.94);
@@ -164,9 +156,15 @@
   opacity: 1; transform: scale(1); pointer-events: auto;
 }
 
-/* reduced motion */
+/* =================================================================
+   REDUCED MOTION
+   ================================================================= */
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  *,*::before,*::after { animation: none !important; transition-duration: 1ms !important; }
-  .page-enter,.reveal { opacity: 1 !important; transform: none !important; }
+  *, *::before, *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+  .page-enter, .reveal { opacity: 1 !important; transform: none !important; }
 }

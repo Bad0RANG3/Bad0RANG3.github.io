@@ -1,20 +1,21 @@
 ---
 import { siteConfig } from '../../config/site';
+import MobileDrawer from './MobileDrawer.astro';
+import Icon from '../icons/Icons.astro';
+
 interface Props { currentPath: string; }
 const { currentPath } = Astro.props;
 const isActive = (href: string) => href === '/' ? currentPath === '/' : currentPath === href || currentPath.startsWith(`${href}/`);
-const mobileDrawerId = 'mobile-drawer';
 ---
 
 <header class="sticky top-0 z-50 backdrop-blur-md bg-base-100/90 border-b border-base-content/10">
+  <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[999] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-content focus:rounded-lg">跳到内容</a>
+
   <div class="max-w-6xl mx-auto px-4 sm:px-6">
     <div class="flex items-center justify-between h-14">
       <div class="flex items-center space-x-3">
-        <a href="/" class="flex items-center space-x-2 group" aria-label={siteConfig.title}>
-          <div class="w-7 h-7 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-            <svg class="w-4 h-4 text-primary-content" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-          </div>
-          <span class="text-lg font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent hidden md:block">{siteConfig.title}</span>
+        <a href="/" class="text-lg font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent" aria-label={siteConfig.title}>
+          {siteConfig.title}
         </a>
       </div>
       <nav class="hidden md:flex items-center gap-4 text-sm font-medium" aria-label="主导航">
@@ -26,57 +27,16 @@ const mobileDrawerId = 'mobile-drawer';
         )})}
       </nav>
       <div class="flex items-center gap-2">
-        <button id="mobile-menu-btn" class="btn btn-ghost btn-circle md:hidden" aria-label="菜单" aria-controls={mobileDrawerId}>
-          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        <!-- Search -->
+        <button id="search-btn" class="btn btn-ghost btn-circle" aria-label="搜索" title="搜索">
+          <Icon name="search" class="h-5 w-5" />
+        </button>
+        <button id="mobile-menu-btn" class="btn btn-ghost btn-circle md:hidden" aria-label="菜单" aria-controls="mobile-drawer">
+          <Icon name="menu" class="h-5 w-5" />
         </button>
       </div>
     </div>
   </div>
 </header>
 
-<dialog id={mobileDrawerId} class="modal" aria-label="移动端导航">
-  <div class="flex w-screen h-screen justify-start">
-    <div class="w-80 max-w-[80vw] sm:max-w-sm h-full bg-base-100 shadow-2xl border-r border-base-content/10 flex flex-col drawer-panel">
-      <div class="bg-base-200/60 backdrop-blur-sm border-b border-base-content/10 p-5 flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-secondary text-primary-content">
-            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-          </span>
-          <div><p class="font-semibold">{siteConfig.title}</p><p class="text-xs text-base-content/60">{siteConfig.description}</p></div>
-        </div>
-        <button type="button" class="btn btn-sm btn-ghost btn-circle" aria-label="关闭导航" data-close-drawer="true">
-          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-        </button>
-      </div>
-      <div class="p-5 space-y-6 overflow-y-auto flex-1">
-        <nav class="flex flex-col gap-2" aria-label="主要导航">
-          {siteConfig.navigation.map(item => { const active = isActive(item.href); return (
-            <a href={item.href} class:list={{'btn btn-ghost justify-start gap-3 rounded-xl':true,'btn-active btn-primary text-primary-content':active}} aria-current={active?'page':undefined}>
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
-              <span>{item.label}</span>
-            </a>
-          )})}
-        </nav>
-      </div>
-    </div>
-    <button type="button" class="flex-1 h-full transition-colors duration-200" data-close-drawer="true" aria-label="点击关闭导航"><span class="sr-only">关闭导航</span></button>
-  </div>
-</dialog>
-
-<style is:inline>
-  .drawer-panel { transform: translateX(-100%); }
-  dialog[open] .drawer-panel { animation: slideInDrawer 0.3s ease forwards; }
-  dialog .drawer-panel.animate-out { animation: slideOutDrawer 0.3s ease forwards; }
-</style>
-
-<script is:inline>
-  (function(){
-    var d=document.getElementById('mobile-drawer'),b=document.getElementById('mobile-menu-btn');
-    if(!d||!b)return;
-    b.addEventListener('click',function(){if(d instanceof HTMLDialogElement)d.showModal()});
-    var p=d.querySelector('.drawer-panel');
-    var close=function(){if(!(d instanceof HTMLDialogElement)||!d.open)return;if(!p){d.close();return}p.classList.add('animate-out');var h=function(){p.classList.remove('animate-out');p.removeEventListener('animationend',h);if(d instanceof HTMLDialogElement&&d.open)d.close()};p.addEventListener('animationend',h,{once:!0})};
-    d.querySelectorAll('[data-close-drawer]').forEach(function(e){e.addEventListener('click',function(e){e.preventDefault();close()})});
-    d.addEventListener('cancel',function(e){e.preventDefault();close()});d.addEventListener('close',function(){if(p)p.classList.remove('animate-out')});
-  })();
-</script>
+<MobileDrawer currentPath={currentPath} />

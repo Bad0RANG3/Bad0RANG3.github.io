@@ -1,106 +1,85 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PostCard from '../components/blog/PostCard.astro';
+import EmptyState from '../components/ui/EmptyState.astro';
+import Icon from '../components/icons/Icons.astro';
 import { siteConfig } from '../config/site';
 import { getPublishedPosts } from '../lib/content';
+import { LAYOUT, STAGGER } from '../constants';
 
 const posts = await getPublishedPosts();
 const featuredPosts = posts.filter(p => p.data.featured);
-const heroPosts = featuredPosts.length > 0 ? featuredPosts.slice(0, 3) : posts.slice(0, 3);
-const recentPosts = posts.slice(0, 6);
+const heroPosts = featuredPosts.length > 0 ? featuredPosts.slice(0, LAYOUT.HERO_POSTS_COUNT) : posts.slice(0, LAYOUT.HERO_POSTS_COUNT);
+const recentPosts = posts.slice(0, LAYOUT.RECENT_POSTS_COUNT);
 const { hero, author } = siteConfig;
 ---
 
 <BaseLayout title={siteConfig.title} description={siteConfig.description}>
-
-  <!-- ═══ HERO — mobile-first ═══ -->
+  <!-- ═══ HERO ═══ -->
   <section class="relative overflow-hidden">
-    <!-- Background blobs -->
     <div class="absolute top-0 left-0 w-48 h-48 sm:w-72 sm:h-72 md:w-96 md:h-96 bg-primary/15 rounded-full filter blur-3xl opacity-40 sm:opacity-50 animate-blob ease-in-out"></div>
-    <div class="absolute bottom-0 right-0 w-48 h-48 sm:w-72 sm:h-72 md:w-96 md:h-96 bg-secondary/15 rounded-full filter blur-3xl opacity-40 sm:opacity-50 animate-blob animation-delay-4000 ease-in-out"></div>
+    <div class="absolute bottom-0 right-0 w-48 h-48 sm:w-72 sm:h-72 md:w-96 md:h-96 bg-secondary/15 rounded-full filter blur-3xl opacity-40 sm:opacity-50 animate-blob [animation-delay:-4s] ease-in-out"></div>
 
     <div class="relative max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-20 md:py-28 lg:py-32">
       <div class="text-center max-w-3xl mx-auto">
-
-        <!-- Avatar -->
         <div class="relative inline-block mb-5 sm:mb-8">
           <div class="absolute -inset-1 sm:-inset-1.5 rounded-full bg-gradient-to-br from-primary/30 to-secondary/30 blur-md"></div>
           <img
             class="relative h-20 w-20 sm:h-28 sm:w-28 md:h-32 md:w-32 rounded-full object-cover ring-3 sm:ring-4 ring-base-100 shadow-lg sm:shadow-xl animate-float"
-            src={author.avatar}
-            alt={author.name}
+            src={author.avatar} alt={author.name} width="128" height="128" loading="eager" fetchpriority="high"
           />
         </div>
-
-        <!-- Title — mobile: smaller, desktop: big gradient -->
         <h1 class="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-bold leading-tight tracking-tight bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent px-1">
           {hero.lyric}
         </h1>
-
-        <!-- Subtitle -->
-        <p class="mt-3 sm:mt-4 text-sm sm:text-lg text-base-content/70 leading-relaxed">
-          {hero.lyricSource}
-        </p>
-
-        <!-- Action buttons — mobile: stacked, desktop: row -->
+        <p class="mt-3 sm:mt-4 text-sm sm:text-lg text-base-content/70 leading-relaxed">{hero.lyricSource}</p>
         <div class="mt-8 sm:mt-10 flex flex-col sm:flex-row flex-wrap justify-center gap-3 sm:gap-4">
-          <a href="/posts" class="btn btn-primary gap-2 rounded-xl btn-sm sm:btn-md">
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
-            查看文章
-          </a>
-          <a href="/about" class="btn btn-outline gap-2 rounded-xl btn-sm sm:btn-md">
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-            关于我
-          </a>
+          <a href="/posts" class="btn btn-primary gap-2 rounded-xl btn-sm sm:btn-md"><Icon name="book" class="w-4 h-4" />查看文章</a>
+          <a href="/about" class="btn btn-outline gap-2 rounded-xl btn-sm sm:btn-md"><Icon name="info" class="w-4 h-4" />关于我</a>
         </div>
-
-        <!-- Badges — mobile: compact, desktop: more space -->
         <div class="mt-8 sm:mt-12 flex items-center justify-center gap-3 sm:gap-6 text-xs sm:text-sm text-base-content/50 sm:text-base-content/60">
-          <span class="inline-flex items-center gap-1 sm:gap-2">
-            <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-            数字世界
-          </span>
-          <span class="inline-flex items-center gap-1 sm:gap-2">
-            <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-            持续更新
-          </span>
+          <span class="inline-flex items-center gap-1 sm:gap-2"><Icon name="location" class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary shrink-0" />数字世界</span>
+          <span class="inline-flex items-center gap-1 sm:gap-2"><Icon name="clock" class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary shrink-0" />持续更新</span>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ═══ 精选文章 ═══ -->
+  <!-- ═══ 精选文章 — Bento grid on desktop ═══ -->
   <section class="mx-auto max-w-6xl px-4 py-10 sm:py-16">
-    <h2 class="text-xl sm:text-2xl md:text-3xl font-bold mb-6 sm:mb-8 reveal" style="--reveal-delay:80ms">
+    <h2 class="text-xl sm:text-2xl md:text-3xl font-bold mb-6 sm:mb-8 reveal" style={`--reveal-delay:${STAGGER.HEADING}ms`}>
       <span class="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">精选文章</span>
     </h2>
     {heroPosts.length === 0 ? (
-      <div class="card bg-base-100 shadow-sm"><div class="card-body items-center text-base-content/50">还没有文章哦</div></div>
+      <EmptyState message="还没有文章哦" />
     ) : (
       <div class="grid gap-4 sm:gap-6 lg:grid-cols-3">
-        {heroPosts.map((p, i) => (
-          <div style={`--reveal-delay:${120 + i * 80}ms`}><PostCard post={p} /></div>
+        <!-- First card: spans 2 cols, takes more visual weight -->
+        <div class="lg:col-span-2" style={`--reveal-delay:${STAGGER.CARD_START}ms`}>
+          <PostCard post={heroPosts[0]} />
+        </div>
+        <!-- Remaining cards in the right column -->
+        {heroPosts.slice(1).map((p, i) => (
+          <div style={`--reveal-delay:${STAGGER.CARD_START + (i + 1) * STAGGER.CARD_STEP}ms`}>
+            <PostCard post={p} />
+          </div>
         ))}
       </div>
     )}
   </section>
 
-  <!-- ═══ 最近更新 ═══ -->
+  <!-- ═══ 最近更新 — 2 columns on desktop ═══ -->
   <section class="mx-auto max-w-6xl px-4 pb-12 sm:pb-16">
-    <h2 class="text-xl sm:text-2xl md:text-3xl font-bold mb-6 sm:mb-8 reveal" style="--reveal-delay:80ms">最近更新</h2>
-    <div class="grid gap-3 sm:gap-5">
+    <h2 class="text-xl sm:text-2xl md:text-3xl font-bold mb-6 sm:mb-8 reveal" style={`--reveal-delay:${STAGGER.HEADING}ms`}>最近更新</h2>
+    <div class="grid gap-3 sm:gap-5 md:grid-cols-2">
       {recentPosts.map((p, i) => (
-        <div style={`--reveal-delay:${120 + i * 60}ms`}><PostCard post={p} /></div>
+        <div style={`--reveal-delay:${STAGGER.LIST_START + i * STAGGER.LIST_STEP}ms`}><PostCard post={p} /></div>
       ))}
     </div>
-    {posts.length > 6 && (
-      <div class="mt-8 text-center reveal" style="--reveal-delay:500ms">
-        <a href="/posts" class="btn btn-outline gap-2 rounded-xl">
-          查看全部文章
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        </a>
+    {posts.length > LAYOUT.RECENT_POSTS_COUNT && (
+      <div class="mt-8 text-center reveal" style={`--reveal-delay:500ms`}>
+        <a href="/posts" class="btn btn-outline gap-2 rounded-xl">查看全部文章<Icon name="chevron-right" class="w-4 h-4" /></a>
       </div>
     )}
   </section>
-
 </BaseLayout>
