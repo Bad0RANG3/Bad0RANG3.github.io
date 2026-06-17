@@ -161,13 +161,22 @@ const jsonLd = type === 'article' ? {
       /* Init */
       const init = () => {
         navigationLocked = false;
+        const root = getPageRoot();
+        if (root) root.classList.remove('is-leaving');
         triggerPageEnter();
         wrapTables();
       };
 
       document.addEventListener('click', handleTransition);
       document.addEventListener('astro:page-load', init);
-      window.addEventListener('pageshow', () => { navigationLocked = false; });
+      window.addEventListener('pageshow', () => {
+        navigationLocked = false;
+        const root = getPageRoot();
+        if (root) {
+          root.classList.remove('is-leaving');
+          triggerPageEnter();
+        }
+      });
       init();
 
       /* Back to top */
