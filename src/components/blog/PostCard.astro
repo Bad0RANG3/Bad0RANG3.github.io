@@ -1,6 +1,7 @@
 ---
 import type { Post } from '../../lib/content';
 import { formatDate } from '../../lib/date';
+import Icon from '../icons/Icons.astro';
 interface Props { post: Post; }
 const { post } = Astro.props;
 ---
@@ -9,13 +10,13 @@ const { post } = Astro.props;
   <article class="card bg-base-100 shadow-sm hover-lift h-full">
     <div class="card-body gap-3 p-5 sm:p-6">
       <div class="flex flex-wrap items-center gap-2">
-        {post.data.featured && <span class="badge badge-primary badge-sm gap-1"><svg class="h-3 w-3" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>精选</span>}
+        {post.data.featured && <span class="badge badge-primary badge-sm gap-1"><Icon name="star" class="h-3 w-3" />精选</span>}
         {post.data.category && <span class="badge badge-ghost badge-sm">{post.data.category}</span>}
       </div>
       <h3 class="text-xl font-bold text-base-content transition-colors group-hover:text-primary">{post.data.title}</h3>
       <p class="line-clamp-3 text-sm leading-relaxed text-base-content/60">{post.data.description}</p>
       <div class="mt-auto flex flex-col gap-3 pt-2">
-        <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-400">
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-base-content/50">
           <time datetime={post.data.date.toISOString()}>{formatDate(post.data.date)}</time>
           {post.data.updatedDate && post.data.updatedDate.valueOf() !== post.data.date.valueOf() && <time datetime={post.data.updatedDate.toISOString()}>更新于 {formatDate(post.data.updatedDate)}</time>}
         </div>

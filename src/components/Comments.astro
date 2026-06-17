@@ -1,0 +1,26 @@
+---
+import { siteConfig } from '../config/site';
+const { repo, repoId, categoryId, category } = siteConfig.giscus;
+---
+
+<section class="mx-auto mt-12 sm:mt-16 border-t border-base-content/10 pt-8 sm:pt-10">
+  <h2 class="text-lg sm:text-xl font-bold mb-6 reveal">评论</h2>
+  <div class="giscus reveal" style="--reveal-delay:100ms"></div>
+  <script
+    src="https://giscus.app/client.js"
+    data-repo={repo}
+    data-repo-id={repoId}
+    data-category={category}
+    data-category-id={categoryId}
+    data-mapping="pathname"
+    data-strict="0"
+    data-reactions-enabled="1"
+    data-emit-metadata="0"
+    data-input-position="bottom"
+    data-theme="dark"
+    data-lang="zh-CN"
+    crossorigin="anonymous"
+    async
+  >
+  </script>
+</section>

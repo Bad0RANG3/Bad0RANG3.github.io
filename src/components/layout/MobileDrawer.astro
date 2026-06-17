@@ -1,0 +1,54 @@
+---
+import { siteConfig } from '../../config/site';
+import Icon from '../icons/Icons.astro';
+
+interface Props { currentPath: string; }
+const { currentPath } = Astro.props;
+const isActive = (href: string) => href === '/' ? currentPath === '/' : currentPath === href || currentPath.startsWith(`${href}/`);
+const drawerId = 'mobile-drawer';
+---
+
+<dialog id={drawerId} class="modal" aria-label="移动端导航">
+  <div class="flex w-screen h-screen justify-start">
+    <div class="w-80 max-w-[80vw] sm:max-w-sm h-full bg-base-100 shadow-2xl border-r border-base-content/10 flex flex-col drawer-panel">
+      <div class="bg-base-200/60 backdrop-blur-sm border-b border-base-content/10 p-5 flex items-center justify-between">
+        <div>
+          <p class="font-semibold">{siteConfig.title}</p>
+          <p class="text-xs text-base-content/60">{siteConfig.description}</p>
+        </div>
+        <button type="button" class="btn btn-sm btn-ghost btn-circle" aria-label="关闭导航" data-close-drawer="true">
+          <Icon name="close" class="w-5 h-5" />
+        </button>
+      </div>
+      <div class="p-5 space-y-6 overflow-y-auto flex-1">
+        <nav class="flex flex-col gap-2" aria-label="主要导航">
+          {siteConfig.navigation.map(item => { const active = isActive(item.href); return (
+            <a href={item.href} class:list={{'btn btn-ghost justify-start gap-3 rounded-xl':true,'btn-active btn-primary text-primary-content':active}} aria-current={active?'page':undefined}>
+              <Icon name="chevron-right" class="w-4 h-4" />
+              <span>{item.label}</span>
+            </a>
+          )})}
+        </nav>
+      </div>
+    </div>
+    <button type="button" class="flex-1 h-full transition-colors duration-200" data-close-drawer="true" aria-label="点击关闭导航"><span class="sr-only">关闭导航</span></button>
+  </div>
+</dialog>
+
+<style is:inline>
+  .drawer-panel { transform: translateX(-100%); }
+  dialog[open] .drawer-panel { animation: slideInDrawer 0.3s ease forwards; }
+  dialog .drawer-panel.animate-out { animation: slideOutDrawer 0.3s ease forwards; }
+</style>
+
+<script is:inline>
+  (function(){
+    const d=document.getElementById('mobile-drawer'),b=document.getElementById('mobile-menu-btn');
+    if(!d||!b)return;
+    b.addEventListener('click',function(){if(d instanceof HTMLDialogElement)d.showModal()});
+    const p=d.querySelector('.drawer-panel');
+    const close=function(){if(!(d instanceof HTMLDialogElement)||!d.open)return;if(!p){d.close();return}p.classList.add('animate-out');const h=function(){p.classList.remove('animate-out');p.removeEventListener('animationend',h);if(d instanceof HTMLDialogElement&&d.open)d.close()};p.addEventListener('animationend',h,{once:!0})};
+    d.querySelectorAll('[data-close-drawer]').forEach(function(e){e.addEventListener('click',function(e){e.preventDefault();close()})});
+    d.addEventListener('cancel',function(e){e.preventDefault();close()});d.addEventListener('close',function(){if(p)p.classList.remove('animate-out')});
+  })();
+</script>

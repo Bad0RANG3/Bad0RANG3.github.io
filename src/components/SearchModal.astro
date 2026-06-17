@@ -1,0 +1,107 @@
+---
+import { getPublishedPosts } from '../lib/content';
+const posts = await getPublishedPosts();
+const searchData = posts.map(p => ({
+  title: p.data.title,
+  description: p.data.description,
+  slug: p.slug,
+  tags: p.data.tags,
+  date: p.data.date.toISOString().slice(0, 10),
+}));
+---
+
+<dialog id="search-modal" class="modal" aria-label="搜索文章">
+  <div class="modal-box w-full max-w-xl p-0 bg-base-100 shadow-2xl rounded-2xl overflow-hidden">
+    <!-- Search input -->
+    <div class="flex items-center gap-3 px-4 py-3 border-b border-base-content/10">
+      <svg class="h-5 w-5 shrink-0 text-base-content/50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input id="search-input" type="text" class="flex-1 bg-transparent text-base outline-none placeholder:text-base-content/40" placeholder="搜索文章..." autocomplete="off" />
+      <kbd class="hidden sm:inline-flex items-center px-1.5 py-0.5 text-xs text-base-content/40 bg-base-200 rounded font-mono">ESC</kbd>
+    </div>
+    <!-- Results -->
+    <div id="search-results" class="max-h-80 overflow-y-auto">
+      <div class="px-4 py-8 text-center text-base-content/50 text-sm">输入关键词搜索文章标题和描述</div>
+    </div>
+    <!-- Footer -->
+    <div id="search-footer" class="hidden px-4 py-2 border-t border-base-content/10 text-xs text-base-content/40 text-center"></div>
+  </div>
+  <form method="dialog" class="modal-backdrop"><button>关闭</button></form>
+</dialog>
+
+<script is:inline>
+  var SEARCH_DATA = ${JSON.stringify(searchData)};
+
+  (function(){
+    var modal = document.getElementById('search-modal');
+    var input = document.getElementById('search-input');
+    var results = document.getElementById('search-results');
+    var footer = document.getElementById('search-footer');
+
+    if (!modal || !input || !results || !footer) return;
+
+    var filter = function(q){
+      var kw = q.toLowerCase().trim();
+      if (!kw) return SEARCH_DATA.slice(0, 5);
+      return SEARCH_DATA.filter(function(item){
+        return item.title.toLowerCase().includes(kw) ||
+               item.description.toLowerCase().includes(kw) ||
+               item.tags.some(function(t){ return t.toLowerCase().includes(kw); });
+      });
+    };
+
+    var render = function(items){
+      if (items.length === 0) {
+        results.innerHTML = '<div class="px-4 py-8 text-center text-base-content/50 text-sm">没有找到相关文章</div>';
+        footer.classList.add('hidden');
+        return;
+      }
+      var html = '';
+      for (var i = 0; i < items.length; i++) {
+        var item = items[i];
+        html += '<a href="/posts/' + item.slug + '" class="flex flex-col gap-1 px-4 py-3 hover:bg-base-200 transition-colors block border-b border-base-content/5 last:border-0">' +
+          '<span class="text-sm font-medium text-base-content">' + esc(item.title) + '</span>' +
+          '<span class="text-xs text-base-content/50 line-clamp-2">' + esc(item.description) + '</span>' +
+          '<span class="flex items-center gap-2 mt-0.5">' +
+            '<span class="text-xs text-base-content/40">' + item.date + '</span>' +
+            item.tags.map(function(t){ return '<span class="badge badge-ghost badge-xs">#' + esc(t) + '</span>'; }).join('') +
+          '</span>' +
+        '</a>';
+      }
+      results.innerHTML = html;
+      footer.classList.remove('hidden');
+      footer.textContent = items.length + ' 篇文章';
+    };
+
+    var esc = function(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
+
+    var doSearch = function(){
+      var q = input.value;
+      render(filter(q));
+    };
+
+    input.addEventListener('input', doSearch);
+
+    // Open modal
+    var openBtn = document.getElementById('search-btn');
+    if (openBtn) {
+      openBtn.addEventListener('click', function(){
+        if (modal instanceof HTMLDialogElement) modal.showModal();
+        setTimeout(function(){ input.focus(); }, 100);
+        input.value = '';
+        render(SEARCH_DATA.slice(0, 5));
+      });
+    }
+
+    // Close on Esc handled natively by <dialog>
+    // Keyboard shortcut: Ctrl+K / Cmd+K
+    document.addEventListener('keydown', function(e){
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        if (modal instanceof HTMLDialogElement) modal.showModal();
+        setTimeout(function(){ input.focus(); }, 100);
+        input.value = '';
+        render(SEARCH_DATA.slice(0, 5));
+      }
+    });
+  })();
+</script>
