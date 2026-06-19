@@ -4,7 +4,14 @@ import daisyui from 'daisyui';
 
 export default {
   content: ['./src/**/*.{astro,ts,md,mdx}'],
-  theme: { extend: {} },
+  theme: {
+    extend: {
+      fontFamily: {
+        sans: ["'MiSans'", 'sans-serif'],
+        mono: ["'JetBrains Mono'", 'monospace'],
+      },
+    },
+  },
   plugins: [typography, daisyui],
   daisyui: {
     themes: [
