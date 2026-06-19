@@ -1,8 +1,6 @@
 /* =================================================================
-   FONTS — 正文 MiSans (小米) / 代码 JetBrains Mono
-   Fontsource 提供完整中文字符集，jsdelivr CDN 国内可用
+   FONTS — 正文 MiSans (小米，link 标签加载) / 代码 JetBrains Mono
    ================================================================= */
-@import 'https://cdn.jsdelivr.net/npm/misans@3.1.0/index.css';
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 
 @tailwind base;
