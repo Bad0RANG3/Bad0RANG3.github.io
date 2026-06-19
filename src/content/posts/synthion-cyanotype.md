@@ -10,6 +10,7 @@ tags:
 category: 随笔
 featured: true
 draft: false
+cover: '/cyanotype.jpg'
 ---
 
 > 题记：黑与白象征麻木与苦难，而蓝色，则成为照亮一切的光。
@@ -32,16 +33,13 @@ Synthion。
 
 直到那段歌词响起。
 
-> I'll color the world for you,
-> 我为你染尽世间，
-> The skies and oceans too,
-> 也包括天与海，
-> A canvas of azure hue using every shade of blue,
-> 穷尽蓝调的蔚蓝色画布，
-> Let's illuminate the night with vibrant shining light,
-> 以光鲜亮丽击破黑暗，
-> So please don't let it be black and white.
-> 莫使之重蹈覆辙。
+<div class="lyric-block">
+<p><i class="lyric-en">I'll color the world for you,</i><br><span class="lyric-cn">我为你染尽世间，</span></p>
+<p><i class="lyric-en">The skies and oceans too,</i><br><span class="lyric-cn">也包括天与海，</span></p>
+<p><i class="lyric-en">A canvas of azure hue using every shade of blue,</i><br><span class="lyric-cn">穷尽蓝调的蔚蓝色画布，</span></p>
+<p><i class="lyric-en">Let's illuminate the night with vibrant shining light,</i><br><span class="lyric-cn">以光鲜亮丽击破黑暗，</span></p>
+<p><i class="lyric-en">So please don't let it be black and white.</i><br><span class="lyric-cn">莫使之重蹈覆辙。</span></p>
+</div>
 
 直到今天，我仍然记得第一次听见这些歌词时的感受。
 
@@ -66,6 +64,11 @@ Synthion。
 它真实存在着。
 
 存在于天空，存在于海洋，存在于每一个仍然愿意向前看的人身上。
+
+<figure class="album-cover">
+  <img src="/cyanotype.jpg" alt="cyanotype — Synthion" loading="lazy">
+  <figcaption>cyanotype — Synthion</figcaption>
+</figure>
 
 点开专辑页面的时候，我才发现《cyanotype》不仅仅是一首歌。
 
@@ -117,26 +120,18 @@ Synthion。
 
 整个人被抛向天空。
 
-> High above,
-> 高空之上，
-> This feeling is not enough,
-> 这种感觉还远远不够，
-> Take a ride,
-> 去兜风吧，
-> On this rocketship,
-> 搭上这艘飞船，
-> Fueled by love,
-> 以爱作为燃料，
-> Spread your wings,
-> 展开双翼，
-> Look up at the soaring sky,
-> 仰望高远的天空，
-> We can fly,
-> 我们能够飞翔，
-> Touch the sky,
-> 触碰苍穹，
-> You and I.
-> 你和我。
+<div class="lyric-block">
+<p><i class="lyric-en">High above,</i><br><span class="lyric-cn">高空之上，</span></p>
+<p><i class="lyric-en">This feeling is not enough,</i><br><span class="lyric-cn">这种感觉还远远不够，</span></p>
+<p><i class="lyric-en">Take a ride,</i><br><span class="lyric-cn">去兜风吧，</span></p>
+<p><i class="lyric-en">On this rocketship,</i><br><span class="lyric-cn">搭上这艘飞船，</span></p>
+<p><i class="lyric-en">Fueled by love,</i><br><span class="lyric-cn">以爱作为燃料，</span></p>
+<p><i class="lyric-en">Spread your wings,</i><br><span class="lyric-cn">展开双翼，</span></p>
+<p><i class="lyric-en">Look up at the soaring sky,</i><br><span class="lyric-cn">仰望高远的天空，</span></p>
+<p><i class="lyric-en">We can fly,</i><br><span class="lyric-cn">我们能够飞翔，</span></p>
+<p><i class="lyric-en">Touch the sky,</i><br><span class="lyric-cn">触碰苍穹，</span></p>
+<p><i class="lyric-en">You and I.</i><br><span class="lyric-cn">你和我。</span></p>
+</div>
 
 那时候的我其实并不明白这些歌词背后的意义。
 
@@ -176,6 +171,11 @@ Synthion。
 
 而是漫长的黑夜。
 
+<figure class="album-cover">
+  <img src="/lone-wolf.jpg" alt="Lone Wolf — Synthion" loading="lazy">
+  <figcaption>Lone Wolf — Synthion</figcaption>
+</figure>
+
 那是在某个深夜。
 
 我偶然翻到了一张名为《Lone Wolf》的专辑。
@@ -184,14 +184,12 @@ Synthion。
 
 于是我点开了播放。
 
-> Without a future in sight,
-> 前路晦暗不明，
-> I'll make a wish upon a star to start again,
-> 愿寄星斗，祈盼重头来过，
-> Would life go on if I were to fade away?
-> 若我消散，生命是否依旧，
-> Suffocating underneath the waves.
-> 窒息于波涛之下。
+<div class="lyric-block">
+<p><i class="lyric-en">Without a future in sight,</i><br><span class="lyric-cn">前路晦暗不明，</span></p>
+<p><i class="lyric-en">I'll make a wish upon a star to start again,</i><br><span class="lyric-cn">愿寄星斗，祈盼重头来过，</span></p>
+<p><i class="lyric-en">Would life go on if I were to fade away?</i><br><span class="lyric-cn">若我消散，生命是否依旧，</span></p>
+<p><i class="lyric-en">Suffocating underneath the waves.</i><br><span class="lyric-cn">窒息于波涛之下。</span></p>
+</div>
 
 那时的我正处于高三。
 
@@ -219,18 +217,14 @@ Synthion。
 
 而后，《main heroine》无缝衔接而来。
 
-> I wrote out my life as my story unfolds,
-> 随着故事展开书写人生，
-> I know that soon I will save my life,
-> 我知道，很快我将拯救自己，
-> I came to my rescue and fought till the end,
-> 挺身而战，直至终章，
-> 'Cause this story still has a chapter left to write,
-> 因为这故事仍有篇章等待续写，
-> Stood strong until I took a step back and saw,
-> 直到回首望去，
-> That I've already become the main heroine.
-> 才发现自己早已成为故事的主角。
+<div class="lyric-block">
+<p><i class="lyric-en">I wrote out my life as my story unfolds,</i><br><span class="lyric-cn">随着故事展开书写人生，</span></p>
+<p><i class="lyric-en">I know that soon I will save my life,</i><br><span class="lyric-cn">我知道，很快我将拯救自己，</span></p>
+<p><i class="lyric-en">I came to my rescue and fought till the end,</i><br><span class="lyric-cn">挺身而战，直至终章，</span></p>
+<p><i class="lyric-en">'Cause this story still has a chapter left to write,</i><br><span class="lyric-cn">因为这故事仍有篇章等待续写，</span></p>
+<p><i class="lyric-en">Stood strong until I took a step back and saw,</i><br><span class="lyric-cn">直到回首望去，</span></p>
+<p><i class="lyric-en">That I've already become the main heroine.</i><br><span class="lyric-cn">才发现自己早已成为故事的主角。</span></p>
+</div>
 
 小时候我们总喜欢把自己代入故事中的英雄。
 
@@ -254,14 +248,12 @@ Synthion。
 
 于是歌曲最后提出了那个问题。
 
-> "But what is the purpose of the main heroine?"
-> 女主角存在的意义究竟是什么？
-> "Is it to save the world?"
-> 是为了拯救世界吗？
-> "Is it to save just one person?"
-> 是为了拯救某一个人吗？
-> "Is it to save myself?"
-> 还是为了拯救自己？
+<div class="lyric-block">
+<p><i class="lyric-en">"But what is the purpose of the main heroine?"</i><br><span class="lyric-cn">女主角存在的意义究竟是什么？</span></p>
+<p><i class="lyric-en">"Is it to save the world?"</i><br><span class="lyric-cn">是为了拯救世界吗？</span></p>
+<p><i class="lyric-en">"Is it to save just one person?"</i><br><span class="lyric-cn">是为了拯救某一个人吗？</span></p>
+<p><i class="lyric-en">"Is it to save myself?"</i><br><span class="lyric-cn">还是为了拯救自己？</span></p>
+</div>
 
 第一次听到这里的时候。
 
@@ -273,18 +265,14 @@ Synthion。
 
 曲尽，落入深深思考的我还没来得及理清思绪，下一首歌便闯进了耳朵里。
 
-> Until then I cry for,
-> 在那以前，我为这些泪流，
-> Promises that shattered into fragments,
-> 粉碎的承诺，
-> The future of myself burned into ashes,
-> 燃尽的前程，
-> Was I really at fault?
-> 真的是我的错吗？
-> Did I really deserve my fate?
-> 这样的命运，我真的应得吗？
-> I'll wish upon a star to trust in my own future,
-> 我向星辰许愿，愿能相信自己的未来。
+<div class="lyric-block">
+<p><i class="lyric-en">Until then I cry for,</i><br><span class="lyric-cn">在那以前，我为这些泪流，</span></p>
+<p><i class="lyric-en">Promises that shattered into fragments,</i><br><span class="lyric-cn">粉碎的承诺，</span></p>
+<p><i class="lyric-en">The future of myself burned into ashes,</i><br><span class="lyric-cn">燃尽的前程，</span></p>
+<p><i class="lyric-en">Was I really at fault?</i><br><span class="lyric-cn">真的是我的错吗？</span></p>
+<p><i class="lyric-en">Did I really deserve my fate?</i><br><span class="lyric-cn">这样的命运，我真的应得吗？</span></p>
+<p><i class="lyric-en">I'll wish upon a star to trust in my own future,</i><br><span class="lyric-cn">我向星辰许愿，愿能相信自己的未来。</span></p>
+</div>
 
 成长过程中，我始终对计算机抱有浓厚的兴趣。
 
@@ -322,16 +310,13 @@ Synthion。
 
 而《Twilight》，大概已经成为了我的座右铭。
 
-> Despite my mistakes,
-> 纵然深陷过错之中，
-> I'll do what it takes,
-> 我仍会全力以赴，
-> To find myself,
-> 寻找真正的自己，
-> In the twilight, in the starlight,
-> 溶于暮光，溺于星光，
-> As the light fades away before my eyes,
-> 注视着逐渐消散于眼前的光芒。
+<div class="lyric-block">
+<p><i class="lyric-en">Despite my mistakes,</i><br><span class="lyric-cn">纵然深陷过错之中，</span></p>
+<p><i class="lyric-en">I'll do what it takes,</i><br><span class="lyric-cn">我仍会全力以赴，</span></p>
+<p><i class="lyric-en">To find myself,</i><br><span class="lyric-cn">寻找真正的自己，</span></p>
+<p><i class="lyric-en">In the twilight, in the starlight,</i><br><span class="lyric-cn">溶于暮光，溺于星光，</span></p>
+<p><i class="lyric-en">As the light fades away before my eyes,</i><br><span class="lyric-cn">注视着逐渐消散于眼前的光芒。</span></p>
+</div>
 
 我知道自己想成为什么样的人。
 
@@ -361,14 +346,12 @@ Twilight Echo。
 
 《雪割草》也是一首我格外喜欢的作品。
 
-> 雪は積もる，
-> 白雪仍在堆积，
-> 透明な結晶が，
-> 透明的冰晶，
-> 僕をふさいでも，
-> 即使将我层层覆盖，
-> 花は咲くから、いつか，
-> 花朵终将绽放，终有一日。
+<div class="lyric-block">
+<p><i class="lyric-en lyric-ja">雪は積もる，</i><br><span class="lyric-cn">白雪仍在堆积，</span></p>
+<p><i class="lyric-en lyric-ja">透明な結晶が，</i><br><span class="lyric-cn">透明的冰晶，</span></p>
+<p><i class="lyric-en lyric-ja">僕をふさいでも，</i><br><span class="lyric-cn">即使将我层层覆盖，</span></p>
+<p><i class="lyric-en lyric-ja">花は咲くから、いつか，</i><br><span class="lyric-cn">花朵终将绽放，终有一日。</span></p>
+</div>
 
 我始终相信。
 
@@ -400,18 +383,14 @@ Twilight Echo。
 
 于是便有了《Leap of Faith》。
 
-> I'll take a leap of faith; I'll keep my fate,
-> 我愿纵身一跃，坚守宿命，
-> Today's the day I live for me,
-> 今日为自己而活，
-> Until I learn to fly and say goodbye,
-> 直至学会翱翔，挥手作别，
-> To all my worries I left behind,
-> 向那些被我抛下的烦忧告别，
-> I won't look back,
-> 我不再回首，
-> This time, I'm taking a leap of faith,
-> 此刻，我愿纵身跃向信念。
+<div class="lyric-block">
+<p><i class="lyric-en">I'll take a leap of faith; I'll keep my fate,</i><br><span class="lyric-cn">我愿纵身一跃，坚守宿命，</span></p>
+<p><i class="lyric-en">Today's the day I live for me,</i><br><span class="lyric-cn">今日为自己而活，</span></p>
+<p><i class="lyric-en">Until I learn to fly and say goodbye,</i><br><span class="lyric-cn">直至学会翱翔，挥手作别，</span></p>
+<p><i class="lyric-en">To all my worries I left behind,</i><br><span class="lyric-cn">向那些被我抛下的烦忧告别，</span></p>
+<p><i class="lyric-en">I won't look back,</i><br><span class="lyric-cn">我不再回首，</span></p>
+<p><i class="lyric-en">This time, I'm taking a leap of faith,</i><br><span class="lyric-cn">此刻，我愿纵身跃向信念。</span></p>
+</div>
 
 高考结束了。
 
@@ -435,14 +414,12 @@ Twilight Echo。
 
 那便是《Shine》的意义。
 
-> It might cost me many tears,
-> 或许代价是无数泪水，
-> But I'll stand up and face my fears,
-> 但我终将直面内心的恐惧，
-> I will shine so bright through the darkest night,
-> 在最漫长的黑夜里闪闪发光，
-> But I will shine again,
-> 而我终将再次闪耀。
+<div class="lyric-block">
+<p><i class="lyric-en">It might cost me many tears,</i><br><span class="lyric-cn">或许代价是无数泪水，</span></p>
+<p><i class="lyric-en">But I'll stand up and face my fears,</i><br><span class="lyric-cn">但我终将直面内心的恐惧，</span></p>
+<p><i class="lyric-en">I will shine so bright through the darkest night,</i><br><span class="lyric-cn">在最漫长的黑夜里闪闪发光，</span></p>
+<p><i class="lyric-en">But I will shine again,</i><br><span class="lyric-cn">而我终将再次闪耀。</span></p>
+</div>
 
 后来。
 
@@ -454,14 +431,12 @@ Synthion 重新书写了《cyanotype》。
 
 只是有时候我们忘记了抬头去看。
 
-> The ripples in the water shine into the night,
-> 水中的涟漪映照夜空，
-> The footsteps in the sand will mark my path,
-> 沙上的足迹指引前路，
-> Watching from my blue and yellow tinted eyes,
-> 透过蓝与金交织的目光，
-> It's all so bright.
-> 一切依旧璀璨如初。
+<div class="lyric-block">
+<p><i class="lyric-en">The ripples in the water shine into the night,</i><br><span class="lyric-cn">水中的涟漪映照夜空，</span></p>
+<p><i class="lyric-en">The footsteps in the sand will mark my path,</i><br><span class="lyric-cn">沙上的足迹指引前路，</span></p>
+<p><i class="lyric-en">Watching from my blue and yellow tinted eyes,</i><br><span class="lyric-cn">透过蓝与金交织的目光，</span></p>
+<p><i class="lyric-en">It's all so bright.</i><br><span class="lyric-cn">一切依旧璀璨如初。</span></p>
+</div>
 
 或许在这个快节奏的时代。
 
