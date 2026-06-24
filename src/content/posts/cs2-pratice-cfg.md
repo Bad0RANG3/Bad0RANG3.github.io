@@ -8,7 +8,7 @@ tags:
   - 游戏
   - 配置
 category: 游戏
-featured: true
+featured: false
 draft: false
 ---
 
