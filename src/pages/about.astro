@@ -1,17 +1,15 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Icon from '../components/icons/Icons.astro';
 import SectionHeader from '../components/ui/SectionHeader.astro';
 import { siteConfig } from '../config/site';
+import { SOCIAL_ICONS } from '../constants';
 
 const { author, about, socials } = siteConfig;
 
-const socialIconFiles: Record<string, string> = {
-  GitHub: '/github.svg', X: '/x.svg', Instagram: '/instagram.svg',
-  抖音: '/tiktok.svg', Email: '/email.svg', Telegram: '/telegram.svg',
-  YouTube: '/youtube.svg', BiliBili: '/bilibili.svg',
-};
-const socialCards = socials.map(s => ({ ...s, iconSrc: socialIconFiles[s.name] ?? null }));
+const socialCards = socials.map((s) => ({
+  ...s,
+  iconSrc: SOCIAL_ICONS[s.name as keyof typeof SOCIAL_ICONS] ?? null,
+}));
 
 const skillIconId: Record<string, string> = {
   HTML5: 'html', CSS3: 'css', JavaScript: 'js', TypeScript: 'ts',

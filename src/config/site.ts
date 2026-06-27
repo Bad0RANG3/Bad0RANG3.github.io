@@ -1,3 +1,5 @@
+import { ROUTES } from '../constants';
+
 export const siteConfig = {
   title: "Bad0RANG3's Blog",
   description: '分享我在软件开发、技术和生活中的想法与经验。',
@@ -16,11 +18,12 @@ export const siteConfig = {
     email: 'badorangeovo@outlook.com',
   },
   navigation: [
-    { href: '/', label: '首页' },
-    { href: '/posts', label: '文章' },
-    { href: '/thoughts', label: '碎碎念' },
-    { href: '/archive', label: '归档' },
-    { href: '/about', label: '关于' },
+    { href: ROUTES.HOME, label: '首页' },
+    { href: ROUTES.POSTS, label: '文章' },
+    { href: ROUTES.THOUGHTS, label: '碎碎念' },
+    { href: ROUTES.TOOLS, label: '工具' },
+    { href: ROUTES.ARCHIVE, label: '归档' },
+    { href: ROUTES.ABOUT, label: '关于' },
   ],
   socials: [
     { name: 'GitHub', url: 'https://github.com/Bad0RANG3' },

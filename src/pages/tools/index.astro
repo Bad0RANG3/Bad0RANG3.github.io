@@ -1,0 +1,70 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/ui/PageHeader.astro';
+import Icon from '../../components/icons/Icons.astro';
+
+const tools = [
+  {
+    name: 'SwitchYourCFG',
+    href: '/tools/switch-your-cfg',
+    icon: '⚙️',
+    desc: 'CS2 配置 → CSGO CFG 转换器。拖放 CS2 配置文件夹，可视化键盘选键，一键买枪绑定，导出 CSGO 格式文件。',
+    tags: ['CS2', 'CFG', '配置'],
+  },
+];
+---
+
+<BaseLayout title="工具" description="实用在线小工具合集。">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-16">
+    <PageHeader
+      label="工具箱"
+      title="在线小工具"
+      description="纯浏览器端运行，无需上传文件，保护你的隐私。"
+    />
+
+    <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      {tools.map((tool) => (
+        <a
+          href={tool.href}
+          class="group reveal card bg-base-200/60 border border-base-content/10 hover:border-primary/30 rounded-2xl p-0 overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+        >
+          <div class="p-6 sm:p-7">
+            <!-- Icon -->
+            <div class="w-12 h-12 flex items-center justify-center rounded-xl bg-primary/10 text-2xl mb-4 group-hover:scale-110 transition-transform duration-300">
+              {tool.icon}
+            </div>
+            <!-- Title -->
+            <h3 class="text-lg font-bold text-base-content group-hover:text-primary transition-colors duration-200 mb-2">
+              {tool.name}
+            </h3>
+            <!-- Description -->
+            <p class="text-sm text-base-content/60 leading-relaxed mb-4">
+              {tool.desc}
+            </p>
+            <!-- Tags -->
+            <div class="flex flex-wrap gap-1.5">
+              {tool.tags.map((tag) => (
+                <span class="badge badge-ghost badge-xs text-[0.65rem]">{tag}</span>
+              ))}
+            </div>
+          </div>
+          <!-- Bottom bar -->
+          <div class="px-6 py-3 border-t border-base-content/5 bg-base-200/40 flex items-center justify-between text-xs text-base-content/40">
+            <span>打开工具</span>
+            <Icon name="chevron-right" class="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform duration-200" />
+          </div>
+        </a>
+      ))}
+    </div>
+
+    <!-- Empty state for future -->
+    <div class="mt-12 text-center reveal" style="--reveal-delay:400ms">
+      <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-base-200/60 border border-base-content/10 text-sm text-base-content/50">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 5v14M5 12h14"/>
+        </svg>
+        更多工具即将添加...
+      </div>
+    </div>
+  </div>
+</BaseLayout>

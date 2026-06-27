@@ -1,20 +1,9 @@
 ---
 import { siteConfig } from '../../config/site';
-const { author, socials } = siteConfig;
+import { SOCIAL_ICONS } from '../../constants';
 
-const footerNav = [
-  { href: '/', text: '首页' },
-  { href: '/posts', text: '文章' },
-  { href: '/thoughts', text: '碎碎念' },
-  { href: '/archive', text: '归档' },
-  { href: '/about', text: '关于' },
-];
-
-const socialIcons: Record<string, string> = {
-  GitHub: '/github.svg', X: '/x.svg', Instagram: '/instagram.svg',
-  抖音: '/tiktok.svg', Email: '/email.svg', Telegram: '/telegram.svg',
-  YouTube: '/youtube.svg', BiliBili: '/bilibili.svg',
-};
+const { author, socials, navigation } = siteConfig;
+const footerNav = navigation.map((item) => ({ href: item.href, text: item.label }));
 ---
 
 <footer class="mt-auto bg-base-200 relative">
@@ -45,7 +34,7 @@ const socialIcons: Record<string, string> = {
     <!-- Social icons row -->
     <div class="mt-6 flex flex-wrap items-center gap-3">
       {socials.map(s => {
-        const iconSrc = socialIcons[s.name];
+        const iconSrc = SOCIAL_ICONS[s.name as keyof typeof SOCIAL_ICONS];
         return iconSrc ? (
           <a href={s.url} target="_blank" rel="noopener noreferrer" aria-label={s.name} title={s.name}
             class="flex h-9 w-9 items-center justify-center rounded-lg bg-base-100 hover:bg-primary/15 transition-all duration-200 hover:scale-110">
