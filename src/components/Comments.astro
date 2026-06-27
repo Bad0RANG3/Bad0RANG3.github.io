@@ -6,7 +6,7 @@ const { repo, repoId, categoryId, category } = siteConfig.giscus;
 <section class="mx-auto mt-12 sm:mt-16 border-t border-base-content/10 pt-8 sm:pt-10">
   <h2 class="text-lg sm:text-xl font-bold mb-6 reveal">评论</h2>
   <div class="giscus reveal" style="--reveal-delay:100ms"></div>
-  <script
+  <script is:inline
     src="https://giscus.app/client.js"
     data-repo={repo}
     data-repo-id={repoId}

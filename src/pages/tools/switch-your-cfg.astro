@@ -1,0 +1,1483 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/ui/PageHeader.astro';
+---
+
+<BaseLayout
+  title="SwitchYourCFG"
+  description="纯浏览器端 CS2 配置转换工具：拖放 CS2 配置文件夹，可视化键盘选键，一键导出 CSGO 格式 CFG 文件。"
+  ogImage="/HP.png"
+>
+  <section class="relative overflow-hidden">
+    <div class="pointer-events-none absolute left-[-6rem] top-[-5rem] h-52 w-52 rounded-full bg-primary/6 blur-3xl"></div>
+    <div class="pointer-events-none absolute bottom-[-6rem] right-[-4rem] h-56 w-56 rounded-full bg-secondary/6 blur-3xl"></div>
+
+    <div class="relative mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
+      <nav class="mb-6 text-sm text-base-content/40 reveal">
+        <a href="/" class="transition-colors hover:text-primary">首页</a>
+        <span class="mx-2">/</span>
+        <a href="/tools" class="transition-colors hover:text-primary">工具</a>
+        <span class="mx-2">/</span>
+        <span class="text-base-content/60">SwitchYourCFG</span>
+      </nav>
+
+      <div id="scfg-root">
+        <PageHeader
+          label="Tools"
+          title="SwitchYourCFG"
+          description="把 CS2 配置整理成更易迁移的 CSGO CFG。全程本地处理，无需上传文件。"
+        />
+
+        <div class="mb-8 reveal rounded-[1.75rem] border border-base-content/8 bg-base-100/75 px-5 py-4 shadow-sm" style="--reveal-delay:40ms">
+          <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Three-step workflow</p>
+              <p class="mt-2 text-sm leading-6 text-base-content/65">先导入并整理配置，再完成键位绑定，最后检查结构化 CFG 并导出。</p>
+            </div>
+            <div class="flex flex-wrap gap-2 text-xs text-base-content/55">
+              <span class="rounded-full border border-base-content/10 bg-base-200/60 px-3 py-1.5">Step 01 输入 / 配置</span>
+              <span class="rounded-full border border-base-content/10 bg-base-200/60 px-3 py-1.5">Step 02 键盘绑定</span>
+              <span class="rounded-full border border-base-content/10 bg-base-200/60 px-3 py-1.5">Step 03 CFG 导出</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-6 scfg-flow">
+          <div class="reveal overflow-hidden rounded-[1.75rem] border border-base-content/8 bg-base-100/88 shadow-sm" style="--reveal-delay:80ms">
+            <div class="scfg-card-head">
+              <div>
+                <p class="scfg-step-label">Step 01</p>
+                <h2 class="scfg-step-title">导入并整理配置</h2>
+              </div>
+              <span class="scfg-card-hint">导入目录后即可继续</span>
+            </div>
+            <div class="scfg-card-body space-y-5">
+              <div class="scfg-dz" id="dropzone">
+                <div class="scfg-dz-orb"></div>
+                <svg class="scfg-dz-icon" viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
+                <div class="scfg-dz-title">拖放 CFG 文件夹到这里</div>
+                <div class="scfg-dz-sub">或点击选择整个配置目录，自动识别 machine / user / keys 文件</div>
+                <div class="scfg-dz-path">Steam\userdata\[你的ID]\730\local\cfg</div>
+                <input type="file" id="folderInput" directory webkitdirectory multiple>
+              </div>
+
+              <div class="scfg-filelist" id="filelist">
+                <div class="scfg-fi" id="fi-machine"><span>⚙️</span><span>cs2_machine_convars.vcfg</span><span id="fi-machine-size"></span><span id="fi-machine-status"></span></div>
+                <div class="scfg-fi" id="fi-user"><span>👤</span><span>cs2_user_convars_0_slot0.vcfg</span><span id="fi-user-size"></span><span id="fi-user-status"></span></div>
+                <div class="scfg-fi" id="fi-keys"><span>⌨️</span><span>cs2_user_keys_0_slot0.vcfg</span><span id="fi-keys-size"></span><span id="fi-keys-status"></span></div>
+              </div>
+
+              <div class="hidden scfg-options-panel" id="optionsCard">
+                <div class="scfg-subhead">
+                  <div>
+                    <p class="scfg-subhead-label">Output Options</p>
+                    <h3 class="scfg-subhead-title">转换规则</h3>
+                  </div>
+                  <span class="scfg-card-hint">影响导出结果</span>
+                </div>
+                <div class="scfg-opts">
+                  <label class="scfg-opt"><input type="checkbox" id="optSkipUnbound" checked><span class="scfg-opt-sw"></span><span><span class="scfg-opt-t">跳过未绑定</span><span class="scfg-opt-d">忽略 &lt;unbound&gt; 条目</span></span></label>
+                  <label class="scfg-opt"><input type="checkbox" id="optUserFirst" checked><span class="scfg-opt-sw"></span><span><span class="scfg-opt-t">用户优先</span><span class="scfg-opt-d">冲突时以用户设置为准</span></span></label>
+                  <label class="scfg-opt"><input type="checkbox" id="optBool" checked><span class="scfg-opt-sw"></span><span><span class="scfg-opt-t">布尔转换</span><span class="scfg-opt-d">true / false 转成 1 / 0</span></span></label>
+                  <label class="scfg-opt"><input type="checkbox" id="optAnalog" checked><span class="scfg-opt-sw"></span><span><span class="scfg-opt-t">模拟注释</span><span class="scfg-opt-d">保留 MOUSE_X/Y 说明为注释</span></span></label>
+                  <label class="scfg-opt"><input type="checkbox" id="optComments" checked><span class="scfg-opt-sw"></span><span><span class="scfg-opt-t">分组注释</span><span class="scfg-opt-d">在导出中加入清晰的分段说明</span></span></label>
+                </div>
+                <div class="scfg-name-row">
+                  <span>🎮 玩家名称</span>
+                  <input type="text" id="playerName" placeholder="自动从配置读取...">
+                  <span class="scfg-name-hint">留空则使用 CS2 配置中的名称</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="hidden reveal overflow-hidden rounded-[1.75rem] border border-base-content/8 bg-base-100/88 shadow-sm" id="buyCard" style="--reveal-delay:140ms">
+            <div class="scfg-card-head">
+              <div>
+                <p class="scfg-step-label">Step 02</p>
+                <h2 class="scfg-step-title">键盘绑定预览</h2>
+              </div>
+              <span class="scfg-card-hint">核心交互区</span>
+            </div>
+            <div class="scfg-card-body">
+              <div class="scfg-input-stage">
+                <div class="scfg-input-board">
+                  <div class="scfg-input-panel">
+                    <div class="scfg-input-panel-head">
+                      <div>
+                        <h3>键盘主区</h3>
+                        <p>优先自动缩放到容器内；空间不足时可横向滚动查看完整布局。</p>
+                      </div>
+                    </div>
+                    <div class="scfg-keyboard-shell">
+                      <div class="scfg-kbd-viewport" id="kbdViewport">
+                        <div class="scfg-kbd-scale" id="kbdScale">
+                          <div class="scfg-kbd-wrap" id="kbdWrap">
+                            <div class="scfg-kbd-main" id="kbdMain"></div>
+                            <div class="scfg-kbd-side" id="kbdSide"></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="scfg-input-panel scfg-pointer-panel">
+                    <div class="scfg-input-panel-head">
+                      <div>
+                        <h3>鼠标区</h3>
+                        <p>鼠标按键与滚轮单独分离，便于快速选中常用开火 / 滚轮绑定。</p>
+                      </div>
+                    </div>
+                    <div class="scfg-mouse-shell">
+                      <div class="scfg-mouse-figure" id="kbdMouse"></div>
+                      <div class="scfg-mouse-legend">
+                        <span><i class="scfg-dot scfg-dot-active"></i> 当前选中</span>
+                        <span><i class="scfg-dot scfg-dot-bound"></i> 已保存绑定</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="scfg-buy-config">
+                  <div class="scfg-key-pick">
+                    <span>已选按键</span>
+                    <span id="buyKeyDisplay">未选择</span>
+                  </div>
+
+                  <div class="scfg-buy-cats" id="buyCats"></div>
+                  <div class="scfg-buy-grid" id="buyGrid"></div>
+                  <div class="scfg-buy-preview" id="buyPreview"><span class="scfg-buy-empty">选择按键和武器来生成购买绑定…</span></div>
+
+                  <div class="scfg-buy-actions">
+                    <button class="btn btn-primary rounded-xl scfg-btn" id="buyAdd">+ 添加绑定</button>
+                    <button class="btn btn-ghost rounded-xl scfg-btn" id="buyClear">清空选择</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="scfg-saved-panel mt-5">
+                <div class="scfg-input-panel-head">
+                  <div>
+                    <h3>已保存绑定</h3>
+                    <p>重复选择同一按键时会自动覆盖原有绑定。</p>
+                  </div>
+                </div>
+                <div class="scfg-buy-saved" id="buySaved"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="hidden reveal overflow-hidden rounded-[1.75rem] border border-base-content/8 bg-base-100/88 shadow-sm" id="outputCard" style="--reveal-delay:200ms">
+            <div class="scfg-card-head">
+              <div>
+                <p class="scfg-step-label">Step 03</p>
+                <h2 class="scfg-step-title">检查并导出 CFG</h2>
+              </div>
+              <span class="scfg-pv-info" id="pvInfo"></span>
+            </div>
+            <div class="scfg-card-body">
+              <div class="scfg-stats-grid mb-5" id="statsBar">
+                <span><em>绑定</em><strong id="statBinds">0</strong></span>
+                <span><em>买枪</em><strong id="statBuy">0</strong></span>
+                <span><em>机器</em><strong id="statMachine">0</strong></span>
+                <span><em>用户</em><strong id="statUser">0</strong></span>
+                <span><em>合并</em><strong id="statMerged">0</strong></span>
+                <span><em>行数</em><strong id="statLines">0</strong></span>
+              </div>
+
+              <div class="scfg-pv-box" id="pvBox">
+                <pre id="pvPre"><span class="scfg-pv-m">// 等待选择文件夹...</span></pre>
+              </div>
+
+              <div class="scfg-cta-bar">
+                <div class="scfg-pv-btns">
+                  <button class="btn btn-primary rounded-xl scfg-btn scfg-btn-main" id="btnDownload" disabled>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    <span class="scfg-btn-text">
+                      <strong>下载 CFG</strong>
+                      <small>导出最终配置文件</small>
+                    </span>
+                  </button>
+                  <button class="btn btn-outline rounded-xl scfg-btn scfg-btn-secondary" id="btnCopy" disabled>
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                    <span class="scfg-btn-text">
+                      <strong>复制文本</strong>
+                      <small>复制到剪贴板</small>
+                    </span>
+                  </button>
+                  <button class="btn btn-ghost rounded-xl scfg-btn scfg-btn-tertiary" id="btnReset">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+                    <span class="scfg-btn-text">
+                      <strong>重新开始</strong>
+                      <small>清空当前状态</small>
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <p class="mt-10 text-center text-xs text-base-content/35 reveal" style="--reveal-delay:240ms">所有处理均在本地浏览器完成 · 不会上传任何文件</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="scfg-toast" id="toast"></div>
+  <div class="scfg-key-tooltip" id="keyTooltip"></div>
+</BaseLayout>
+
+<style is:inline>
+/* ============================================================
+   SwitchYourCFG — theme refresh (inline for JS-generated DOM)
+   ============================================================ */
+#scfg-root {
+  --scfg-surface: oklch(var(--b1) / 0.92);
+  --scfg-soft: oklch(var(--b2) / 0.68);
+  --scfg-muted: oklch(var(--bc) / 0.6);
+  --scfg-faint: oklch(var(--bc) / 0.34);
+  --scfg-border: oklch(var(--bc) / 0.08);
+  --scfg-border-strong: oklch(var(--bc) / 0.16);
+  --scfg-accent: oklch(var(--p));
+  --scfg-accent-soft: oklch(var(--p) / 0.12);
+  --scfg-secondary-soft: oklch(var(--s) / 0.1);
+  --scfg-success: oklch(var(--su));
+  --scfg-success-soft: oklch(var(--su) / 0.12);
+  --scfg-danger: oklch(var(--er));
+  --scfg-danger-soft: oklch(var(--er) / 0.1);
+  --scfg-code-bg: oklch(0.17 0.02 255 / 0.98);
+  --keyboard-scale: 1;
+}
+
+.scfg-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid var(--scfg-border);
+  padding: 1.15rem 1.4rem;
+  background:
+    linear-gradient(135deg, oklch(var(--p) / 0.04), transparent 40%),
+    linear-gradient(180deg, oklch(var(--b2) / 0.75), transparent);
+}
+.scfg-card-body { padding: 1.35rem 1.4rem 1.45rem; }
+.scfg-step-label {
+  margin: 0;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: oklch(var(--p));
+}
+.scfg-step-title {
+  margin: 0.28rem 0 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: oklch(var(--bc) / 0.96);
+}
+.scfg-card-hint,
+.scfg-pv-info {
+  white-space: nowrap;
+  font-size: 0.72rem;
+  color: var(--scfg-faint);
+}
+
+/* ----- Dropzone -------------------------------------------- */
+.scfg-dz {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.5rem;
+  border: 1.5px dashed var(--scfg-border-strong);
+  background: linear-gradient(180deg, oklch(var(--b2) / 0.9), oklch(var(--b1) / 0.85));
+  padding: 3rem 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color .25s, transform .25s, box-shadow .25s, background .25s;
+}
+.scfg-dz:hover {
+  border-color: oklch(var(--p) / 0.45);
+  background: linear-gradient(180deg, oklch(var(--p) / 0.08), oklch(var(--b1) / 0.88));
+  box-shadow: 0 20px 45px -30px oklch(var(--p) / 0.45);
+}
+.scfg-dz.active {
+  border-color: var(--scfg-accent);
+  transform: translateY(-1px);
+  box-shadow: 0 24px 54px -32px oklch(var(--p) / 0.55);
+}
+.scfg-dz.ready {
+  border-style: solid;
+  border-color: oklch(var(--su) / 0.42);
+  background: linear-gradient(180deg, oklch(var(--su) / 0.12), oklch(var(--b1) / 0.92));
+}
+.scfg-dz input { display: none; }
+.scfg-dz-orb {
+  position: absolute;
+  left: 50%;
+  top: -2.5rem;
+  width: 12rem;
+  height: 12rem;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: radial-gradient(circle, oklch(var(--p) / 0.18), transparent 65%);
+  pointer-events: none;
+}
+.scfg-dz-icon {
+  position: relative;
+  width: 3.5rem;
+  height: 3.5rem;
+  margin: 0 auto 0.95rem;
+  fill: oklch(var(--bc) / 0.22);
+  transition: fill .25s;
+}
+.scfg-dz:hover .scfg-dz-icon { fill: oklch(var(--p)); }
+.scfg-dz.ready .scfg-dz-icon { fill: oklch(var(--su)); }
+.scfg-dz-title {
+  position: relative;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: oklch(var(--bc) / 0.94);
+}
+.scfg-dz-sub {
+  position: relative;
+  margin-top: 0.45rem;
+  font-size: 0.88rem;
+  line-height: 1.65;
+  color: var(--scfg-muted);
+}
+.scfg-dz-path {
+  position: relative;
+  margin-top: 0.9rem;
+  display: inline-flex;
+  max-width: 100%;
+  overflow-x: auto;
+  border-radius: 999px;
+  background: oklch(var(--b1) / 0.7);
+  padding: 0.45rem 0.85rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--scfg-faint);
+}
+
+/* ----- File list ------------------------------------------- */
+.scfg-filelist {
+  display: none;
+  margin-top: 1rem;
+}
+.scfg-filelist.show {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+.scfg-fi {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0.65rem;
+  border-radius: 1rem;
+  border: 1px solid var(--scfg-border);
+  background: var(--scfg-soft);
+  padding: 0.9rem 1rem;
+  font-size: 0.82rem;
+}
+.scfg-fi > :first-child { font-size: 1.1rem; }
+.scfg-fi > :nth-child(2) {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+  color: oklch(var(--bc) / 0.88);
+}
+.scfg-fi > :nth-child(3) {
+  font-size: 0.72rem;
+  color: var(--scfg-muted);
+}
+.scfg-fi > :last-child {
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+.scfg-fi.ok {
+  border-color: oklch(var(--su) / 0.28);
+  background: linear-gradient(180deg, oklch(var(--su) / 0.12), oklch(var(--b1) / 0.88));
+}
+.scfg-fi.ok > :last-child { color: oklch(var(--su)); }
+.scfg-fi.err {
+  border-color: oklch(var(--er) / 0.24);
+  background: linear-gradient(180deg, oklch(var(--er) / 0.09), oklch(var(--b1) / 0.88));
+}
+.scfg-fi.err > :last-child { color: oklch(var(--er)); }
+
+/* ----- Stats ----------------------------------------------- */
+.scfg-stats-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.scfg-stats-grid span {
+  display: flex;
+  flex-direction: column;
+  gap: 0.32rem;
+  border-radius: 1.1rem;
+  border: 1px solid var(--scfg-border);
+  background: var(--scfg-soft);
+  padding: 0.95rem 1rem;
+}
+.scfg-stats-grid em {
+  font-style: normal;
+  font-size: 0.74rem;
+  color: var(--scfg-faint);
+}
+.scfg-stats-grid strong {
+  font-size: 1.2rem;
+  color: oklch(var(--bc) / 0.96);
+}
+
+/* ----- Options --------------------------------------------- */
+.scfg-opts {
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+}
+.scfg-opt {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  border-radius: 1.1rem;
+  border: 1px solid var(--scfg-border);
+  background: var(--scfg-soft);
+  padding: 1rem;
+  cursor: pointer;
+  transition: border-color .2s, background .2s, transform .2s;
+}
+.scfg-opt:hover {
+  border-color: oklch(var(--p) / 0.26);
+  background: linear-gradient(180deg, oklch(var(--p) / 0.08), oklch(var(--b1) / 0.84));
+  transform: translateY(-1px);
+}
+.scfg-opt input { display: none; }
+.scfg-opt-sw {
+  position: relative;
+  margin-top: 0.15rem;
+  height: 1.2rem;
+  width: 2.25rem;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: oklch(var(--bc) / 0.15);
+  transition: background .2s;
+}
+.scfg-opt-sw::after {
+  content: '';
+  position: absolute;
+  left: 0.14rem;
+  top: 0.14rem;
+  height: 0.92rem;
+  width: 0.92rem;
+  border-radius: 999px;
+  background: white;
+  transition: transform .2s;
+}
+.scfg-opt input:checked + .scfg-opt-sw { background: oklch(var(--p)); }
+.scfg-opt input:checked + .scfg-opt-sw::after { transform: translateX(1.05rem); }
+.scfg-opt-t {
+  display: block;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: oklch(var(--bc) / 0.92);
+}
+.scfg-opt-d {
+  display: block;
+  margin-top: 0.28rem;
+  font-size: 0.76rem;
+  line-height: 1.55;
+  color: var(--scfg-muted);
+}
+
+/* ----- Name row -------------------------------------------- */
+.scfg-name-row {
+  margin-top: 0.9rem;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  border-radius: 1.1rem;
+  border: 1px solid var(--scfg-border);
+  background: var(--scfg-soft);
+  padding: 0.95rem 1rem;
+}
+.scfg-name-row span:first-child {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: oklch(var(--bc) / 0.88);
+  white-space: nowrap;
+}
+.scfg-name-row input {
+  min-width: 180px;
+  flex: 1;
+  border-radius: 0.85rem;
+  border: 1px solid var(--scfg-border-strong);
+  background: oklch(var(--b1) / 0.85);
+  padding: 0.75rem 0.95rem;
+  color: oklch(var(--bc) / 0.92);
+  font-size: 0.84rem;
+  font-family: inherit;
+  transition: border-color .2s, box-shadow .2s;
+}
+.scfg-name-row input:focus {
+  outline: none;
+  border-color: oklch(var(--p) / 0.38);
+  box-shadow: 0 0 0 4px oklch(var(--p) / 0.08);
+}
+.scfg-name-row input::placeholder { color: var(--scfg-faint); }
+.scfg-name-hint { font-size: 0.72rem; color: var(--scfg-muted); }
+
+/* ============================================================
+   KEYBOARD
+   ============================================================ */
+.scfg-input-stage {
+  display: grid;
+  gap: 1.2rem;
+  min-width: 0;
+}
+.scfg-input-board {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+.scfg-input-panel,
+.scfg-saved-panel {
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 1.4rem;
+  border: 1px solid var(--scfg-border);
+  background: linear-gradient(180deg, oklch(var(--b2) / 0.82), oklch(var(--b1) / 0.92));
+  padding: 1rem;
+}
+.scfg-input-panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.85rem;
+}
+.scfg-input-panel-head h3 {
+  margin: 0;
+  font-size: 0.96rem;
+  font-weight: 700;
+  color: oklch(var(--bc) / 0.94);
+}
+.scfg-input-panel-head p {
+  margin: 0.28rem 0 0;
+  font-size: 0.76rem;
+  line-height: 1.6;
+  color: var(--scfg-muted);
+}
+.scfg-keyboard-shell {
+  overflow-x: auto;
+  overflow-y: hidden;
+  border-radius: 1.25rem;
+  border: 1px solid oklch(var(--bc) / 0.08);
+  background: linear-gradient(180deg, oklch(var(--b3) / 0.58), oklch(var(--b1) / 0.94));
+  padding: 1rem;
+}
+.scfg-kbd-viewport {
+  width: 100%;
+  min-width: max-content;
+}
+.scfg-kbd-scale {
+  width: 1120px;
+  margin: 0 auto;
+  transform: scale(var(--keyboard-scale));
+  transform-origin: top center;
+}
+.scfg-kbd-wrap {
+  display: grid;
+  gap: 1rem;
+  width: 1120px;
+  grid-template-columns: minmax(760px, 1fr) 260px 170px;
+  align-items: start;
+}
+.scfg-kbd-main { min-width: 760px; }
+.scfg-kbd-side {
+  display: grid;
+  gap: 0.9rem;
+  grid-template-columns: 1fr;
+  align-content: start;
+}
+.scfg-kbd-row { display: flex; gap: 0.42rem; margin-bottom: 0.42rem; justify-content: center; }
+.scfg-kbd-label {
+  margin-bottom: 0.35rem;
+  text-align: center;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--scfg-faint);
+}
+.scfg-kbd-key {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 52px;
+  border-radius: 1rem;
+  border: 1px solid var(--scfg-border-strong);
+  background: linear-gradient(180deg, oklch(var(--b1) / 0.98), oklch(var(--b2) / 0.7));
+  color: oklch(var(--bc) / 0.68);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 0.2rem;
+  box-shadow: inset 0 -1px 0 rgba(255,255,255,0.02), 0 12px 24px -20px rgba(0,0,0,0.6);
+  transition: border-color .15s, background .15s, transform .15s, color .15s, box-shadow .15s;
+}
+.scfg-kbd-key:hover {
+  border-color: oklch(var(--p) / 0.45);
+  color: oklch(var(--bc) / 0.95);
+  background: linear-gradient(180deg, oklch(var(--p) / 0.16), oklch(var(--b1) / 0.96));
+  transform: translateY(-1px);
+}
+.scfg-kbd-key.on {
+  border-color: oklch(var(--p) / 0.6);
+  background: linear-gradient(180deg, oklch(var(--p) / 0.3), oklch(var(--p) / 0.14));
+  color: oklch(var(--p));
+  box-shadow: 0 14px 30px -18px oklch(var(--p) / 0.62);
+}
+.scfg-kbd-key.bound {
+  border-color: oklch(var(--su) / 0.36);
+  background: linear-gradient(180deg, oklch(var(--su) / 0.18), oklch(var(--b1) / 0.96));
+  color: oklch(var(--su) / 0.92);
+}
+.scfg-kbd-key.disabled {
+  opacity: 0.22;
+  cursor: default;
+  pointer-events: none;
+}
+.scfg-kbd-key.small,
+.scfg-kbd-key[data-key="ESCAPE"],
+.scfg-kbd-key[data-key="BACKSPACE"],
+.scfg-kbd-key[data-key="CAPSLOCK"],
+.scfg-kbd-key[data-key="ENTER"],
+.scfg-kbd-key[data-key="SHIFT"],
+.scfg-kbd-key[data-key="RSHIFT"],
+.scfg-kbd-key[data-key="SPACE"] { font-size: 0.74rem; }
+.scfg-kbd-key.w1{width:48px} .scfg-kbd-key.w1d2{width:56px} .scfg-kbd-key.w1d5{width:74px}
+.scfg-kbd-key.w1d8{width:88px} .scfg-kbd-key.w2{width:100px} .scfg-kbd-key.w2d2{width:108px}
+.scfg-kbd-key.w2d5{width:122px} .scfg-kbd-key.w2d8{width:138px} .scfg-kbd-key.w3{width:148px}
+.scfg-kbd-key.w6{width:292px} .scfg-kbd-key.w6d5{width:320px}
+.scfg-mouse-shell {
+  display: grid;
+  gap: 0.9rem;
+  border-radius: 1.25rem;
+  border: 1px solid oklch(var(--bc) / 0.08);
+  background: linear-gradient(180deg, oklch(var(--b3) / 0.58), oklch(var(--b1) / 0.94));
+  padding: 1rem;
+}
+.scfg-mouse-figure {
+  position: relative;
+  margin: 0 auto;
+  width: min(240px, 100%);
+  min-height: 320px;
+  padding: 1rem 1rem 1.2rem;
+  border-radius: 999px;
+  border: 1px solid oklch(var(--bc) / 0.12);
+  background:
+    radial-gradient(circle at 50% 10%, oklch(var(--bc) / 0.08), transparent 35%),
+    linear-gradient(180deg, oklch(var(--b1) / 0.98), oklch(var(--b2) / 0.7));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.06),
+    inset 0 -12px 18px rgba(0,0,0,0.18),
+    0 22px 40px -30px rgba(0,0,0,0.65);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 104px 40px 1fr 1fr;
+  gap: 0.65rem;
+  justify-items: center;
+  align-items: stretch;
+}
+.scfg-mouse-figure::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0.85rem;
+  bottom: 1rem;
+  width: 1px;
+  background: linear-gradient(180deg, oklch(var(--bc) / 0.18), transparent 16%, transparent 84%, oklch(var(--bc) / 0.1));
+  transform: translateX(-50%);
+}
+.scfg-mouse-figure .scfg-kbd-row {
+  display: contents;
+}
+.scfg-mouse-figure .scfg-kbd-key {
+  width: 100%;
+  height: 100%;
+  min-height: 3rem;
+  border-radius: 1.25rem;
+  justify-content: center;
+  padding: 0.4rem;
+}
+.scfg-mouse-figure .scfg-kbd-key[data-key="MOUSE1"] {
+  grid-column: 1;
+  grid-row: 1;
+  border-top-left-radius: 2.4rem;
+  border-bottom-left-radius: 1.1rem;
+}
+.scfg-mouse-figure .scfg-kbd-key[data-key="MOUSE2"] {
+  grid-column: 2;
+  grid-row: 1;
+  border-top-right-radius: 2.4rem;
+  border-bottom-right-radius: 1.1rem;
+}
+.scfg-mouse-figure .scfg-kbd-key[data-key="MOUSE3"] {
+  grid-column: 1 / span 2;
+  grid-row: 2;
+  width: 3.4rem;
+  min-width: 3.4rem;
+  border-radius: 999px;
+  justify-self: center;
+}
+.scfg-mouse-figure .scfg-kbd-key[data-key="MOUSE4"],
+.scfg-mouse-figure .scfg-kbd-key[data-key="MOUSE5"] {
+  width: calc(100% - 1.2rem);
+  min-height: 2.9rem;
+}
+.scfg-mouse-figure .scfg-kbd-key[data-key="MOUSE4"] {
+  grid-column: 1 / span 2;
+  grid-row: 3;
+  justify-self: center;
+}
+.scfg-mouse-figure .scfg-kbd-key[data-key="MOUSE5"] {
+  grid-column: 1 / span 2;
+  grid-row: 4;
+  justify-self: center;
+}
+.scfg-mouse-figure .scfg-kbd-key[data-key="MWHEELUP"] {
+  position: absolute;
+  left: calc(50% - 4.6rem);
+  top: 8.45rem;
+  width: 3.8rem;
+  height: 2.5rem;
+  border-radius: 999px;
+}
+.scfg-mouse-figure .scfg-kbd-key[data-key="MWHEELDOWN"] {
+  position: absolute;
+  right: calc(50% - 4.6rem);
+  top: 8.45rem;
+  width: 3.8rem;
+  height: 2.5rem;
+  border-radius: 999px;
+}
+.scfg-mouse-figure .scfg-kbd-key.small { font-size: 0.74rem; }
+.scfg-mouse-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem 1rem;
+  font-size: 0.72rem;
+  color: var(--scfg-muted);
+}
+.scfg-mouse-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+.scfg-dot {
+  display: inline-block;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+  background: oklch(var(--bc) / 0.2);
+}
+.scfg-dot-active { background: oklch(var(--p)); }
+.scfg-dot-bound { background: oklch(var(--su)); }
+
+/* ============================================================
+   BUY BINDS
+   ============================================================ */
+.scfg-buy-config {
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 1.4rem;
+  border: 1px solid var(--scfg-border);
+  background: linear-gradient(180deg, oklch(var(--b2) / 0.72), oklch(var(--b1) / 0.95));
+  padding: 1rem;
+}
+.scfg-key-pick {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 1rem;
+  font-size: 0.86rem;
+  color: var(--scfg-muted);
+}
+.scfg-key-pick span:first-child {
+  font-weight: 700;
+  color: oklch(var(--bc) / 0.78);
+}
+.scfg-key-pick span:last-child {
+  min-width: 84px;
+  border-radius: 999px;
+  border: 1px solid oklch(var(--su) / 0.28);
+  background: var(--scfg-success-soft);
+  padding: 0.52rem 0.95rem;
+  text-align: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: oklch(var(--su));
+}
+.scfg-buy-cats,
+.scfg-buy-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  min-width: 0;
+}
+.scfg-buy-cats { margin-bottom: 0.85rem; }
+.scfg-buy-grid { min-height: 44px; margin-bottom: 1rem; }
+.scfg-buy-cat,
+.scfg-buy-item {
+  border-radius: 999px;
+  border: 1px solid var(--scfg-border-strong);
+  background: var(--scfg-soft);
+  transition: border-color .15s, background .15s, color .15s, transform .15s, box-shadow .15s;
+}
+.scfg-buy-cat {
+  padding: 0.65rem 1.05rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: oklch(var(--bc) / 0.58);
+  cursor: pointer;
+}
+.scfg-buy-cat:hover,
+.scfg-buy-item:hover {
+  transform: translateY(-1px);
+  border-color: oklch(var(--p) / 0.26);
+  color: oklch(var(--bc) / 0.92);
+}
+.scfg-buy-cat.sel {
+  border-color: oklch(var(--p) / 0.48);
+  background: var(--scfg-accent-soft);
+  color: oklch(var(--p));
+  box-shadow: 0 10px 22px -18px oklch(var(--p) / 0.52);
+}
+.scfg-buy-item {
+  max-width: 100%;
+  padding: 0.7rem 1.05rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: oklch(var(--bc) / 0.62);
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+.scfg-buy-item.on {
+  border-color: oklch(var(--su) / 0.42);
+  background: var(--scfg-success-soft);
+  color: oklch(var(--su));
+  box-shadow: 0 10px 22px -18px oklch(var(--su) / 0.46);
+}
+.scfg-buy-item .cost {
+  margin-left: 0.32rem;
+  font-size: 0.68rem;
+  opacity: 0.56;
+}
+.scfg-buy-preview {
+  min-height: 56px;
+  max-width: 100%;
+  overflow: hidden;
+  border-radius: 1.1rem;
+  border: 1px solid oklch(var(--bc) / 0.08);
+  background: var(--scfg-code-bg);
+  padding: 1rem 1.05rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  line-height: 1.75;
+  color: oklch(0.77 0.11 200);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.scfg-buy-empty { color: oklch(var(--bc) / 0.28); }
+.scfg-buy-actions {
+  margin: 1rem 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+.scfg-buy-saved {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.scfg-buy-saved .scfg-sv {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+  border-radius: 1rem;
+  border: 1px solid var(--scfg-border);
+  background: var(--scfg-soft);
+  padding: 0.9rem 1rem;
+}
+.scfg-sv-key {
+  border-radius: 999px;
+  border: 1px solid oklch(var(--su) / 0.28);
+  background: var(--scfg-success-soft);
+  padding: 0.32rem 0.76rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: oklch(var(--su));
+}
+.scfg-sv-cmd {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  color: oklch(var(--bc) / 0.68);
+}
+.scfg-sv-del {
+  cursor: pointer;
+  font-size: 0.95rem;
+  line-height: 1;
+  color: oklch(var(--bc) / 0.22);
+  transition: color .15s, transform .15s;
+}
+.scfg-sv-del:hover {
+  color: oklch(var(--er));
+  transform: scale(1.05);
+}
+
+/* ----- Buttons --------------------------------------------- */
+.scfg-btn {
+  min-height: 3.4rem;
+  gap: 0.75rem;
+  justify-content: flex-start;
+  padding-inline: 1rem;
+  font-weight: 700;
+  border-width: 1px;
+  box-shadow: 0 12px 24px -20px rgba(0,0,0,0.55);
+}
+.scfg-btn svg { flex-shrink: 0; }
+.scfg-btn-text {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.25;
+}
+.scfg-btn-text strong {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: inherit;
+}
+.scfg-btn-text small {
+  margin-top: 0.15rem;
+  font-size: 0.7rem;
+  color: oklch(var(--bc) / 0.58);
+}
+.scfg-buy-actions .scfg-btn,
+.scfg-pv-btns .scfg-btn {
+  color: oklch(var(--bc) / 0.95);
+}
+.scfg-buy-actions .btn-primary,
+.scfg-pv-btns .btn-primary {
+  background: linear-gradient(135deg, oklch(var(--p)) 0%, oklch(var(--s)) 100%);
+  border-color: transparent;
+  color: oklch(0.18 0.01 255);
+  box-shadow: 0 18px 34px -18px oklch(var(--p) / 0.72);
+}
+.scfg-buy-actions .btn-primary .scfg-btn-text small,
+.scfg-pv-btns .btn-primary .scfg-btn-text small {
+  color: oklch(0.24 0.02 255 / 0.78);
+}
+.scfg-buy-actions .btn-primary:hover,
+.scfg-pv-btns .btn-primary:hover {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+}
+.scfg-buy-actions .btn-ghost,
+.scfg-pv-btns .btn-outline,
+.scfg-pv-btns .btn-ghost {
+  background: oklch(var(--b1) / 0.96);
+  border-color: oklch(var(--bc) / 0.16);
+}
+.scfg-pv-btns .btn-outline {
+  box-shadow: inset 0 0 0 1px oklch(var(--p) / 0.08), 0 10px 22px -20px rgba(0,0,0,0.55);
+}
+.scfg-pv-btns .btn-ghost {
+  background: oklch(var(--b2) / 0.78);
+}
+.scfg-pv-btns .btn-outline:hover,
+.scfg-pv-btns .btn-ghost:hover,
+.scfg-buy-actions .btn-ghost:hover {
+  background: oklch(var(--b2) / 0.96);
+  border-color: oklch(var(--p) / 0.24);
+  transform: translateY(-1px);
+}
+.scfg-btn-main {
+  flex: 1.3 1 280px;
+  font-size: 0.98rem;
+}
+.scfg-btn-secondary,
+.scfg-btn-tertiary {
+  flex: 1 1 210px;
+}
+
+/* ----- Preview --------------------------------------------- */
+.scfg-pv-box {
+  max-height: 520px;
+  overflow: auto;
+  border-radius: 1.25rem;
+  border: 1px solid oklch(var(--bc) / 0.08);
+  background: var(--scfg-code-bg);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+.scfg-pv-box pre {
+  margin: 0;
+  padding: 1.15rem 1.2rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  tab-size: 4;
+  font-family: 'JetBrains Mono', 'Consolas', monospace;
+  font-size: 0.78rem;
+  line-height: 1.78;
+  color: oklch(var(--bc) / 0.84);
+}
+.scfg-pv-m { color: oklch(var(--bc) / 0.28); }
+.scfg-cta-bar {
+  position: sticky;
+  bottom: 0;
+  margin-top: 1rem;
+  border-radius: 1.25rem;
+  border: 1px solid oklch(var(--bc) / 0.1);
+  background: linear-gradient(180deg, oklch(var(--b1) / 0.96), oklch(var(--b2) / 0.9));
+  padding: 0.9rem;
+  box-shadow: 0 -18px 36px -28px rgba(0,0,0,0.52);
+  backdrop-filter: blur(10px);
+}
+.scfg-pv-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+
+/* ----- Toast ----------------------------------------------- */
+.scfg-toast {
+  position: fixed;
+  right: 1.5rem;
+  bottom: 1.5rem;
+  z-index: 999;
+  border-radius: 999px;
+  border: 1px solid oklch(var(--su) / 0.3);
+  background: oklch(var(--b1) / 0.94);
+  box-shadow: 0 18px 48px -28px rgba(0, 0, 0, 0.45);
+  padding: 0.8rem 1rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: oklch(var(--su));
+  opacity: 0;
+  transform: translateY(10px);
+  pointer-events: none;
+  transition: opacity .25s, transform .25s;
+}
+.scfg-toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+.scfg-key-tooltip {
+  position: fixed;
+  z-index: 1000;
+  max-width: min(260px, calc(100vw - 2rem));
+  border-radius: 0.85rem;
+  border: 1px solid oklch(var(--bc) / 0.1);
+  background: oklch(var(--b1) / 0.96);
+  box-shadow: 0 16px 40px -28px rgba(0,0,0,0.5);
+  padding: 0.55rem 0.75rem;
+  font-size: 0.74rem;
+  line-height: 1.5;
+  color: oklch(var(--bc) / 0.82);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(6px);
+  transition: opacity .15s, transform .15s;
+}
+.scfg-key-tooltip.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ----- Utility --------------------------------------------- */
+.scfg-options-panel {
+  border-radius: 1.35rem;
+  border: 1px solid var(--scfg-border);
+  background: linear-gradient(180deg, oklch(var(--b2) / 0.6), oklch(var(--b1) / 0.92));
+  padding: 1rem;
+}
+.scfg-subhead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.9rem;
+}
+.scfg-subhead-label {
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: oklch(var(--p) / 0.8);
+}
+.scfg-subhead-title {
+  margin: 0.28rem 0 0;
+  font-size: 0.96rem;
+  font-weight: 700;
+  color: oklch(var(--bc) / 0.94);
+}
+.scfg-flow > * { scroll-margin-top: 5rem; }
+#scfg-root .hidden { display: none !important; }
+#scfg-root ::-webkit-scrollbar { width: 6px; height: 6px; }
+#scfg-root ::-webkit-scrollbar-track { background: transparent; }
+#scfg-root ::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: oklch(var(--bc) / 0.12);
+}
+
+/* ----- Responsive ------------------------------------------ */
+@media (max-width: 900px) {
+  .scfg-card-head,
+  .scfg-subhead,
+  .scfg-input-panel-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .scfg-card-hint,
+  .scfg-pv-info { white-space: normal; }
+}
+@media (max-width: 1100px) {
+  .scfg-kbd-wrap {
+    min-width: 1120px;
+  }
+}
+@media (max-width: 700px) {
+  .scfg-card-body { padding: 1rem; }
+  .scfg-dz { padding: 2.25rem 1rem; }
+  .scfg-opts { grid-template-columns: 1fr; }
+  .scfg-options-panel,
+  .scfg-input-panel,
+  .scfg-buy-config,
+  .scfg-saved-panel { padding: 0.9rem; }
+  .scfg-keyboard-shell,
+  .scfg-mouse-shell { padding: 0.8rem; }
+  .scfg-key-pick { flex-direction: column; align-items: flex-start; }
+  .scfg-kbd-key { height: 44px; font-size: 0.72rem; }
+  .scfg-mouse-figure {
+    width: min(220px, 100%);
+    min-height: 300px;
+    padding-inline: 0.85rem;
+  }
+  .scfg-mouse-figure .scfg-kbd-key[data-key="MWHEELUP"],
+  .scfg-mouse-figure .scfg-kbd-key[data-key="MWHEELDOWN"] {
+    width: 3.2rem;
+  }
+  .scfg-kbd-key.w1{width:40px} .scfg-kbd-key.w1d2{width:48px} .scfg-kbd-key.w1d5{width:64px}
+  .scfg-kbd-key.w1d8{width:76px} .scfg-kbd-key.w2{width:88px} .scfg-kbd-key.w2d2{width:96px}
+  .scfg-kbd-key.w2d5{width:108px} .scfg-kbd-key.w2d8{width:122px} .scfg-kbd-key.w6{width:252px} .scfg-kbd-key.w6d5{width:276px}
+  .scfg-stats-grid { grid-template-columns: 1fr 1fr; }
+  .scfg-pv-btns,
+  .scfg-buy-actions { flex-direction: column; }
+  .scfg-btn,
+  .scfg-btn-main,
+  .scfg-btn-secondary,
+  .scfg-btn-tertiary {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .scfg-toast {
+    left: 1rem;
+    right: 1rem;
+    bottom: 1rem;
+    text-align: center;
+  }
+}
+</style>
+
+<script is:inline>
+// @ts-nocheck
+/* ============================================================
+   SwitchYourCFG — Application Logic
+   ============================================================ */
+;(function(){
+var $=function(s){return document.querySelector(s);};
+var $$=function(s){return document.querySelectorAll(s);};
+
+function fmtSize(b){if(b<1024)return b+' B';if(b<1048576)return(b/1024).toFixed(1)+' KB';return(b/1048576).toFixed(1)+' MB';}
+function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+
+var _tt;function toast(m){clearTimeout(_tt);var e=$('.scfg-toast');if(!e)return;e.textContent=m;e.classList.add('show');_tt=setTimeout(function(){e.classList.remove('show');},2200);}
+var _keyTip=$('#keyTooltip');
+function tooltipText(k){
+  if(!k)return '';
+  if(k===_bk)return '当前选中按键：'+k;
+  var saved=S.buyBinds.find(function(b){return b.key===k;});
+  if(saved)return '已绑定：'+saved.cmd;
+  return '点击选择按键：'+k;
+}
+function showKeyTip(t,x,y){
+  if(!_keyTip||!t)return;
+  _keyTip.textContent=t;
+  _keyTip.style.left=Math.min(window.innerWidth-220,Math.max(12,x+14))+'px';
+  _keyTip.style.top=Math.max(12,y+14)+'px';
+  _keyTip.classList.add('show');
+}
+function hideKeyTip(){ if(_keyTip)_keyTip.classList.remove('show'); }
+
+/* VDF Parser */
+function parseVDF(t){
+  if(t.charCodeAt(0)===0xFEFF)t=t.slice(1);t=t.replace(/\/\/[^\n]*/g,'\n');var p=0;
+  function sw(){while(p<t.length&&(t[p]===' '||t[p]==='\t'||t[p]==='\n'||t[p]==='\r'))p++;}
+  function rs(){sw();if(p>=t.length||t[p]!=='"')return null;p++;var r='';
+    while(p<t.length){if(t[p]==='"'){p++;return r;}
+      if(t[p]==='\\'&&p+1<t.length){p++;var c=t[p];
+        if(c==='"'){var la=p+1;while(la<t.length&&(t[la]===' '||t[la]==='\t'||t[la]==='\n'||t[la]==='\r'))la++;
+          if(la>=t.length||t[la]==='{'||t[la]==='}'||t[la]==='"'){r+='\\';p++;return r;}r+='"';}
+        else if(c==='n')r+='\n';else if(c==='t')r+='\t';else if(c==='\\')r+='\\';else r+=c;}
+      else{r+=t[p];}p++;}return r;}
+  function ro(){sw();var k=rs();if(k===null)return null;sw();if(p>=t.length)return null;
+    if(t[p]==='"'){var v=rs();var o={};o[k]=v;return o;}
+    if(t[p]==='{'){p++;var o={};
+      while(p<t.length){sw();if(t[p]==='}'){p++;var r={};r[k]=o;return r;}var c=ro();if(c===null)break;Object.assign(o,c);}
+      var r={};r[k]=o;return r;}return null;}
+  var root={};while(p<t.length){sw();if(p>=t.length)break;var o=ro();if(o===null)break;Object.assign(root,o);}return root;
+}
+
+/* State */
+var S={machine:null,user:null,keys:null,buyBinds:[],_mN:null,_mS:null,_mE:false,_uN:null,_uS:null,_uE:false,_kN:null,_kS:null,_kE:false};
+var FP={machine:[/^cs2_machine_convars\.vcfg$/i],user:[/^cs2_user_convars.*\.vcfg$/i],keys:[/^cs2_user_keys.*\.vcfg$/i]};
+
+function classifyFile(n){for(var t in FP){var rs=FP[t];for(var i=0;i<rs.length;i++){if(rs[i].test(n))return t;}}return null;}
+
+function loadFiles(fl){
+  S.machine=S.user=S.keys=null;var found={};
+  for(var i=0;i<fl.length;i++){var f=fl[i],t=classifyFile(f.name);if(!t)continue;if(!found[t]||(f.name.indexOf('slot0')!==-1&&found[t].name.indexOf('slot0')===-1))found[t]=f;}
+  var pending=Object.keys(found).length;if(pending===0){updateFileList();updateUI();return;}
+  for(var t in found){(function(type,file){var reader=new FileReader();
+    reader.onload=function(e){
+      try{var parsed=parseVDF(e.target.result);if(!parsed||!parsed.config)throw new Error('Bad');var cfg=parsed.config;
+        if(type==='machine'||type==='user'){if(!cfg.convars||typeof cfg.convars!=='object')throw new Error('No convars');S[type]=cfg.convars;}
+        else{S.keys={bindings:cfg.bindings||{},analog:cfg.analogbindings||{}};}
+        S['_'+type+'N']=file.name;S['_'+type+'S']=file.size;S['_'+type+'E']=false;}
+      catch(err){S[type]=null;S['_'+type+'N']=file.name;S['_'+type+'S']=file.size;S['_'+type+'E']=true;}
+      pending--;if(pending===0){updateFileList();updateUI();}
+    };reader.readAsText(file);})(t,found[t]);
+  }
+  var types=['machine','user','keys'];
+  for(var j=0;j<types.length;j++){var tt=types[j];if(!found[tt]){S[tt]=null;S['_'+tt+'N']=null;S['_'+tt+'S']=null;S['_'+tt+'E']=false;}}
+  updateFileList();
+}
+
+function updateFileList(){
+  $('#filelist').classList.add('show');
+  var types=['machine','user','keys'];
+  for(var i=0;i<types.length;i++){var t=types[i],n=S['_'+t+'N'],s=S['_'+t+'S'],e=S['_'+t+'E'],fi=document.getElementById('fi-'+t);
+    fi.classList.remove('ok','err');
+    if(!n){fi.classList.add('err');fi.children[2].textContent='';fi.children[3].textContent='未找到';}
+    else if(e){fi.classList.add('err');fi.children[2].textContent=fmtSize(s);fi.children[3].textContent='解析失败';}
+    else{fi.classList.add('ok');fi.children[2].textContent=fmtSize(s);fi.children[3].textContent='✓ 已识别';}
+  }
+}
+
+/* Keyboard */
+var MAIN=[['Esc','ESCAPE','w1'],['F1','F1','w1'],['F2','F2','w1'],['F3','F3','w1'],['F4','F4','w1'],['F5','F5','w1'],['F6','F6','w1'],['F7','F7','w1'],['F8','F8','w1'],['F9','F9','w1'],['F10','F10','w1'],['F11','F11','w1'],['F12','F12','w1']];
+var ROW1=[['`','`','w1'],['1','1','w1'],['2','2','w1'],['3','3','w1'],['4','4','w1'],['5','5','w1'],['6','6','w1'],['7','7','w1'],['8','8','w1'],['9','9','w1'],['0','0','w1'],['-','-','w1'],['=','=','w1'],['⌫','BACKSPACE','w2']];
+var ROW2=[['Tab','TAB','w1d5'],['Q','q','w1'],['W','w','w1'],['E','e','w1'],['R','r','w1'],['T','t','w1'],['Y','y','w1'],['U','u','w1'],['I','i','w1'],['O','o','w1'],['P','p','w1'],['[','[','w1'],[']',']','w1'],['\\','\\','w1d5']];
+var ROW3=[['Caps','CAPSLOCK','w1d8'],['A','a','w1'],['S','s','w1'],['D','d','w1'],['F','f','w1'],['G','g','w1'],['H','h','w1'],['J','j','w1'],['K','k','w1'],['L','l','w1'],[';',';','w1'],["'","'",'w1'],['↵','ENTER','w2d2']];
+var ROW4=[['Shift','SHIFT','w2d5'],['Z','z','w1'],['X','x','w1'],['C','c','w1'],['V','v','w1'],['B','b','w1'],['N','n','w1'],['M','m','w1'],[' , ',',','w1'],['.','.','w1'],['/','/','w1'],['Shift','RSHIFT','w2d8']];
+var ROW5=[['Ctrl','CTRL','w1d5'],['⊞','','w1d2',1],['Alt','ALT','w1d2'],['','SPACE','w6d5'],['Alt','RALT','w1d2'],['⊞','','w1d2',1],['Ctrl','RCTRL','w1d5']];
+var MAIN_ROWS=[[],ROW1,ROW2,ROW3,ROW4,ROW5];MAIN_ROWS[0]=MAIN;
+var SIDE=[
+  {l:'数字键盘',r:[[['NumLk','',0,1],['/','kp_slash'],['*','kp_multiply'],['-','kp_minus']],[['7','kp_home'],['8','kp_uparrow'],['9','kp_pgup'],['+','kp_plus']],[['4','kp_leftarrow'],['5','kp_5'],['6','kp_rightarrow']],[['1','kp_end'],['2','kp_downarrow'],['3','kp_pgdn'],['Ent','kp_enter']],[['0','kp_ins',2],['.','kp_del']]]},
+  {l:'方向键',r:[[['','',0,1],['↑','UPARROW'],['','',0,1]],[['←','LEFTARROW'],['↓','DOWNARROW'],['→','RIGHTARROW']]]},
+  {l:'其他',r:[[['Ins','INS'],['Home','HOME'],['PgUp','PGUP']],[['Del','DEL'],['End','END'],['PgDn','PGDN']]]}
+];
+var MOUSE_ROWS=[[['M1','MOUSE1','w2d2'],['M2','MOUSE2','w2d2']],[['M3','MOUSE3','w2'],['M4','MOUSE4','w2'],['M5','MOUSE5','w2']],[['滚↑','MWHEELUP','w2d2'],['滚↓','MWHEELDOWN','w2d2']]];
+var CATS=[{id:'rifles',l:'步枪',i:[['ak47','AK-47','2700'],['m4a1','M4A1-S','2900'],['awp','AWP','4750'],['ssg08','SSG 08','1700'],['galilar','Galil','1800'],['famas','FAMAS','1950'],['sg556','SG 553','3000'],['aug','AUG','3300'],['g3sg1','G3SG1','5000'],['scar20','SCAR-20','5000']]},{id:'smgs',l:'冲锋枪',i:[['mac10','MAC-10','1050'],['ump45','UMP-45','1200'],['p90','P90','2350'],['bizon','PP-Bizon','1400'],['mp7','MP7','1500'],['mp9','MP9','1250']]},{id:'shotguns',l:'霰弹枪',i:[['xm1014','XM1014','2000'],['mag7','MAG-7','1300'],['sawedoff','Sawed-Off','1100'],['nova','Nova','1050']]},{id:'heavy',l:'重型',i:[['m249','M249','5200'],['negev','Negev','1700']]},{id:'pistols',l:'手枪',i:[['deagle','沙漠之鹰','700'],['p250','P250','300'],['fiveseven','Five-SeveN','500'],['tec9','Tec-9','500'],['glock','Glock','200'],['hkp2000','P2000','200'],['elite','双持贝瑞塔','300']]},{id:'nades',l:'投掷物',i:[['hegrenade','高爆手雷','300'],['flashbang','闪光弹','200'],['smokegrenade','烟雾弹','300'],['molotov','燃烧弹(T)','400'],['incgrenade','燃烧弹(CT)','500'],['decoy','诱饵弹','50']]},{id:'equip',l:'装备',i:[['vest','防弹衣','650'],['vesthelm','头甲','1000'],['defuser','拆弹器','400'],['taser','电击枪','200']]}];
+
+var _bk='',_bi=new Set(),_bc='rifles';
+
+function hasSavedBind(key){return !!S.buyBinds.find(function(b){return b.key===key;});}
+function rKey(l,k,w,d,sm){var c='scfg-kbd-key '+w;if(d)c+=' disabled';if(k===_bk)c+=' on';else if(k&&hasSavedBind(k))c+=' bound';if(sm)c+=' small';else if(k.length>2)c+=' small';return'<div class="'+c+'" data-key="'+k+'">'+l+'</div>';}
+function rRows(rows,sm){var h='';for(var i=0;i<rows.length;i++){h+='<div class="scfg-kbd-row">';for(var j=0;j<rows[i].length;j++){var r=rows[i][j],w=r[2]||'w1';if(sm&&r[3])w=r[3]===2?'w2':'w1';h+=rKey(r[0],r[1],w,r[3],sm);}h+='</div>';}return h;}
+
+function renderKeyboard(){
+  $('#kbdMain').innerHTML=rRows(MAIN_ROWS);
+  var s='';
+  for(var i=0;i<SIDE.length;i++){var p=SIDE[i];s+='<div class="scfg-kbd-label">'+p.l+'</div>'+rRows(p.r,true);}
+  $('#kbdSide').innerHTML=s;
+  var ms='';
+  for(var j=0;j<MOUSE_ROWS.length;j++){ms+='<div class="scfg-kbd-row">';for(var k=0;k<MOUSE_ROWS[j].length;k++){var r=MOUSE_ROWS[j][k];ms+=rKey(r[0],r[1],r[2]||'w2',0,false);}ms+='</div>';}
+  var mouse=$('#kbdMouse');if(mouse)mouse.innerHTML=ms;
+  $('#buyKeyDisplay').textContent=_bk||'未选择';
+  updateKeyboardScale();
+}
+
+function renderBuyItems(){
+  var cat=null;for(var i=0;i<CATS.length;i++){if(CATS[i].id===_bc){cat=CATS[i];break;}}
+  var t='';for(var j=0;j<CATS.length;j++){var c=CATS[j];t+='<button class="scfg-buy-cat'+(c.id===_bc?' sel':'')+'" data-cat="'+c.id+'">'+c.l+'</button>';}
+  $('#buyCats').innerHTML=t;
+  var it='';if(cat){for(var k=0;k<cat.i.length;k++){var x=cat.i[k],on=_bi.has(x[0]);it+='<span class="scfg-buy-item'+(on?' on':'')+'" data-item="'+x[0]+'">'+x[1]+'<span class="cost">$'+x[2]+'</span></span>';}}
+  $('#buyGrid').innerHTML=it;
+  updateBuyPreview();
+}
+function updateBuyPreview(){
+  var p=$('#buyPreview');if(!_bk||_bi.size===0){p.innerHTML='<span class="scfg-buy-empty">选择按键和武器来生成购买绑定…</span>';return;}
+  var a=[];_bi.forEach(function(x){a.push(x);});p.textContent='bind "'+_bk+'" "'+a.map(function(x){return'buy '+x;}).join('; ')+'"';
+}
+function renderSavedBinds(){
+  var e=$('#buySaved');if(!e)return;if(S.buyBinds.length===0){e.innerHTML='';return;}
+  e.innerHTML=S.buyBinds.map(function(b,i){return'<div class="scfg-sv"><span class="scfg-sv-key">'+esc(b.key)+'</span><span class="scfg-sv-cmd">'+esc(b.cmd)+'</span><span class="scfg-sv-del" data-idx="'+i+'">✕</span></div>';}).join('');
+}
+function fmtLine(cmd){return cmd.indexOf('\t')!==-1?cmd.replace(/\t/g,'    '):cmd;}
+function escapePre(s){return esc(s).replace(/\n/g,'<br>');}
+function bindGroup(key,cmd){
+  if(/^buy /.test(cmd))return '一键买枪';
+  if(/^slot\d+$/i.test(cmd))return 'Slot';
+  if(/\+(forward|back|moveleft|moveright|jump|duck)/i.test(cmd))return '移动';
+  if(/^(lastinv|invnext|invprev|use|drop|reload)$/i.test(cmd))return '交互';
+  if(/^(attack|attack2|lookatweapon|player_ping)$/i.test(cmd)||/^\+?(attack|attack2)/i.test(cmd))return '战斗';
+  if(/^(say|messagemode|messagemode2)/i.test(cmd))return '通信';
+  return '其他绑定';
+}
+function structuredPreview(lines){
+  var groups=[];var current=null;
+  for(var i=0;i<lines.length;i++){
+    var line=lines[i];
+    if(!line)continue;
+    if(line.startsWith('// =====')){current={title:line.replace(/^\/\/ =====\s*/,'').replace(/\s*=====$/,''),items:[]};groups.push(current);continue;}
+    if(!current){current={title:'基础设置',items:[]};groups.push(current);}
+    current.items.push(line);
+  }
+  return groups;
+}
+function renderStructuredPreview(groups){
+  if(!groups.length)return '<span class="scfg-pv-m">// 等待选择文件夹...</span>';
+  return groups.map(function(group){
+    var title=group.title||'未命名分组';
+    var items='';
+    if(title==='按键绑定'){
+      var sub={};
+      for(var i=0;i<group.items.length;i++){
+        var line=group.items[i];
+        var m=line.match(/^bind\t"([^"]+)"\t"([^"]+)"$/);
+        if(!m){(sub['其他']||(sub['其他']=[])).push({raw:line});continue;}
+        var key=m[1],cmd=m[2],g=bindGroup(key,cmd);
+        (sub[g]||(sub[g]=[])).push({key:key,cmd:cmd});
+      }
+      items=Object.keys(sub).map(function(name){
+        return '<div class="scfg-preview-subgroup"><div class="scfg-preview-subtitle">'+esc(name)+'</div>'+sub[name].map(function(entry){
+          if(entry.raw)return '<div class="scfg-preview-row"><code>'+esc(fmtLine(entry.raw))+'</code></div>';
+          return '<div class="scfg-preview-row"><span class="scfg-preview-key">'+esc(entry.key)+'</span><span class="scfg-preview-arrow">→</span><code>'+esc(entry.cmd)+'</code></div>';
+        }).join('')+'</div>';
+      }).join('');
+    } else if(title==='一键买枪') {
+      items=group.items.map(function(line){
+        var m=line.match(/^bind\t"([^"]+)"\t"([^"]+)"$/);
+        if(!m)return '<div class="scfg-preview-row"><code>'+esc(fmtLine(line))+'</code></div>';
+        return '<div class="scfg-preview-row"><span class="scfg-preview-key">'+esc(m[1])+'</span><span class="scfg-preview-arrow">→</span><code>'+esc(m[2])+'</code></div>';
+      }).join('');
+    } else {
+      items=group.items.map(function(line){return '<div class="scfg-preview-row"><code>'+esc(fmtLine(line))+'</code></div>';}).join('');
+    }
+    return '<section class="scfg-preview-group"><header>'+esc(title)+'</header>'+items+'</section>';
+  }).join('');
+}
+
+/* Generate CFG */
+function generateCFG(){
+  var lines=[],su=$('#optSkipUnbound').checked,uf=$('#optUserFirst').checked,bc=$('#optBool').checked,ia=$('#optAnalog').checked,ac=$('#optComments').checked,pn=$('#playerName').value.trim(),k=S.keys;
+  lines.push('cfgver\t"1"');lines.push('unbindall');if(ac)lines.push('');
+  var nB=0;if(k&&k.bindings){if(ac)lines.push('// ===== 按键绑定 =====');
+    var sk=Object.keys(k.bindings).sort(function(a,b){return/^\d$/.test(a)&&!/^\d$/.test(b)?-1:!/^\d$/.test(a)&&/^\d$/.test(b)?1:a.localeCompare(b);});
+    for(var i=0;i<sk.length;i++){var key=sk[i],cmd=k.bindings[key];if(su&&cmd==='<unbound>')continue;if(cmd&&cmd!=='<unbound>'){lines.push('bind\t"'+key+'"\t"'+cmd+'"');nB++;}}}
+  var nBy=0;if(S.buyBinds.length>0){if(ac){lines.push('');lines.push('// ===== 一键买枪 =====');}for(var j=0;j<S.buyBinds.length;j++){lines.push('bind\t"'+S.buyBinds[j].key+'"\t"'+S.buyBinds[j].cmd+'"');nBy++;}}
+  var mc=S.machine||{},uc=S.user||{},mg=uf?Object.assign({},mc,uc):Object.assign({},uc,mc);if(pn)mg['name']=pn;
+  if(ac&&Object.keys(mg).length>0){lines.push('');lines.push('// ===== 设置参数 =====');}
+  var sc=Object.keys(mg).sort(function(a,b){return a.localeCompare(b);}),nC=0;
+  for(var k2=0;k2<sc.length;k2++){var n=sc[k2],v=mg[n];if(bc){if(v==='true')v='1';if(v==='false')v='0';}lines.push(n+'\t"'+v+'"');nC++;}
+  if(ia&&k&&k.analog&&Object.keys(k.analog).length>0){if(ac){lines.push('');lines.push('// ===== 模拟绑定 =====');}var ak=Object.keys(k.analog);for(var m=0;m<ak.length;m++){lines.push('// analogbind\t"'+ak[m]+'"\t"'+k.analog[ak[m]]+'"');}}
+  var cfgText=lines.join('\n');
+  var groups=structuredPreview(lines);
+  return{cfg:cfgText,groups:groups,previewHtml:renderStructuredPreview(groups),plainHtml:escapePre(cfgText),stats:{binds:nB,buy:nBy,machine:Object.keys(mc).length,user:Object.keys(uc).length,merged:nC,lines:lines.length}};
+}
+
+function updateKeyboardScale(){
+  var viewport=$('#kbdViewport'),scaleEl=$('#kbdScale');
+  if(!viewport||!scaleEl)return;
+  var baseWidth=1120;
+  var currentWidth=viewport.clientWidth||baseWidth;
+  var scale=Math.min(currentWidth/baseWidth,1);
+  scaleEl.style.setProperty('--keyboard-scale',String(scale));
+  scaleEl.style.height=(390*scale)+'px';
+}
+
+function updateUI(){
+  var ha=!!(S.machine||S.user||S.keys);
+  $('#optionsCard').classList.toggle('hidden',!ha);$('#buyCard').classList.toggle('hidden',!ha);$('#outputCard').classList.toggle('hidden',!ha);
+  if(!ha){$('#statsBar').classList.add('hidden');$('#pvPre').innerHTML='<span class="scfg-pv-m">// 等待选择文件夹...</span>';$('#btnDownload').disabled=true;$('#btnCopy').disabled=true;updateKeyboardScale();return;}
+  var r=generateCFG();
+  $('#statsBar').classList.remove('hidden');$('#statBinds').textContent=r.stats.binds;$('#statBuy').textContent=r.stats.buy;$('#statMachine').textContent=r.stats.machine;$('#statUser').textContent=r.stats.user;$('#statMerged').textContent=r.stats.merged;$('#statLines').textContent=r.stats.lines;
+  $('#pvInfo').textContent=r.stats.lines+' 行 · '+r.stats.binds+' 绑定 · '+r.stats.buy+' 买枪 · '+r.stats.merged+' ConVar';
+  $('#pvPre').innerHTML=r.plainHtml;$('#pvBox').scrollTop=0;
+  $('#btnDownload').disabled=false;$('#btnCopy').disabled=false;$('#btnDownload')._r=r;$('#btnCopy')._r=r;
+  updateKeyboardScale();
+}
+
+/* Events */
+var dz=$('#dropzone'),fin=$('#folderInput');
+if(dz&&fin){
+  dz.addEventListener('click',function(e){if(e.target===dz||(dz.contains(e.target)&&e.target.tagName!=='A')){fin.value='';fin.click();}});
+  fin.addEventListener('click',function(e){e.stopPropagation();});
+  fin.addEventListener('change',function(){if(fin.files.length>0){loadFiles(Array.from(fin.files));dz.classList.add('ready');}});
+  dz.addEventListener('dragover',function(e){e.preventDefault();e.stopPropagation();dz.classList.add('active');});
+  dz.addEventListener('dragleave',function(e){e.preventDefault();e.stopPropagation();dz.classList.remove('active');});
+  dz.addEventListener('drop',function(e){e.preventDefault();e.stopPropagation();dz.classList.remove('active');var items=e.dataTransfer.items;if(!items)return;var files=[];
+    function tr(it){if(it.kind!=='file')return Promise.resolve();var en=it.webkitGetAsEntry?it.webkitGetAsEntry():null;if(en&&en.isDirectory){return rd(en,files);}else{files.push(it.getAsFile());return Promise.resolve();}}
+    function rd(en,out){return new Promise(function(rs){var r=en.createReader(),es=[];
+      function rb(){r.readEntries(function(b){if(b.length===0){var ps=[];for(var i=0;i<es.length;i++){(function(e){if(e.isFile)ps.push(new Promise(function(rr){e.file(rr);}));else if(e.isDirectory)ps.push(rd(e,out));})(es[i]);}Promise.all(ps).then(rs);return;}es.push.apply(es,b);rb();});}rb();});}
+    var ps=[];for(var i=0;i<items.length;i++)ps.push(tr(items[i]));Promise.all(ps).then(function(){if(files.length>0){loadFiles(files);dz.classList.add('ready');}});});
+}
+
+var kw=$('#kbdWrap');if(kw){kw.addEventListener('click',function(e){var ke=e.target.closest('.scfg-kbd-key');if(!ke||ke.classList.contains('disabled'))return;var k=ke.dataset.key;if(!k)return;_bk=k;renderKeyboard();updateBuyPreview();});kw.addEventListener('pointermove',function(e){var ke=e.target.closest('.scfg-kbd-key');if(!ke||ke.classList.contains('disabled')){hideKeyTip();return;}showKeyTip(tooltipText(ke.dataset.key),e.clientX,e.clientY);});kw.addEventListener('pointerleave',hideKeyTip);}
+var km=$('#kbdMouse');if(km){km.addEventListener('click',function(e){var ke=e.target.closest('.scfg-kbd-key');if(!ke||ke.classList.contains('disabled'))return;var k=ke.dataset.key;if(!k)return;_bk=k;renderKeyboard();updateBuyPreview();});km.addEventListener('pointermove',function(e){var ke=e.target.closest('.scfg-kbd-key');if(!ke||ke.classList.contains('disabled')){hideKeyTip();return;}showKeyTip(tooltipText(ke.dataset.key),e.clientX,e.clientY);});km.addEventListener('pointerleave',hideKeyTip);}
+var bc=$('#buyCats');if(bc){bc.addEventListener('click',function(e){var c=e.target.closest('.scfg-buy-cat');if(!c)return;_bc=c.dataset.cat;renderBuyItems();});}
+var bg=$('#buyGrid');if(bg){bg.addEventListener('click',function(e){var it=e.target.closest('.scfg-buy-item');if(!it)return;var id=it.dataset.item;_bi.has(id)?_bi.delete(id):_bi.add(id);renderBuyItems();});}
+var ba=$('#buyAdd');if(ba){ba.addEventListener('click',function(){if(!_bk){toast('请先在键盘上点击一个按键');return;}if(_bi.size===0){toast('请选择至少一个武器/装备');return;}var a=[];_bi.forEach(function(x){a.push(x);});var cmd=a.map(function(x){return'buy '+x;}).join('; ');var idx=S.buyBinds.findIndex(function(b){return b.key===_bk;});if(idx>=0)S.buyBinds[idx]={key:_bk,cmd:cmd};else S.buyBinds.push({key:_bk,cmd:cmd});_bk='';_bi.clear();renderKeyboard();renderBuyItems();renderSavedBinds();updateUI();toast('已添加绑定');});}
+var bcl=$('#buyClear');if(bcl){bcl.addEventListener('click',function(){_bk='';_bi.clear();renderKeyboard();renderBuyItems();});}
+var bsv=$('#buySaved');if(bsv){bsv.addEventListener('click',function(e){var d=e.target.closest('.scfg-sv-del');if(!d)return;S.buyBinds.splice(parseInt(d.dataset.idx),1);renderSavedBinds();updateUI();});}
+
+var cbs=document.querySelectorAll('#optionsCard input[type=checkbox]');for(var i=0;i<cbs.length;i++){cbs[i].addEventListener('change',updateUI);}
+var pni=$('#playerName');if(pni)pni.addEventListener('input',updateUI);
+
+var bd=$('#btnDownload');if(bd){bd.addEventListener('click',function(){var r=this._r;if(!r)return;var blob=new Blob([r.cfg],{type:'text/plain;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;var n=$('#playerName').value.trim()||(S.user&&S.user.name)||'Player';a.download=n+'_CSGO.cfg';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);toast('已下载 CFG 文件');});}
+var bcp=$('#btnCopy');if(bcp){bcp.addEventListener('click',function(){var r=this._r;if(!r)return;var t=r.cfg;if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(function(){toast('已复制到剪贴板');}).catch(function(){fc(t);});}else{fc(t);}});}
+function fc(t){var ta=document.createElement('textarea');ta.value=t;ta.style.cssText='position:fixed;opacity:0';document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);toast('已复制到剪贴板');}
+var br=$('#btnReset');if(br){br.addEventListener('click',function(){
+  S.machine=S.user=S.keys=null;S.buyBinds=[];var ts=['machine','user','keys'];
+  for(var i=0;i<ts.length;i++){var t=ts[i];S['_'+t+'N']=null;S['_'+t+'S']=null;S['_'+t+'E']=false;}
+  $('#filelist').classList.remove('show');for(var j=0;j<ts.length;j++){var tt=ts[j],el=document.getElementById('fi-'+tt);if(el){el.classList.remove('ok','err');el.children[2].textContent='';el.children[3].textContent='';}}
+  if(dz)dz.classList.remove('ready');if(fin)fin.value='';var p=$('#playerName');if(p)p.value='';
+  _bk='';_bi.clear();renderKeyboard();renderBuyItems();renderSavedBinds();
+  $('#pvPre').innerHTML='<span class="scfg-pv-m">// 等待选择文件夹...</span>';$('#btnDownload').disabled=true;$('#btnCopy').disabled=true;
+  $('#statsBar').classList.add('hidden');$('#optionsCard').classList.add('hidden');$('#buyCard').classList.add('hidden');$('#outputCard').classList.add('hidden');updateKeyboardScale();toast('已重置');
+});}
+
+window.addEventListener('resize',updateKeyboardScale);
+renderKeyboard();renderBuyItems();renderSavedBinds();updateKeyboardScale();
+})();
+</script>

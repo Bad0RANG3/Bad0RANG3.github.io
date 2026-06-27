@@ -35,6 +35,7 @@ export const ROUTES = {
   HOME: '/',
   POSTS: '/posts',
   THOUGHTS: '/thoughts',
+  TOOLS: '/tools',
   ARCHIVE: '/archive',
   ABOUT: '/about',
   TAGS: '/tags',
@@ -46,4 +47,15 @@ export const SITE = {
   LOCALE: 'zh_CN',
   THEME: 'dark',
   THEME_COLOR: '#1e1e2e',
+} as const;
+
+export const SOCIAL_ICONS = {
+  GitHub: '/github.svg',
+  X: '/x.svg',
+  Instagram: '/instagram.svg',
+  抖音: '/tiktok.svg',
+  Email: '/email.svg',
+  Telegram: '/telegram.svg',
+  YouTube: '/youtube.svg',
+  BiliBili: '/bilibili.svg',
 } as const;

@@ -4,7 +4,7 @@ import SiteHeader from '../components/layout/SiteHeader.astro';
 import SiteFooter from '../components/layout/SiteFooter.astro';
 import SearchModal from '../components/SearchModal.astro';
 import { siteConfig } from '../config/site';
-import { SITE, ROUTES } from '../constants';
+import { ANIMATION, LAYOUT, SITE, ROUTES } from '../constants';
 
 interface Props {
   title?: string;
@@ -28,6 +28,8 @@ const currentPath = Astro.url.pathname;
 const pageTitle = title === siteConfig.title ? title : `${title} | ${siteConfig.title}`;
 const canonicalUrl = new URL(currentPath, siteConfig.siteUrl).toString();
 const socialImageUrl = new URL(ogImage, siteConfig.siteUrl).toString();
+const pageExitDuration = ANIMATION.PAGE_EXIT_DURATION;
+const backToTopThreshold = LAYOUT.BACK_TO_TOP_THRESHOLD;
 
 const jsonLd = type === 'article' ? {
   '@context': 'https://schema.org',
@@ -87,7 +89,7 @@ const jsonLd = type === 'article' ? {
   <meta name="twitter:image" content={socialImageUrl}>
 
   <!-- JSON-LD -->
-  <script type="application/ld+json" set:html={JSON.stringify(jsonLd)}></script>
+  <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)}></script>
 </head>
 
 <body class="flex flex-col min-h-screen bg-base-100 text-base-content overflow-x-hidden">
@@ -103,10 +105,12 @@ const jsonLd = type === 'article' ? {
     <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 15l-6-6-6 6"/></svg>
   </button>
 
-  <script is:inline>
+  <script is:inline define:vars={{ pageExitDuration, backToTopThreshold }}>
+    // @ts-nocheck
     /* ── Page transition + back-to-top + table wrapping ── */
     (function(){
-      const PAGE_EXIT_DURATION = 140;
+      const PAGE_EXIT_DURATION = pageExitDuration;
+      const BACK_TO_TOP_THRESHOLD = backToTopThreshold;
       let navigationLocked = false;
 
       const getPageRoot = () => {
@@ -184,7 +188,7 @@ const jsonLd = type === 'article' ? {
       /* Back to top */
       const backBtn = document.getElementById('back-to-top');
       if (backBtn) {
-        const toggleBtn = () => { backBtn.classList.toggle('visible', window.scrollY > 300); };
+        const toggleBtn = () => { backBtn.classList.toggle('visible', window.scrollY > BACK_TO_TOP_THRESHOLD); };
         window.addEventListener('scroll', toggleBtn, { passive: true });
         backBtn.addEventListener('click', () => { window.scrollTo({ top: 0, behavior: 'smooth' }); });
       }
