@@ -12,7 +12,7 @@ const socialCards = socials.map((s) => ({
 }));
 
 const skillIconId: Record<string, string> = {
-  HTML5: 'html', CSS3: 'css', JavaScript: 'js', TypeScript: 'ts',
+  HTML5: 'html', CSS3: 'css', JavaScript: 'js', TypeScript: 'typescript',
   Python: 'py', Java: 'java', Kotlin: 'kotlin', 'C++': 'cpp', 'C#': 'cs',
   C: 'c', Rust: 'rust', Git: 'git', Docker: 'docker', 'Vue.js': 'vue',
   'Tailwind CSS': 'tailwind', Flask: 'flask', 'Spring Boot': 'spring',
@@ -23,7 +23,7 @@ const skillIconId: Record<string, string> = {
 };
 const getIconUrl = (n: string) => {
   const id = skillIconId[n]; if (!id) return null;
-  return id.startsWith('/') ? id : `https://skillicons.dev/icons?i=${id}`;
+  return id.startsWith('/') ? id : `/icons/skills/${id}.svg`;
 };
 
 const statusLines = about.currentStatus.split('\n');

@@ -1,37 +1,31 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PageHeader from '../components/ui/PageHeader.astro';
-import { getArchiveGroups } from '../lib/content';
+import { getPublishedPosts } from '../lib/content';
 import { formatDate } from '../lib/date';
 
-const groups = await getArchiveGroups();
+const posts = await getPublishedPosts();
 ---
 
 <BaseLayout title="归档" description="按时间浏览博客文章归档。">
   <div class="mx-auto max-w-6xl px-4 py-8 sm:py-12">
-    <PageHeader label="Archive" title="时间归档" description="按年份整理所有已发布文章。" />
+    <PageHeader label="Archive" title="时间归档" description={`所有已发布文章。共 ${posts.length} 篇。`} />
 
-    <div class="grid gap-6 lg:grid-cols-2">
-      {groups.map((g, gi) => (
-        <section class="reveal card bg-base-100 shadow-sm" style={`--reveal-delay:${gi * 90}ms`}>
-          <div class="card-body">
-            <div class="mb-4 flex items-center gap-4">
-              <h2 class="text-2xl font-extrabold">{g.year}</h2>
-              <span class="badge badge-primary">{g.posts.length} 篇</span>
-            </div>
-            <div class="space-y-1">
-              {g.posts.map((p, i) => (
-                <a href={`/posts/${p.slug}`} class="reveal flex flex-col gap-1 rounded-xl p-3 transition-colors hover:bg-base-200 sm:flex-row sm:items-center sm:justify-between" style={`--reveal-delay:${80 + i * 50}ms`}>
-                  <div>
-                    <h3 class="font-semibold text-sm">{p.data.title}</h3>
-                    <p class="text-xs text-base-content/50 line-clamp-1">{p.data.description}</p>
-                  </div>
-                  <time class="shrink-0 text-xs text-base-content/40">{formatDate(p.data.date)}</time>
-                </a>
-              ))}
-            </div>
+    <div class="mx-auto max-w-2xl grid gap-3">
+      {posts.map((p, i) => (
+        <a
+          href={`/posts/${p.slug}`}
+          class="reveal block group card bg-base-100 shadow-sm rounded-2xl p-5 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300"
+          style={`--reveal-delay:${i * 60}ms`}
+        >
+          <div class="flex items-baseline justify-between gap-4">
+            <h3 class="font-medium group-hover:text-primary transition-colors">{p.data.title}</h3>
+            <time class="shrink-0 text-sm text-base-content/25 tabular-nums" datetime={p.data.date.toISOString()}>
+              {formatDate(p.data.date)}
+            </time>
           </div>
-        </section>
+          <p class="mt-1 text-sm text-base-content/40 line-clamp-1">{p.data.description}</p>
+        </a>
       ))}
     </div>
   </div>
