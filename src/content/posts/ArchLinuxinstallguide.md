@@ -1,9 +1,9 @@
 ---
 title: '如何借巨人肩膀安装好一个美丽的Arch Linux'
 description: '你说得对我挺懒的，所有我还是用AI吧'
-date: 2026-7-2
+date: 2026-07-02
 tags:
-  - 教程
+  - Arch
 category: 教程
 featured: true
 draft: false
