@@ -5,7 +5,7 @@ date: 2026-07-02
 tags:
   - Arch
 category: 教程
-featured: true
+featured: false
 draft: false
 ---
 
