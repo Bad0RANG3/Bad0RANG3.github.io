@@ -15,6 +15,8 @@ draft: false
 >
 > 本文是人家的**实操记录**——全程在 Live 环境里装上 OpenCode，然后用 AI 帮人家装好了整个系统。如果主人也想像人家一样躺平，照着做就行啦！
 
+<p align="center"><img src="/GIF/nekoyaki-hug-me.webp" alt="" width="180" loading="lazy" /></p>
+
 ---
 
 ## 这个指南是写给谁的喵？
@@ -25,6 +27,8 @@ draft: false
 - 你想让 **AI 帮你干所有脏活累活**，自己喝着奶茶监工就好
 
 那这篇指南就是为你量身定做的喵~
+
+<p align="center"><img src="/GIF/nekoyaki-smug-wink-star.webp" alt="" width="180" loading="lazy" /></p>
 
 ### 我们的战术是啥？
 
@@ -97,6 +101,8 @@ draft: false
    - 如果不关，装完双系统后 BitLocker 发现分区布局变了，会触发恢复密钥验证——到时候进不去 Windows 可别怪人家没提醒你喵！
 3. **下面步骤看不懂也没关系**，主人只需要坚持到第 5 节，后面的脏活累活全丢给 AI 就行。
 
+<p align="center"><img src="/GIF/nekoyaki-panic-question.webp" alt="" width="180" loading="lazy" /></p>
+
 ### 需要下载什么喵？
 
 | 文件 | 去哪下载 | 干啥用 |
@@ -109,6 +115,8 @@ draft: false
 ## 2. BIOS / UEFI 设置（最关键的坎）
 
 > **这是整个流程里翻车率最高的一步喵。** Secure Boot 不关的话，装完 CachyOS 大概率开机直接跪。
+
+<p align="center"><img src="/GIF/nekoyaki-scared-stress-lines.webp" alt="" width="180" loading="lazy" /></p>
 
 ### Secure Boot 是什么？为什么不关不行？
 
@@ -226,6 +234,8 @@ sudo pacman -S opencode
 
 `pacman` 是 Arch Linux 的包管理器，`-S` 的意思是"同步并安装"（sync）。这条命令的意思就是"以 root 权限从软件仓库同步安装 opencode 这个包"。等几秒钟，叮~ AI 助手到货啦！
 
+<p align="center"><img src="/GIF/nekoyaki-confused-question.webp" alt="" width="180" loading="lazy" /></p>
+
 ### 5.4 检查一下 AI 能不能用
 
 ```bash
@@ -261,6 +271,8 @@ opencode
 ```
 
 然后**复制粘贴下面这段话**给 AI（记得先把方括号里的占位符换成你自己的信息）：
+
+<p align="center"><img src="/GIF/nekoyaki-serious-thinking.webp" alt="" width="180" loading="lazy" /></p>
 
 ```
 I want to install CachyOS alongside Windows 11 (dual boot). Do it step by step:
@@ -334,6 +346,8 @@ sudo reboot
 - **Windows Boot Manager** ← 选这个回到 Windows
 
 > 如果看不到 Windows 选项，或者直接进了 Windows 没看到 GRUB——**不要慌，不要炸毛**——看下一节喵。
+
+<p align="center"><img src="/GIF/nekoyaki-teary-eyes.webp" alt="" width="180" loading="lazy" /></p>
 
 ---
 
@@ -421,6 +435,8 @@ Tell me what you find first.
 ## 8. 进系统后 —— 装桌面环境（DMS + Niri）
 
 恭喜喵！现在你已经有了一台跑着 CachyOS 的电脑。但它还很"素"——没有漂亮的桌面，没有毛玻璃，没有丝滑动画，什么都没有。就像一个刚买了还没装修的毛坯房。
+
+<p align="center"><img src="/GIF/nekoyaki-heart-eyes.webp" alt="" width="180" loading="lazy" /></p>
 
 我们要装修的是 **DMS（DankShell Management System）** + **Niri**。这是由 **Shorin** 精心打造的一整套 Arch 桌面环境：
 
@@ -553,6 +569,8 @@ miyu "where is my niri config file"
 ```
 
 OpenCode 负责干活，Miyu 负责陪聊——分工明确喵~
+
+<p align="center"><img src="/GIF/nekoyaki-shy-love.webp" alt="" width="180" loading="lazy" /></p>
 
 ### 9.4 系统更新
 
