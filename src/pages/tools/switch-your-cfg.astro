@@ -80,7 +80,6 @@ import '../../styles/tools/switch-your-cfg.css';
                   <label class="scfg-opt"><input type="checkbox" id="optSkipUnbound" checked><span class="scfg-opt-sw"></span><span><span class="scfg-opt-t">跳过未绑定</span><span class="scfg-opt-d">忽略 &lt;unbound&gt; 条目</span></span></label>
                   <label class="scfg-opt"><input type="checkbox" id="optUserFirst" checked><span class="scfg-opt-sw"></span><span><span class="scfg-opt-t">用户优先</span><span class="scfg-opt-d">冲突时以用户设置为准</span></span></label>
                   <label class="scfg-opt"><input type="checkbox" id="optBool" checked><span class="scfg-opt-sw"></span><span><span class="scfg-opt-t">布尔转换</span><span class="scfg-opt-d">true / false 转成 1 / 0</span></span></label>
-                  <label class="scfg-opt"><input type="checkbox" id="optAnalog" checked><span class="scfg-opt-sw"></span><span><span class="scfg-opt-t">模拟注释</span><span class="scfg-opt-d">保留 MOUSE_X/Y 说明为注释</span></span></label>
                   <label class="scfg-opt"><input type="checkbox" id="optComments" checked><span class="scfg-opt-sw"></span><span><span class="scfg-opt-t">分组注释</span><span class="scfg-opt-d">在导出中加入清晰的分段说明</span></span></label>
                 </div>
                 <div class="scfg-name-row">
@@ -291,7 +290,7 @@ function loadFiles(fl){
     reader.onload=function(e){
       try{var parsed=parseVDF(e.target.result);if(!parsed||!parsed.config)throw new Error('Bad');var cfg=parsed.config;
         if(type==='machine'||type==='user'){if(!cfg.convars||typeof cfg.convars!=='object')throw new Error('No convars');S[type]=cfg.convars;}
-        else{S.keys={bindings:cfg.bindings||{},analog:cfg.analogbindings||{}};}
+        else{S.keys={bindings:cfg.bindings||{}};}
         S['_'+type+'N']=file.name;S['_'+type+'S']=file.size;S['_'+type+'E']=false;}
       catch(err){S[type]=null;S['_'+type+'N']=file.name;S['_'+type+'S']=file.size;S['_'+type+'E']=true;}
       pending--;if(pending===0){updateFileList();updateUI();}
@@ -451,9 +450,9 @@ function renderStructuredPreview(groups){
 
 /* ── CFG Generation ────────────────────────────────────────── */
 function generateCFG(){
-  var lines=[],su=$('#optSkipUnbound').checked,uf=$('#optUserFirst').checked,bc=$('#optBool').checked,ia=$('#optAnalog').checked,ac=$('#optComments').checked,pn=$('#playerName').value.trim(),k=S.keys;
-  lines.push('cfgver\t"1"');lines.push('unbindall');if(ac)lines.push('');
-  var nB=0;
+  var lines=[],su=$('#optSkipUnbound').checked,uf=$('#optUserFirst').checked,bc=$('#optBool').checked,ac=$('#optComments').checked,pn=$('#playerName').value.trim(),k=S.keys;
+  lines.push('cfgver\t"1"');lines.push('unbindall');lines.push('bind\t"MOUSE_X"\t"yaw"');lines.push('bind\t"MOUSE_Y"\t"pitch"');if(ac)lines.push('');
+  var nB=2;
   if(k&&k.bindings){
     if(ac)lines.push('// ===== 按键绑定 =====');
     var sk=Object.keys(k.bindings).sort(function(a,b){return/^\d$/.test(a)&&!/^\d$/.test(b)?-1:!/^\d$/.test(a)&&/^\d$/.test(b)?1:a.localeCompare(b);});
@@ -464,7 +463,6 @@ function generateCFG(){
   if(ac&&Object.keys(mg).length>0){lines.push('');lines.push('// ===== 设置参数 =====');}
   var sc=Object.keys(mg).sort(function(a,b){return a.localeCompare(b);}),nC=0;
   for(var k2=0;k2<sc.length;k2++){var n=sc[k2],v=mg[n];if(bc){if(v==='true')v='1';if(v==='false')v='0';}lines.push(n+'\t"'+v+'"');nC++;}
-  if(ia&&k&&k.analog&&Object.keys(k.analog).length>0){if(ac){lines.push('');lines.push('// ===== 模拟绑定 =====');}var ak=Object.keys(k.analog);for(var m=0;m<ak.length;m++){lines.push('// analogbind\t"'+ak[m]+'"\t"'+k.analog[ak[m]]+'"');}}
   var cfgText=lines.join('\n');
   return{
     cfg:cfgText,
