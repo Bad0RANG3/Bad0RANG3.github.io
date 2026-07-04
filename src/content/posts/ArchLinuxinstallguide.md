@@ -48,12 +48,14 @@ draft: false
 
 简单说：**一个运行在终端里的 AI 助手，你说人话，它帮你敲命令。**
 
-- 你跟它说 "connect to Wi-Fi"，它就帮你连
+- 你已经联网以后，跟它说 "check my Wi-Fi"，它能帮你查网络问题
 - 你跟它说 "partition the disk and install the system"，它就帮你把系统装好
 - 你跟它说 "GRUB is broken, fix it"，它就帮你修引导
 - **不需要折腾什么 API Key**，装好就能用，自带的 deepseek 模型完全够打
 
 它不是那种只会跟你聊天的花瓶 AI——它是真的能 `sudo`、真的能读写文件、真的能帮你把系统装好的实干派！
+
+> 但有个前提：**先得有网**。没网的时候 OpenCode 连不上模型，AI 自己也醒不过来，所以第一次联网必须主人手动完成喵。
 
 ### ⚠️ 关于语言的问题
 
@@ -222,7 +224,29 @@ Secure Boot 是 UEFI 固件里的一道安全检查：它只允许启动那些**
 - **有线网络**：插上网线一般 DHCP 自动获取 IP，啥都不用干
 - **Wi-Fi**：桌面右下角系统托盘找网络图标 → 选你的 Wi-Fi → 输密码
 
-或者你也可以尝试叫 AI 来帮你连——但等等，AI 还没装呢喵！先手动连一下，就这一次啦。
+这一步不能丢给 AI。因为没网就装不了 OpenCode，也连不上 AI 模型。
+所以第一次联网，主人必须自己来，就这一次啦。
+
+如果桌面网络图标抽风，可以打开终端试试 `nmcli`：
+
+```bash
+nmcli device wifi list
+nmcli device wifi connect "你的WiFi名" password "你的WiFi密码"
+```
+
+如果你用的是原版 Arch ISO，可能要用 `iwctl`：
+
+```bash
+iwctl
+device list
+station wlan0 scan
+station wlan0 get-networks
+station wlan0 connect "你的WiFi名"
+exit
+```
+
+> `wlan0` 不一定叫 `wlan0`，以 `device list` 里显示的无线网卡名为准。
+> 如果无线网卡驱动在 Live 环境里就不认，最省心的急救方案是：插网线，或者用手机 USB 共享网络。先让系统有网，AI 才能接手后面的活。
 
 ### 5.3 在 Live 环境里安装 OpenCode
 
@@ -454,11 +478,7 @@ sudo nmcli device wifi list                        # 扫描附近 Wi-Fi
 sudo nmcli device wifi connect "你的WiFi名" password "你的WiFi密码"  # 连接
 ```
 
-> 也可以丢给 opencode 来连：
-> ```
-> opencode
-> connect to Wi-Fi, SSID is [your-wifi-name], password is [your-wifi-password]
-> ```
+> 注意：这一步仍然不能指望 opencode。没网时 AI 连不上模型，最多只能靠你手动用桌面网络设置、`nmcli`、网线或手机 USB 共享网络先救活网络。
 
 ### 8.2 一键安装 DMS + Niri（推荐喵）
 
@@ -646,6 +666,17 @@ fcitx5 input method not working on CachyOS, check and fix it
 ```
 
 ### Q6: Wi-Fi 连不上
+
+如果你现在完全没网，先别急着找 AI。OpenCode 也要联网才能工作。优先试：
+
+```bash
+nmcli device wifi list
+nmcli device wifi connect "你的WiFi名" password "你的WiFi密码"
+```
+
+或者先用网线 / 手机 USB 共享网络临时联网。
+
+等有了临时网络以后，再让 AI 查原因：
 
 ```
 opencode
