@@ -258,7 +258,6 @@ sudo pacman -S opencode
 
 `pacman` 是 Arch Linux 的包管理器，`-S` 的意思是"同步并安装"（sync）。这条命令的意思就是"以 root 权限从软件仓库同步安装 opencode 这个包"。等几秒钟，叮~ AI 助手到货啦！
 
-<p align="center"><img src="/GIF/nekoyaki-confused-question.webp" alt="" width="180" loading="lazy" /></p>
 
 ### 5.4 检查一下 AI 能不能用
 
