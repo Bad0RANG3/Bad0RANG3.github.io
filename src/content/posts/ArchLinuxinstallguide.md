@@ -482,14 +482,11 @@ sudo nmcli device wifi connect "你的WiFi名" password "你的WiFi密码"  # �
 ### 8.2 一键安装 DMS + Niri（推荐喵）
 
 ```bash
-# 下载 Shorin 的神奇安装脚本
-curl -O https://shorin.xyz/archsetup.sh
-chmod +x archsetup.sh
-
-# 运行它
-./archsetup.sh
+#  Shorin 的神奇安装脚本
+curl -L shorin.xyz/archsetup | bash
 ```
 
+下载完脚本之后第一次会让你选从那个平台下，如果你没有配置软路由没代理的话就选Gitee，国内没办法了（
 你会看到一个终端菜单，用方向键选 **`Shorin_DMS_Niri (Recommended)`**，回车。
 
 然后你就可以去泡杯奶茶了。这个脚本会自动完成下面所有事情（全程大约 20-40 分钟，取决于你的网速）：
