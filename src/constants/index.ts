@@ -45,8 +45,10 @@ export const ROUTES = {
 export const SITE = {
   LANG: 'zh',
   LOCALE: 'zh_CN',
-  THEME: 'dark',
-  THEME_COLOR: '#1e1e2e',
+  THEME: 'paper',
+  THEME_COLOR: '#f4efe4',
+  THEME_COLOR_DARK: '#1a1612',
+  THEME_STORAGE_KEY: 'b0-theme',
 } as const;
 
 export const SOCIAL_ICONS = {

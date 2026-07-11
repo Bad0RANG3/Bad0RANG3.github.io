@@ -2,14 +2,12 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 <BaseLayout title="页面未找到" description="你访问的页面不存在。">
-  <div class="flex min-h-[60vh] items-center justify-center px-4">
-    <div class="card bg-base-100 shadow-sm max-w-md w-full">
-      <div class="card-body items-center text-center gap-4 p-10">
-        <p class="text-sm font-semibold uppercase tracking-[0.3em] text-primary">404</p>
-        <h1 class="text-4xl sm:text-5xl font-extrabold">页面未找到</h1>
-        <p class="text-base-content/60">你访问的内容可能已经移动，或者链接本身有误。</p>
-        <a href="/" class="btn btn-primary mt-4 rounded-xl">返回首页</a>
-      </div>
+  <div class="flex min-h-[65vh] items-center justify-center px-4">
+    <div class="hard-card w-full max-w-lg rounded-[2rem] p-10 text-center">
+      <p class="eyebrow justify-center">404</p>
+      <h1 class="display-title mt-4 text-5xl sm:text-6xl">信号丢失</h1>
+      <p class="mt-4 text-base-content/60">你访问的内容可能已经移动，或者链接本身有误。</p>
+      <a href="/" class="btn-brutal mt-8">返回首页</a>
     </div>
   </div>
 </BaseLayout>

@@ -1,32 +1,53 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PageHeader from '../components/ui/PageHeader.astro';
-import { getPublishedPosts } from '../lib/content';
+import EmptyState from '../components/ui/EmptyState.astro';
+import { getArchiveGroups } from '../lib/content';
 import { formatDate } from '../lib/date';
 
-const posts = await getPublishedPosts();
+const groups = await getArchiveGroups();
+const total = groups.reduce((sum, g) => sum + g.posts.length, 0);
 ---
 
-<BaseLayout title="归档" description="按时间浏览博客文章归档。">
-  <div class="mx-auto max-w-6xl px-4 py-8 sm:py-12">
-    <PageHeader label="Archive" title="时间归档" description={`所有已发布文章。共 ${posts.length} 篇。`} />
+<BaseLayout title="归档" description="按年份浏览全部文章。">
+  <div class="site-frame py-5 sm:py-8">
+    <PageHeader
+      label="Timeline"
+      title="归档"
+      description={`${total} 篇文章，按年份摊开。时间线也要够有存在感。`}
+    />
 
-    <div class="mx-auto max-w-2xl grid gap-3">
-      {posts.map((p, i) => (
-        <a
-          href={`/posts/${p.slug}`}
-          class="reveal block group card bg-base-100 shadow-sm rounded-2xl p-5 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300"
-          style={`--reveal-delay:${i * 60}ms`}
-        >
-          <div class="flex items-baseline justify-between gap-4">
-            <h3 class="font-medium group-hover:text-primary transition-colors">{p.data.title}</h3>
-            <time class="shrink-0 text-sm text-base-content/25 tabular-nums" datetime={p.data.date.toISOString()}>
-              {formatDate(p.data.date)}
-            </time>
-          </div>
-          <p class="mt-1 text-sm text-base-content/40 line-clamp-1">{p.data.description}</p>
-        </a>
-      ))}
-    </div>
+    {groups.length === 0 ? (
+      <EmptyState message="还没有可归档的文章" />
+    ) : (
+      <div class="space-y-10">
+        {groups.map((group, gi) => (
+          <section class="reveal" style={`--reveal-delay:${gi * 80}ms`}>
+            <div class="mb-5 flex items-end gap-4">
+              <h2 class="display-title text-5xl text-primary sm:text-6xl">{group.year}</h2>
+              <span class="mb-2 chip-lime">{group.posts.length} 篇</span>
+            </div>
+            <div class="space-y-3">
+              {group.posts.map((post) => (
+                <a
+                  href={`/posts/${post.slug}`}
+                  class="group flex flex-col gap-2 rounded-[1.25rem] border-2 border-base-content/10 bg-base-100/80 p-4 transition-all hover:-translate-x-1 hover:border-primary/40 hover:bg-secondary/15 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div class="min-w-0">
+                    <p class="truncate text-base font-black tracking-tight transition-colors group-hover:text-primary">
+                      {post.data.title}
+                    </p>
+                    <p class="mt-1 line-clamp-1 text-sm text-base-content/55">{post.data.description}</p>
+                  </div>
+                  <time class="shrink-0 font-mono text-xs font-bold uppercase tracking-[0.14em] text-base-content/40" datetime={post.data.date.toISOString()}>
+                    {formatDate(post.data.date)}
+                  </time>
+                </a>
+              ))}
+            </div>
+          </section>
+        ))}
+      </div>
+    )}
   </div>
 </BaseLayout>

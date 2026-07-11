@@ -8,30 +8,42 @@ const isActive = (href: string) => href === '/' ? currentPath === '/' : currentP
 const drawerId = 'mobile-drawer';
 ---
 
-<dialog id={drawerId} class="modal" aria-label="移动端导航">
-  <div class="flex w-screen h-dvh justify-start">
-    <div class="w-80 max-w-[80vw] sm:max-w-sm h-dvh bg-base-100 shadow-2xl border-r border-base-content/10 flex flex-col drawer-panel">
-      <div class="bg-base-200/60 backdrop-blur-sm border-b border-base-content/10 p-5 flex items-center justify-between">
+<dialog id={drawerId} class="modal mobile-nav-dialog" aria-label="移动端导航">
+  <div class="flex h-dvh w-screen justify-start">
+    <div class="drawer-panel flex h-dvh w-80 max-w-[80vw] flex-col border-r-2 border-base-content/10 bg-base-100 shadow-2xl sm:max-w-sm">
+      <div class="flex items-center justify-between border-b-2 border-base-content/10 bg-gradient-to-r from-primary/15 via-secondary/30 to-accent/15 p-5">
         <div>
-          <p class="font-semibold">{siteConfig.title}</p>
-          <p class="text-xs text-base-content/60">{siteConfig.description}</p>
+          <p class="font-black tracking-tight">{siteConfig.title}</p>
+          <p class="text-xs font-bold uppercase tracking-[0.18em] text-base-content/55">paper navigation</p>
         </div>
         <button type="button" class="btn btn-sm btn-ghost btn-circle" aria-label="关闭导航" data-close-drawer="true">
-          <Icon name="close" class="w-5 h-5" />
+          <Icon name="close" class="h-5 w-5" />
         </button>
       </div>
-      <div class="p-5 space-y-6 overflow-y-auto flex-1">
+      <div class="flex-1 space-y-6 overflow-y-auto p-5">
         <nav class="flex flex-col gap-2" aria-label="主要导航">
-          {siteConfig.navigation.map(item => { const active = isActive(item.href); return (
-            <a href={item.href} class:list={{'btn btn-ghost justify-start gap-3 rounded-xl':true,'btn-active btn-primary text-primary-content':active}} aria-current={active?'page':undefined}>
-              <Icon name="chevron-right" class="w-4 h-4" />
-              <span>{item.label}</span>
-            </a>
-          )})}
+          {siteConfig.navigation.map(item => {
+            const active = isActive(item.href);
+            return (
+              <a
+                href={item.href}
+                class:list={[
+                  'flex items-center gap-3 rounded-2xl border-2 px-4 py-3 text-sm font-bold transition-all',
+                  active
+                    ? 'border-base-content bg-primary text-primary-content shadow-[4px_4px_0_0] shadow-base-content'
+                    : 'border-base-content/10 bg-base-200/50 text-base-content/75 hover:border-primary/40 hover:bg-secondary/20',
+                ]}
+                aria-current={active ? 'page' : undefined}
+              >
+                <Icon name="chevron-right" class="h-4 w-4" />
+                <span>{item.label}</span>
+              </a>
+            );
+          })}
         </nav>
       </div>
     </div>
-    <button type="button" class="flex-1 h-full transition-colors duration-200" data-close-drawer="true" aria-label="点击关闭导航"><span class="sr-only">关闭导航</span></button>
+    <button type="button" class="h-full flex-1 transition-colors duration-200" data-close-drawer="true" aria-label="点击关闭导航"><span class="sr-only">关闭导航</span></button>
   </div>
 </dialog>
 

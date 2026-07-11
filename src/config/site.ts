@@ -1,8 +1,8 @@
 import { ROUTES } from '../constants';
 
 export const siteConfig = {
-  title: "Bad0RANG3's Blog",
-  description: '分享我在软件开发、技术和生活中的想法与经验。',
+  title: "Bad0RANG3's Studio",
+  description: '项目、工具、特效与折腾笔记——奶油纸面、珊瑚硬边、大胆排版的个人实验站。',
   siteUrl: 'https://bad0rang3.github.io',
   ogImage: '/HP.png',
   giscus: {
@@ -13,7 +13,7 @@ export const siteConfig = {
   },
   author: {
     name: 'Bad0RANG3',
-    intro: '喜欢在计算机方面折腾的一个普普通通的菜鸟，更倾向于视频特效的制作。',
+    intro: '喜欢在计算机方面折腾的一个普普通通的菜鸟，更倾向于视频特效的制作。把输入系统、配置工具和安装笔记都做成能直接上手的作品。',
     avatar: '/HP.png',
     email: 'badorangeovo@outlook.com',
   },

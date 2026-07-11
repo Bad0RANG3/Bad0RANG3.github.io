@@ -25,35 +25,36 @@ const isResourceList = post.data.category === '资源清单';
   publishedTime={post.data.date.toISOString()}
   modifiedTime={post.data.updatedDate?.toISOString()}
 >
-  <article class:list={['mx-auto px-4 py-8 sm:py-12', isResourceList ? 'max-w-5xl' : 'max-w-3xl']}>
-    <header class="mb-10 text-center">
-      <div class="reveal mb-5 flex flex-wrap items-center justify-center gap-2">
-        {post.data.featured && <span class="badge badge-primary badge-sm gap-1"><Icon name="star" class="h-3 w-3" />精选</span>}
-        {post.data.category && <span class="badge badge-ghost badge-sm">{post.data.category}</span>}
+  <article class:list={['site-frame py-5 sm:py-8', isResourceList ? 'max-w-5xl' : 'max-w-3xl']}>
+    <header class="mb-10">
+      <div class="reveal mb-5 flex flex-wrap items-center gap-2">
+        {post.data.featured && <span class="chip-signal gap-1"><Icon name="star" class="h-3 w-3" />精选</span>}
+        {post.data.category && <span class="chip-lime">{post.data.category}</span>}
       </div>
-      <h1 class="reveal mb-5 text-3xl font-extrabold leading-tight sm:text-4xl md:text-5xl" style={`--reveal-delay:${STAGGER.POST_HEADING}ms`}>{post.data.title}</h1>
-      <p class="reveal mx-auto mb-5 max-w-2xl text-base-content/60" style={`--reveal-delay:${STAGGER.SUBTITLE}ms`}>{post.data.description}</p>
+      <h1 class="reveal display-title mb-5 text-3xl sm:text-4xl md:text-5xl lg:text-6xl" style={`--reveal-delay:${STAGGER.POST_HEADING}ms`}>{post.data.title}</h1>
+      <p class="reveal mb-5 max-w-2xl text-base leading-7 text-base-content/60" style={`--reveal-delay:${STAGGER.SUBTITLE}ms`}>{post.data.description}</p>
       <div class="space-y-4">
-        <div class="reveal" style={`--reveal-delay:${STAGGER.POST_META}ms`}><PostMeta date={post.data.date} updatedDate={post.data.updatedDate} centered long /></div>
-        <div class="reveal flex justify-center" style={`--reveal-delay:${STAGGER.POST_TAGS}ms`}><TagList tags={post.data.tags} /></div>
+        <div class="reveal" style={`--reveal-delay:${STAGGER.POST_META}ms`}><PostMeta date={post.data.date} updatedDate={post.data.updatedDate} long /></div>
+        <div class="reveal" style={`--reveal-delay:${STAGGER.POST_TAGS}ms`}><TagList tags={post.data.tags} /></div>
       </div>
+      <div class="mt-8 h-1.5 w-full bg-gradient-to-r from-primary via-secondary to-accent"></div>
     </header>
 
     {isResourceList && (
-      <div class="reveal card bg-base-100 shadow-sm mb-8" style={`--reveal-delay:${STAGGER.POST_GUIDE}ms`}>
-        <div class="card-body gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div class="reveal hard-card mb-8 rounded-[1.5rem] p-5 sm:p-6" style={`--reveal-delay:${STAGGER.POST_GUIDE}ms`}>
+        <div class="gap-4 sm:flex sm:items-start sm:justify-between">
           <div>
-            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Guide</p>
-            <h2 class="mt-2 text-lg font-bold">这篇文章怎么读更省时间</h2>
+            <p class="eyebrow">Guide</p>
+            <h2 class="mt-2 text-lg font-black">这篇文章怎么读更省时间</h2>
             <p class="mt-2 max-w-3xl text-sm leading-7 text-base-content/60">这是一篇偏"资源导航"型长文，推荐先看上方的快速入口，再按自己的场景跳到对应分区。</p>
           </div>
-          <div class="shrink-0 rounded-2xl bg-primary/10 px-4 py-3 text-sm text-primary">建议桌面端阅读，表格更完整。</div>
+          <div class="mt-4 shrink-0 rounded-2xl border-2 border-base-content bg-secondary px-4 py-3 text-sm font-black text-secondary-content shadow-[4px_4px_0_0] shadow-base-content sm:mt-0">建议桌面端阅读，表格更完整。</div>
         </div>
       </div>
     )}
 
     {post.data.cover && (
-      <img src={post.data.cover} alt={post.data.title} class="reveal mb-10 w-full rounded-2xl object-cover shadow-lg" style={`--reveal-delay:${STAGGER.POST_COVER}ms`} loading="lazy" />
+      <img src={post.data.cover} alt={post.data.title} class="reveal mb-10 w-full rounded-[1.5rem] object-cover shadow-punch" style={`--reveal-delay:${STAGGER.POST_COVER}ms`} loading="lazy" />
     )}
 
     <div class:list={['reveal prose max-w-none', isResourceList && 'prose-resource-list']} style={`--reveal-delay:${STAGGER.POST_CONTENT}ms`}>
@@ -61,6 +62,6 @@ const isResourceList = post.data.category === '资源清单';
     </div>
 
     <!-- Comments -->
-    <div class="max-w-3xl mx-auto"><Comments /></div>
+    <div class="mx-auto max-w-3xl"><Comments /></div>
   </article>
 </BaseLayout>
