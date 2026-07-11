@@ -8,30 +8,70 @@ const { currentPath } = Astro.props;
 const isActive = (href: string) => href === '/' ? currentPath === '/' : currentPath === href || currentPath.startsWith(`${href}/`);
 ---
 
-<header class="sticky top-0 z-50 backdrop-blur-md bg-base-100/90 border-b border-base-content/10">
-  <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[999] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-content focus:rounded-lg">跳到内容</a>
+<header class="sticky top-0 z-50 border-b-2 border-base-content/10 bg-base-100/80 backdrop-blur-xl">
+  <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[999] focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-content">跳到内容</a>
 
-  <div class="max-w-6xl mx-auto px-4 sm:px-6">
-    <div class="flex items-center justify-between h-14">
-      <div class="flex items-center space-x-3">
-        <a href="/" class="text-lg font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent" aria-label={siteConfig.title}>
-          {siteConfig.title}
-        </a>
-      </div>
-      <nav class="hidden md:flex items-center gap-4 text-sm font-medium" aria-label="主导航">
-        {siteConfig.navigation.map(item => { const active = isActive(item.href); return (
-          <a href={item.href} class:list={['relative inline-flex items-center gap-1 transition-colors', active ? 'text-primary font-semibold' : 'text-base-content/70 hover:text-primary']} aria-current={active ? 'page' : undefined}>
-            <span>{item.label}</span>
-            {active && <span class="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-primary to-secondary rounded-full"></span>}
-          </a>
-        )})}
+  <div class="site-frame">
+    <div class="flex h-[4.25rem] items-center justify-between gap-4">
+      <a href="/" class="group flex min-w-0 items-center gap-3" aria-label={siteConfig.title}>
+        <span class="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-[1rem] border-2 border-base-content bg-gradient-to-br from-primary via-secondary to-accent p-[2px] shadow-[4px_4px_0_0] shadow-base-content">
+          <img
+            src={siteConfig.author.avatar}
+            alt={siteConfig.author.name}
+            width="44"
+            height="44"
+            class="h-full w-full rounded-[0.85rem] object-cover object-center bg-base-100"
+            loading="eager"
+            decoding="async"
+          />
+        </span>
+        <span class="min-w-0">
+          <span class="block truncate text-sm font-black tracking-tight sm:text-base">
+            <span class="bg-gradient-to-r from-primary via-[#ff7a45] to-accent bg-clip-text text-transparent">Bad0RANG3</span>
+          </span>
+          <span class="hidden text-[0.65rem] font-black uppercase tracking-[0.16em] text-base-content/40 sm:block">paper punch studio</span>
+        </span>
+      </a>
+
+      <nav class="hidden items-center gap-1 rounded-full border-2 border-base-content/10 bg-base-200/70 p-1 lg:flex" aria-label="主导航">
+        {siteConfig.navigation.map(item => {
+          const active = isActive(item.href);
+          return (
+            <a
+              href={item.href}
+              class:list={[
+                'relative rounded-full px-3.5 py-2 text-sm font-bold transition-all',
+                active
+                  ? 'border border-base-content bg-primary text-primary-content shadow-[3px_3px_0_0] shadow-base-content'
+                  : 'text-base-content/65 hover:bg-base-100 hover:text-base-content',
+              ]}
+              aria-current={active ? 'page' : undefined}
+            >
+              {item.label}
+            </a>
+          );
+        })}
       </nav>
+
       <div class="flex items-center gap-2">
-        <!-- Search -->
-        <button id="search-btn" class="btn btn-ghost btn-circle" aria-label="搜索" title="搜索">
+        <button
+          id="theme-toggle"
+          type="button"
+          class="btn btn-ghost btn-circle border-2 border-base-content/10 bg-base-200/50 hover:border-secondary/50 hover:bg-secondary/15"
+          aria-label="切换深色模式"
+          title="切换亮色 / 深色"
+        >
+          <span class="theme-icon-sun" aria-hidden="true">
+            <Icon name="sun" class="h-5 w-5" />
+          </span>
+          <span class="theme-icon-moon" aria-hidden="true">
+            <Icon name="moon" class="h-5 w-5" />
+          </span>
+        </button>
+        <button id="search-btn" class="btn btn-ghost btn-circle border-2 border-base-content/10 bg-base-200/50 hover:border-primary/40 hover:bg-primary/10" aria-label="搜索" title="搜索">
           <Icon name="search" class="h-5 w-5" />
         </button>
-        <button id="mobile-menu-btn" class="btn btn-ghost btn-circle md:hidden" aria-label="菜单" aria-controls="mobile-drawer">
+        <button id="mobile-menu-btn" class="btn btn-ghost btn-circle border-2 border-base-content/10 bg-base-200/50 lg:hidden" aria-label="菜单" aria-controls="mobile-drawer">
           <Icon name="menu" class="h-5 w-5" />
         </button>
       </div>

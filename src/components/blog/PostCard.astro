@@ -2,25 +2,91 @@
 import type { Post } from '../../lib/content';
 import { formatDate } from '../../lib/date';
 import Icon from '../icons/Icons.astro';
-interface Props { post: Post; }
-const { post } = Astro.props;
+
+interface Props {
+  post: Post;
+  featured?: boolean;
+  compact?: boolean;
+}
+const { post, featured = false, compact = false } = Astro.props;
 ---
 
-<a href={`/posts/${post.slug}`} class="group block reveal">
-  <article class="card bg-base-100 shadow-sm hover-lift h-full">
-    <div class="card-body gap-3 p-5 sm:p-6">
-      <div class="flex flex-wrap items-center gap-2">
-        {post.data.featured && <span class="badge badge-primary badge-sm gap-1"><Icon name="star" class="h-3 w-3" />精选</span>}
-        {post.data.category && <span class="badge badge-ghost badge-sm">{post.data.category}</span>}
+<a href={`/posts/${post.slug}`} class="group block h-full reveal">
+  <article
+    class:list={[
+      'hard-card flex h-full flex-col overflow-hidden rounded-[1.5rem] bg-base-100/90',
+      featured && 'min-h-full',
+      compact && 'hard-card-teal',
+    ]}
+  >
+    {post.data.cover ? (
+      <div class:list={['relative overflow-hidden border-b-2 border-base-content/10', featured ? 'h-56 sm:h-72' : 'h-40']}>
+        <img
+          src={post.data.cover}
+          alt=""
+          class="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+          loading="lazy"
+        />
+        <div class="absolute inset-0 bg-gradient-to-t from-base-100 via-base-100/10 to-transparent"></div>
+        {featured && (
+          <div class="absolute left-4 top-4">
+            <span class="paper-sticker">Featured Spread</span>
+          </div>
+        )}
       </div>
-      <h3 class="text-xl font-bold text-base-content transition-colors group-hover:text-primary">{post.data.title}</h3>
-      <p class="line-clamp-3 text-sm leading-relaxed text-base-content/60">{post.data.description}</p>
+    ) : (
+      <div class:list={[
+        'relative overflow-hidden border-b-2 border-base-content/10',
+        featured ? 'h-40 sm:h-52' : compact ? 'h-2' : 'h-3',
+        !compact && 'bg-gradient-to-r from-primary via-secondary to-accent',
+        compact && 'bg-gradient-to-r from-accent via-primary to-secondary',
+      ]}>
+        {featured && !post.data.cover && (
+          <div class="absolute inset-0 flex items-end p-5">
+            <span class="paper-sticker">Lead Story</span>
+          </div>
+        )}
+      </div>
+    )}
+
+    <div class:list={['flex flex-1 flex-col gap-3', featured ? 'p-6 sm:p-8' : 'p-5 sm:p-6']}>
+      <div class="flex flex-wrap items-center gap-2">
+        {post.data.featured && (
+          <span class="chip-signal gap-1">
+            <Icon name="star" class="h-3 w-3" />
+            精选
+          </span>
+        )}
+        {post.data.category && <span class="chip-lime">{post.data.category}</span>}
+      </div>
+
+      <h3
+        class:list={[
+          'font-black leading-[1.05] tracking-tight text-base-content transition-colors group-hover:text-primary',
+          featured ? 'text-2xl sm:text-4xl' : 'text-xl',
+        ]}
+      >
+        {post.data.title}
+      </h3>
+
+      <p class:list={['leading-relaxed text-base-content/60', featured ? 'line-clamp-4 text-base' : 'line-clamp-3 text-sm']}>
+        {post.data.description}
+      </p>
+
       <div class="mt-auto flex flex-col gap-3 pt-2">
-        <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-base-content/50">
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-bold uppercase tracking-[0.14em] text-base-content/40">
           <time datetime={post.data.date.toISOString()}>{formatDate(post.data.date)}</time>
-          {post.data.updatedDate && post.data.updatedDate.valueOf() !== post.data.date.valueOf() && <time datetime={post.data.updatedDate.toISOString()}>更新于 {formatDate(post.data.updatedDate)}</time>}
+          {post.data.updatedDate && post.data.updatedDate.valueOf() !== post.data.date.valueOf() && (
+            <time datetime={post.data.updatedDate.toISOString()}>更新 {formatDate(post.data.updatedDate)}</time>
+          )}
         </div>
-        {post.data.tags.length > 0 && <div class="flex flex-wrap gap-1.5">{post.data.tags.map(t => <span class="badge badge-ghost badge-sm">#{t}</span>)}</div>}
+        {post.data.tags.length > 0 && (
+          <div class="flex flex-wrap gap-1.5">
+            {post.data.tags.slice(0, featured ? 6 : 4).map((t) => (
+              <span class="badge badge-ghost badge-sm border border-base-content/10 bg-base-200/70">#{t}</span>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   </article>

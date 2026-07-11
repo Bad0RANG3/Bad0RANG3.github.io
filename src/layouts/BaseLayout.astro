@@ -51,16 +51,35 @@ const jsonLd = type === 'article' ? {
 ---
 
 <!doctype html>
-<html lang={SITE.LANG} data-theme={SITE.THEME}>
+<html lang={SITE.LANG} data-theme={SITE.THEME} data-theme-ready="false">
 <head>
+
+
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="generator" content={Astro.generator}>
   <title>{pageTitle}</title>
   <meta name="description" content={description}>
   <meta name="author" content={siteConfig.author.name}>
-  <meta name="theme-color" content={SITE.THEME_COLOR}>
-  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" id="meta-theme-color" content={SITE.THEME_COLOR}>
+  <meta name="color-scheme" content="light dark">
+  <script is:inline define:vars={{ themeStorageKey: SITE.THEME_STORAGE_KEY, themeLight: SITE.THEME, themeDark: 'paper-dark', themeColorLight: SITE.THEME_COLOR, themeColorDark: SITE.THEME_COLOR_DARK }}>
+    // @ts-nocheck
+    (function () {
+      try {
+        var key = themeStorageKey;
+        var stored = localStorage.getItem(key);
+        var theme = stored === 'paper-dark' || stored === 'paper'
+          ? stored
+          : (window.matchMedia('(prefers-color-scheme: dark)').matches ? themeDark : themeLight);
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.style.colorScheme = theme === themeDark ? 'dark' : 'light';
+        var meta = document.getElementById('meta-theme-color') || document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute('content', theme === themeDark ? themeColorDark : themeColorLight);
+      } catch (e) {}
+      document.documentElement.setAttribute('data-theme-ready', 'true');
+    })();
+  </script>
   <meta name="robots" content="index, follow">
 
   <link rel="canonical" href={canonicalUrl}>
@@ -93,14 +112,14 @@ const jsonLd = type === 'article' ? {
 
 <body class="flex flex-col min-h-screen bg-base-100 text-base-content overflow-x-hidden">
   <SiteHeader currentPath={currentPath} />
-  <main id="main-content" class="page-enter flex-grow">
+  <main id="main-content" class="page-enter w-full flex-1">
     <slot />
   </main>
   <SiteFooter />
   <SearchModal />
 
   <!-- Back to top -->
-  <button id="back-to-top" class="fixed bottom-6 right-6 z-50 btn btn-circle btn-primary shadow-lg" aria-label="回到顶部" title="回到顶部">
+  <button id="back-to-top" class="fixed bottom-6 right-6 z-50 btn btn-circle btn-primary border-2 border-base-content shadow-[4px_4px_0_0] shadow-base-content" aria-label="回到顶部" title="回到顶部">
     <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 15l-6-6-6 6"/></svg>
   </button>
 
@@ -193,5 +212,54 @@ const jsonLd = type === 'article' ? {
       }
     })();
   </script>
+
+  <script is:inline define:vars={{ themeStorageKey: SITE.THEME_STORAGE_KEY, themeLight: SITE.THEME, themeDark: 'paper-dark', themeColorLight: SITE.THEME_COLOR, themeColorDark: SITE.THEME_COLOR_DARK }}>
+    // @ts-nocheck
+    (function () {
+      var KEY = themeStorageKey;
+      var LIGHT = themeLight;
+      var DARK = themeDark;
+
+      function currentTheme() {
+        return document.documentElement.getAttribute('data-theme') === DARK ? DARK : LIGHT;
+      }
+
+      function updateToggleUI(theme) {
+        var btn = document.getElementById('theme-toggle');
+        if (!btn) return;
+        var isDark = theme === DARK;
+        btn.setAttribute('aria-label', isDark ? '切换亮色模式' : '切换深色模式');
+        btn.setAttribute('title', isDark ? '切换到亮色' : '切换到深色');
+        btn.setAttribute('aria-pressed', isDark ? 'true' : 'false');
+      }
+
+      function applyTheme(theme, persist) {
+        var next = theme === DARK ? DARK : LIGHT;
+        document.documentElement.setAttribute('data-theme', next);
+        document.documentElement.style.colorScheme = next === DARK ? 'dark' : 'light';
+        var meta = document.getElementById('meta-theme-color') || document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute('content', next === DARK ? themeColorDark : themeColorLight);
+        if (persist) {
+          try { localStorage.setItem(KEY, next); } catch (e) {}
+        }
+        updateToggleUI(next);
+      }
+
+      function bindToggle() {
+        var btn = document.getElementById('theme-toggle');
+        if (!btn || btn.dataset.bound === '1') return;
+        btn.dataset.bound = '1';
+        btn.addEventListener('click', function () {
+          applyTheme(currentTheme() === DARK ? LIGHT : DARK, true);
+        });
+        updateToggleUI(currentTheme());
+      }
+
+      bindToggle();
+      document.addEventListener('astro:page-load', bindToggle);
+      window.addEventListener('pageshow', function () { updateToggleUI(currentTheme()); });
+    })();
+  </script>
+
 </body>
 </html>

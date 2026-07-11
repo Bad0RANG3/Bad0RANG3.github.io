@@ -21,7 +21,7 @@ const posts = await getPostsByTag(tag);
 ---
 
 <BaseLayout title={`标签：${tag}`} description={`查看与 ${tag} 相关的文章。`}>
-  <div class="mx-auto max-w-6xl px-4 py-8 sm:py-12">
+  <div class="site-frame py-5 sm:py-8">
     <PageHeader
       label="Tag archive"
       title={`#${tag}`}

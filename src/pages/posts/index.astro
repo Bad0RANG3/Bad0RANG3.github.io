@@ -3,21 +3,39 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import PostCard from '../../components/blog/PostCard.astro';
 import PageHeader from '../../components/ui/PageHeader.astro';
 import EmptyState from '../../components/ui/EmptyState.astro';
-import { getPublishedPosts } from '../../lib/content';
+import { getPublishedPosts, getAllTags } from '../../lib/content';
+import { STAGGER } from '../../constants';
 
 const posts = await getPublishedPosts();
+const tags = await getAllTags();
 ---
 
-<BaseLayout title="文章" description="浏览博客中的全部文章。">
-  <div class="mx-auto max-w-6xl px-4 py-8 sm:py-12">
-    <PageHeader label="Posts" title="全部文章" description={`共发布 ${posts.length} 篇文章`} />
+<BaseLayout title="文章" description="全部文章列表。">
+  <div class="site-frame py-5 sm:py-8">
+    <PageHeader
+      label="Archive Feed"
+      title="文章"
+      description={`一共 ${posts.length} 篇。从输入系统到安装笔记，全部摊开。`}
+    />
+
+    {tags.length > 0 && (
+      <div class="mb-8 flex flex-wrap gap-2 reveal">
+        {tags.map((tag) => (
+          <a href={`/tags/${encodeURIComponent(tag)}`} class="chip-signal transition hover:-translate-y-0.5 hover:bg-primary/20">
+            #{tag}
+          </a>
+        ))}
+      </div>
+    )}
 
     {posts.length === 0 ? (
       <EmptyState message="还没有文章哦" />
     ) : (
-      <div class="grid gap-5 sm:gap-6 md:grid-cols-2 xl:grid-cols-3">
-        {posts.map((p, i) => (
-          <div style={`--reveal-delay:${i * 70}ms`}><PostCard post={p} /></div>
+      <div class="grid gap-4 sm:gap-5 md:grid-cols-2 xl:grid-cols-3">
+        {posts.map((post, i) => (
+          <div style={`--reveal-delay:${STAGGER.LIST_START + i * STAGGER.LIST_STEP}ms`}>
+            <PostCard post={post} />
+          </div>
         ))}
       </div>
     )}
