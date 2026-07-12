@@ -2,7 +2,7 @@ import { ROUTES } from '../constants';
 
 export const siteConfig = {
   title: "Bad0RANG3's Studio",
-  description: '项目、工具、特效与折腾笔记——奶油纸面、珊瑚硬边、大胆排版的个人实验站。',
+  description: '关注塔菲谢谢喵',
   siteUrl: 'https://bad0rang3.github.io',
   ogImage: '/HP.png',
   giscus: {
