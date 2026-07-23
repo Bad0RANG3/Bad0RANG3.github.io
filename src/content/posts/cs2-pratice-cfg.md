@@ -2,7 +2,7 @@
 title: 'CS2 跑图配置文件使用指南'
 description: '今天给大家分享一个精心制作的 CS2 跑图配置文件仓库，帮助大家更好地练习和提升技术。'
 date: 2026-03-27
-updatedDate: 2026-05-03
+updatedDate: 2026-07-23
 tags:
   - CS2
   - 游戏
@@ -15,6 +15,8 @@ draft: false
 今天给大家分享一个我精心制作的 CS2 跑图配置文件仓库：[CS2PraticeCFG](https://github.com/Bad0RANG3/CS2PraticeCFG)
 
 ## 功能特点
+
+> 2026-07-23：已同步仓库最新缓存更新；下面的使用方式与功能说明保持适用。
 
 ### 🎯 专为跑图设计
 - 去除所有干扰因素
