@@ -10,8 +10,8 @@ const drawerId = 'mobile-drawer';
 
 <dialog id={drawerId} class="modal mobile-nav-dialog" aria-label="移动端导航">
   <div class="flex h-dvh w-screen justify-start">
-    <div class="drawer-panel flex h-dvh w-80 max-w-[80vw] flex-col border-r-2 border-base-content/10 bg-base-100 shadow-2xl sm:max-w-sm">
-      <div class="flex items-center justify-between border-b-2 border-base-content/10 bg-gradient-to-r from-primary/15 via-secondary/30 to-accent/15 p-5">
+    <div class="drawer-panel flex h-dvh w-80 max-w-[86vw] flex-col border-r-2 border-base-content/10 bg-base-100 shadow-2xl sm:max-w-sm">
+      <div class="flex items-center justify-between border-b-2 border-base-content/10 bg-gradient-to-r from-primary/15 via-secondary/30 to-accent/15 px-5 pb-5 pt-[max(1.25rem,env(safe-area-inset-top))]">
         <div>
           <p class="font-black tracking-tight">{siteConfig.title}</p>
           <p class="text-xs font-bold uppercase tracking-[0.18em] text-base-content/55">paper navigation</p>
@@ -20,7 +20,7 @@ const drawerId = 'mobile-drawer';
           <Icon name="close" class="h-5 w-5" />
         </button>
       </div>
-      <div class="flex-1 space-y-6 overflow-y-auto p-5">
+      <div class="flex-1 space-y-6 overflow-y-auto px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-5">
         <nav class="flex flex-col gap-2" aria-label="主要导航">
           {siteConfig.navigation.map(item => {
             const active = isActive(item.href);
@@ -59,16 +59,17 @@ const drawerId = 'mobile-drawer';
   .drawer-panel { transform: translateX(-100%); }
   dialog[open] .drawer-panel { animation: slideInDrawer 0.3s ease forwards; }
   dialog .drawer-panel.animate-out { animation: slideOutDrawer 0.3s ease forwards; }
+  .mobile-nav-dialog::backdrop { background: color-mix(in oklab, var(--color-ink) 42%, transparent); }
 </style>
 
 <script is:inline>
   (function(){
     const d=document.getElementById('mobile-drawer'),b=document.getElementById('mobile-menu-btn');
     if(!d||!b)return;
-    b.addEventListener('click',function(){if(d instanceof HTMLDialogElement)d.showModal()});
+    b.addEventListener('click',function(){if(d instanceof HTMLDialogElement&&!d.open){d.showModal();b.setAttribute('aria-expanded','true')}});
     const p=d.querySelector('.drawer-panel');
     const close=function(){if(!(d instanceof HTMLDialogElement)||!d.open)return;if(!p){d.close();return}p.classList.add('animate-out');const h=function(){p.classList.remove('animate-out');p.removeEventListener('animationend',h);if(d instanceof HTMLDialogElement&&d.open)d.close()};p.addEventListener('animationend',h,{once:!0})};
     d.querySelectorAll('[data-close-drawer]').forEach(function(e){e.addEventListener('click',function(e){e.preventDefault();close()})});
-    d.addEventListener('cancel',function(e){e.preventDefault();close()});d.addEventListener('close',function(){if(p)p.classList.remove('animate-out')});
+    d.addEventListener('cancel',function(e){e.preventDefault();close()});d.addEventListener('close',function(){if(p)p.classList.remove('animate-out');b.setAttribute('aria-expanded','false')});
   })();
 </script>

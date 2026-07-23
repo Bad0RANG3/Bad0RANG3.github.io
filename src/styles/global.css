@@ -92,6 +92,7 @@
   html {
     scroll-behavior: smooth;
     overflow-x: hidden;
+    overflow-x: clip;
   }
 
   body {
@@ -105,6 +106,9 @@
       linear-gradient(to bottom, color-mix(in oklab, var(--color-base-content) 5%, transparent) 1px, transparent 1px);
     background-size: auto, auto, auto, 56px 56px, 56px 56px;
     background-attachment: fixed;
+    min-width: 0;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
   }
 
   body::before {
@@ -145,6 +149,11 @@
   img, video, iframe {
     max-width: 100%;
     height: auto;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-accent);
+    outline-offset: 3px;
   }
 }
 
@@ -704,8 +713,8 @@ html[data-theme="paper-dark"] .lyric-block:hover {
 /* =================================================================
    MOBILE TABLE / OVERFLOW FIXES
    ================================================================= */
-.prose-resource-list .table-wrapper { position: relative; }
-.prose-resource-list .table-wrapper::after {
+.prose .table-wrapper { position: relative; }
+.prose .table-wrapper::after {
   content: '← 滑动查看 →';
   display: block;
   text-align: center;
@@ -714,22 +723,27 @@ html[data-theme="paper-dark"] .lyric-block:hover {
   padding: 0.5rem 0 0.25rem;
 }
 @media (min-width: 768px) {
-  .prose-resource-list .table-wrapper::after { content: none; }
+  .prose .table-wrapper::after { content: none; }
 }
 @media (max-width: 767px) {
-  .prose-resource-list .table-wrapper {
+  .prose .table-wrapper {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
   }
-  .prose-resource-list :where(table) { min-width: 100%; }
-  .prose-resource-list :where(th:first-child),
-  .prose-resource-list :where(td:first-child) {
+  .prose .table-wrapper :where(table) {
+    display: table;
+    min-width: max(100%, 34rem);
+  }
+  .prose .table-wrapper :where(th:first-child),
+  .prose .table-wrapper :where(td:first-child) {
     position: sticky;
     left: 0;
     z-index: 5;
     background: var(--color-base-100);
   }
-  .prose:not(.prose-resource-list) :where(table) {
+  .prose > :where(table) {
     display: block;
     width: 100%;
     overflow-x: auto;
@@ -752,6 +766,22 @@ html[data-theme="paper-dark"] .lyric-block:hover {
   .btn-brutal,
   .btn-brutal-outline {
     width: 100%;
+  }
+  #back-to-top {
+    right: max(1rem, env(safe-area-inset-right));
+    bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+  .marquee-track {
+    animation-duration: 36s;
+  }
+}
+
+@media (hover: none) {
+  .hard-card:hover,
+  .hard-card-citrus:hover,
+  .hard-card-teal:hover {
+    transform: none;
+    box-shadow: 6px 6px 0 0 color-mix(in oklab, var(--color-primary) 80%, transparent);
   }
 }
 

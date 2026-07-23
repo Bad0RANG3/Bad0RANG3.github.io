@@ -17,7 +17,7 @@ const focusDelay = LAYOUT.SEARCH_FOCUS_DELAY;
 ---
 
 <dialog id="search-modal" class="modal" aria-label="搜索文章">
-  <div class="modal-box w-full max-w-xl overflow-hidden rounded-2xl border-2 border-base-content/10 bg-base-100 p-0 shadow-[10px_10px_0_0] shadow-primary/40">
+  <div class="modal-box max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-xl overflow-hidden rounded-2xl border-2 border-base-content/10 bg-base-100 p-0 shadow-[10px_10px_0_0] shadow-primary/40">
     <!-- Search input -->
     <div class="flex items-center gap-3 border-b-2 border-base-content/10 bg-secondary/20 px-4 py-3">
       <svg class="h-5 w-5 shrink-0 text-base-content/50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
@@ -89,16 +89,20 @@ const focusDelay = LAYOUT.SEARCH_FOCUS_DELAY;
       render(filter(q));
     };
 
+    var openSearch = function(){
+      if (modal instanceof HTMLDialogElement && !modal.open) modal.showModal();
+      input.value = '';
+      render(SEARCH_DATA.slice(0, DEFAULT_COUNT));
+      setTimeout(function(){ input.focus(); }, FOCUS_DELAY);
+    };
+
     input.addEventListener('input', doSearch);
 
     // Open modal
     var openBtn = document.getElementById('search-btn');
     if (openBtn) {
       openBtn.addEventListener('click', function(){
-        if (modal instanceof HTMLDialogElement) modal.showModal();
-        setTimeout(function(){ input.focus(); }, FOCUS_DELAY);
-        input.value = '';
-        render(SEARCH_DATA.slice(0, DEFAULT_COUNT));
+        openSearch();
       });
     }
 
@@ -106,10 +110,7 @@ const focusDelay = LAYOUT.SEARCH_FOCUS_DELAY;
     document.addEventListener('keydown', function(e){
       if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
         e.preventDefault();
-        if (modal instanceof HTMLDialogElement) modal.showModal();
-        setTimeout(function(){ input.focus(); }, FOCUS_DELAY);
-        input.value = '';
-        render(SEARCH_DATA.slice(0, DEFAULT_COUNT));
+        openSearch();
       }
     });
   })();

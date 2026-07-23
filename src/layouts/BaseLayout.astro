@@ -171,9 +171,9 @@ const jsonLd = type === 'article' ? {
         setTimeout(() => { window.location.assign(url.toString()); }, PAGE_EXIT_DURATION);
       };
 
-      /* Table wrapping for resource-list */
+      /* Keep article tables readable on narrow screens without widening the page. */
       const wrapTables = () => {
-        document.querySelectorAll('.prose-resource-list table').forEach((tbl) => {
+        document.querySelectorAll('.prose table').forEach((tbl) => {
           if (tbl.parentElement && tbl.parentElement.classList.contains('table-wrapper')) return;
           const wrapper = document.createElement('div');
           wrapper.className = 'table-wrapper';
