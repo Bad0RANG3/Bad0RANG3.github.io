@@ -444,7 +444,7 @@ function give_enchant_set {
 <summary>🪖 幽夜冠冕（头盔）</summary>
 
 ```mcfunction
-/give @p netherite_helmet[minecraft:custom_name={text:"✦ 幽夜冠冕 ✦",color:"light_purple",bold:true}, minecraft:lore=[{text:"承载星尘的意志",color:"gold",italic:false}], minecraft:enchantments={"minecraft:protection":255,"minecraft:respiration":5,"minecraft:aqua_affinity":5,"minecraft:thorns":5,"minecraft:unbreaking":255,"minecraft:mending":255}, minecraft:unbreakable={}]
+/give @p netherite_helmet[minecraft:custom_name={text:"✦ 幽夜冠冕 ✦",color:"light_purple",bold:true}, minecraft:lore=[{text:"承载星尘的意志",color:"gold",italic:false}], minecraft:enchantments={"minecraft:protection":255,"minecraft:blast_protection":255,"minecraft:fire_protection":255,"minecraft:projectile_protection":255,"minecraft:respiration":5,"minecraft:aqua_affinity":5,"minecraft:thorns":5,"minecraft:unbreaking":255,"minecraft:mending":255}, minecraft:unbreakable={}]
 ```
 </details>
 
@@ -452,7 +452,7 @@ function give_enchant_set {
 <summary>🛡️ 霜寒甲胄（胸甲）</summary>
 
 ```mcfunction
-/give @p netherite_chestplate[minecraft:custom_name={text:"❄ 霜寒甲胄 ❄",color:"dark_aqua",bold:true}, minecraft:lore=[{text:"千年寒铁所铸",color:"aqua",italic:false}], minecraft:enchantments={"minecraft:protection":255,"minecraft:thorns":5,"minecraft:unbreaking":255,"minecraft:mending":255}, minecraft:unbreakable={}]
+/give @p netherite_chestplate[minecraft:custom_name={text:"❄ 霜寒甲胄 ❄",color:"dark_aqua",bold:true}, minecraft:lore=[{text:"千年寒铁所铸",color:"aqua",italic:false}], minecraft:enchantments={"minecraft:protection":255,"minecraft:blast_protection":255,"minecraft:fire_protection":255,"minecraft:projectile_protection":255,"minecraft:thorns":5,"minecraft:unbreaking":255,"minecraft:mending":255}, minecraft:unbreakable={}]
 ```
 </details>
 
@@ -460,7 +460,7 @@ function give_enchant_set {
 <summary>👖 影舞胫甲（护腿）</summary>
 
 ```mcfunction
-/give @p netherite_leggings[minecraft:custom_name={text:"◇ 影舞胫甲 ◇",color:"light_purple",bold:true}, minecraft:lore=[{text:"踏碎虚空的残影",color:"dark_purple",italic:false}], minecraft:enchantments={"minecraft:protection":255,"minecraft:thorns":5,"minecraft:unbreaking":255,"minecraft:mending":255}, minecraft:unbreakable={}]
+/give @p netherite_leggings[minecraft:custom_name={text:"◇ 影舞胫甲 ◇",color:"light_purple",bold:true}, minecraft:lore=[{text:"踏碎虚空的残影",color:"dark_purple",italic:false}], minecraft:enchantments={"minecraft:protection":255,"minecraft:blast_protection":255,"minecraft:fire_protection":255,"minecraft:projectile_protection":255,"minecraft:thorns":5,"minecraft:unbreaking":255,"minecraft:mending":255}, minecraft:unbreakable={}]
 ```
 </details>
 
@@ -468,7 +468,7 @@ function give_enchant_set {
 <summary>👢 流光飞靴（靴子）</summary>
 
 ```mcfunction
-/give @p netherite_boots[minecraft:custom_name={text:"♪ 流光飞靴 ♪",color:"yellow",bold:true}, minecraft:lore=[{text:"步履所至皆为通途",color:"gold",italic:false}], minecraft:enchantments={"minecraft:protection":255,"minecraft:thorns":5,"minecraft:depth_strider":5,"minecraft:soul_speed":3,"minecraft:feather_falling":255,"minecraft:unbreaking":255,"minecraft:mending":255}, minecraft:unbreakable={}]
+/give @p netherite_boots[minecraft:custom_name={text:"♪ 流光飞靴 ♪",color:"yellow",bold:true}, minecraft:lore=[{text:"步履所至皆为通途",color:"gold",italic:false}], minecraft:enchantments={"minecraft:protection":255,"minecraft:blast_protection":255,"minecraft:fire_protection":255,"minecraft:projectile_protection":255,"minecraft:thorns":5,"minecraft:depth_strider":5,"minecraft:soul_speed":3,"minecraft:feather_falling":255,"minecraft:unbreaking":255,"minecraft:mending":255}, minecraft:unbreakable={}]
 ```
 </details>
 
@@ -476,7 +476,7 @@ function give_enchant_set {
 <summary>⚔️ 断罪之刃（剑）</summary>
 
 ```mcfunction
-/give @p netherite_sword[minecraft:custom_name={text:"「断罪之刃」",color:"dark_red",bold:true}, minecraft:lore=[{text:"裁决万物之罪",color:"red",italic:false}], minecraft:enchantments={"minecraft:sharpness":255,"minecraft:knockback":3,"minecraft:fire_aspect":5,"minecraft:looting":5,"minecraft:unbreaking":255,"minecraft:mending":255,"minecraft:smite":255,"minecraft:bane_of_arthropods":255}, minecraft:unbreakable={}]
+/give @p netherite_sword[minecraft:custom_name={text:"「断罪之刃」",color:"dark_red",bold:true}, minecraft:lore=[{text:"裁决万物之罪",color:"red",italic:false}], minecraft:enchantments={"minecraft:sharpness":255,"minecraft:smite":255,"minecraft:bane_of_arthropods":255,"minecraft:knockback":3,"minecraft:fire_aspect":5,"minecraft:looting":5,"minecraft:sweeping_edge":255,"minecraft:unbreaking":255,"minecraft:mending":255}, minecraft:unbreakable={}]
 ```
 </details>
 
@@ -484,7 +484,7 @@ function give_enchant_set {
 <summary>🪓 开天巨斧（斧）</summary>
 
 ```mcfunction
-/give @p netherite_axe[minecraft:custom_name={text:"★ 开天巨斧 ★",color:"gold",bold:true}, minecraft:lore=[{text:"劈开混沌的第一道光",color:"orange",italic:false}], minecraft:enchantments={"minecraft:sharpness":255,"minecraft:efficiency":255,"minecraft:fortune":5,"minecraft:knockback":3,"minecraft:fire_aspect":5,"minecraft:unbreaking":255,"minecraft:mending":255,"minecraft:smite":255,"minecraft:bane_of_arthropods":255}, minecraft:unbreakable={}]
+/give @p netherite_axe[minecraft:custom_name={text:"★ 开天巨斧 ★",color:"gold",bold:true}, minecraft:lore=[{text:"劈开混沌的第一道光",color:"orange",italic:false}], minecraft:enchantments={"minecraft:sharpness":255,"minecraft:smite":255,"minecraft:bane_of_arthropods":255,"minecraft:efficiency":255,"minecraft:fortune":5,"minecraft:knockback":3,"minecraft:fire_aspect":5,"minecraft:looting":5,"minecraft:unbreaking":255,"minecraft:mending":255}, minecraft:unbreakable={}]
 ```
 </details>
 
@@ -492,7 +492,7 @@ function give_enchant_set {
 <summary>🗡️ 贯穿星辰（长矛）</summary>
 
 ```mcfunction
-/give @p netherite_spear[minecraft:custom_name={text:"✧ 贯穿星辰 ✧",color:"light_purple",bold:true}, minecraft:lore=[{text:"一击贯穿永恒",color:"dark_purple",italic:false}], minecraft:enchantments={"minecraft:sharpness":255,"minecraft:smite":255,"minecraft:bane_of_arthropods":255,"minecraft:lunge":5,"minecraft:unbreaking":255,"minecraft:mending":255}, minecraft:unbreakable={}]
+/give @p netherite_spear[minecraft:custom_name={text:"✧ 贯穿星辰 ✧",color:"light_purple",bold:true}, minecraft:lore=[{text:"一击贯穿永恒",color:"dark_purple",italic:false}], minecraft:enchantments={"minecraft:sharpness":255,"minecraft:smite":255,"minecraft:bane_of_arthropods":255,"minecraft:lunge":5,"minecraft:knockback":3,"minecraft:fire_aspect":5,"minecraft:looting":5,"minecraft:unbreaking":255,"minecraft:mending":255}, minecraft:unbreakable={}]
 ```
 </details>
 
@@ -500,7 +500,7 @@ function give_enchant_set {
 <summary>🔱 海神戟（三叉戟）</summary>
 
 ```mcfunction
-/give @p trident[minecraft:custom_name={text:"〜 海神戟 〜",color:"dark_aqua",bold:true}, minecraft:lore=[{text:"号令四海之潮",color:"aqua",italic:false}], minecraft:enchantments={"minecraft:loyalty":5,"minecraft:impaling":255,"minecraft:riptide":5,"minecraft:channeling":255,"minecraft:unbreaking":255,"minecraft:mending":255}, minecraft:unbreakable={}]
+/give @p trident[minecraft:custom_name={text:"〜 海神戟 〜",color:"dark_aqua",bold:true}, minecraft:lore=[{text:"号令四海之潮",color:"aqua",italic:false}], minecraft:enchantments={"minecraft:sharpness":255,"minecraft:impaling":255,"minecraft:loyalty":5,"minecraft:riptide":5,"minecraft:channeling":255,"minecraft:knockback":3,"minecraft:fire_aspect":5,"minecraft:looting":5,"minecraft:unbreaking":255,"minecraft:mending":255}, minecraft:unbreakable={}]
 ```
 </details>
 
@@ -508,7 +508,7 @@ function give_enchant_set {
 <summary>⛏️ 地核穿梭者（镐）</summary>
 
 ```mcfunction
-/give @p netherite_pickaxe[minecraft:custom_name={text:"◆ 地核穿梭者 ◆",color:"dark_gray",bold:true}, minecraft:lore=[{text:"深入大地的脉搏",color:"green",italic:false}], minecraft:enchantments={"minecraft:efficiency":255,"minecraft:fortune":5,"minecraft:unbreaking":255,"minecraft:mending":255}, minecraft:unbreakable={}]
+/give @p netherite_pickaxe[minecraft:custom_name={text:"◆ 地核穿梭者 ◆",color:"dark_gray",bold:true}, minecraft:lore=[{text:"深入大地的脉搏",color:"green",italic:false}], minecraft:enchantments={"minecraft:efficiency":255,"minecraft:fortune":5,"minecraft:sharpness":255,"minecraft:knockback":3,"minecraft:unbreaking":255,"minecraft:mending":255}, minecraft:unbreakable={}]
 ```
 </details>
 
@@ -516,7 +516,7 @@ function give_enchant_set {
 <summary>🔧 移山者（铲）</summary>
 
 ```mcfunction
-/give @p netherite_shovel[minecraft:custom_name={text:"☆ 移山者 ☆",color:"green",bold:true}, minecraft:lore=[{text:"一铲改变地貌",color:"dark_green",italic:false}], minecraft:enchantments={"minecraft:efficiency":255,"minecraft:fortune":5,"minecraft:knockback":3,"minecraft:sharpness":255,"minecraft:unbreaking":255,"minecraft:mending":255}, minecraft:unbreakable={}]
+/give @p netherite_shovel[minecraft:custom_name={text:"☆ 移山者 ☆",color:"green",bold:true}, minecraft:lore=[{text:"一铲改变地貌",color:"dark_green",italic:false}], minecraft:enchantments={"minecraft:efficiency":255,"minecraft:fortune":5,"minecraft:sharpness":255,"minecraft:knockback":3,"minecraft:fire_aspect":5,"minecraft:looting":5,"minecraft:unbreaking":255,"minecraft:mending":255}, minecraft:unbreakable={}]
 ```
 </details>
 
@@ -524,7 +524,7 @@ function give_enchant_set {
 <summary>🌱 生命之锄（锄头）</summary>
 
 ```mcfunction
-/give @p netherite_hoe[minecraft:custom_name={text:"✿ 生命之锄 ✿",color:"dark_green",bold:true}, minecraft:lore=[{text:"唤醒沉睡的种子",color:"gold",italic:false}], minecraft:enchantments={"minecraft:efficiency":255,"minecraft:fortune":5,"minecraft:unbreaking":255,"minecraft:mending":255,"minecraft:sharpness":255,"minecraft:knockback":3,"minecraft:fire_aspect":5}, minecraft:unbreakable={}]
+/give @p netherite_hoe[minecraft:custom_name={text:"✿ 生命之锄 ✿",color:"dark_green",bold:true}, minecraft:lore=[{text:"唤醒沉睡的种子",color:"gold",italic:false}], minecraft:enchantments={"minecraft:efficiency":255,"minecraft:fortune":5,"minecraft:sharpness":255,"minecraft:knockback":3,"minecraft:fire_aspect":5,"minecraft:looting":5,"minecraft:unbreaking":255,"minecraft:mending":255}, minecraft:unbreakable={}]
 ```
 </details>
 
@@ -556,7 +556,7 @@ function give_enchant_set {
 <summary>🔨 天罚之锤（Mace）</summary>
 
 ```mcfunction
-/give @p mace[minecraft:custom_name={text:"⚡ 天罚之锤 ⚡",color:"light_purple",bold:true}, minecraft:lore=[{text:"从天而降的审判",color:"gold",italic:false}], minecraft:enchantments={"minecraft:smite":255,"minecraft:bane_of_arthropods":255,"minecraft:unbreaking":255,"minecraft:mending":255}, minecraft:unbreakable={}]
+/give @p mace[minecraft:custom_name={text:"⚡ 天罚之锤 ⚡",color:"light_purple",bold:true}, minecraft:lore=[{text:"从天而降的审判",color:"gold",italic:false}], minecraft:enchantments={"minecraft:sharpness":255,"minecraft:smite":255,"minecraft:bane_of_arthropods":255,"minecraft:knockback":3,"minecraft:fire_aspect":5,"minecraft:looting":5,"minecraft:unbreaking":255,"minecraft:mending":255}, minecraft:unbreakable={}]
 ```
 </details>
 
