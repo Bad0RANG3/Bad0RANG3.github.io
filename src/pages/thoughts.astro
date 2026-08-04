@@ -16,7 +16,7 @@ const rendered = await Promise.all(
 
 <BaseLayout title="碎碎念" description="随手记录的想法、吐槽和日常。">
   <div class="site-frame py-5 sm:py-8">
-    <PageHeader label="Thoughts" title="碎碎念" description={`随手记录的想法、吐槽和日常。${thoughts.length} 条。`} />
+    <PageHeader label="Thoughts" title="碎碎念" />
 
     {rendered.length === 0 ? (
       <EmptyState message="还没有碎碎念哦" />

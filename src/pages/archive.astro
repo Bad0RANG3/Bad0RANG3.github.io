@@ -6,7 +6,6 @@ import { getArchiveGroups } from '../lib/content';
 import { formatDate } from '../lib/date';
 
 const groups = await getArchiveGroups();
-const total = groups.reduce((sum, g) => sum + g.posts.length, 0);
 ---
 
 <BaseLayout title="归档" description="按年份浏览全部文章。">
@@ -14,7 +13,6 @@ const total = groups.reduce((sum, g) => sum + g.posts.length, 0);
     <PageHeader
       label="Timeline"
       title="归档"
-      description={`${total} 篇文章，按年份摊开。时间线也要够有存在感。`}
     />
 
     {groups.length === 0 ? (
