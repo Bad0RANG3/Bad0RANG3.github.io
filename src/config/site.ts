@@ -13,7 +13,7 @@ export const siteConfig = {
   },
   author: {
     name: 'Bad0RANG3',
-    intro: '喜欢在计算机方面折腾的一个普普通通的菜鸟，更倾向于视频特效的制作。把输入系统、配置工具和安装笔记都做成能直接上手的作品。',
+    intro: '喜欢在计算机方面折腾的一个普普通通的菜鸟。把输入系统、配置工具和安装笔记都做成能直接上手的作品。',
     avatar: '/HP.png',
     email: 'badorangeovo@outlook.com',
   },

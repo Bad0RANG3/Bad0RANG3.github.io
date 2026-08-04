@@ -25,7 +25,6 @@ const posts = await getPostsByTag(tag);
     <PageHeader
       label="Tag archive"
       title={`#${tag}`}
-      description={`共 ${posts.length} 篇`}
     />
     {posts.length === 0 ? (
       <EmptyState message="暂无文章" />

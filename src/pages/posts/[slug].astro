@@ -32,7 +32,6 @@ const isResourceList = post.data.category === '资源清单';
         {post.data.category && <span class="chip-lime">{post.data.category}</span>}
       </div>
       <h1 class="reveal display-title mb-5 text-3xl sm:text-4xl md:text-5xl lg:text-6xl" style={`--reveal-delay:${STAGGER.POST_HEADING}ms`}>{post.data.title}</h1>
-      <p class="reveal mb-5 max-w-2xl text-base leading-7 text-base-content/60" style={`--reveal-delay:${STAGGER.SUBTITLE}ms`}>{post.data.description}</p>
       <div class="space-y-4">
         <div class="reveal" style={`--reveal-delay:${STAGGER.POST_META}ms`}><PostMeta date={post.data.date} updatedDate={post.data.updatedDate} long /></div>
         <div class="reveal" style={`--reveal-delay:${STAGGER.POST_TAGS}ms`}><TagList tags={post.data.tags} /></div>
