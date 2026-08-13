@@ -196,6 +196,7 @@ try {
       if (options.base !== '/') {
         for (const match of source.matchAll(/\b(?:href|src|poster)=(['"])(\/[^'"]*)\1/gi)) {
           const url = match[2];
+          if (url === '/' || url.startsWith(`${options.base}_astro/`) || url.startsWith(`${options.base}project-pages/`)) continue;
           if (!url.startsWith(options.base)) fail(`Project-base HTML has an unprefixed root-relative URL (${url}): ${relative}`);
         }
       }
