@@ -48,7 +48,9 @@ function attributes(markup) {
 }
 
 function postId(filename) {
-  return path.relative(postsDir, filename).replace(/\\/g, '/').replace(/\.(md|mdx)$/i, '');
+  // Astro normalizes content collection slugs to lowercase; mirror that here
+  // so the smoke test behaves the same on case-sensitive and case-insensitive filesystems.
+  return path.relative(postsDir, filename).replace(/\\/g, '/').replace(/\.(md|mdx)$/i, '').toLowerCase();
 }
 
 function draft(source) {
