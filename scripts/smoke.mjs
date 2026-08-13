@@ -213,10 +213,14 @@ try {
   console.log(`Static budget: ${(distBytes / 1024 / 1024).toFixed(2)} MiB total; largest ${largest.file} (${Math.ceil(largest.size / 1024)} KiB).`);
 } catch (error) {
   console.error(`smoke failed: ${error.message}`);
+  if (process.env.CI) console.log(`::error title=Smoke test failed::${error.message}`);
   process.exit(1);
 }
 
-for (const failure of failures) console.error(`ERROR ${failure}`);
+for (const failure of failures) {
+  console.error(`ERROR ${failure}`);
+  if (process.env.CI) console.log(`::error title=Smoke test failure::${failure}`);
+}
 if (failures.length) {
   console.error(`Smoke test failed with ${failures.length} issue(s).`);
   process.exitCode = 1;
