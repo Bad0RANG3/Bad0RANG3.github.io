@@ -1,117 +1,118 @@
 ---
 import { LAYOUT, ROUTES } from '../constants';
-import { getPublishedPosts } from '../lib/content';
-
-const posts = await getPublishedPosts();
-const searchData = posts.map(p => ({
-  title: p.data.title,
-  description: p.data.description,
-  slug: p.slug,
-  tags: p.data.tags,
-  date: p.data.date.toISOString().slice(0, 10),
-}));
-const searchDataJSON = JSON.stringify(searchData);
-const postsRoute = ROUTES.POSTS;
-const defaultCount = LAYOUT.SEARCH_DEFAULT_COUNT;
-const focusDelay = LAYOUT.SEARCH_FOCUS_DELAY;
+import { withBase } from '../lib/urls';
 ---
 
 <dialog id="search-modal" class="modal" aria-label="搜索文章">
   <div class="modal-box max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-xl overflow-hidden rounded-2xl border-2 border-base-content/10 bg-base-100 p-0 shadow-[10px_10px_0_0] shadow-primary/40">
-    <!-- Search input -->
     <div class="flex items-center gap-3 border-b-2 border-base-content/10 bg-secondary/20 px-4 py-3">
-      <svg class="h-5 w-5 shrink-0 text-base-content/50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-      <input id="search-input" type="text" class="flex-1 bg-transparent text-base outline-none placeholder:text-base-content/40" placeholder="搜索文章..." autocomplete="off" />
-      <kbd class="hidden sm:inline-flex items-center px-1.5 py-0.5 text-xs text-base-content/40 bg-base-200 rounded font-mono">ESC</kbd>
+      <svg class="h-5 w-5 shrink-0 text-base-content/50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input id="search-input" type="search" class="flex-1 bg-transparent text-base outline-none placeholder:text-base-content/40" placeholder="搜索标题、摘要、正文、标签..." autocomplete="off" aria-label="搜索文章" />
+      <kbd class="hidden sm:inline-flex items-center rounded bg-base-200 px-1.5 py-0.5 font-mono text-xs text-base-content/40">ESC</kbd>
     </div>
-    <!-- Results -->
-    <div id="search-results" class="max-h-80 overflow-y-auto">
-      <div class="px-4 py-8 text-center text-base-content/50 text-sm">输入关键词搜索文章标题和描述</div>
+    <div id="search-filters" class="flex flex-wrap gap-2 border-b border-base-content/10 px-4 py-2" hidden></div>
+    <div id="search-results" class="max-h-[min(28rem,60dvh)] overflow-y-auto" aria-live="polite">
+      <div class="px-4 py-8 text-center text-sm text-base-content/50">打开搜索后加载索引...</div>
     </div>
-    <!-- Footer -->
-    <div id="search-footer" class="hidden px-4 py-2 border-t border-base-content/10 text-xs text-base-content/40 text-center"></div>
+    <div id="search-footer" class="hidden border-t border-base-content/10 px-4 py-2 text-center text-xs text-base-content/40"></div>
   </div>
   <form method="dialog" class="modal-backdrop"><button>关闭</button></form>
 </dialog>
 
-<script is:inline define:vars={{ searchDataJSON, postsRoute, defaultCount, focusDelay }}>
+<script is:inline define:vars={{ indexUrl: withBase(ROUTES.SEARCH_INDEX), postsUrl: withBase(ROUTES.POSTS), defaultCount: LAYOUT.SEARCH_DEFAULT_COUNT, focusDelay: LAYOUT.SEARCH_FOCUS_DELAY }}>
   // @ts-nocheck
-  var SEARCH_DATA = JSON.parse(searchDataJSON);
-  var POSTS_ROUTE = postsRoute;
-  var DEFAULT_COUNT = defaultCount;
-  var FOCUS_DELAY = focusDelay;
+  (() => {
+    const modal = document.getElementById('search-modal');
+    const input = document.getElementById('search-input');
+    const results = document.getElementById('search-results');
+    const footer = document.getElementById('search-footer');
+    const filters = document.getElementById('search-filters');
+    const openButton = document.getElementById('search-btn');
+    if (!modal || !input || !results || !footer || !openButton) return;
+    if (modal.dataset.bound === '1') return;
+    modal.dataset.bound = '1';
 
-  (function(){
-    var modal = document.getElementById('search-modal');
-    var input = document.getElementById('search-input');
-    var results = document.getElementById('search-results');
-    var footer = document.getElementById('search-footer');
+    let documents = [];
+    let loading = false;
+    let activeType = 'all';
 
-    if (!modal || !input || !results || !footer) return;
-
-    var filter = function(q){
-      var kw = q.toLowerCase().trim();
-      if (!kw) return SEARCH_DATA.slice(0, DEFAULT_COUNT);
-      return SEARCH_DATA.filter(function(item){
-        return item.title.toLowerCase().includes(kw) ||
-               item.description.toLowerCase().includes(kw) ||
-               item.tags.some(function(t){ return t.toLowerCase().includes(kw); });
-      });
+    const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+    const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const tokens = (query) => query.toLowerCase().trim().split(/\s+/).filter(Boolean).slice(0, 8);
+    const highlight = (value, query) => {
+      let html = escapeHtml(value);
+      for (const token of tokens(query).sort((a, b) => b.length - a.length)) {
+        const escaped = escapeRegExp(escapeHtml(token));
+        html = html.replace(new RegExp(`(${escaped})`, 'gi'), '<mark class="rounded bg-primary/20 px-0.5 text-inherit">$1</mark>');
+      }
+      return html;
     };
-
-    var render = function(items){
-      if (items.length === 0) {
-        results.innerHTML = '<div class="px-4 py-8 text-center text-base-content/50 text-sm">没有找到相关文章</div>';
+    const searchable = (item) => [item.title, item.description, item.body, ...(item.tags || []), item.category, item.series].filter(Boolean).join(' ').toLowerCase();
+    const score = (item, query) => tokens(query).reduce((total, token) => {
+      const title = item.title.toLowerCase();
+      const tags = (item.tags || []).join(' ').toLowerCase();
+      const text = searchable(item);
+      return total + (title.includes(token) ? 20 : 0) + (tags.includes(token) ? 12 : 0) + (item.description.toLowerCase().includes(token) ? 8 : 0) + (text.includes(token) ? 2 : 0);
+    }, item.featured ? 3 : 0);
+    const excerpt = (item, query) => {
+      const body = item.body || item.description || '';
+      const token = tokens(query)[0];
+      if (!token) return item.description;
+      const index = body.toLowerCase().indexOf(token);
+      if (index < 0) return item.description;
+      const start = Math.max(0, index - 55);
+      return `${start > 0 ? '…' : ''}${body.slice(start, index + 130)}${index + 130 < body.length ? '…' : ''}`;
+    };
+    const renderFilters = () => {
+      const types = [...new Set(documents.map((item) => item.type).filter(Boolean))];
+      if (types.length < 2) { filters.hidden = true; return; }
+      filters.hidden = false;
+      filters.innerHTML = ['all', ...types].map((type) => `<button type="button" data-search-type="${escapeHtml(type)}" class="chip-signal ${activeType === type ? 'bg-primary/20' : ''}">${type === 'all' ? '全部' : escapeHtml(type)}</button>`).join('');
+      filters.querySelectorAll('[data-search-type]').forEach((button) => button.addEventListener('click', () => { activeType = button.dataset.searchType || 'all'; render(); }));
+    };
+    const render = () => {
+      const query = input.value;
+      let items = documents.filter((item) => activeType === 'all' || item.type === activeType);
+      if (query.trim()) items = items.filter((item) => tokens(query).every((token) => searchable(item).includes(token))).sort((a, b) => score(b, query) - score(a, query) || b.date.localeCompare(a.date));
+      else items = items.slice(0, Number(defaultCount));
+      if (!items.length) {
+        results.innerHTML = '<div class="px-4 py-8 text-center text-sm text-base-content/50">没有找到匹配内容。试试标题、标签或正文里的其他关键词。</div>';
         footer.classList.add('hidden');
         return;
       }
-      var html = '';
-      for (var i = 0; i < items.length; i++) {
-        var item = items[i];
-        html += '<a href="' + POSTS_ROUTE + '/' + item.slug + '" class="flex flex-col gap-1 px-4 py-3 hover:bg-base-200 transition-colors block border-b border-base-content/5 last:border-0">' +
-          '<span class="text-sm font-medium text-base-content">' + esc(item.title) + '</span>' +
-          '<span class="text-xs text-base-content/50 line-clamp-2">' + esc(item.description) + '</span>' +
-          '<span class="flex items-center gap-2 mt-0.5">' +
-            '<span class="text-xs text-base-content/40">' + item.date + '</span>' +
-            item.tags.map(function(t){ return '<span class="badge badge-ghost badge-xs">#' + esc(t) + '</span>'; }).join('') +
-          '</span>' +
-        '</a>';
-      }
-      results.innerHTML = html;
+      results.innerHTML = items.map((item) => `<a href="${escapeHtml(item.url)}" class="block border-b border-base-content/5 px-4 py-3 transition-colors last:border-0 hover:bg-base-200 focus:bg-base-200 focus:outline-none">
+        <div class="flex items-start justify-between gap-3"><span class="text-sm font-bold text-base-content">${highlight(item.title, query)}</span><time class="shrink-0 text-xs text-base-content/40">${escapeHtml(item.date)}</time></div>
+        <p class="mt-1 line-clamp-2 text-xs leading-5 text-base-content/55">${highlight(excerpt(item, query), query)}</p>
+        <div class="mt-2 flex flex-wrap gap-1.5">${(item.tags || []).slice(0, 4).map((tag) => `<span class="badge badge-ghost badge-xs">#${escapeHtml(tag)}</span>`).join('')}</div>
+      </a>`).join('');
       footer.classList.remove('hidden');
-      footer.textContent = items.length + ' 篇文章';
+      footer.textContent = `${items.length} 个结果${query.trim() ? '' : ' · 输入关键词搜索全文'}`;
     };
-
-    var esc = function(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
-
-    var doSearch = function(){
-      var q = input.value;
-      render(filter(q));
+    const load = async () => {
+      if (documents.length || loading) return;
+      loading = true;
+      results.innerHTML = '<div class="px-4 py-8 text-center text-sm text-base-content/50">正在加载搜索索引...</div>';
+      try {
+        const response = await fetch(indexUrl, { headers: { Accept: 'application/json' } });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        documents = await response.json();
+        renderFilters();
+        render();
+      } catch {
+        results.innerHTML = `<div class="px-4 py-8 text-center text-sm text-base-content/50">搜索索引加载失败，请直接浏览<a class="ml-1 font-bold text-primary underline" href="${postsUrl}">文章列表</a>。</div>`;
+      } finally { loading = false; }
     };
-
-    var openSearch = function(){
+    const open = () => {
       if (modal instanceof HTMLDialogElement && !modal.open) modal.showModal();
       input.value = '';
-      render(SEARCH_DATA.slice(0, DEFAULT_COUNT));
-      setTimeout(function(){ input.focus(); }, FOCUS_DELAY);
+      activeType = 'all';
+      load().then(render);
+      window.setTimeout(() => input.focus(), Number(focusDelay));
     };
-
-    input.addEventListener('input', doSearch);
-
-    // Open modal
-    var openBtn = document.getElementById('search-btn');
-    if (openBtn) {
-      openBtn.addEventListener('click', function(){
-        openSearch();
-      });
-    }
-
-    // Keyboard shortcut: Ctrl+K / Cmd+K
-    document.addEventListener('keydown', function(e){
-      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-        e.preventDefault();
-        openSearch();
-      }
+    openButton.addEventListener('click', open);
+    input.addEventListener('input', render);
+    document.addEventListener('keydown', (event) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); open(); }
     });
   })();
 </script>

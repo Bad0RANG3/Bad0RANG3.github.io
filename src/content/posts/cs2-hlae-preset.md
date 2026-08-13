@@ -9,8 +9,14 @@ tags:
   - 视频录制
   - 配置
 category: 项目
+series: CS2 工具与工作流
+seriesOrder: 2
 featured: false
 draft: false
+verifiedDate: 2026-06-24
+difficulty: 中等
+audience: 想录制 CS2 Demo POV 的玩家
+hasDownload: true
 ---
 
 > 想从 CS2 Demo 里导出干净的第一人称镜头，又不想每次都手配 HLAE 和 FFmpeg？这套预设可以直接拿来录。

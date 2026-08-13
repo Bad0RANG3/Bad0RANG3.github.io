@@ -1,6 +1,6 @@
 ---
 // Reusable SVG icon components — import { Icon } from '../icons/Icons.astro'
-export type IconName = 'calendar' | 'clock' | 'search' | 'menu' | 'close' | 'chevron-right' | 'star' | 'book' | 'info' | 'location' | 'arrow-up' | 'logo' | 'external-link' | 'sun' | 'moon';
+export type IconName = 'calendar' | 'clock' | 'search' | 'menu' | 'close' | 'chevron-right' | 'star' | 'book' | 'info' | 'location' | 'arrow-up' | 'logo' | 'external-link' | 'arrow-up-right' | 'sun' | 'moon';
 interface Props { name: IconName; class?: string; }
 const { name, class: className = 'h-5 w-5' } = Astro.props;
 ---
@@ -16,6 +16,7 @@ const { name, class: className = 'h-5 w-5' } = Astro.props;
 {name === 'location' && <svg class={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>}
 {name === 'arrow-up' && <svg class={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 15l-6-6-6 6"/></svg>}
 {name === 'logo' && <svg class={className} viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>}
+{name === 'arrow-up-right' && <svg class={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M8 7h9v9"/></svg>}
 {name === 'external-link' && <svg class={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>}
 {name === 'sun' && <svg class={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>}
 {name === 'moon' && <svg class={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 14.5A8.5 8.5 0 1 1 9.5 3a7 7 0 0 0 11.5 11.5z"/></svg>}

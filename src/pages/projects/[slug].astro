@@ -1,0 +1,86 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { projects, type Project } from '../../config/projects';
+import { siteConfig } from '../../config/site';
+import { withBase } from '../../lib/urls';
+import Icon from '../../components/icons/Icons.astro';
+
+export function getStaticPaths() {
+  return projects.map((project) => ({
+    params: { slug: project.slug },
+    props: { project },
+  }));
+}
+
+interface Props { project: Project; }
+const { project } = Astro.props;
+const relatedProjects = projects.filter((item) => item.slug !== project.slug && item.tags.some((tag) => project.tags.includes(tag))).slice(0, 2);
+---
+
+<BaseLayout title={`${project.name} · 项目 · ${siteConfig.title}`} description={project.description}>
+  <div class="site-frame py-8 sm:py-12">
+    <a href={withBase('/projects/')} class="inline-flex items-center gap-2 text-sm font-bold text-base-content/65 underline decoration-base-content/25 underline-offset-4 hover:text-primary">
+      <span aria-hidden="true">←</span> 返回项目总览
+    </a>
+
+    <article class="mt-7 max-w-4xl">
+      <header class:list={[
+        'rounded-[2rem] border-2 border-base-content bg-base-100 p-6 shadow-[8px_8px_0_0] sm:p-9',
+        project.tone === 'teal' && 'shadow-secondary/70',
+        project.tone === 'coral' && 'shadow-primary/65',
+        project.tone === 'citrus' && 'shadow-accent/70',
+      ]}>
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <span class="font-mono text-sm font-black tracking-[0.22em] text-base-content/45">PROJECT {project.code}</span>
+          <span class="chip-signal">{project.type}</span>
+        </div>
+        <p class="mt-9 flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-primary"><span class="h-2 w-2 rounded-full bg-current"></span>{project.status}</p>
+        <h1 class="display-title mt-3 text-4xl sm:text-6xl">{project.name}</h1>
+        <p class="mt-5 max-w-2xl text-lg font-bold leading-8 text-base-content/75">{project.summary}</p>
+        <p class="mt-4 max-w-2xl leading-8 text-base-content/60">{project.description}</p>
+        <div class="mt-7 flex flex-wrap gap-2">
+          {project.tags.map((tag) => <span class="badge badge-lg border border-base-content/15 bg-base-200/70 font-bold">{tag}</span>)}
+        </div>
+        <a href={withBase(project.href)} class="btn-brutal mt-8 inline-flex w-fit items-center gap-2">
+          {project.primaryActionLabel}<Icon name="arrow-up-right" class="h-5 w-5" />
+        </a>
+      </header>
+
+      <section class="mt-12" aria-labelledby="project-focus-title">
+        <p class="eyebrow">What this work captures</p>
+        <h2 id="project-focus-title" class="mt-2 text-2xl font-black sm:text-3xl">案例重点</h2>
+        <ol class="mt-6 grid gap-4 sm:grid-cols-3">
+          {project.highlights.map((highlight, index) => (
+            <li class="rounded-2xl border-2 border-base-content/10 bg-base-100/70 p-5">
+              <span class="font-mono text-xs font-black tracking-[0.16em] text-primary">0{index + 1}</span>
+              <p class="mt-3 text-sm font-bold leading-7 text-base-content/75">{highlight}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <section class="mt-12 rounded-[1.5rem] border-2 border-base-content/10 bg-base-200/45 p-6 sm:p-8" aria-labelledby="project-entry-title">
+        <p class="eyebrow">Source of truth</p>
+        <h2 id="project-entry-title" class="mt-2 text-2xl font-black">继续查看</h2>
+        <p class="mt-3 max-w-2xl leading-7 text-base-content/65">本页只整理项目定位与公开成果，不虚构下载量、用户数据或实时状态。具体实现、使用方式和后续更新以关联的工具或文章为准。</p>
+        <a href={withBase(project.href)} class="btn-brutal-outline mt-6 inline-flex items-center gap-2">{project.primaryActionLabel}<Icon name="arrow-up-right" class="h-5 w-5" /></a>
+      </section>
+
+      {relatedProjects.length > 0 && (
+        <section class="mt-12" aria-labelledby="related-project-title">
+          <p class="eyebrow">Keep exploring</p>
+          <h2 id="related-project-title" class="mt-2 text-2xl font-black">关联项目</h2>
+          <div class="mt-6 grid gap-4 sm:grid-cols-2">
+            {relatedProjects.map((item) => (
+              <a href={withBase(`/projects/${item.slug}/`)} class="hard-card rounded-2xl border-2 border-base-content/15 bg-base-100 p-5 hover:-translate-y-1">
+                <p class="font-mono text-xs font-black tracking-[0.16em] text-base-content/45">PROJECT {item.code}</p>
+                <h3 class="mt-3 text-xl font-black">{item.name}</h3>
+                <p class="mt-2 text-sm leading-6 text-base-content/60">{item.summary}</p>
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
+    </article>
+  </div>
+</BaseLayout>

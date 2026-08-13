@@ -4,6 +4,7 @@ import PageHeader from '../components/ui/PageHeader.astro';
 import EmptyState from '../components/ui/EmptyState.astro';
 import { getArchiveGroups } from '../lib/content';
 import { formatDate } from '../lib/date';
+import { withBase } from '../lib/urls';
 
 const groups = await getArchiveGroups();
 ---
@@ -28,7 +29,7 @@ const groups = await getArchiveGroups();
             <div class="space-y-3">
               {group.posts.map((post) => (
                 <a
-                  href={`/posts/${post.slug}`}
+                  href={withBase(`/posts/${post.slug}/`)}
                   class="group flex flex-col gap-2 rounded-[1.25rem] border-2 border-base-content/10 bg-base-100/80 p-4 transition-all hover:-translate-x-1 hover:border-primary/40 hover:bg-secondary/15 sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div class="min-w-0">

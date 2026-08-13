@@ -3,7 +3,8 @@ import typography from '@tailwindcss/typography';
 import daisyui from 'daisyui';
 
 export default {
-  content: ['./src/**/*.{astro,ts,md,mdx}'],
+  content: ['./src/**/*.{astro,ts}'],
+  safelist: ['lyric-block', 'lyric-en', 'lyric-cn', 'lyric-ja', 'album-cover'],
   theme: {
     extend: {
       fontFamily: {
