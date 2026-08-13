@@ -36,6 +36,8 @@ jobs:
       - name: Smoke test build output
         run: pnpm smoke
       - name: Validate project Pages base path
+        env:
+          BASE_PATH: /project-pages/
         run: |
-          BASE_PATH=/project-pages/ pnpm build
+          pnpm build
           pnpm smoke -- --base=/project-pages/
