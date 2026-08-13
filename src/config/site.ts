@@ -4,7 +4,7 @@ export const siteConfig = {
   title: "Bad0RANG3's Studio",
   description: '关注塔菲谢谢喵',
   siteUrl: 'https://bad0rang3.github.io',
-  ogImage: '/HP.png',
+  ogImage: '/HP.webp',
   giscus: {
     repo: 'Bad0RANG3/Bad0RANG3.github.io',
     repoId: 'R_kgDORyk8Fg',
@@ -13,13 +13,14 @@ export const siteConfig = {
   },
   author: {
     name: 'Bad0RANG3',
-    intro: '喜欢在计算机方面折腾的一个普普通通的菜鸟。把输入系统、配置工具和安装笔记都做成能直接上手的作品。',
-    avatar: '/HP.png',
+    intro: '喜欢在计算机方面折腾的普通菜鸟。把输入系统、配置工具和安装笔记做成能够直接上手的作品。',
+    avatar: '/HP.webp',
     email: 'badorangeovo@outlook.com',
   },
   navigation: [
     { href: ROUTES.HOME, label: '首页' },
     { href: ROUTES.POSTS, label: '文章' },
+    { href: ROUTES.PROJECTS, label: '项目' },
     { href: ROUTES.THOUGHTS, label: '碎碎念' },
     { href: ROUTES.TOOLS, label: '工具' },
     { href: ROUTES.ARCHIVE, label: '归档' },
@@ -37,7 +38,7 @@ export const siteConfig = {
   ],
   hero: {
     lyric: '当我的故事开篇之时，就是我书写人生之时',
-    lyricSource: '— Synthion「main heroine」',
+    lyricSource: 'Synthion · Main heroine',
   },
   about: {
     greeting: 'Hi, there!',
@@ -45,14 +46,14 @@ export const siteConfig = {
     currentStatus: `#include <iostream>
 int main() {
     while (true) {
-        std::cout << "我喜欢你" << std::endl;
+        std::cout << "我喜欢做东西" << std::endl;
     }
     return 0;
 }`,
     quotes: [
-      '"四大皆空😡😡（指钱包、微信、支付宝和Paypal）"',
-      '"愿意和我组一辈子乐队吗？"',
-      '"质疑屎山，理解屎山，制造屎山"',
+      '“四大皆空（指钱包、微信、支付宝和 PayPal）”',
+      '“愿意和我组一辈子乐队吗？”',
+      '“质疑屎山，理解屎山，创造屎山。”',
     ],
     techStack: [
       { name: 'HTML5', url: 'https://html.spec.whatwg.org/' },

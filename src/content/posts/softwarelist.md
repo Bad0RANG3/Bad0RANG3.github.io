@@ -12,6 +12,9 @@ tags:
 category: 资源清单
 featured: false
 draft: false
+verifiedDate: 2026-08-05
+difficulty: 入门
+audience: 正在整理 Windows 工作环境的用户
 ---
 
 # 🧰 电脑软件实用清单

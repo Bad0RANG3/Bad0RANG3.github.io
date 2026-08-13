@@ -1,0 +1,26 @@
+---
+import { withBase } from '../../lib/urls';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/ui/PageHeader.astro';
+import EmptyState from '../../components/ui/EmptyState.astro';
+import { getTagGroups } from '../../lib/content';
+import { formatDate } from '../../lib/date';
+
+const groups = await getTagGroups();
+---
+<BaseLayout title="标签" description="按主题浏览文章标签。">
+  <div class="site-frame py-5 sm:py-8">
+    <PageHeader label="Topics" title="标签" description="把文章按兴趣和技术主题重新连起来。" />
+    {groups.length === 0 ? <EmptyState message="还没有标签" /> : (
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {groups.map((group, index) => (
+          <a href={withBase(`/tags/${encodeURIComponent(group.name)}/`)} class="reveal hard-card rounded-[1.5rem] p-5 transition hover:-translate-y-1" style={`--reveal-delay:${index * 45}ms`}>
+            <div class="flex items-start justify-between gap-3"><h2 class="text-xl font-black">#{group.name}</h2><span class="chip-signal">{group.posts.length} 篇</span></div>
+            <p class="mt-4 text-sm text-base-content/55">最近更新：{formatDate(group.posts[0].data.updatedDate ?? group.posts[0].data.date)}</p>
+            <p class="mt-3 line-clamp-2 text-sm leading-6 text-base-content/65">{group.posts[0].data.title}</p>
+          </a>
+        ))}
+      </div>
+    )}
+  </div>
+</BaseLayout>

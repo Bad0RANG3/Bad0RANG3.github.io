@@ -1,4 +1,5 @@
 ---
+import { withBase } from '../../lib/urls';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PostCard from '../../components/blog/PostCard.astro';
 import PageHeader from '../../components/ui/PageHeader.astro';
@@ -20,7 +21,7 @@ const tags = await getAllTags();
     {tags.length > 0 && (
       <div class="mb-8 flex flex-wrap gap-2 reveal">
         {tags.map((tag) => (
-          <a href={`/tags/${encodeURIComponent(tag)}`} class="chip-signal transition hover:-translate-y-0.5 hover:bg-primary/20">
+          <a href={withBase(`/tags/${encodeURIComponent(tag)}/`)} class="chip-signal transition hover:-translate-y-0.5 hover:bg-primary/20">
             #{tag}
           </a>
         ))}

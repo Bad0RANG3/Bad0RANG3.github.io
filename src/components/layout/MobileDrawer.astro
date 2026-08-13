@@ -1,6 +1,7 @@
 ---
 import { siteConfig } from '../../config/site';
 import Icon from '../icons/Icons.astro';
+import { withBase } from '../../lib/urls';
 
 interface Props { currentPath: string; }
 const { currentPath } = Astro.props;
@@ -26,7 +27,7 @@ const drawerId = 'mobile-drawer';
             const active = isActive(item.href);
             return (
               <a
-                href={item.href}
+                href={withBase(item.href)}
                 class:list={[
                   'flex items-center gap-3 rounded-2xl border-2 px-4 py-3 text-sm font-bold transition-all',
                   active

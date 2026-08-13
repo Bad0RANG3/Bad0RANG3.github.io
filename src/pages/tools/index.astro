@@ -1,4 +1,5 @@
 ---
+import { withBase } from '../../lib/urls';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHeader from '../../components/ui/PageHeader.astro';
 import Icon from '../../components/icons/Icons.astro';
@@ -6,7 +7,7 @@ import Icon from '../../components/icons/Icons.astro';
 const tools = [
   {
     name: 'SwitchYourCFG',
-    href: '/tools/switch-your-cfg',
+    href: withBase('/tools/switch-your-cfg/'),
     icon: '⚙️',
     desc: 'CS2 配置 → CS2 CFG 转换器。拖放 CS2 配置文件夹，可视化键盘选键，一键买枪绑定，导出 CS2 格式文件。',
     tags: ['CS2', 'CFG', '配置'],

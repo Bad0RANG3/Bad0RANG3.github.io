@@ -1,0 +1,6 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+<BaseLayout title="隐私说明" description="这个静态博客如何处理本地数据、评论和外部连接。">
+  <div class="site-frame py-5 sm:py-8"><div class="mx-auto max-w-3xl"><p class="eyebrow">Privacy notes</p><h1 class="display-title mt-3 text-4xl sm:text-6xl">隐私说明</h1><p class="mt-5 text-base leading-8 text-base-content/65">这里尽量保持简单：本站是部署在 GitHub Pages 上的静态站点，不设置广告、统计脚本或追踪 Cookie。</p><div class="prose prose-lg mt-10 max-w-none"><h2>站点托管</h2><p>页面文件由 GitHub Pages 提供，构建由 GitHub Actions 执行。访问站点时，GitHub 可能按照其服务规则处理网络请求日志。</p><h2>浏览器本地数据</h2><p>主题偏好、文章收藏和阅读进度使用浏览器 <code>localStorage</code> 保存，只留在当前浏览器中，不会由本站上传。你可以在“本地书架”页面清除收藏与阅读记录，也可以直接清理浏览器站点数据。</p><h2>离线缓存</h2><p>本站可能注册 Service Worker 并缓存少量页面资源，以支持离线页和更快的再次访问。清除站点数据或注销 Service Worker 即可移除这些缓存。</p><h2>评论</h2><p>评论默认不加载。只有你主动点击“加载评论”后，页面才会连接 Giscus/GitHub，并按照它们各自的隐私政策处理评论请求；不使用评论功能不会建立这条连接。</p><h2>外部资源</h2><p>正文中的外部链接、项目链接和社交链接会把你带到第三方网站。本站不向这些网站传输额外的个人资料。</p><h2>联系</h2><p>如果你发现页面中存在不必要的外部请求，可以通过页脚列出的邮箱联系我。</p></div></div></div>
+</BaseLayout>
