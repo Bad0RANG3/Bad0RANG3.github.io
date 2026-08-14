@@ -1,0 +1,282 @@
+---
+import { withBase } from '../../lib/urls';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/ui/PageHeader.astro';
+import '../../styles/tools/ncm.css';
+---
+
+<BaseLayout
+  title="NCM 解密"
+  description="在浏览器本地将网易云音乐 NCM 文件转换为 MP3 或 FLAC。"
+>
+  <div class="site-frame py-6 sm:py-10">
+    <PageHeader label="NCM TOOL" title="NCM 解密" />
+
+    <div class="ncm-shell">
+      <section class="ncm-intro hard-card rounded-[1.75rem] p-6 sm:p-8">
+        <div>
+          <p class="ncm-eyebrow">LOCAL PROCESSING</p>
+          <h2 class="ncm-title">把 NCM 文件还原成可播放音频</h2>
+          <p class="ncm-copy">
+            选择或拖入一个或多个 <code>.ncm</code> 文件，工具会在当前浏览器中完成处理，并输出原始的 MP3 / FLAC 音频。
+            文件不会上传到服务器。
+          </p>
+        </div>
+        <div class="ncm-note">
+          <span class="ncm-note-dot" aria-hidden="true"></span>
+          <span>请只处理你有权使用的本地音乐文件。</span>
+        </div>
+      </section>
+
+      <section class="ncm-card hard-card rounded-[1.75rem] p-5 sm:p-7" aria-labelledby="ncm-upload-title">
+        <div class="ncm-section-head">
+          <div>
+            <p class="ncm-eyebrow">STEP 01</p>
+            <h2 id="ncm-upload-title" class="ncm-section-title">添加 NCM 文件</h2>
+          </div>
+          <span id="ncm-status" class="ncm-status" role="status" aria-live="polite">等待添加文件</span>
+        </div>
+
+        <label class="ncm-dropzone" id="ncm-dropzone" for="ncm-file-input" tabindex="0">
+          <input id="ncm-file-input" type="file" accept=".ncm,audio/ncm" multiple hidden />
+          <span class="ncm-drop-icon" aria-hidden="true">♪</span>
+          <span class="ncm-drop-title">拖放 .ncm 文件到这里</span>
+          <span class="ncm-drop-copy">或点击选择文件，可一次添加多个文件</span>
+          <span class="ncm-drop-action">选择文件</span>
+        </label>
+
+        <div id="ncm-pending" class="ncm-list" hidden>
+          <div class="ncm-list-head">
+            <h3>待处理文件</h3>
+            <button type="button" class="ncm-link-button" id="ncm-clear">清空</button>
+          </div>
+          <ul id="ncm-pending-list"></ul>
+        </div>
+
+        <div class="ncm-options">
+          <label class="ncm-checkbox">
+            <input id="ncm-fix-metadata" type="checkbox" checked />
+            <span>
+              <strong>写入歌曲信息</strong>
+              <small>保留标题、歌手、专辑和 NCM 内置封面</small>
+            </span>
+          </label>
+          <p class="ncm-option-hint">默认不会联网补全缺失封面，转换过程保持在本地完成。</p>
+        </div>
+
+        <button type="button" class="ncm-primary-button" id="ncm-convert" disabled>
+          <span aria-hidden="true">↯</span>
+          开始解密
+        </button>
+      </section>
+
+      <section class="ncm-card hard-card rounded-[1.75rem] p-5 sm:p-7" aria-labelledby="ncm-results-title">
+        <div class="ncm-section-head">
+          <div>
+            <p class="ncm-eyebrow">STEP 02</p>
+            <h2 id="ncm-results-title" class="ncm-section-title">转换结果</h2>
+          </div>
+          <button type="button" class="ncm-link-button" id="ncm-clear-results" hidden>清空结果</button>
+        </div>
+        <div id="ncm-results" class="ncm-results" aria-live="polite">
+          <div class="ncm-empty" id="ncm-empty-results">
+            <span aria-hidden="true">◌</span>
+            <p>转换完成后的音频会显示在这里。</p>
+          </div>
+        </div>
+      </section>
+
+      <a class="ncm-back-link" href={withBase('/tools/')}>← 返回工具箱</a>
+    </div>
+  </div>
+</BaseLayout>
+
+<script>
+  import { dump } from 'ncmdump-js';
+
+  const fileInput = document.querySelector<HTMLInputElement>('#ncm-file-input');
+  const dropzone = document.querySelector<HTMLLabelElement>('#ncm-dropzone');
+  const pending = document.querySelector<HTMLElement>('#ncm-pending');
+  const pendingList = document.querySelector<HTMLUListElement>('#ncm-pending-list');
+  const clearButton = document.querySelector<HTMLButtonElement>('#ncm-clear');
+  const convertButton = document.querySelector<HTMLButtonElement>('#ncm-convert');
+  const fixMetadata = document.querySelector<HTMLInputElement>('#ncm-fix-metadata');
+  const status = document.querySelector<HTMLElement>('#ncm-status');
+  const results = document.querySelector<HTMLElement>('#ncm-results');
+  const emptyResults = document.querySelector<HTMLElement>('#ncm-empty-results');
+  const clearResultsButton = document.querySelector<HTMLButtonElement>('#ncm-clear-results');
+  const files: File[] = [];
+  const resultUrls: string[] = [];
+
+  if (!fileInput || !dropzone || !pending || !pendingList || !clearButton || !convertButton || !fixMetadata || !status || !results || !emptyResults || !clearResultsButton) {
+    throw new Error('NCM tool UI failed to initialize.');
+  }
+
+  const formatBytes = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    if (bytes < 1024 * 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+    return `${(bytes / 1024 / 1024 / 1024).toFixed(1)} GB`;
+  };
+
+  const isNcm = (file: File) => file.name.toLowerCase().endsWith('.ncm');
+
+  const setStatus = (message: string, tone: 'info' | 'success' | 'warning' | 'loading' = 'info') => {
+    status.textContent = message;
+    status.dataset.tone = tone;
+  };
+
+  const renderPending = () => {
+    pendingList.replaceChildren();
+    pending.hidden = files.length === 0;
+    convertButton.disabled = files.length === 0;
+    if (files.length === 0) {
+      setStatus('等待添加文件');
+      return;
+    }
+
+    files.forEach((file, index) => {
+      const item = document.createElement('li');
+      item.className = 'ncm-file-item';
+      const name = document.createElement('span');
+      name.className = 'ncm-file-name';
+      name.textContent = file.name;
+      const size = document.createElement('span');
+      size.className = 'ncm-file-size';
+      size.textContent = formatBytes(file.size);
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'ncm-remove-button';
+      remove.textContent = '移除';
+      remove.addEventListener('click', () => {
+        files.splice(index, 1);
+        renderPending();
+      });
+      item.append(name, size, remove);
+      pendingList.append(item);
+    });
+    setStatus(`已添加 ${files.length} 个文件`);
+  };
+
+  const addFiles = (incoming: File[]) => {
+    const accepted = incoming.filter(isNcm);
+    const duplicates = accepted.filter((file) => files.some((current) => current.name === file.name && current.size === file.size));
+    files.push(...accepted.filter((file) => !duplicates.includes(file)));
+    if (incoming.length !== accepted.length) setStatus('已忽略非 .ncm 文件', 'warning');
+    renderPending();
+  };
+
+  const clearResults = () => {
+    resultUrls.splice(0).forEach((url) => URL.revokeObjectURL(url));
+    results.replaceChildren(emptyResults);
+    emptyResults.hidden = false;
+    clearResultsButton.hidden = true;
+  };
+
+  const addResult = ({ file, output, url }: { file: File; output: Awaited<ReturnType<typeof dump>>; url: string }) => {
+    emptyResults.hidden = true;
+    clearResultsButton.hidden = false;
+
+    const item = document.createElement('article');
+    item.className = 'ncm-result-item';
+    const meta = document.createElement('div');
+    meta.className = 'ncm-result-meta';
+    const title = document.createElement('h3');
+    title.textContent = output.filename;
+    const detail = document.createElement('p');
+    detail.textContent = `${file.name} · ${output.format.toUpperCase()} · ${formatBytes(output.blob.size)}`;
+    meta.append(title, detail);
+
+    const audio = document.createElement('audio');
+    audio.controls = true;
+    audio.preload = 'metadata';
+    audio.src = url;
+
+    const download = document.createElement('a');
+    download.className = 'ncm-download-button';
+    download.href = url;
+    download.download = output.filename;
+    download.textContent = '下载';
+
+    item.append(meta, audio, download);
+    results.append(item);
+  };
+
+  const addError = (file: File, message: string) => {
+    const item = document.createElement('article');
+    item.className = 'ncm-result-item ncm-result-error';
+    const meta = document.createElement('div');
+    const title = document.createElement('h3');
+    title.textContent = `${file.name} 解密失败`;
+    const detail = document.createElement('p');
+    detail.textContent = message;
+    meta.append(title, detail);
+    item.append(meta);
+    emptyResults.hidden = true;
+    clearResultsButton.hidden = false;
+    results.append(item);
+  };
+
+  const convert = async () => {
+    if (files.length === 0) return;
+    convertButton.disabled = true;
+    clearButton.disabled = true;
+    clearResults();
+    const queue = files.splice(0);
+    renderPending();
+    setStatus(`正在解密 0/${queue.length} 个文件`, 'loading');
+
+    let completed = 0;
+    let failed = 0;
+    for (const file of queue) {
+      try {
+        const output = await dump(file, {
+          fixMetadata: fixMetadata.checked,
+          fetchMissingCover: false,
+        });
+        const url = URL.createObjectURL(output.blob);
+        resultUrls.push(url);
+        addResult({ file, output, url });
+        completed += 1;
+      } catch (error) {
+        failed += 1;
+        const message = error instanceof Error ? error.message : '未知错误';
+        addError(file, message);
+      }
+      setStatus(`正在解密 ${completed + failed}/${queue.length} 个文件`, 'loading');
+    }
+
+    convertButton.disabled = files.length === 0;
+    clearButton.disabled = false;
+    setStatus(failed ? `完成：${completed} 个成功，${failed} 个失败` : `全部完成：${completed} 个文件`, failed ? 'warning' : 'success');
+  };
+
+  fileInput.addEventListener('change', () => {
+    addFiles(Array.from(fileInput.files ?? []));
+    fileInput.value = '';
+  });
+  dropzone.addEventListener('dragover', (event) => {
+    event.preventDefault();
+    dropzone.dataset.active = 'true';
+  });
+  dropzone.addEventListener('dragleave', () => {
+    dropzone.dataset.active = 'false';
+  });
+  dropzone.addEventListener('drop', (event) => {
+    event.preventDefault();
+    dropzone.dataset.active = 'false';
+    addFiles(Array.from(event.dataTransfer?.files ?? []));
+  });
+  dropzone.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      fileInput.click();
+    }
+  });
+  clearButton.addEventListener('click', () => {
+    files.splice(0);
+    renderPending();
+  });
+  clearResultsButton.addEventListener('click', clearResults);
+  convertButton.addEventListener('click', convert);
+</script>
