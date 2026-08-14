@@ -20,7 +20,6 @@ export const siteConfig = {
   navigation: [
     { href: ROUTES.HOME, label: '首页' },
     { href: ROUTES.POSTS, label: '文章' },
-    { href: ROUTES.PROJECTS, label: '项目' },
     { href: ROUTES.THOUGHTS, label: '碎碎念' },
     { href: ROUTES.TOOLS, label: '工具' },
     { href: ROUTES.ARCHIVE, label: '归档' },
@@ -33,7 +32,7 @@ export const siteConfig = {
     { name: '抖音', url: 'https://www.douyin.com/user/MS4wLjABAAAA3y9usLYBic-19MR78rfDbN-VmS3RhnVMmlZMmnt39m8' },
     { name: 'Email', url: 'mailto:badorangeovo@outlook.com' },
     { name: 'Telegram', url: 'https://t.me/Bad0RANG3' },
-    { name: 'YouTube', url: 'https://youtube.com/Bad0RANG3' },
+    { name: 'YouTube', url: 'https://youtube.com/@Bad0RANG3' },
     { name: 'BiliBili', url: 'https://space.bilibili.com/482966540' },
   ],
   hero: {
@@ -46,7 +45,7 @@ export const siteConfig = {
     currentStatus: `#include <iostream>
 int main() {
     while (true) {
-        std::cout << "我喜欢做东西" << std::endl;
+        std::cout << "我喜欢你" << std::endl;
     }
     return 0;
 }`,

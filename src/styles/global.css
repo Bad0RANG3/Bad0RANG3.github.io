@@ -182,6 +182,55 @@
   margin-inline: auto;
 }
 
+/* About page: let cards and their inner grids shrink with the viewport. */
+.about-page,
+.about-page > *,
+.about-page .grid > *,
+.about-page .relative.grid > *,
+.about-page a,
+.about-page .mockup-code,
+.about-page .mockup-code pre {
+  min-width: 0;
+}
+.about-page .mockup-code {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.about-page .mockup-code pre {
+  width: max-content;
+  min-width: 100%;
+  max-width: none;
+}
+.about-page a > :where(div, span:last-child) {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 639px) {
+  .about-page {
+    /* Keep the normal 1rem gutter so hard-card shadows also stay on-screen. */
+    width: min(calc(100% - 2rem), 72rem);
+  }
+  .about-page > section,
+  .about-page .grid > section {
+    min-width: 0;
+    padding-inline: 1rem;
+  }
+  .about-page .display-title {
+    max-width: 100%;
+    font-size: clamp(2rem, 12vw, 3rem);
+    overflow-wrap: anywhere;
+  }
+  .about-page .chip-lime {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    text-align: center;
+  }
+}
+
 main#main-content {
   display: block;
   width: 100%;
@@ -741,9 +790,16 @@ html[data-theme="paper-dark"] .lyric-block:hover {
   background: color-mix(in oklab, var(--color-accent) 14%, var(--color-base-200));
 }
 /* =================================================================
-   MOBILE TABLE / OVERFLOW FIXES
+   TABLE / OVERFLOW FIXES
    ================================================================= */
-.prose .table-wrapper { position: relative; }
+.prose .table-wrapper {
+  position: relative;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+}
 .prose .table-wrapper::after {
   content: '← 滑动查看 →';
   display: block;
@@ -755,30 +811,25 @@ html[data-theme="paper-dark"] .lyric-block:hover {
 @media (min-width: 768px) {
   .prose .table-wrapper::after { content: none; }
 }
+.prose .table-wrapper :where(table) {
+  display: table;
+  width: max-content;
+  min-width: 100%;
+  table-layout: auto;
+}
+.prose .table-wrapper :where(thead, tbody, tfoot, tr, th, td) {
+  background: transparent !important;
+}
+.prose .table-wrapper :where(th) {
+  white-space: nowrap;
+}
+.prose > :where(table) {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
 @media (max-width: 767px) {
-  .prose .table-wrapper {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior-x: contain;
-    scrollbar-width: thin;
-  }
-  .prose .table-wrapper :where(table) {
-    display: table;
-    min-width: max(100%, 34rem);
-  }
-  .prose .table-wrapper :where(th:first-child),
-  .prose .table-wrapper :where(td:first-child) {
-    position: sticky;
-    left: 0;
-    z-index: 5;
-    background: var(--color-base-100);
-  }
-  .prose > :where(table) {
-    display: block;
-    width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
   .prose :where(pre) {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
