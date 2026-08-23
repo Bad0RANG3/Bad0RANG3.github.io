@@ -1,5 +1,7 @@
 ---
+import { withBase } from '../../lib/urls';
 import type { Post } from '../../lib/content';
+import { getPostReadingMinutes } from '../../lib/content';
 import { formatDate } from '../../lib/date';
 import Icon from '../icons/Icons.astro';
 
@@ -8,10 +10,12 @@ interface Props {
   featured?: boolean;
   compact?: boolean;
 }
+
 const { post, featured = false, compact = false } = Astro.props;
+const readingMinutes = getPostReadingMinutes(post);
 ---
 
-<a href={`/posts/${post.slug}`} class="group block h-full reveal">
+<a href={withBase(`/posts/${post.slug}/`)} class="group block h-full reveal">
   <article
     class:list={[
       'hard-card flex h-full flex-col overflow-hidden rounded-[1.5rem] bg-base-100/90',
@@ -22,7 +26,7 @@ const { post, featured = false, compact = false } = Astro.props;
     {post.data.cover ? (
       <div class:list={['relative overflow-hidden border-b-2 border-base-content/10', featured ? 'h-56 sm:h-72' : 'h-40']}>
         <img
-          src={post.data.cover}
+          src={withBase(post.data.cover)}
           alt=""
           class="h-full w-full object-cover transition duration-500 group-hover:scale-105"
           loading="lazy"
@@ -35,12 +39,14 @@ const { post, featured = false, compact = false } = Astro.props;
         )}
       </div>
     ) : (
-      <div class:list={[
-        'relative overflow-hidden border-b-2 border-base-content/10',
-        featured ? 'h-40 sm:h-52' : compact ? 'h-2' : 'h-3',
-        !compact && 'bg-gradient-to-r from-primary via-secondary to-accent',
-        compact && 'bg-gradient-to-r from-accent via-primary to-secondary',
-      ]}>
+      <div
+        class:list={[
+          'relative overflow-hidden border-b-2 border-base-content/10',
+          featured ? 'h-40 sm:h-52' : compact ? 'h-2' : 'h-3',
+          !compact && 'bg-gradient-to-r from-primary via-secondary to-accent',
+          compact && 'bg-gradient-to-r from-accent via-primary to-secondary',
+        ]}
+      >
         {featured && !post.data.cover && (
           <div class="absolute inset-0 flex items-end p-5">
             <span class="paper-sticker">Lead Story</span>
@@ -58,6 +64,7 @@ const { post, featured = false, compact = false } = Astro.props;
           </span>
         )}
         {post.data.category && <span class="chip-lime">{post.data.category}</span>}
+        {post.data.series && <span class="badge badge-sm border border-secondary/30 bg-secondary/10 font-bold">系列</span>}
       </div>
 
       <h3
@@ -80,6 +87,17 @@ const { post, featured = false, compact = false } = Astro.props;
             <time datetime={post.data.updatedDate.toISOString()}>更新 {formatDate(post.data.updatedDate)}</time>
           )}
         </div>
+
+        <div class="flex flex-wrap items-center gap-1.5 text-xs font-bold text-base-content/55">
+          <span class="badge badge-sm gap-1 border border-base-content/10 bg-base-200/70">
+            <Icon name="clock" class="h-3 w-3" />
+            约 {readingMinutes} 分钟
+          </span>
+          {post.data.difficulty && <span class="badge badge-sm border border-primary/20 bg-primary/10">{post.data.difficulty}</span>}
+          {post.data.hasCode && <span class="badge badge-sm border border-secondary/25 bg-secondary/10">源码</span>}
+          {post.data.hasDownload && <span class="badge badge-sm border border-accent/25 bg-accent/10">下载</span>}
+        </div>
+
         {post.data.tags.length > 0 && (
           <div class="flex flex-wrap gap-1.5">
             {post.data.tags.slice(0, featured ? 6 : 4).map((t) => (

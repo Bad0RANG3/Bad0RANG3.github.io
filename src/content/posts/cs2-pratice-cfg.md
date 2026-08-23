@@ -10,6 +10,12 @@ tags:
 category: 游戏
 featured: false
 draft: false
+verifiedDate: 2026-07-23
+difficulty: 入门
+audience: 需要快速开始 CS2 跑图练习的玩家
+hasDownload: true
+series: CS2 工具与工作流
+seriesOrder: 1
 ---
 
 今天给大家分享一个我精心制作的 CS2 跑图配置文件仓库：[CS2PraticeCFG](https://github.com/Bad0RANG3/CS2PraticeCFG)

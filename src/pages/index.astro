@@ -4,8 +4,11 @@ import PostCard from '../components/blog/PostCard.astro';
 import EmptyState from '../components/ui/EmptyState.astro';
 import Icon from '../components/icons/Icons.astro';
 import { siteConfig } from '../config/site';
-import { getPublishedPosts } from '../lib/content';
+import { getPublishedPosts, getCategoryGroups, getTagGroups, getSeriesGroups } from '../lib/content';
+import { getThoughts } from '../lib/thoughts';
+import { formatDate } from '../lib/date';
 import { LAYOUT, STAGGER, ROUTES } from '../constants';
+import { withBase } from '../lib/urls';
 
 const posts = await getPublishedPosts();
 const featuredPosts = posts.filter((p) => p.data.featured);
@@ -14,6 +17,17 @@ const heroPosts =
     ? featuredPosts.slice(0, LAYOUT.HERO_POSTS_COUNT)
     : posts.slice(0, LAYOUT.HERO_POSTS_COUNT);
 const recentPosts = posts.slice(0, LAYOUT.RECENT_POSTS_COUNT);
+const categoryGroups = await getCategoryGroups();
+const tagGroups = await getTagGroups();
+const seriesGroups = await getSeriesGroups();
+const thoughts = await getThoughts();
+const latestThought = thoughts[0];
+const latestThoughtPreview = latestThought?.body
+  ?.replace(/```[\s\S]*?```/g, '')
+  .replace(/[#>*_`~]/g, '')
+  .replace(/\s+/g, ' ')
+  .trim()
+  .slice(0, 128);
 const { hero, author, about } = siteConfig;
 
 const projectShowcase = [
@@ -89,8 +103,8 @@ const marqueeItems = [
 
     <div class="site-frame-wide">
       <div class="hero-grid">
-        <!-- Left: lyric-first editorial stage -->
-        <div class="relative overflow-hidden rounded-[2rem] border-2 border-base-content/15 bg-base-100/85 shadow-[12px_12px_0_0] shadow-primary/70">
+        <!-- Right: lyric-first editorial stage -->
+        <div class="relative order-1 overflow-hidden rounded-[2rem] border-2 border-base-content/15 bg-base-100/85 shadow-[12px_12px_0_0] shadow-primary/70 lg:order-2">
           <!-- layered paper planes -->
           <div class="pointer-events-none absolute inset-0">
             <div class="absolute -left-10 top-8 h-40 w-40 rotate-12 rounded-[2rem] bg-secondary/70"></div>
@@ -134,15 +148,15 @@ const marqueeItems = [
             </div>
 
             <div class="mt-8 grid gap-3 sm:grid-cols-[1.1fr_0.9fr]">
-              <a href={ROUTES.POSTS} class="btn-brutal w-full">
+              <a href={withBase(ROUTES.POSTS)} class="btn-brutal w-full">
                 <Icon name="book" class="h-4 w-4" />
                 进入文章流
               </a>
               <div class="grid grid-cols-2 gap-3">
-                <a href={ROUTES.TOOLS} class="btn-brutal-outline w-full px-3 text-sm">
+                <a href={withBase(ROUTES.TOOLS)} class="btn-brutal-outline w-full px-3 text-sm">
                   工具台
                 </a>
-                <a href={ROUTES.ABOUT} class="btn-brutal-outline w-full px-3 text-sm">
+                <a href={withBase(ROUTES.ABOUT)} class="btn-brutal-outline w-full px-3 text-sm">
                   关于
                 </a>
               </div>
@@ -159,8 +173,8 @@ const marqueeItems = [
           </div>
         </div>
 
-        <!-- Right: profile dossier -->
-        <div class="flex flex-col gap-4">
+        <!-- Left: profile dossier -->
+        <div class="order-2 flex flex-col gap-4 lg:order-1">
           <div class="hard-card hard-card-citrus relative overflow-hidden rounded-[1.75rem]">
             <!-- portrait stage: full avatar, no crop -->
             <div class="relative border-b-2 border-base-content/10 bg-gradient-to-br from-secondary/50 via-base-100 to-accent/20 px-5 pt-5 pb-4">
@@ -171,7 +185,7 @@ const marqueeItems = [
                 <div class="absolute -inset-2 rotate-[-2deg] rounded-[1.6rem] bg-gradient-to-br from-primary via-secondary to-accent opacity-80"></div>
                 <div class="relative overflow-hidden rounded-[1.35rem] border-2 border-base-content bg-base-100 shadow-[6px_6px_0_0] shadow-base-content">
                   <img
-                    src={author.avatar}
+                    src={withBase(author.avatar)}
                     alt={author.name}
                     width="248"
                     height="248"
@@ -248,7 +262,7 @@ const marqueeItems = [
     <div class="project-rail">
       {projectShowcase.map((project, i) => (
         <a
-          href={project.href}
+          href={withBase(project.href)}
           class:list={[
             'group reveal relative overflow-hidden rounded-[1.75rem] border-2 border-base-content/15 p-6 transition-transform duration-300 hover:-translate-y-1 sm:p-7',
             project.tone === 'coral' && 'bg-gradient-to-br from-primary/15 via-base-100 to-base-100 hard-card',
@@ -283,7 +297,7 @@ const marqueeItems = [
         <p class="eyebrow">Featured</p>
         <h2 class="display-title mt-3 text-4xl sm:text-5xl">精选文章</h2>
       </div>
-      <a href={ROUTES.POSTS} class="link-underline text-sm font-black uppercase tracking-[0.18em]">
+      <a href={withBase(ROUTES.POSTS)} class="link-underline text-sm font-black uppercase tracking-[0.18em]">
         全部文章 →
       </a>
     </div>
@@ -323,12 +337,82 @@ const marqueeItems = [
 
     {posts.length > LAYOUT.RECENT_POSTS_COUNT && (
       <div class="mt-10 text-center reveal" style="--reveal-delay:500ms">
-        <a href={ROUTES.POSTS} class="btn-brutal-outline">
+        <a href={withBase(ROUTES.POSTS)} class="btn-brutal-outline">
           查看全部文章
           <Icon name="chevron-right" class="h-4 w-4" />
         </a>
       </div>
     )}
+  </section>
+
+  <!-- ═══ CONTENT MAP — make the archive feel like a living studio ═══ -->
+  <section id="content-map" class="site-frame pb-12 sm:pb-16">
+    <div class="mb-8 flex flex-col gap-4 sm:mb-10 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <p class="eyebrow">Studio Index</p>
+        <h2 class="display-title mt-3 text-4xl sm:text-5xl">把内容串起来</h2>
+      </div>
+      <a href={withBase(ROUTES.EXPLORE)} class="link-underline text-sm font-black uppercase tracking-[0.18em]">进入探索页 →</a>
+    </div>
+
+    <div class="grid gap-4 lg:grid-cols-[1.08fr_0.92fr]">
+      <div class="hard-card hard-card-teal rounded-[1.75rem] p-6 sm:p-8">
+        <div class="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p class="text-xs font-black uppercase tracking-[0.2em] text-base-content/45">Content signal</p>
+            <h3 class="mt-2 text-2xl font-black tracking-tight sm:text-3xl">这里不只有文章</h3>
+          </div>
+          <span class="paper-sticker rotate-2">INDEX 2026</span>
+        </div>
+
+        <div class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {[
+            { label: '文章', value: posts.length, href: ROUTES.POSTS },
+            { label: '分类', value: categoryGroups.length, href: ROUTES.EXPLORE },
+            { label: '标签', value: tagGroups.length, href: ROUTES.TAGS },
+            { label: '系列', value: seriesGroups.length, href: ROUTES.SERIES },
+          ].map((item, i) => (
+            <a
+              href={withBase(item.href)}
+              class:list={[
+                'rounded-2xl border-2 border-base-content/10 bg-base-100/75 p-4 transition hover:-translate-y-1 hover:border-primary/40',
+                i % 2 === 0 ? 'shadow-[4px_4px_0_0] shadow-primary/35' : 'shadow-[4px_4px_0_0] shadow-accent/35',
+              ]}
+            >
+              <p class="text-[0.65rem] font-black uppercase tracking-[0.16em] text-base-content/45">{item.label}</p>
+              <p class="mt-1 text-3xl font-black tracking-tight text-primary">{String(item.value).padStart(2, '0')}</p>
+            </a>
+          ))}
+        </div>
+
+        <div class="mt-6 flex flex-wrap gap-2">
+          {tagGroups.slice(0, 10).map((group) => (
+            <a href={withBase(`/tags/${encodeURIComponent(group.name)}/`)} class="chip-lime transition hover:-translate-y-0.5">#{group.name}</a>
+          ))}
+        </div>
+      </div>
+
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
+        <a href={withBase(ROUTES.THOUGHTS)} class="hard-card rounded-[1.75rem] p-6 transition hover:-translate-y-1">
+          <div class="flex items-center justify-between gap-3">
+            <p class="eyebrow">Latest thought</p>
+            <span class="text-xs font-black text-base-content/40">{latestThought ? formatDate(latestThought.data.date) : 'soon'}</span>
+          </div>
+          <h3 class="mt-4 text-xl font-black tracking-tight">{latestThought ? '刚刚写下的一点信号' : '碎碎念正在等待更新'}</h3>
+          <p class="mt-3 line-clamp-3 text-sm leading-7 text-base-content/60">
+            {latestThoughtPreview || '把还没整理成文章的想法，先放在这里。短一点、真一点，也是一种记录。'}
+          </p>
+          <span class="mt-5 inline-flex text-xs font-black uppercase tracking-[0.18em] text-primary">打开碎碎念 →</span>
+        </a>
+
+        <a href={withBase(ROUTES.LIBRARY)} class="hard-card hard-card-citrus rounded-[1.75rem] p-6 transition hover:-translate-y-1">
+          <p class="eyebrow">Your shelf</p>
+          <h3 class="mt-4 text-xl font-black tracking-tight">把喜欢的文章留下来</h3>
+          <p class="mt-3 text-sm leading-7 text-base-content/60">收藏、继续阅读、查看进度。这个小书架只存在于你的浏览器里，不需要登录。</p>
+          <span class="mt-5 inline-flex text-xs font-black uppercase tracking-[0.18em] text-primary">打开本地书架 →</span>
+        </a>
+      </div>
+    </div>
   </section>
 
   <!-- ═══ CTA band ═══ -->
@@ -351,7 +435,7 @@ const marqueeItems = [
           </p>
         </div>
         <div class="flex flex-col gap-3 sm:flex-row lg:flex-col">
-          <a href={ROUTES.ABOUT} class="inline-flex items-center justify-center rounded-full border-2 border-base-content bg-secondary px-5 py-3 text-sm font-black text-secondary-content shadow-[5px_5px_0_0] shadow-base-content transition hover:-translate-x-0.5 hover:-translate-y-0.5">
+          <a href={withBase(ROUTES.ABOUT)} class="inline-flex items-center justify-center rounded-full border-2 border-base-content bg-secondary px-5 py-3 text-sm font-black text-secondary-content shadow-[5px_5px_0_0] shadow-base-content transition hover:-translate-x-0.5 hover:-translate-y-0.5">
             关于我
           </a>
           <a href="mailto:badorangeovo@outlook.com" class="inline-flex items-center justify-center rounded-full border-2 border-base-content bg-base-100 px-5 py-3 text-sm font-black text-base-content shadow-[5px_5px_0_0] shadow-base-content transition hover:-translate-x-0.5 hover:-translate-y-0.5">
@@ -362,3 +446,4 @@ const marqueeItems = [
     </div>
   </section>
 </BaseLayout>
+

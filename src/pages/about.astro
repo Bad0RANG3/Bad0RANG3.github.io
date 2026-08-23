@@ -1,4 +1,5 @@
 ---
+import { withBase } from '../lib/urls';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import SectionHeader from '../components/ui/SectionHeader.astro';
 import { siteConfig } from '../config/site';
@@ -23,22 +24,22 @@ const skillIconId: Record<string, string> = {
 };
 const getIconUrl = (n: string) => {
   const id = skillIconId[n]; if (!id) return null;
-  return id.startsWith('/') ? id : `/icons/skills/${id}.svg`;
+  return withBase(id.startsWith('/') ? id : `/icons/skills/${id}.svg`);
 };
 
 const statusLines = about.currentStatus.split('\n');
 ---
 
 <BaseLayout title="关于" description="了解博主和常用技术栈。">
-  <div class="site-frame space-y-6 py-5 sm:py-8">
-    <section class="reveal relative overflow-hidden rounded-[2rem] border-2 border-base-content/12 bg-base-100/80 p-6 shadow-hard sm:p-8">
+  <div class="about-page site-frame min-w-0 space-y-6 py-5 sm:py-8">
+    <section class="reveal relative overflow-hidden rounded-[2rem] border-2 dark-soft-border-strong bg-base-100/80 p-6 shadow-hard sm:p-8">
       <div class="pointer-events-none absolute -right-10 top-0 h-40 w-40 rounded-full bg-primary/20 blur-3xl"></div>
       <div class="pointer-events-none absolute bottom-0 left-10 h-32 w-32 rounded-full bg-secondary/40 blur-3xl"></div>
 
       <div class="relative grid gap-8 lg:grid-cols-[auto_1fr] lg:items-center">
         <div class="relative mx-auto lg:mx-0">
           <div class="absolute -inset-2 rotate-3 rounded-[1.75rem] bg-gradient-to-br from-primary via-secondary to-accent opacity-80"></div>
-          <img class="relative h-28 w-28 rounded-[1.5rem] border-2 border-base-content object-cover shadow-xl sm:h-36 sm:w-36" src={author.avatar} alt={author.name} width="144" height="144" loading="eager" />
+          <img class="relative h-28 w-28 rounded-[1.5rem] border-2 dark-soft-border-strong object-cover shadow-xl sm:h-36 sm:w-36" src={withBase(author.avatar)} alt={author.name} width="144" height="144" loading="eager" />
         </div>
         <div class="text-center lg:text-left">
           <p class="eyebrow justify-center lg:justify-start">About</p>
@@ -57,9 +58,9 @@ const statusLines = about.currentStatus.split('\n');
         <SectionHeader label="Online" title="社交坐标" />
         <div class="grid gap-3 sm:grid-cols-2">
           {socialCards.map((s, i) => (
-            <a href={s.url} target="_blank" rel="noopener noreferrer" style={`--reveal-delay:${i * 45}ms`} class="reveal group flex items-center gap-3 rounded-2xl border-2 border-base-content/10 bg-base-100/70 p-4 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:bg-primary/10">
-              <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border-2 border-base-content/10 bg-base-200 transition-transform duration-300 group-hover:scale-110">
-                {s.iconSrc ? <img src={s.iconSrc} alt={s.name} class="h-6 w-6" loading="lazy" /> : <span class="text-xl">?</span>}
+            <a href={s.url} target="_blank" rel="noopener noreferrer" style={`--reveal-delay:${i * 45}ms`} class="reveal group flex items-center gap-3 rounded-2xl border-2 dark-soft-border bg-base-100/70 p-4 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:bg-primary/10">
+              <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border-2 dark-soft-border bg-base-200 transition-transform duration-300 group-hover:scale-110">
+                {s.iconSrc ? <img src={withBase(s.iconSrc)} alt={s.name} class="h-6 w-6" loading="lazy" /> : <span class="text-xl">?</span>}
               </span>
               <div>
                 <p class="font-bold">{s.name}</p>
@@ -72,7 +73,7 @@ const statusLines = about.currentStatus.split('\n');
 
       <section class="reveal hard-card hard-card-citrus rounded-[1.75rem] p-6 sm:p-8">
         <SectionHeader label="Now" title="当前状态" />
-        <div class="mockup-code overflow-x-auto border-2 border-base-content/10 bg-base-100/80">
+        <div class="mockup-code overflow-x-auto border-2 dark-soft-border bg-base-100/80">
           {statusLines.map((l, i) => <pre data-prefix={i + 1}><code>{l || ' '}</code></pre>)}
         </div>
       </section>
@@ -86,7 +87,7 @@ const statusLines = about.currentStatus.split('\n');
             const u = getIconUrl(t.name);
             return (
               <div style={`--reveal-delay:${i * 40}ms`}>
-                <a href={t.url} target="_blank" rel="noopener noreferrer" class="reveal group flex items-center gap-3 rounded-xl border-2 border-base-content/10 bg-base-100/70 p-3 transition-all hover:border-secondary/50 hover:bg-secondary/20">
+                <a href={t.url} target="_blank" rel="noopener noreferrer" class="reveal group flex items-center gap-3 rounded-xl border-2 dark-soft-border bg-base-100/70 p-3 transition-all hover:border-secondary/50 hover:bg-secondary/20">
                   <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-base-200">
                     {u ? <img src={u} alt="" class="h-5 w-5" loading="lazy" /> : <span class="text-xs font-black">{t.name.slice(0,2)}</span>}
                   </span>
@@ -105,7 +106,7 @@ const statusLines = about.currentStatus.split('\n');
             const u = getIconUrl(t.name);
             return (
               <div style={`--reveal-delay:${i * 40}ms`}>
-                <a href={t.url} target="_blank" rel="noopener noreferrer" class="reveal group flex items-center gap-3 rounded-xl border-2 border-base-content/10 bg-base-100/70 p-3 transition-all hover:border-accent/40 hover:bg-accent/10">
+                <a href={t.url} target="_blank" rel="noopener noreferrer" class="reveal group flex items-center gap-3 rounded-xl border-2 dark-soft-border bg-base-100/70 p-3 transition-all hover:border-accent/40 hover:bg-accent/10">
                   <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-base-200">
                     {u ? <img src={u} alt="" class="h-5 w-5" loading="lazy" /> : <span class="text-xs font-black">{t.name.slice(0,2)}</span>}
                   </span>
@@ -122,7 +123,7 @@ const statusLines = about.currentStatus.split('\n');
       <SectionHeader label="Quotes" title="语录" />
       <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {about.quotes.map((q, i) => (
-          <div style={`--reveal-delay:${i * 55}ms`} class="reveal rounded-2xl border-2 border-base-content/10 bg-gradient-to-br from-primary/10 via-base-100 to-secondary/30 p-5 shadow-[6px_6px_0_0] shadow-accent/25">
+          <div style={`--reveal-delay:${i * 55}ms`} class="reveal rounded-2xl border-2 dark-soft-border bg-gradient-to-br from-primary/10 via-base-100 to-secondary/30 p-5 shadow-[6px_6px_0_0] shadow-accent/25">
             <p class="text-sm font-medium italic leading-7 text-base-content/75">{q}</p>
           </div>
         ))}

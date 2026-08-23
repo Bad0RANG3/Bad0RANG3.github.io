@@ -12,6 +12,10 @@ tags:
 category: 项目
 featured: true
 draft: false
+verifiedDate: 2026-07-16
+difficulty: 进阶
+audience: 想搭建自托管排队系统的开发者或场馆运营者
+hasCode: true
 ---
 
 > 想让顾客知道哪台机空着、什么时候轮到自己，又不想靠纸条和喊人维持队伍？VirtualWait 就是为这个场景做的。

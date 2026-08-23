@@ -7,6 +7,9 @@ tags:
 category: 教程
 featured: false
 draft: false
+verifiedDate: 2026-07-02
+difficulty: 中等
+audience: 想从 Windows 开始尝试 Linux 的用户
 ---
 
 # CachyOS + Windows 11 双系统 + DMS + Niri 桌面环境 完全指南

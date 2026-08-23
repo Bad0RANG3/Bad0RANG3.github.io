@@ -11,6 +11,10 @@ tags:
 category: 项目
 featured: false
 draft: false
+verifiedDate: 2026-06-24
+difficulty: 中等
+audience: Windows 下玩格斗游戏或 FPS 的键盘用户
+hasCode: true
 ---
 
 > 为什么格斗选手都在用 Hitbox？因为他们有 SOCD 芯片。而你的键盘，也可以有。

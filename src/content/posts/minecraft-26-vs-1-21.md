@@ -11,6 +11,9 @@ tags:
 category: 游戏
 featured: false
 draft: false
+verifiedDate: 2026-07-27
+difficulty: 进阶
+audience: Minecraft 数据包与命令作者
 ---
 
 ## 前言
@@ -27,7 +30,7 @@ Minecraft 从 1.21 到 26.2，横跨了二十多个大版本。如果你是从 1
 
 在 1.21 及更早版本中，给物品附加属性靠的是 NBT（Named Binary Tag）：
 
-```mcfunction
+```text
 /give @p netherite_sword{display:{Name:'{"text":"断罪之刃","color":"dark_red"}'},Enchantments:[{id:"minecraft:sharpness",lvl:255}]}
 ```
 
@@ -37,7 +40,7 @@ Minecraft 从 1.21 到 26.2，横跨了二十多个大版本。如果你是从 1
 
 26.x 彻底废弃了旧 NBT 格式，全面转向**物品组件（Item Components）**：
 
-```mcfunction
+```text
 /give @p netherite_sword[
   minecraft:custom_name={text:"断罪之刃",color:"dark_red",bold:true},
   minecraft:lore=[{text:"裁决万物之罪",color:"red",italic:false}],
@@ -72,7 +75,7 @@ Minecraft 从 1.21 到 26.2，横跨了二十多个大版本。如果你是从 1
 
 1.21 引入了 Mace（重锤）作为试炼密室奖励，26.2 进一步扩展了它的附魔池：
 
-```mcfunction
+```text
 /give @p mace[
   minecraft:custom_name={text:"天罚之锤",color:"dark_purple",bold:true},
   minecraft:lore=[{text:"从天而降的审判",color:"gold",italic:false}],
@@ -97,7 +100,7 @@ Minecraft 从 1.21 到 26.2，横跨了二十多个大版本。如果你是从 1
 
 长矛是 26.x 新增的武器类型，介于剑和三叉戟之间：
 
-```mcfunction
+```text
 /give @p netherite_spear[
   minecraft:custom_name={text:"✧ 贯穿星辰 ✧",color:"light_purple",bold:true},
   minecraft:lore=[{text:"一击贯穿永恒",color:"dark_purple",italic:false}],
@@ -121,7 +124,7 @@ Minecraft 从 1.21 到 26.2，横跨了二十多个大版本。如果你是从 1
 
 1.21 中，大多数附魔的上限是 V（5 级）。26.2 在 `/give` 命令层面**移除了所有附魔上限**：
 
-```mcfunction
+```text
 // 26.2：这是合法的
 "minecraft:sharpness":255,
 "minecraft:protection":255,
@@ -134,7 +137,7 @@ Minecraft 从 1.21 到 26.2，横跨了二十多个大版本。如果你是从 1
 
 1.21 禁止 Sharpness / Smite / Bane of Arthropods 共存。26.2 在命令层面**解除了互斥限制**：
 
-```mcfunction
+```text
 /give @p netherite_sword[
   minecraft:enchantments={
     "minecraft:sharpness":255,
@@ -167,7 +170,7 @@ Minecraft 从 1.21 到 26.2，横跨了二十多个大版本。如果你是从 1
 
 ### 1.21
 
-```mcfunction
+```text
 display:{Name:'{"text":"剑","color":"red","bold":true}'}
 ```
 
@@ -175,7 +178,7 @@ display:{Name:'{"text":"剑","color":"red","bold":true}'}
 
 ### 26.2
 
-```mcfunction
+```text
 minecraft:custom_name={text:"剑",color:"red",bold:true,obfuscated:true}
 ```
 
@@ -189,7 +192,7 @@ execute 是 Minecraft 命令体系的脊梁骨——几乎所有高级机制都�
 
 ### 1.21 的 execute
 
-```mcfunction
+```text
 ## 经典子命令链
 execute as @a at @s if block ~ ~-1 ~ grass_block run say 我站在草地上
 
@@ -204,7 +207,7 @@ execute positioned 0 64 0 align xyz run setblock ~ ~ ~ stone
 
 ### 26.2 新增的子命令
 
-```mcfunction
+```text
 ## 相机控制：电影级过场动画
 execute as @a[tag=cinematic] at @s camera lerp 3s ease-in-out facing entity @e[type=warden,limit=1]
 
@@ -234,7 +237,7 @@ execute if dimension minecraft:the_nether unless predicate safe_zone run damage 
 
 1.21 的 `/item` 只负责「移动物品」，想修改物品属性？请走 `/data`：
 
-```mcfunction
+```text
 ## 1.21：先给物品，再用 /data 改 NBT（分两步）
 /item replace entity @p weapon.mainhand with netherite_sword
 /data merge entity @p SelectedItem{tag:{Enchantments:[{id:"minecraft:sharpness",lvl:10}]}}
@@ -242,7 +245,7 @@ execute if dimension minecraft:the_nether unless predicate safe_zone run damage 
 
 26.2 的 `/item` 一步到位：
 
-```mcfunction
+```text
 ## 26.2：/item 直接支持组件
 /item replace entity @p weapon.mainhand with netherite_sword[
   minecraft:enchantments={"minecraft:sharpness":10},
@@ -281,7 +284,7 @@ Display Entity（`item_display`、`block_display`、`text_display`）在 1.19.4 
 
 ### 三种 Display Entity 的 26.2 新能力
 
-```mcfunction
+```text
 ## text_display：完整的 JSON 文本组件 + 背景渲染
 summon minecraft:text_display ~ ~1 ~ {
   text: {text:"第 1 关",color:"gold",bold:true},
@@ -326,12 +329,12 @@ Minecraft 1.20.2 引入了函数宏（Function Macro），让数据包函数不�
 
 ### 1.21 的 Macro
 
-```mcfunction
+```text
 ## 文件：give_tool.mcfunction
 ## $item=$(tool)  $enchant=$(ench)
 give @p $(tool){Enchantments:[{id:"$(ench)",lvl:5}]}
 ```
-```mcfunction
+```text
 ## 调用时传参
 function give_tool {tool:"minecraft:netherite_sword", ench:"minecraft:sharpness"}
 ```
@@ -340,13 +343,13 @@ function give_tool {tool:"minecraft:netherite_sword", ench:"minecraft:sharpness"
 
 ### 26.2 的 Macro 增强
 
-```mcfunction
+```text
 ## 文件：give_enchant_set.mcfunction
 ## $(weapon) 直接接受组件格式参数
 ## $(enchants) 接受 JSON 对象
 $give @p minecraft:$(weapon)[minecraft:enchantments=$(enchants)]
 ```
-```mcfunction
+```text
 ## 调用：传数组、传对象、传组件
 function give_enchant_set {
   weapon: "netherite_sword",
@@ -443,7 +446,7 @@ function give_enchant_set {
 <details>
 <summary>🪖 幽夜冠冕（头盔）</summary>
 
-```mcfunction
+```text
 /give @p netherite_helmet[minecraft:custom_name={text:"✦ 幽夜冠冕 ✦",color:"light_purple",bold:true}, minecraft:lore=[{text:"承载星尘的意志",color:"gold",italic:false}], minecraft:enchantments={"minecraft:protection":255,"minecraft:blast_protection":255,"minecraft:fire_protection":255,"minecraft:projectile_protection":255,"minecraft:respiration":255,"minecraft:aqua_affinity":255,"minecraft:thorns":5,"minecraft:unbreaking":255,"minecraft:mending":255}, minecraft:unbreakable={}]
 ```
 </details>
@@ -451,7 +454,7 @@ function give_enchant_set {
 <details>
 <summary>🛡️ 霜寒甲胄（胸甲）</summary>
 
-```mcfunction
+```text
 /give @p netherite_chestplate[minecraft:custom_name={text:"❄ 霜寒甲胄 ❄",color:"dark_aqua",bold:true}, minecraft:lore=[{text:"千年寒铁所铸",color:"aqua",italic:false}], minecraft:enchantments={"minecraft:protection":255,"minecraft:blast_protection":255,"minecraft:fire_protection":255,"minecraft:projectile_protection":255,"minecraft:thorns":5,"minecraft:unbreaking":255,"minecraft:mending":255}, minecraft:unbreakable={}]
 ```
 </details>
@@ -459,7 +462,7 @@ function give_enchant_set {
 <details>
 <summary>👖 影舞胫甲（护腿）</summary>
 
-```mcfunction
+```text
 /give @p netherite_leggings[minecraft:custom_name={text:"◇ 影舞胫甲 ◇",color:"light_purple",bold:true}, minecraft:lore=[{text:"踏碎虚空的残影",color:"dark_purple",italic:false}], minecraft:enchantments={"minecraft:protection":255,"minecraft:blast_protection":255,"minecraft:fire_protection":255,"minecraft:projectile_protection":255,"minecraft:thorns":5,"minecraft:unbreaking":255,"minecraft:mending":255}, minecraft:unbreakable={}]
 ```
 </details>
@@ -467,7 +470,7 @@ function give_enchant_set {
 <details>
 <summary>👢 流光飞靴（靴子）</summary>
 
-```mcfunction
+```text
 /give @p netherite_boots[minecraft:custom_name={text:"♪ 流光飞靴 ♪",color:"yellow",bold:true}, minecraft:lore=[{text:"步履所至皆为通途",color:"gold",italic:false}], minecraft:enchantments={"minecraft:protection":255,"minecraft:blast_protection":255,"minecraft:fire_protection":255,"minecraft:projectile_protection":255,"minecraft:thorns":5,"minecraft:depth_strider":255,"minecraft:soul_speed":3,"minecraft:feather_falling":255,"minecraft:unbreaking":255,"minecraft:mending":255}, minecraft:unbreakable={}]
 ```
 </details>
@@ -475,7 +478,7 @@ function give_enchant_set {
 <details>
 <summary>⚔️ 断罪之刃（剑）</summary>
 
-```mcfunction
+```text
 /give @p netherite_sword[minecraft:custom_name={text:"「断罪之刃」",color:"dark_red",bold:true}, minecraft:lore=[{text:"裁决万物之罪",color:"red",italic:false}], minecraft:enchantments={"minecraft:sharpness":255,"minecraft:smite":255,"minecraft:bane_of_arthropods":255,"minecraft:knockback":3,"minecraft:fire_aspect":5,"minecraft:looting":5,"minecraft:sweeping_edge":255,"minecraft:unbreaking":255,"minecraft:mending":255}, minecraft:unbreakable={}]
 ```
 </details>
@@ -483,7 +486,7 @@ function give_enchant_set {
 <details>
 <summary>🪓 开天巨斧（斧）</summary>
 
-```mcfunction
+```text
 /give @p netherite_axe[minecraft:custom_name={text:"★ 开天巨斧 ★",color:"gold",bold:true}, minecraft:lore=[{text:"劈开混沌的第一道光",color:"orange",italic:false}], minecraft:enchantments={"minecraft:sharpness":255,"minecraft:smite":255,"minecraft:bane_of_arthropods":255,"minecraft:efficiency":255,"minecraft:fortune":5,"minecraft:knockback":3,"minecraft:fire_aspect":5,"minecraft:looting":5,"minecraft:unbreaking":255,"minecraft:mending":255}, minecraft:unbreakable={}]
 ```
 </details>
@@ -491,7 +494,7 @@ function give_enchant_set {
 <details>
 <summary>🗡️ 贯穿星辰（长矛）</summary>
 
-```mcfunction
+```text
 /give @p netherite_spear[minecraft:custom_name={text:"✧ 贯穿星辰 ✧",color:"light_purple",bold:true}, minecraft:lore=[{text:"一击贯穿永恒",color:"dark_purple",italic:false}], minecraft:enchantments={"minecraft:sharpness":255,"minecraft:smite":255,"minecraft:bane_of_arthropods":255,"minecraft:lunge":5,"minecraft:knockback":3,"minecraft:fire_aspect":5,"minecraft:looting":5,"minecraft:unbreaking":255,"minecraft:mending":255}, minecraft:unbreakable={}]
 ```
 </details>
@@ -499,7 +502,7 @@ function give_enchant_set {
 <details>
 <summary>🔱 海神戟（三叉戟）</summary>
 
-```mcfunction
+```text
 /give @p trident[minecraft:custom_name={text:"〜 海神戟 〜",color:"dark_aqua",bold:true}, minecraft:lore=[{text:"号令四海之潮",color:"aqua",italic:false}], minecraft:enchantments={"minecraft:sharpness":255,"minecraft:impaling":255,"minecraft:loyalty":5,"minecraft:riptide":5,"minecraft:channeling":255,"minecraft:knockback":3,"minecraft:fire_aspect":5,"minecraft:looting":5,"minecraft:unbreaking":255,"minecraft:mending":255}, minecraft:unbreakable={}]
 ```
 </details>
@@ -507,7 +510,7 @@ function give_enchant_set {
 <details>
 <summary>⛏️ 地核穿梭者（镐）</summary>
 
-```mcfunction
+```text
 /give @p netherite_pickaxe[minecraft:custom_name={text:"◆ 地核穿梭者 ◆",color:"dark_gray",bold:true}, minecraft:lore=[{text:"深入大地的脉搏",color:"green",italic:false}], minecraft:enchantments={"minecraft:efficiency":255,"minecraft:fortune":5,"minecraft:sharpness":255,"minecraft:knockback":3,"minecraft:unbreaking":255,"minecraft:mending":255}, minecraft:unbreakable={}]
 ```
 </details>
@@ -515,7 +518,7 @@ function give_enchant_set {
 <details>
 <summary>🔧 移山者（铲）</summary>
 
-```mcfunction
+```text
 /give @p netherite_shovel[minecraft:custom_name={text:"☆ 移山者 ☆",color:"green",bold:true}, minecraft:lore=[{text:"一铲改变地貌",color:"dark_green",italic:false}], minecraft:enchantments={"minecraft:efficiency":255,"minecraft:fortune":5,"minecraft:sharpness":255,"minecraft:knockback":3,"minecraft:fire_aspect":5,"minecraft:looting":5,"minecraft:unbreaking":255,"minecraft:mending":255}, minecraft:unbreakable={}]
 ```
 </details>
@@ -523,7 +526,7 @@ function give_enchant_set {
 <details>
 <summary>🌱 生命之锄（锄头）</summary>
 
-```mcfunction
+```text
 /give @p netherite_hoe[minecraft:custom_name={text:"✿ 生命之锄 ✿",color:"dark_green",bold:true}, minecraft:lore=[{text:"唤醒沉睡的种子",color:"gold",italic:false}], minecraft:enchantments={"minecraft:efficiency":255,"minecraft:fortune":5,"minecraft:sharpness":255,"minecraft:knockback":3,"minecraft:fire_aspect":5,"minecraft:looting":5,"minecraft:unbreaking":255,"minecraft:mending":255}, minecraft:unbreakable={}]
 ```
 </details>
@@ -531,7 +534,7 @@ function give_enchant_set {
 <details>
 <summary>🏹 落日长弓（弓）</summary>
 
-```mcfunction
+```text
 /give @p bow[minecraft:custom_name={text:"☀ 落日长弓 ☀",color:"gold",bold:true}, minecraft:lore=[{text:"一箭落日，余晖尽散",color:"red",italic:false}], minecraft:enchantments={"minecraft:power":255,"minecraft:punch":3,"minecraft:flame":5,"minecraft:infinity":255,"minecraft:unbreaking":255,"minecraft:mending":255}, minecraft:unbreakable={}]
 ```
 </details>
@@ -539,7 +542,7 @@ function give_enchant_set {
 <details>
 <summary>🏹 千机连弩（弩）</summary>
 
-```mcfunction
+```text
 /give @p crossbow[minecraft:custom_name={text:"◈ 千机连弩 ◈",color:"aqua",bold:true}, minecraft:lore=[{text:"万箭齐发，无人可挡",color:"dark_aqua",italic:false}], minecraft:enchantments={"minecraft:quick_charge":5,"minecraft:multishot":255,"minecraft:piercing":255,"minecraft:unbreaking":255,"minecraft:mending":255}, minecraft:unbreakable={}]
 ```
 </details>
@@ -547,7 +550,7 @@ function give_enchant_set {
 <details>
 <summary>🛡️ 不灭之壁（盾牌）</summary>
 
-```mcfunction
+```text
 /give @p shield[minecraft:custom_name={text:"「不灭之壁」",color:"gray",bold:true}, minecraft:lore=[{text:"绝对防御的化身",color:"gold",italic:false}], minecraft:enchantments={"minecraft:unbreaking":255,"minecraft:mending":255}, minecraft:unbreakable={}]
 ```
 </details>
@@ -555,7 +558,7 @@ function give_enchant_set {
 <details>
 <summary>🔨 天罚之锤（Mace）</summary>
 
-```mcfunction
+```text
 /give @p mace[minecraft:custom_name={text:"⚡ 天罚之锤 ⚡",color:"light_purple",bold:true}, minecraft:lore=[{text:"从天而降的审判",color:"gold",italic:false}], minecraft:enchantments={"minecraft:sharpness":255,"minecraft:smite":255,"minecraft:bane_of_arthropods":255,"minecraft:knockback":3,"minecraft:fire_aspect":5,"minecraft:looting":5,"minecraft:unbreaking":255,"minecraft:mending":255}, minecraft:unbreakable={}]
 ```
 </details>

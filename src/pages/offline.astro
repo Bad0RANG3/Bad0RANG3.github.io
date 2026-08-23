@@ -1,0 +1,22 @@
+---
+import { withBase } from '../lib/urls';
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="暂时离线" description="网络不可用时的本地离线提示页面" noindex>
+  <div class="site-frame flex min-h-[65vh] items-center justify-center py-12">
+    <section class="hard-card w-full max-w-2xl rounded-[2rem] p-8 sm:p-12" aria-labelledby="offline-title">
+      <p class="eyebrow">Bad0RANG3's Studio · Offline mode</p>
+      <h1 id="offline-title" class="display-title mt-4 text-5xl sm:text-7xl">暂时离线</h1>
+      <p class="mt-6 max-w-xl text-base leading-8 text-base-content/70">
+        当前网络不可用。已经缓存的页面仍然可以访问；网络恢复后，重新加载即可继续浏览。
+      </p>
+      <div class="mt-8 flex flex-wrap gap-3">
+        <button class="btn-brutal" type="button" onclick="location.reload()">重新加载</button>
+        <a class="btn btn-outline rounded-full border-2" href={withBase('/')}>返回首页</a>
+        <a class="btn btn-outline rounded-full border-2" href={withBase('/posts/')}>查看文章</a>
+      </div>
+      <p class="mt-8 text-sm text-base-content/50">数据只使用浏览器缓存，不会发送额外的统计请求。</p>
+    </section>
+  </div>
+</BaseLayout>

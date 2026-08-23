@@ -2,8 +2,6 @@
    PAPER PUNCH — cream editorial design system
    Coral vermillion · Yuzu citrus · Electric teal
    ================================================================= */
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -52,11 +50,11 @@
    ================================================================= */
 [data-theme="paper-dark"] {
   color-scheme: dark;
-  --color-ink: oklch(94% 0.02 85);
+  --color-ink: oklch(76% 0.02 85);
   --color-base-100: oklch(18% 0.02 60);
   --color-base-200: oklch(22% 0.022 58);
   --color-base-300: oklch(28% 0.024 55);
-  --color-base-content: oklch(94% 0.018 85);
+  --color-base-content: oklch(80% 0.018 85);
   --color-primary: oklch(72% 0.19 35);
   --color-primary-content: oklch(18% 0.03 50);
   --color-secondary: oklch(88% 0.16 98);
@@ -64,7 +62,7 @@
   --color-accent: oklch(78% 0.12 195);
   --color-accent-content: oklch(16% 0.03 200);
   --color-neutral: oklch(30% 0.02 55);
-  --color-neutral-content: oklch(94% 0.015 85);
+  --color-neutral-content: oklch(80% 0.015 85);
   --color-info: oklch(74% 0.11 220);
   --color-info-content: oklch(18% 0.03 220);
   --color-success: oklch(76% 0.14 150);
@@ -132,13 +130,16 @@
     color: var(--color-base-content);
   }
 
-  /* Keep page layers above the paper grain, but never force fixed UI into flow */
+  /* Keep document layers above the paper grain. Fixed controls manage their own positioning. */
   body > header,
   body > main,
-  body > footer,
-  body > #back-to-top {
+  body > footer {
     position: relative;
     z-index: 1;
+  }
+
+  body > #back-to-top {
+    z-index: 50;
   }
 
   ::selection {
@@ -179,6 +180,55 @@
 .site-frame-wide {
   width: min(100% - 1.5rem, 80rem);
   margin-inline: auto;
+}
+
+/* About page: let cards and their inner grids shrink with the viewport. */
+.about-page,
+.about-page > *,
+.about-page .grid > *,
+.about-page .relative.grid > *,
+.about-page a,
+.about-page .mockup-code,
+.about-page .mockup-code pre {
+  min-width: 0;
+}
+.about-page .mockup-code {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.about-page .mockup-code pre {
+  width: max-content;
+  min-width: 100%;
+  max-width: none;
+}
+.about-page a > :where(div, span:last-child) {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 639px) {
+  .about-page {
+    /* Keep the normal 1rem gutter so hard-card shadows also stay on-screen. */
+    width: min(calc(100% - 2rem), 72rem);
+  }
+  .about-page > section,
+  .about-page .grid > section {
+    min-width: 0;
+    padding-inline: 1rem;
+  }
+  .about-page .display-title {
+    max-width: 100%;
+    font-size: clamp(2rem, 12vw, 3rem);
+    overflow-wrap: anywhere;
+  }
+  .about-page .chip-lime {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    text-align: center;
+  }
 }
 
 main#main-content {
@@ -287,6 +337,35 @@ html[data-theme="paper-dark"] .panel-slice {
   background:
     linear-gradient(140deg, color-mix(in oklab, var(--color-primary) 10%, transparent), transparent 46%),
     color-mix(in oklab, var(--color-base-200) 88%, black);
+}
+
+/* Dark mode uses charcoal borders instead of high-contrast white rules. */
+html[data-theme="paper-dark"] [class~="border-base-content"] {
+  border-color: color-mix(in oklab, var(--color-base-content) 22%, transparent);
+}
+html[data-theme="paper-dark"] [class*="border-base-content/"] {
+  border-color: color-mix(in oklab, var(--color-base-content) 12%, transparent);
+}
+html[data-theme="paper-dark"] [class~="shadow-base-content"] {
+  --tw-shadow-color: color-mix(in oklab, var(--color-base-content) 28%, transparent);
+}
+html[data-theme="paper-dark"] .hard-card,
+html[data-theme="paper-dark"] .panel-slice {
+  border-color: color-mix(in oklab, var(--color-base-content) 12%, transparent);
+}
+html[data-theme="paper-dark"] .hard-card:hover {
+  border-color: color-mix(in oklab, var(--color-base-content) 20%, transparent);
+}
+
+/* Utility for dense sections such as the About page: keep borders visible, but never white-hot. */
+html[data-theme="paper-dark"] .dark-soft-border {
+  border-color: color-mix(in oklab, var(--color-base-content) 7%, transparent) !important;
+}
+html[data-theme="paper-dark"] .dark-soft-border-strong {
+  border-color: color-mix(in oklab, var(--color-base-content) 16%, transparent) !important;
+}
+html[data-theme="paper-dark"] .mockup-code {
+  border-color: color-mix(in oklab, var(--color-base-content) 8%, transparent) !important;
 }
 
 .hard-card-citrus {
@@ -483,7 +562,7 @@ html[data-theme="paper-dark"] .marquee-band {
 }
 @media (min-width: 1024px) {
   .hero-grid {
-    grid-template-columns: 1.35fr 0.95fr;
+    grid-template-columns: 0.95fr 1.35fr;
     gap: 1.5rem;
     align-items: stretch;
   }
@@ -684,7 +763,7 @@ html[data-theme="paper-dark"] .prose :where(code):not(:where(pre *)) {
 
 .lyric-en {
   font-style: italic;
-  font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 0.92em;
   font-weight: 500;
   color: var(--color-base-content);
@@ -711,9 +790,16 @@ html[data-theme="paper-dark"] .lyric-block:hover {
   background: color-mix(in oklab, var(--color-accent) 14%, var(--color-base-200));
 }
 /* =================================================================
-   MOBILE TABLE / OVERFLOW FIXES
+   TABLE / OVERFLOW FIXES
    ================================================================= */
-.prose .table-wrapper { position: relative; }
+.prose .table-wrapper {
+  position: relative;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+}
 .prose .table-wrapper::after {
   content: '← 滑动查看 →';
   display: block;
@@ -725,30 +811,25 @@ html[data-theme="paper-dark"] .lyric-block:hover {
 @media (min-width: 768px) {
   .prose .table-wrapper::after { content: none; }
 }
+.prose .table-wrapper :where(table) {
+  display: table;
+  width: max-content;
+  min-width: 100%;
+  table-layout: auto;
+}
+.prose .table-wrapper :where(thead, tbody, tfoot, tr, th, td) {
+  background: transparent !important;
+}
+.prose .table-wrapper :where(th) {
+  white-space: nowrap;
+}
+.prose > :where(table) {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
 @media (max-width: 767px) {
-  .prose .table-wrapper {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior-x: contain;
-    scrollbar-width: thin;
-  }
-  .prose .table-wrapper :where(table) {
-    display: table;
-    min-width: max(100%, 34rem);
-  }
-  .prose .table-wrapper :where(th:first-child),
-  .prose .table-wrapper :where(td:first-child) {
-    position: sticky;
-    left: 0;
-    z-index: 5;
-    background: var(--color-base-100);
-  }
-  .prose > :where(table) {
-    display: block;
-    width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
   .prose :where(pre) {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
@@ -850,3 +931,23 @@ html[data-theme="paper-dark"] .lyric-block:hover {
 }
 html[data-theme="paper-dark"] #theme-toggle .theme-icon-sun { display: none; }
 html:not([data-theme="paper-dark"]) #theme-toggle .theme-icon-moon { display: none; }
+
+/* Article reading experience */
+.reading-progress { position: fixed; inset: 0 auto auto 0; z-index: 70; width: 100%; height: 4px; background: linear-gradient(90deg, var(--color-primary), var(--color-secondary), var(--color-accent)); transform: scaleX(0); transform-origin: left; pointer-events: none; }
+.article-layout { min-width: 0; }
+.article-toc { display: none; }
+@media (min-width: 1100px) {
+  .article-layout.has-toc { display: grid; grid-template-columns: minmax(0, 1fr) 13rem; gap: 3rem; direction: rtl; }
+  .article-layout.has-toc > * { direction: ltr; }
+  .article-layout.has-toc > .article-toc { display: block; grid-column: 2; grid-row: 1; position: sticky; top: 5.5rem; align-self: start; max-height: calc(100vh - 7rem); overflow: auto; }
+  .article-layout.has-toc > .prose { grid-column: 1; grid-row: 1; }
+}
+.article-toc a { display: block; border-left: 2px solid color-mix(in oklab, var(--color-base-content) 12%, transparent); padding-left: .65rem; color: color-mix(in oklab, var(--color-base-content) 55%, transparent); font-size: .78rem; line-height: 1.4; }
+.article-toc a:hover, .article-toc a.is-active { border-color: var(--color-primary); color: var(--color-primary); }
+.article-tools { display: inline-flex; align-items: center; gap: .25rem; }
+.code-copy { position: absolute; top: .65rem; right: .65rem; border: 1px solid color-mix(in oklab, var(--color-base-content) 25%, transparent); border-radius: .5rem; padding: .25rem .5rem; background: color-mix(in oklab, var(--color-base-100) 15%, transparent); color: inherit; font-size: .7rem; cursor: pointer; }
+.prose pre { position: relative; }
+.image-lightbox { max-width: min(95vw, 1200px); max-height: 95vh; padding: 0; border: 0; background: transparent; }
+.image-lightbox::backdrop { background: rgb(0 0 0 / .8); }
+.image-lightbox img { max-width: 95vw; max-height: 90vh; object-fit: contain; border-radius: 1rem; }
+.image-lightbox-close { position: absolute; top: -.75rem; right: -.75rem; z-index: 1; width: 2rem; height: 2rem; border-radius: 999px; border: 2px solid white; background: black; color: white; font-size: 1.25rem; line-height: 1; cursor: pointer; }

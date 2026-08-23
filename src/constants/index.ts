@@ -34,17 +34,25 @@ export const STAGGER = {
 export const ROUTES = {
   HOME: '/',
   POSTS: '/posts',
+  PROJECTS: '/projects',
   THOUGHTS: '/thoughts',
   TOOLS: '/tools',
   ARCHIVE: '/archive',
   ABOUT: '/about',
   TAGS: '/tags',
+  SERIES: '/series',
+  EXPLORE: '/explore',
+  LIBRARY: '/library',
+  PRIVACY: '/privacy',
+  SEARCH_INDEX: '/search-index.json',
   RSS: '/rss.xml',
+  ATOM: '/atom.xml',
+  JSON_FEED: '/feed.json',
 } as const;
 
 export const SITE = {
-  LANG: 'zh',
-  LOCALE: 'zh_CN',
+  LANG: 'zh-CN',
+  LOCALE: 'zh-CN',
   THEME: 'paper',
   THEME_COLOR: '#f4efe4',
   THEME_COLOR_DARK: '#1a1612',

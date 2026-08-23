@@ -4,7 +4,7 @@ export const siteConfig = {
   title: "Bad0RANG3's Studio",
   description: '关注塔菲谢谢喵',
   siteUrl: 'https://bad0rang3.github.io',
-  ogImage: '/HP.png',
+  ogImage: '/HP.webp',
   giscus: {
     repo: 'Bad0RANG3/Bad0RANG3.github.io',
     repoId: 'R_kgDORyk8Fg',
@@ -13,8 +13,8 @@ export const siteConfig = {
   },
   author: {
     name: 'Bad0RANG3',
-    intro: '喜欢在计算机方面折腾的一个普普通通的菜鸟。把输入系统、配置工具和安装笔记都做成能直接上手的作品。',
-    avatar: '/HP.png',
+    intro: '喜欢在计算机方面折腾的普通菜鸟。把输入系统、配置工具和安装笔记做成能够直接上手的作品。',
+    avatar: '/HP.webp',
     email: 'badorangeovo@outlook.com',
   },
   navigation: [
@@ -32,12 +32,12 @@ export const siteConfig = {
     { name: '抖音', url: 'https://www.douyin.com/user/MS4wLjABAAAA3y9usLYBic-19MR78rfDbN-VmS3RhnVMmlZMmnt39m8' },
     { name: 'Email', url: 'mailto:badorangeovo@outlook.com' },
     { name: 'Telegram', url: 'https://t.me/Bad0RANG3' },
-    { name: 'YouTube', url: 'https://youtube.com/Bad0RANG3' },
+    { name: 'YouTube', url: 'https://youtube.com/@Bad0RANG3' },
     { name: 'BiliBili', url: 'https://space.bilibili.com/482966540' },
   ],
   hero: {
     lyric: '当我的故事开篇之时，就是我书写人生之时',
-    lyricSource: '— Synthion「main heroine」',
+    lyricSource: 'Synthion · Main heroine',
   },
   about: {
     greeting: 'Hi, there!',
@@ -50,9 +50,9 @@ int main() {
     return 0;
 }`,
     quotes: [
-      '"四大皆空😡😡（指钱包、微信、支付宝和Paypal）"',
-      '"愿意和我组一辈子乐队吗？"',
-      '"质疑屎山，理解屎山，制造屎山"',
+      '“四大皆空（指钱包、微信、支付宝和 PayPal）”',
+      '“愿意和我组一辈子乐队吗？”',
+      '“质疑屎山，理解屎山，创造屎山。”',
     ],
     techStack: [
       { name: 'HTML5', url: 'https://html.spec.whatwg.org/' },
