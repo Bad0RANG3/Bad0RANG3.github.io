@@ -1,20 +1,40 @@
 ---
+import { withBase } from '../../lib/urls';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PostMeta from '../../components/blog/PostMeta.astro';
 import TagList from '../../components/blog/TagList.astro';
+import ArticleTools from '../../components/blog/ArticleTools.astro';
+import ArticleEnhancements from '../../components/blog/ArticleEnhancements.astro';
+import RelatedPosts from '../../components/blog/RelatedPosts.astro';
 import Comments from '../../components/Comments.astro';
 import Icon from '../../components/icons/Icons.astro';
-import { getPublishedPosts } from '../../lib/content';
+import { getPublishedPosts, getPostReadingMinutes, getPostWordCount, getRelatedPosts } from '../../lib/content';
+import { formatDate } from '../../lib/date';
 import { STAGGER } from '../../constants';
+import type { MarkdownHeading } from 'astro';
 
 export async function getStaticPaths() {
   const posts = await getPublishedPosts();
-  return posts.map(p => ({ params: { slug: p.slug }, props: { post: p } }));
+  return posts.map((post, index) => ({
+    params: { slug: post.slug },
+    props: { post, previous: posts[index + 1], next: posts[index - 1] },
+  }));
 }
 
-const { post } = Astro.props;
-const { Content } = await post.render();
-const isResourceList = post.data.category === '资源清单';
+const { post, previous, next } = Astro.props;
+const allPosts = await getPublishedPosts();
+const rendered = await post.render();
+const { Content, headings: renderedHeadings } = rendered;
+const related = await getRelatedPosts(post);
+const readingMinutes = getPostReadingMinutes(post);
+const wordCount = getPostWordCount(post);
+const headings = (renderedHeadings ?? []).filter((heading: MarkdownHeading) => heading.depth >= 2 && heading.depth <= 3);
+const seriesPosts = post.data.series ? allPosts
+  .filter((item) => item.data.series === post.data.series)
+  .sort((a, b) => (a.data.seriesOrder ?? 999) - (b.data.seriesOrder ?? 999)) : [];
+const seriesIndex = seriesPosts.findIndex((item) => item.slug === post.slug);
+const seriesPrevious = seriesIndex > 0 ? seriesPosts[seriesIndex - 1] : undefined;
+const seriesNext = seriesIndex >= 0 ? seriesPosts[seriesIndex + 1] : undefined;
 ---
 
 <BaseLayout
@@ -24,43 +44,86 @@ const isResourceList = post.data.category === '资源清单';
   type="article"
   publishedTime={post.data.date.toISOString()}
   modifiedTime={post.data.updatedDate?.toISOString()}
+  canonical={post.data.canonical}
+  noindex={post.data.noindex}
+  lang={post.data.lang}
+  articleSection={post.data.category}
+  keywords={post.data.tags}
+  ogImageAlt={post.data.coverAlt}
+  breadcrumbs={[
+    { name: '首页', path: '/' },
+    { name: '文章', path: '/posts/' },
+    { name: post.data.title, path: `/posts/${post.slug}/` },
+  ]}
 >
-  <article class:list={['site-frame py-5 sm:py-8', isResourceList ? 'max-w-5xl' : 'max-w-3xl']}>
-    <header class="mb-10">
+  <ArticleEnhancements />
+  <article data-article data-slug={post.slug} class:list={['site-frame py-5 sm:py-8', headings.length > 0 ? 'max-w-6xl' : 'max-w-3xl']}>
+    <header class="mb-10 max-w-3xl">
       <div class="reveal mb-5 flex flex-wrap items-center gap-2">
         {post.data.featured && <span class="chip-signal gap-1"><Icon name="star" class="h-3 w-3" />精选</span>}
         {post.data.category && <span class="chip-lime">{post.data.category}</span>}
+        {post.data.series && <span class="chip-teal">系列：{post.data.series}</span>}
       </div>
       <h1 class="reveal display-title mb-5 text-3xl sm:text-4xl md:text-5xl lg:text-6xl" style={`--reveal-delay:${STAGGER.POST_HEADING}ms`}>{post.data.title}</h1>
       <div class="space-y-4">
         <div class="reveal" style={`--reveal-delay:${STAGGER.POST_META}ms`}><PostMeta date={post.data.date} updatedDate={post.data.updatedDate} long /></div>
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-bold text-base-content/55">
+          <span>约 {readingMinutes} 分钟</span><span>{wordCount.toLocaleString()} 字</span>
+          {post.data.difficulty && <span>难度：{post.data.difficulty}</span>}
+          <ArticleTools slug={post.slug} title={post.data.title} />
+        </div>
+        {(post.data.audience || post.data.verifiedDate || post.data.hasCode || post.data.hasDownload) && (
+          <div class="grid gap-2 rounded-2xl border-2 border-dashed border-base-content/12 bg-base-200/45 p-4 text-xs text-base-content/65 sm:grid-cols-2">
+            {post.data.audience && <div><strong class="font-black text-base-content/80">适合读者：</strong>{post.data.audience}</div>}
+            {post.data.verifiedDate && <div><strong class="font-black text-base-content/80">最后验证：</strong>{formatDate(post.data.verifiedDate)}</div>}
+            {post.data.hasCode && <div class="text-primary">✓ 含源码或配置示例</div>}
+            {post.data.hasDownload && <div class="text-primary">✓ 含下载或可直接使用的文件</div>}
+          </div>
+        )}
         <div class="reveal" style={`--reveal-delay:${STAGGER.POST_TAGS}ms`}><TagList tags={post.data.tags} /></div>
       </div>
       <div class="mt-8 h-1.5 w-full bg-gradient-to-r from-primary via-secondary to-accent"></div>
     </header>
 
-    {isResourceList && (
-      <div class="reveal hard-card mb-8 rounded-[1.5rem] p-5 sm:p-6" style={`--reveal-delay:${STAGGER.POST_GUIDE}ms`}>
-        <div class="gap-4 sm:flex sm:items-start sm:justify-between">
-          <div>
-            <p class="eyebrow">Guide</p>
-            <h2 class="mt-2 text-lg font-black">这篇文章怎么读更省时间</h2>
-            <p class="mt-2 max-w-3xl text-sm leading-7 text-base-content/60">这是一篇偏"资源导航"型长文，推荐先看上方的快速入口，再按自己的场景跳到对应分区。</p>
-          </div>
-          <div class="mt-4 shrink-0 rounded-2xl border-2 border-base-content bg-secondary px-4 py-3 text-sm font-black text-secondary-content shadow-[4px_4px_0_0] shadow-base-content sm:mt-0">建议桌面端阅读，表格更完整。</div>
-        </div>
+    {post.data.cover && <img src={withBase(post.data.cover)} alt={post.data.coverAlt ?? post.data.title} class="reveal mb-10 w-full rounded-[1.5rem] object-cover shadow-punch" style={`--reveal-delay:${STAGGER.POST_COVER}ms`} loading="lazy" />}
+
+    <div class:list={['article-layout', headings.length > 0 && 'has-toc']}>
+      {headings.length > 0 && (
+        <aside class="article-toc not-prose" aria-label="文章目录">
+          <p class="eyebrow mb-3">On this page</p>
+          <nav><ol class="space-y-2">{headings.map((heading) => <li class:list={[heading.depth === 3 && 'pl-3']}><a href={`#${heading.slug}`} data-toc-link={heading.slug}>{heading.text}</a></li>)}</ol></nav>
+        </aside>
+      )}
+      <div class:list={['reveal prose max-w-none', post.data.category === '资源清单' && 'prose-resource-list']} style={`--reveal-delay:${STAGGER.POST_CONTENT}ms`}>
+        <Content />
       </div>
-    )}
-
-    {post.data.cover && (
-      <img src={post.data.cover} alt={post.data.title} class="reveal mb-10 w-full rounded-[1.5rem] object-cover shadow-punch" style={`--reveal-delay:${STAGGER.POST_COVER}ms`} loading="lazy" />
-    )}
-
-    <div class:list={['reveal prose max-w-none', isResourceList && 'prose-resource-list']} style={`--reveal-delay:${STAGGER.POST_CONTENT}ms`}>
-      <Content />
     </div>
 
-    <!-- Comments -->
-    <div class="mx-auto max-w-3xl"><Comments /></div>
+    {post.data.series && seriesPosts.length > 0 && (
+      <section class="mt-12 rounded-[1.5rem] border-2 border-base-content/10 bg-secondary/25 p-5 sm:p-6" aria-labelledby="series-navigation-title">
+        <div class="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <p class="eyebrow">Reading path</p>
+            <h2 id="series-navigation-title" class="mt-2 text-xl font-black">{post.data.series}</h2>
+          </div>
+          <span class="chip-signal">第 {seriesIndex + 1} / {seriesPosts.length} 篇</span>
+        </div>
+        <div class="mt-4 h-2 overflow-hidden rounded-full bg-base-100/80">
+          <div class="h-full rounded-full bg-primary" style={`width:${((seriesIndex + 1) / seriesPosts.length) * 100}%`}></div>
+        </div>
+        <div class="mt-4 flex flex-col gap-3 sm:flex-row sm:justify-between">
+          {seriesPrevious ? <a href={withBase(`/posts/${seriesPrevious.slug}/`)} class="text-sm font-bold text-base-content/65 hover:text-primary">← 上一篇：{seriesPrevious.data.title}</a> : <span class="text-sm text-base-content/40">已经是系列第一篇</span>}
+          {seriesNext ? <a href={withBase(`/posts/${seriesNext.slug}/`)} class="text-sm font-bold text-base-content/65 hover:text-primary sm:text-right">下一篇：{seriesNext.data.title} →</a> : <span class="text-sm text-base-content/40 sm:text-right">已经是系列最后一篇</span>}
+        </div>
+      </section>
+    )}
+
+    {(previous || next) && <nav class="mt-12 grid gap-4 border-t-2 border-base-content/10 pt-8 sm:grid-cols-2" aria-label="文章导航">
+      {previous ? <a href={withBase(`/posts/${previous.slug}/`)} class="hard-card rounded-2xl p-4"><span class="eyebrow">上一篇</span><strong class="mt-2 block">{previous.data.title}</strong></a> : <span />}
+      {next ? <a href={withBase(`/posts/${next.slug}/`)} class="hard-card rounded-2xl p-4 text-right"><span class="eyebrow">下一篇</span><strong class="mt-2 block">{next.data.title}</strong></a> : <span />}
+    </nav>}
+
+    <div class="mx-auto mt-12 max-w-3xl"><Comments /></div>
+    <RelatedPosts posts={related} />
   </article>
 </BaseLayout>

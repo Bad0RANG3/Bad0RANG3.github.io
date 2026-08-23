@@ -1,4 +1,5 @@
 ---
+import { withBase } from '../../lib/urls';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHeader from '../../components/ui/PageHeader.astro';
 import '../../styles/tools/switch-your-cfg.css';
@@ -7,7 +8,7 @@ import '../../styles/tools/switch-your-cfg.css';
 <BaseLayout
   title="SwitchYourCFG"
   description="纯浏览器端 CS2 配置转换工具：拖放 CS2 配置文件夹，可视化键盘选键，一键导出 CS2 格式 CFG 文件。"
-  ogImage="/HP.png"
+  ogImage="/HP.webp"
 >
   <section class="relative overflow-hidden">
     <div class="pointer-events-none absolute left-[-6rem] top-[-5rem] h-52 w-52 rounded-full bg-primary/6 blur-3xl"></div>
@@ -15,9 +16,9 @@ import '../../styles/tools/switch-your-cfg.css';
 
     <div class="relative mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
       <nav class="mb-6 text-sm text-base-content/40 reveal">
-        <a href="/" class="transition-colors hover:text-primary">首页</a>
+        <a href={withBase('/')} class="transition-colors hover:text-primary">首页</a>
         <span class="mx-2">/</span>
-        <a href="/tools" class="transition-colors hover:text-primary">工具</a>
+        <a href={withBase('/tools/')} class="transition-colors hover:text-primary">工具</a>
         <span class="mx-2">/</span>
         <span class="text-base-content/60">SwitchYourCFG</span>
       </nav>

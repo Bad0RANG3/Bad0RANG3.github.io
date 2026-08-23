@@ -10,7 +10,11 @@ tags:
 category: 随笔
 featured: true
 draft: false
-cover: '/cyanotype.jpg'
+verifiedDate: 2026-06-19
+difficulty: 入门
+audience: 喜欢音乐、成长与个人随笔的读者
+cover: '/cyanotype.webp'
+coverAlt: '蓝色氰版照片风格的文章封面'
 ---
 
 > 题记：黑与白象征麻木与苦难，而蓝色，则成为照亮一切的光。
@@ -66,7 +70,7 @@ Synthion。
 存在于天空，存在于海洋，存在于每一个仍然愿意向前看的人身上。
 
 <figure class="album-cover">
-  <img src="/cyanotype.jpg" alt="cyanotype — Synthion" loading="lazy">
+  <img src="/cyanotype.webp" alt="cyanotype — Synthion" loading="lazy">
   <figcaption>cyanotype — Synthion</figcaption>
 </figure>
 
@@ -172,7 +176,7 @@ Synthion。
 而是漫长的黑夜。
 
 <figure class="album-cover">
-  <img src="/lone-wolf.jpg" alt="Lone Wolf — Synthion" loading="lazy">
+  <img src="/lone-wolf.webp" alt="Lone Wolf — Synthion" loading="lazy">
   <figcaption>Lone Wolf — Synthion</figcaption>
 </figure>
 

@@ -1,0 +1,43 @@
+name: Content and build checks
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Validate, check, build, and smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Validate content
+        run: pnpm validate:content
+      - name: Astro check
+        run: pnpm check
+      - name: Build static site
+        run: pnpm build
+      - name: Smoke test build output
+        run: pnpm smoke
+      - name: Validate project Pages base path
+        env:
+          BASE_PATH: /project-pages/
+        run: |
+          pnpm build
+          pnpm smoke -- --base=/project-pages/
