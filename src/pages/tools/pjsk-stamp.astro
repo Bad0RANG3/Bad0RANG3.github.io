@@ -1,26 +1,41 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHeader from '../../components/ui/PageHeader.astro';
-import pjskData from '../../data/pjsk-stamp.json';
+import pjskRaw from '../../data/pjsk-stamp.json';
+import { withBase } from '../../lib/urls';
 import '../../styles/tools/pjsk-stamp.css';
 
-// 按小队/虚拟歌手分组，方便侧栏展示
+// 素材路径需支持 BASE_PATH（项目 Pages 部署）
+const pjskData = pjskRaw.map((s) => ({ ...s, img: withBase(s.img) }));
+
 const UNIT_ORDER = ['虚拟歌手', 'Leo/need', 'MORE MORE JUMP!', 'Vivid BAD SQUAD', 'Wonderlands×Showtime', '25时，Nightcord'];
 const charMeta = new Map();
 for (const s of pjskData) {
-  if (!charMeta.has(s.char)) {
-    charMeta.set(s.char, { key: s.char, cn: s.cn, unit: s.unit, color: s.color, count: 0 });
-  }
+  if (!charMeta.has(s.char)) charMeta.set(s.char, { key: s.char, cn: s.cn, unit: s.unit, color: s.color, count: 0 });
   charMeta.get(s.char).count++;
 }
 const units = UNIT_ORDER
   .map((u) => ({ unit: u, chars: [...charMeta.values()].filter((c) => c.unit === u) }))
   .filter((g) => g.chars.length > 0);
+
+// 字体：YurukaStd（游戏同款）+ 上首方糖体（中文圆体），子集化 + unicode-range 按需加载
+const font = (family: string, file: string, range: string) =>
+  `@font-face{font-family:'${family}';src:url('${withBase(`/fonts/${file}`)}') format('woff2');font-weight:400 900;font-style:normal;font-display:swap;unicode-range:${range};}`;
+const FONT_FACES = [
+  font('YurukaStd', 'yuruka-latin.woff2', 'U+20-7E,U+A0-FF,U+2000-206F'),
+  font('YurukaStd', 'yuruka-kana.woff2', 'U+3040-309F,U+30A0-30FF,U+31F0-31FF,U+3000-303F,U+FF00-FFEF'),
+  font('YurukaStd', 'yuruka-cjk1.woff2', 'U+4E00-77FF'),
+  font('YurukaStd', 'yuruka-cjk2.woff2', 'U+7800-9FFF'),
+  font('SSFangTangTi', 'ssft-latin.woff2', 'U+20-7E,U+A0-FF,U+2000-206F'),
+  font('SSFangTangTi', 'ssft-kana.woff2', 'U+3040-309F,U+30A0-30FF,U+31F0-31FF,U+3000-303F,U+FF00-FFEF'),
+  font('SSFangTangTi', 'ssft-cjk1.woff2', 'U+4E00-77FF'),
+  font('SSFangTangTi', 'ssft-cjk2.woff2', 'U+7800-9FFF'),
+].join('\n');
 ---
 
 <BaseLayout
   title="PJSK 表情包生成器"
-  description="纯浏览器端的 Project Sekai / 世界计划表情包生成器：选择角色贴纸、添加顶部与底部文字，一键导出透明背景 PNG。"
+  description="纯浏览器端的 Project Sekai / 世界计划表情包生成器：26 个角色 359 张贴纸，游戏同款字体、弧形文字、渐变与双层描边，一键导出透明背景 PNG / WEBP。"
   ogImage="/HP.png"
 >
   <section class="relative overflow-hidden">
@@ -29,9 +44,9 @@ const units = UNIT_ORDER
 
     <div class="relative mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
       <nav class="mb-6 text-sm text-base-content/40 reveal">
-        <a href="/" class="transition-colors hover:text-primary">首页</a>
+        <a href={withBase('/')} class="transition-colors hover:text-primary">首页</a>
         <span class="mx-2">/</span>
-        <a href="/tools" class="transition-colors hover:text-primary">工具</a>
+        <a href={withBase('/tools')} class="transition-colors hover:text-primary">工具</a>
         <span class="mx-2">/</span>
         <span class="text-base-content/60">PJSK 表情包生成器</span>
       </nav>
@@ -45,25 +60,50 @@ const units = UNIT_ORDER
         <div class="mb-8 reveal rounded-[1.75rem] border border-base-content/8 bg-base-100/75 px-5 py-4 shadow-sm" style="--reveal-delay:40ms">
           <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Four-step workflow</p>
-              <p class="mt-2 text-sm leading-6 text-base-content/65">选择角色与贴纸，输入顶部 / 底部文案，实时预览后一键导出透明背景 PNG。</p>
+              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Zero-delay live preview</p>
+              <p class="mt-2 text-sm leading-6 text-base-content/65">挑选角色贴纸（或上传自定义图片），使用游戏同款字体输入文字，弧形 / 渐变 / 双层描边自由调节，实时预览后一键导出透明 PNG / WEBP。</p>
             </div>
             <div class="flex flex-wrap gap-2 text-xs text-base-content/55">
-              <span class="rounded-full border border-base-content/10 bg-base-200/60 px-3 py-1.5">Step 01 角色</span>
-              <span class="rounded-full border border-base-content/10 bg-base-200/60 px-3 py-1.5">Step 02 贴纸</span>
-              <span class="rounded-full border border-base-content/10 bg-base-200/60 px-3 py-1.5">Step 03 文案</span>
+              <span class="rounded-full border border-base-content/10 bg-base-200/60 px-3 py-1.5">Step 01 素材</span>
+              <span class="rounded-full border border-base-content/10 bg-base-200/60 px-3 py-1.5">Step 02 文字</span>
+              <span class="rounded-full border border-base-content/10 bg-base-200/60 px-3 py-1.5">Step 03 排版</span>
               <span class="rounded-full border border-base-content/10 bg-base-200/60 px-3 py-1.5">Step 04 导出</span>
             </div>
           </div>
         </div>
 
-        <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
-          <!-- 左侧：角色 + 贴纸选择 -->
+        <!-- 预览区 -->
+        <div class="mb-6 reveal overflow-hidden rounded-[1.75rem] border border-base-content/8 bg-base-100/88 shadow-sm" style="--reveal-delay:80ms">
+          <div class="pst-card-head">
+            <div>
+              <p class="pst-step-label">Preview</p>
+              <h2 class="pst-step-title">实时预览</h2>
+            </div>
+            <span class="pst-card-hint"><span id="pst-status">未选择贴纸</span> · 640×640</span>
+          </div>
+          <div class="pst-card-body">
+            <div class="pst-preview-wrap">
+              <div class="pst-canvas-shell" id="pst-canvas-shell">
+                <canvas id="pst-preview" width="640" height="640"></canvas>
+                <div class="pst-canvas-tip">拖动文字 / 角色可调整位置</div>
+              </div>
+              <div class="pst-actions-top">
+                <button type="button" id="pst-random" class="pst-btn pst-btn-soft">🎲 随机文案</button>
+                <button type="button" id="pst-copy-img" class="pst-btn pst-btn-outline">📋 复制 PNG</button>
+                <button type="button" id="pst-download" class="pst-btn pst-btn-primary">⬇ 下载 PNG</button>
+                <button type="button" id="pst-download-webp" class="pst-btn pst-btn-primary-alt">⬇ WEBP</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
+          <!-- 左：角色与贴纸 -->
           <div class="space-y-6">
-            <div class="reveal overflow-hidden rounded-[1.75rem] border border-base-content/8 bg-base-100/88 shadow-sm" style="--reveal-delay:80ms">
+            <div class="reveal overflow-hidden rounded-[1.75rem] border border-base-content/8 bg-base-100/88 shadow-sm" style="--reveal-delay:120ms">
               <div class="pst-card-head">
                 <div>
-                  <p class="pst-step-label">Step 01 · 02</p>
+                  <p class="pst-step-label">Step 01 · 素材</p>
                   <h2 class="pst-step-title">选择角色与贴纸</h2>
                 </div>
                 <span class="pst-card-hint"><span id="pst-count"></span> 张贴纸</span>
@@ -99,91 +139,222 @@ const units = UNIT_ORDER
                   </div>
                   <div class="pst-stamp-grid" id="pst-stamp-grid"></div>
                 </div>
+
+                <div class="pst-upload-area">
+                  <label class="pst-upload" for="pst-file">
+                    <input type="file" id="pst-file" accept="image/*" hidden />
+                    <span class="pst-upload-icon">🖼️</span>
+                    <span class="pst-upload-text">
+                      <b>上传自定义图片</b>
+                      <i>把本地图片作为贴纸主体（支持 PNG / JPG / WEBP）</i>
+                    </span>
+                  </label>
+                </div>
               </div>
             </div>
           </div>
 
-          <!-- 右侧：预览 + 文案 + 导出 -->
+          <!-- 右：全部控制项 -->
           <div class="space-y-6 lg:sticky lg:top-24 lg:self-start">
-            <div class="reveal overflow-hidden rounded-[1.75rem] border border-base-content/8 bg-base-100/88 shadow-sm" style="--reveal-delay:120ms">
+            <div class="reveal overflow-hidden rounded-[1.75rem] border border-base-content/8 bg-base-100/88 shadow-sm" style="--reveal-delay:160ms">
               <div class="pst-card-head">
                 <div>
-                  <p class="pst-step-label">Step 03 · 04</p>
-                  <h2 class="pst-step-title">预览与导出</h2>
+                  <p class="pst-step-label">Step 02 · 文字</p>
+                  <h2 class="pst-step-title">文字与字体</h2>
                 </div>
-                <span class="pst-card-hint"><span id="pst-status">未选择贴纸</span></span>
               </div>
-              <div class="pst-card-body">
-                <div class="pst-canvas-shell" id="pst-canvas-shell">
-                  <canvas id="pst-preview" width="640" height="640"></canvas>
-                  <div class="pst-canvas-tip">拖动文字可调整位置</div>
+              <div class="pst-card-body pst-ctrl-body">
+                <label class="pst-field">
+                  <span class="pst-field-label">贴纸文字（支持多行，Enter 换行）</span>
+                  <textarea id="pst-text" class="pst-input pst-textarea" rows="3" maxlength="80" placeholder="绷不住了&#10;啊？？？"></textarea>
+                </label>
+                <div class="pst-ctrl-grid">
+                  <label class="pst-field">
+                    <span class="pst-field-label">字体</span>
+                    <select id="pst-font" class="pst-input">
+                      <option value="YurukaStd">游戏同款 YurukaStd</option>
+                      <option value="SSFangTangTi">中文圆体 上首方糖体</option>
+                    </select>
+                  </label>
+                  <label class="pst-field">
+                    <span class="pst-field-label">排列</span>
+                    <select id="pst-vertical" class="pst-input">
+                      <option value="0">横向</option>
+                      <option value="1">竖向</option>
+                    </select>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="reveal overflow-hidden rounded-[1.75rem] border border-base-content/8 bg-base-100/88 shadow-sm" style="--reveal-delay:200ms">
+              <div class="pst-card-head">
+                <div>
+                  <p class="pst-step-label">Step 03 · 排版</p>
+                  <h2 class="pst-step-title">精细调节</h2>
+                </div>
+              </div>
+              <div class="pst-card-body pst-ctrl-body">
+                <div class="pst-slider-row" data-key="fontSize">
+                  <span class="pst-slider-label">字号 <b id="v-fontSize">72</b></span>
+                  <input type="range" id="c-fontSize" min="24" max="160" value="72" class="pst-range" />
+                </div>
+                <div class="pst-slider-row" data-key="rotate">
+                  <span class="pst-slider-label">旋转 <b id="v-rotate">0°</b></span>
+                  <input type="range" id="c-rotate" min="-30" max="30" value="0" class="pst-range" />
+                </div>
+                <div class="pst-slider-row" data-key="letterSpacing">
+                  <span class="pst-slider-label">字间距 <b id="v-letterSpacing">0</b></span>
+                  <input type="range" id="c-letterSpacing" min="0" max="40" value="0" class="pst-range" />
+                </div>
+                <div class="pst-slider-row" data-key="lineSpacing">
+                  <span class="pst-slider-label">行间距 <b id="v-lineSpacing">0</b></span>
+                  <input type="range" id="c-lineSpacing" min="0" max="60" value="0" class="pst-range" />
+                </div>
+                <div class="pst-slider-row" data-key="textX">
+                  <span class="pst-slider-label">文字 X <b id="v-textX">50%</b></span>
+                  <input type="range" id="c-textX" min="5" max="95" value="50" class="pst-range" />
+                </div>
+                <div class="pst-slider-row" data-key="textY">
+                  <span class="pst-slider-label">文字 Y <b id="v-textY">33%</b></span>
+                  <input type="range" id="c-textY" min="5" max="95" value="33" class="pst-range" />
                 </div>
 
-                <div class="pst-text-row">
+                <div class="pst-toggle-row">
+                  <span class="pst-slider-label">弧形文字</span>
+                  <label class="pst-switch"><input type="checkbox" id="c-arcText" /><i></i></label>
+                </div>
+                <div class="pst-slider-row" data-key="arcRadius">
+                  <span class="pst-slider-label">弧半径 <b id="v-arcRadius">280</b></span>
+                  <input type="range" id="c-arcRadius" min="100" max="900" value="280" class="pst-range" />
+                </div>
+
+                <div class="pst-toggle-row">
+                  <span class="pst-slider-label">图片缩放 <b id="v-imageScale">100%</b></span>
+                  <input type="range" id="c-imageScale" min="40" max="180" value="100" class="pst-range pst-range-inline" />
+                </div>
+              </div>
+            </div>
+
+            <div class="reveal overflow-hidden rounded-[1.75rem] border border-base-content/8 bg-base-100/88 shadow-sm" style="--reveal-delay:240ms">
+              <div class="pst-card-head">
+                <div>
+                  <p class="pst-step-label">Step 04 · 描边与颜色</p>
+                  <h2 class="pst-step-title">色彩与滤镜</h2>
+                </div>
+              </div>
+              <div class="pst-card-body pst-ctrl-body">
+                <div class="pst-palettes">
+                  <span class="pst-slider-label">渐变预设</span>
+                  <div class="pst-palette-row" id="pst-palettes">
+                    <button type="button" class="pst-palette" data-colors='["#ffffff"]' title="纯白"><i style="background:#ffffff"></i></button>
+                    <button type="button" class="pst-palette" data-colors='["#ff4d6d","#ffb84d"]' title="橙粉"><i style="background:linear-gradient(90deg,#ff4d6d,#ffb84d)"></i></button>
+                    <button type="button" class="pst-palette" data-colors='["#4dc3ff","#7dffb0"]' title="青绿"><i style="background:linear-gradient(90deg,#4dc3ff,#7dffb0)"></i></button>
+                    <button type="button" class="pst-palette" data-colors='["#a78bfa","#f472b6"]' title="紫粉"><i style="background:linear-gradient(90deg,#a78bfa,#f472b6)"></i></button>
+                    <button type="button" class="pst-palette" data-colors='["#fd6bb4","#6ad2c0","#ffa954","#71b7f5"]' title="彩虹"><i style="background:linear-gradient(90deg,#fd6bb4,#6ad2c0,#ffa954,#71b7f5)"></i></button>
+                  </div>
+                </div>
+                <div class="pst-ctrl-grid">
                   <label class="pst-field">
-                    <span class="pst-field-label">顶部文字</span>
-                    <input type="text" id="pst-top" class="pst-input" maxlength="40" placeholder="绷不住了" />
+                    <span class="pst-field-label">文字颜色 1</span>
+                    <input type="color" id="pst-color1" class="pst-color" value="#ffffff" />
                   </label>
                   <label class="pst-field">
-                    <span class="pst-field-label">底部文字</span>
-                    <input type="text" id="pst-bottom" class="pst-input" maxlength="40" placeholder="啊？？？" />
+                    <span class="pst-field-label">文字颜色 2</span>
+                    <input type="color" id="pst-color2" class="pst-color" value="#ffffff" />
+                  </label>
+                  <label class="pst-field">
+                    <span class="pst-field-label">内描边</span>
+                    <input type="color" id="pst-stroke-color" class="pst-color" value="#ffffff" />
+                  </label>
+                  <label class="pst-field">
+                    <span class="pst-field-label">外描边</span>
+                    <input type="color" id="pst-outline-color" class="pst-color" value="#3b3b3b" />
                   </label>
                 </div>
+                <div class="pst-slider-row" data-key="strokeWidth">
+                  <span class="pst-slider-label">描边粗细 <b id="v-strokeWidth">16</b></span>
+                  <input type="range" id="c-strokeWidth" min="0" max="60" value="16" class="pst-range" />
+                </div>
+                <div class="pst-toggle-row">
+                  <span class="pst-slider-label">双层外描边</span>
+                  <label class="pst-switch"><input type="checkbox" id="c-outline" checked /><i></i></label>
+                </div>
+                <div class="pst-slider-row" data-key="outlineWidth">
+                  <span class="pst-slider-label">外描边粗细 <b id="v-outlineWidth">6</b></span>
+                  <input type="range" id="c-outlineWidth" min="0" max="40" value="6" class="pst-range" />
+                </div>
+
+                <div class="pst-divider"></div>
 
                 <div class="pst-ctrl-grid">
                   <label class="pst-field">
-                    <span class="pst-field-label">字号 <b id="pst-size-val">100%</b></span>
-                    <input type="range" id="pst-size" min="50" max="200" value="100" class="pst-range" />
+                    <span class="pst-field-label">亮度 <b id="v-brightness">100%</b></span>
+                    <input type="range" id="c-brightness" min="40" max="180" value="100" class="pst-range" />
                   </label>
                   <label class="pst-field">
-                    <span class="pst-field-label">倾斜</span>
-                    <select id="pst-rot" class="pst-input">
-                      <option value="0">不倾斜</option>
-                      <option value="-3">左倾 -3°</option>
-                      <option value="3">右倾 +3°</option>
-                    </select>
+                    <span class="pst-field-label">对比度 <b id="v-contrast">100%</b></span>
+                    <input type="range" id="c-contrast" min="40" max="180" value="100" class="pst-range" />
                   </label>
                   <label class="pst-field">
-                    <span class="pst-field-label">文字颜色</span>
-                    <input type="color" id="pst-text-color" class="pst-color" value="#ffffff" />
+                    <span class="pst-field-label">饱和度 <b id="v-saturate">100%</b></span>
+                    <input type="range" id="c-saturate" min="0" max="200" value="100" class="pst-range" />
                   </label>
                   <label class="pst-field">
-                    <span class="pst-field-label">背景</span>
-                    <select id="pst-bg" class="pst-input">
-                      <option value="t">透明</option>
-                      <option value="w">白色</option>
-                      <option value="b">黑色</option>
-                      <option value="g">渐变色</option>
-                    </select>
-                  </label>
-                  <label class="pst-field pst-field-grad" id="pst-grad-wrap">
-                    <span class="pst-field-label">渐变起止</span>
-                    <span class="pst-grad-pair">
-                      <input type="color" id="pst-bg1" class="pst-color" value="#ffe3ef" />
-                      <input type="color" id="pst-bg2" class="pst-color" value="#cfe8ff" />
-                    </span>
+                    <span class="pst-field-label">色相 <b id="v-hue">0°</b></span>
+                    <input type="range" id="c-hue" min="0" max="360" value="0" class="pst-range" />
                   </label>
                 </div>
 
+                <div class="pst-divider"></div>
+
+                <label class="pst-field">
+                  <span class="pst-field-label">背景</span>
+                  <select id="pst-bg" class="pst-input">
+                    <option value="t">透明</option>
+                    <option value="w">白色</option>
+                    <option value="b">黑色</option>
+                    <option value="g">渐变色</option>
+                  </select>
+                </label>
+                <div class="pst-ctrl-grid pst-grad-pair" id="pst-grad-wrap" style="display:none">
+                  <label class="pst-field">
+                    <span class="pst-field-label">渐变起</span>
+                    <input type="color" id="pst-bg1" class="pst-color" value="#ffe3ef" />
+                  </label>
+                  <label class="pst-field">
+                    <span class="pst-field-label">渐变止</span>
+                    <input type="color" id="pst-bg2" class="pst-color" value="#cfe8ff" />
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="reveal overflow-hidden rounded-[1.75rem] border border-base-content/8 bg-base-100/88 shadow-sm" style="--reveal-delay:280ms">
+              <div class="pst-card-head">
+                <div>
+                  <p class="pst-step-label">Utility</p>
+                  <h2 class="pst-step-title">更多操作</h2>
+                </div>
+              </div>
+              <div class="pst-card-body">
                 <div class="pst-actions">
-                  <button type="button" id="pst-random" class="pst-btn pst-btn-soft">🎲 随机文案</button>
-                  <button type="button" id="pst-download" class="pst-btn pst-btn-primary">⬇ 下载 PNG</button>
-                  <button type="button" id="pst-copy-img" class="pst-btn pst-btn-outline">📋 复制图片</button>
                   <button type="button" id="pst-copy-link" class="pst-btn pst-btn-outline">🔗 复制链接</button>
+                  <button type="button" id="pst-export-config" class="pst-btn pst-btn-outline">📤 导出配置</button>
+                  <label class="pst-btn pst-btn-outline" style="cursor:pointer">
+                    📥 导入配置<input type="file" id="pst-import-config" accept="application/json,.json" hidden />
+                  </label>
                   <button type="button" id="pst-reset" class="pst-btn pst-btn-ghost">↺ 重置</button>
                 </div>
-
-                <div class="pst-note">
-                  输出尺寸 640×640 · 透明背景导出 PNG · 文案与选择可随链接分享
-                </div>
+                <div class="pst-note">输出 640×640 · 透明背景导出 · 点击画布拖动文字 / 角色 · 配置与链接可分享还原</div>
               </div>
             </div>
           </div>
         </div>
 
-        <div class="mt-8 reveal rounded-[1.75rem] border border-base-content/8 bg-base-100/70 px-5 py-4 text-xs leading-6 text-base-content/45" style="--reveal-delay:180ms">
-          <p class="font-bold text-base-content/60">素材说明</p>
-          <p>贴纸素材来自《世界计划 缤纷舞台！feat. 初音未来》游戏内角色贴纸（版权归 SEGA / Colorful Palette 所有），图像整理自 <a class="underline decoration-dotted underline-offset-2 hover:text-primary" href="https://github.com/kamicry/arcpjsk-hub" target="_blank" rel="noreferrer">kamicry/arcpjsk-hub</a>；字体使用开源字体「得意黑 Smiley Sans」（SIL OFL-1.1）。本工具仅供个人娱乐使用。</p>
+        <div class="mt-8 reveal rounded-[1.75rem] border border-base-content/8 bg-base-100/70 px-5 py-4 text-xs leading-6 text-base-content/45" style="--reveal-delay:320ms">
+          <p class="font-bold text-base-content/60">素材与字体说明</p>
+          <p>贴纸素材来自《世界计划 缤纷舞台！feat. 初音未来》游戏内角色贴纸（版权归 SEGA / Colorful Palette 所有），图像整理自 <a class="underline decoration-dotted underline-offset-2 hover:text-primary" href="https://github.com/kamicry/arcpjsk-hub" target="_blank" rel="noreferrer">kamicry/arcpjsk-hub</a>；字体使用「Yuruka Std」（© FONTWORKS，免费字体）与「上首方糖体」（© 上首字库，免费字体），均仅按需加载子集。本工具仅供个人娱乐与非商用同人交流使用。</p>
         </div>
 
         <div class="pst-toast" id="pst-toast"></div>
@@ -192,12 +363,13 @@ const units = UNIT_ORDER
   </section>
 </BaseLayout>
 
+<style set:html={FONT_FACES}></style>
+
 <script define:vars={{ pjskData }} is:inline>
 // @ts-nocheck
 (function () {
   'use strict';
 
-  /* ── helpers ─────────────────────────────────────────── */
   var $ = function (id) { return document.getElementById(id); };
   var _tt;
   function toast(m) {
@@ -225,30 +397,45 @@ const units = UNIT_ORDER
     char: null,
     stamp: null,
     img: null,
-    top: '',
-    bottom: '',
-    size: 100,
-    rot: 0,
-    textColor: '#ffffff',
+    text: '绷不住了\n啊？？？',
+    font: 'YurukaStd',
+    fontSize: 72,
+    rotate: 0,
+    letterSpacing: 0,
+    lineSpacing: 0,
+    textX: 0.5,
+    textY: 0.33,
+    arcText: false,
+    arcRadius: 280,
+    imageScale: 1,
+    strokeWidth: 16,
+    strokeColor: '#ffffff',
+    outline: true,
+    outlineWidth: 6,
+    outlineColor: '#3b3b3b',
+    textColors: ['#ffffff', '#ffffff'],
+    vertical: false,
     bg: 't',
     bg1: '#ffe3ef',
     bg2: '#cfe8ff',
-    topX: 0.5, topY: 0.13,
-    bottomX: 0.5, bottomY: 0.88
+    brightness: 100,
+    contrast: 100,
+    saturate: 100,
+    hue: 0,
+    imageX: 0.5,
+    imageY: 0.56,
   };
   var imgCache = {};
   var dragMode = null;
   var queryHandled = false;
 
-  var PHRASES_TOP = [
-    '绷不住了', '笑死我了', '就这？', '我破防了', '这也太典了', '离谱', '急了急了', '好好好',
-    '怎么个事', '牛的牛的', '乐', '小丑竟是我自己', '已阅，滚', '典中典', '蚌埠住了', '大受震撼',
-    '雨我无瓜', '栓Q', '你真的…我哭死', '菜，就多练', '赢麻了', '退退退', '祖安模式启动', '你最好是'
-  ];
-  var PHRASES_BOTTOM = [
-    '啊？？？', '6', '啊这', '我不理解', '你没事吧', '救命', '真的假的', '我不道啊',
-    '逆天', '好家伙', '这也行？', '你礼貌吗', '尊嘟假嘟', '无语住了', '细说', '展开说说',
-    '告辞', '有被冒犯到', '捏捏的', '？', '坏了坏了', '别骂了别骂了', '人麻了', '寄'
+  var PHRASES = [
+    ['绷不住了', '啊？？？'], ['笑死我了', '6'], ['就这？', '我不理解'], ['我破防了', '你没事吧'],
+    ['这也太典了', '真的假的'], ['离谱', '好家伙'], ['急了急了', '展开说说'], ['好好好', '尊嘟假嘟'],
+    ['怎么个事', '细说'], ['牛的牛的', '有被冒犯到'], ['乐', '告辞'], ['小丑竟是我自己', '别骂了别骂了'],
+    ['已阅，滚', '寄'], ['蚌埠住了', '人麻了'], ['大受震撼', '逆天'], ['雨我无瓜', '？'],
+    ['栓Q', '捏捏的'], ['你真的…我哭死', '这也能行？'], ['菜，就多练', '你礼貌吗'], ['赢麻了', '退退退'],
+    ['祖安模式启动', '坏了坏了'], ['你最好是', '救命'], ['我不道啊', '啊这'], ['无语住了', '我不理解'],
   ];
 
   function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
@@ -258,72 +445,27 @@ const units = UNIT_ORDER
     if (imgCache[src]) { cb(imgCache[src]); return; }
     var im = new Image();
     im.onload = function () { imgCache[src] = im; cb(im); };
-    im.onerror = function () { toast('贴纸加载失败：' + src); };
+    im.onerror = function () { toast('图片加载失败：' + src); };
     im.src = src;
   }
 
   /* ── rendering ───────────────────────────────────────── */
   var cv = $('pst-preview');
   var ctx = cv ? cv.getContext('2d') : null;
-  var FONT_STACK = '"SmileySans","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif';
+  var W = 640, H = 640;
 
-  function wrapText(context, text, maxWidth) {
-    var lines = [];
-    var paras = String(text).split('\n');
-    for (var i = 0; i < paras.length; i++) {
-      var p = paras[i];
-      if (p === '') { lines.push(''); continue; }
-      var cur = '';
-      for (var j = 0; j < p.length; j++) {
-        var ch = p[j];
-        var t = cur + ch;
-        if (context.measureText(t).width > maxWidth && cur) { lines.push(cur); cur = ch; }
-        else { cur = t; }
-      }
-      if (cur) lines.push(cur);
-    }
-    return lines.length ? lines : [''];
+  function fontStack() {
+    return '"' + S.font + '","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif';
   }
 
-  function drawTextBlock(context, text, fx, fy, W, H) {
-    text = String(text || '').trim();
-    if (!text) return;
-    var maxW = W * 0.86;
-    var size = Math.max(20, Math.round(W * 0.092 * S.size / 100));
-    var lines, longest;
-    for (var tries = 0; tries < 30; tries++) {
-      context.font = '900 ' + size + 'px ' + FONT_STACK;
-      lines = wrapText(context, text, maxW);
-      longest = 0;
-      for (var i = 0; i < lines.length; i++) longest = Math.max(longest, context.measureText(lines[i]).width);
-      if (longest <= maxW && lines.length * size * 1.2 <= H * 0.34) break;
-      size -= 2;
-    }
-    var lineH = size * 1.2;
-    var totalH = lines.length * lineH;
-    context.save();
-    context.translate(fx * W, fy * H);
-    context.rotate(S.rot * Math.PI / 180);
-    context.textAlign = 'center';
-    context.textBaseline = 'middle';
-    context.lineJoin = 'round';
-    context.miterLimit = 2;
-    context.lineWidth = Math.max(4, size * 0.16);
-    context.strokeStyle = '#000000';
-    context.fillStyle = S.textColor || '#ffffff';
-    var startY = -totalH / 2 + lineH / 2;
-    for (var k = 0; k < lines.length; k++) {
-      var ly = startY + k * lineH;
-      context.strokeText(lines[k], 0, ly);
-      context.fillText(lines[k], 0, ly);
-    }
-    context.restore();
+  function filterString() {
+    return 'brightness(' + S.brightness + '%) contrast(' + S.contrast + '%) saturate(' + S.saturate + '%) hue-rotate(' + S.hue + 'deg)';
   }
 
   function draw() {
     if (!ctx || !cv) return;
-    var W = cv.width, H = cv.height;
     ctx.clearRect(0, 0, W, H);
+    // 背景
     if (S.bg === 'w') { ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H); }
     else if (S.bg === 'b') { ctx.fillStyle = '#111111'; ctx.fillRect(0, 0, W, H); }
     else if (S.bg === 'g') {
@@ -331,16 +473,153 @@ const units = UNIT_ORDER
       g.addColorStop(0, S.bg1); g.addColorStop(1, S.bg2);
       ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
     }
+    // 角色 / 自定义图片
     if (S.img) {
-      var img = S.img;
-      var maxW = W - 90, maxH = H * 0.58;
-      var sc = Math.min(maxW / img.width, maxH / img.height);
-      var dw = img.width * sc, dh = img.height * sc;
-      var dx = (W - dw) / 2, dy = H * 0.585 - dh / 2;
-      ctx.drawImage(img, dx, dy, dw, dh);
+      ctx.save();
+      try { ctx.filter = filterString(); } catch (e) {}
+      var maxW = W - 100, maxH = H * 0.62;
+      var sc = Math.min(maxW / S.img.width, maxH / S.img.height) * S.imageScale;
+      var dw = S.img.width * sc, dh = S.img.height * sc;
+      ctx.drawImage(S.img, S.imageX * W - dw / 2, S.imageY * H - dh / 2, dw, dh);
+      ctx.restore();
     }
-    drawTextBlock(ctx, S.top, S.topX, S.topY, W, H);
-    drawTextBlock(ctx, S.bottom, S.bottomX, S.bottomY, W, H);
+    drawTextBlock();
+  }
+
+  /* ---- 文本工具 ---- */
+  function splitLines(text) {
+    // 按换行符拆分后，再按宽度自动折行
+    var raw = String(text || '').split('\n');
+    var out = [];
+    for (var i = 0; i < raw.length; i++) {
+      var line = raw[i];
+      if (line === '') { out.push(''); continue; }
+      var cur = '';
+      for (var j = 0; j < line.length; j++) {
+        var ch = line[j];
+        var t = cur + ch;
+        var w = measureLine(ctx, t, S.fontSize);
+        if (w > W * 0.86 && cur) { out.push(cur); cur = ch; }
+        else { cur = t; }
+      }
+      if (cur) out.push(cur);
+    }
+    return out.length ? out : [''];
+  }
+
+  function measureLine(c, text, size) {
+    c.font = 'bold ' + size + 'px ' + fontStack();
+    var w = 0;
+    for (var i = 0; i < text.length; i++) {
+      w += c.measureText(text[i]).width + (S.letterSpacing || 0);
+    }
+    return w;
+  }
+
+  function lineHeight() {
+    return S.fontSize * 1.18 + (S.lineSpacing || 0);
+  }
+
+  function drawTextBlock() {
+    var text = String(S.text || '').trim();
+    if (!text) return;
+    var lines = splitLines(text);
+    var lh = lineHeight();
+    var totalH = lines.length * lh;
+
+    ctx.save();
+    ctx.translate(S.textX * W, S.textY * H);
+    ctx.rotate(S.rotate * Math.PI / 180);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.lineJoin = 'round';
+    ctx.miterLimit = 2;
+    ctx.font = 'bold ' + S.fontSize + 'px ' + fontStack();
+
+    // 渐变（横跨整个文本块）
+    var grad = ctx.createLinearGradient(0, -totalH / 2, 0, totalH / 2);
+    var colors = S.textColors && S.textColors.length ? S.textColors : ['#ffffff'];
+    if (colors.length === 1) colors = [colors[0], colors[0]];
+    for (var g = 0; g < colors.length; g++) grad.addColorStop(g / (colors.length - 1), colors[g]);
+
+    ctx.strokeStyle = S.strokeColor || '#ffffff';
+    ctx.fillStyle = grad;
+
+    var startY = -totalH / 2 + lh / 2;
+    for (var li = 0; li < lines.length; li++) {
+      var line = lines[li];
+      var ly = startY + li * lh;
+      if (S.vertical) drawVerticalLine(ctx, line, ly, grad);
+      else if (S.arcText) drawArcLine(ctx, line, ly);
+      else drawFlatLine(ctx, line, ly);
+    }
+    ctx.restore();
+  }
+
+  function strokeTextPath(ctx, line, x, y) {
+    // 外描边 -> 内描边 -> 填充
+    if (S.outline && S.outlineWidth > 0) {
+      ctx.save();
+      ctx.lineWidth = S.strokeWidth + S.outlineWidth * 2;
+      ctx.strokeStyle = S.outlineColor || '#3b3b3b';
+      ctx.strokeText(line, x, y);
+      ctx.restore();
+    }
+    if (S.strokeWidth > 0) {
+      ctx.lineWidth = S.strokeWidth;
+      ctx.strokeStyle = S.strokeColor || '#ffffff';
+      ctx.strokeText(line, x, y);
+    }
+    ctx.fillText(line, x, y);
+  }
+
+  function drawFlatLine(ctx, line, y) {
+    if (!line) return;
+    var x = 0;
+    if (S.letterSpacing) {
+      // 逐字绘制以支持字间距
+      var total = measureLine(ctx, line, S.fontSize);
+      x = -total / 2;
+      for (var i = 0; i < line.length; i++) {
+        var ch = line[i];
+        var w = ctx.measureText(ch).width;
+        strokeTextPath(ctx, ch, x + w / 2, y);
+        x += w + S.letterSpacing;
+      }
+    } else {
+      strokeTextPath(ctx, line, 0, y);
+    }
+  }
+
+  function drawVerticalLine(ctx, line, y) {
+    if (!line) return;
+    var total = line.length * S.fontSize;
+    var x = 0, cy = -total / 2 + S.fontSize / 2;
+    for (var i = 0; i < line.length; i++) {
+      var ch = line[i];
+      strokeTextPath(ctx, ch, x, cy);
+      cy += S.fontSize + (S.letterSpacing || 0);
+    }
+  }
+
+  function drawArcLine(ctx, line, y) {
+    if (!line) return;
+    var n = line.length;
+    var radius = S.arcRadius;
+    var step = (S.fontSize + (S.letterSpacing || 0)) / radius; // 弧度
+    var start = -(n - 1) / 2 * step;
+    for (var i = 0; i < n; i++) {
+      var a = start + i * step;
+      var px = radius * Math.sin(a);
+      var py = -radius + radius * Math.cos(a) + y;
+      ctx.save();
+      ctx.translate(px, py);
+      ctx.rotate(a);
+      var ch = line[i];
+      var w = ctx.measureText(ch).width;
+      strokeTextPath(ctx, ch, 0, 0);
+      ctx.restore();
+    }
   }
 
   /* ── character / stamp UI ────────────────────────────── */
@@ -353,9 +632,7 @@ const units = UNIT_ORDER
   function selectChar(key) {
     S.char = key;
     var chips = document.querySelectorAll('.pst-char-chip');
-    for (var i = 0; i < chips.length; i++) {
-      chips[i].classList.toggle('active', chips[i].dataset.key === key);
-    }
+    for (var i = 0; i < chips.length; i++) chips[i].classList.toggle('active', chips[i].dataset.key === key);
     var meta = CHAR_META[key];
     if (!gridEl || !meta) return;
     gridEl.innerHTML = '';
@@ -367,15 +644,13 @@ const units = UNIT_ORDER
       b.dataset.idx = String(idx);
       var im = document.createElement('img');
       im.src = s.img;
-      im.alt = s.name;
+      im.alt = CHAR_META[key].cn + ' 贴纸 ' + (idx + 1);
       im.loading = 'lazy';
       var lab = document.createElement('span');
       lab.textContent = String(idx + 1).padStart(2, '0');
       b.appendChild(im);
       b.appendChild(lab);
-      b.addEventListener('click', function () {
-        selectStamp(meta.stamps[idx]);
-      });
+      b.addEventListener('click', function () { selectStamp(meta.stamps[idx]); });
       gridEl.appendChild(b);
     });
   }
@@ -383,10 +658,8 @@ const units = UNIT_ORDER
   function selectStamp(stampMeta) {
     S.stamp = stampMeta.img;
     S.char = stampMeta.char;
-    loadImage(stampMeta.img, function (img) {
-      S.img = img;
-      draw();
-    });
+    S.custom = null;
+    loadImage(stampMeta.img, function (img) { S.img = img; draw(); });
     var stamps = gridEl.querySelectorAll('.pst-stamp');
     for (var i = 0; i < stamps.length; i++) stamps[i].classList.toggle('active', stamps[i].querySelector('img').getAttribute('src') === stampMeta.img);
     if (statusEl) statusEl.textContent = CHAR_META[stampMeta.char].cn + ' · ' + stampMeta.name;
@@ -395,7 +668,6 @@ const units = UNIT_ORDER
     toast('已选择 ' + CHAR_META[stampMeta.char].cn + ' 的贴纸');
   }
 
-  // 角色点击
   var charListEl = document.querySelector('.pst-char-list');
   if (charListEl) {
     charListEl.addEventListener('click', function (e) {
@@ -407,7 +679,6 @@ const units = UNIT_ORDER
     });
   }
 
-  // 搜索角色
   var searchEl = $('pst-search');
   if (searchEl) {
     searchEl.addEventListener('input', function () {
@@ -415,8 +686,7 @@ const units = UNIT_ORDER
       var chips = document.querySelectorAll('.pst-char-chip');
       var any = false;
       for (var i = 0; i < chips.length; i++) {
-        var key = chips[i].dataset.key;
-        var cn = chips[i].dataset.cn;
+        var key = chips[i].dataset.key, cn = chips[i].dataset.cn;
         var hit = !q || key.indexOf(q) !== -1 || cn.indexOf(q) !== -1;
         chips[i].style.display = hit ? '' : 'none';
         if (hit) any = true;
@@ -435,27 +705,112 @@ const units = UNIT_ORDER
     });
   }
 
-  /* ── text controls ───────────────────────────────────── */
-  var topEl = $('pst-top'), bottomEl = $('pst-bottom');
-  if (topEl) topEl.addEventListener('input', function () { S.top = topEl.value; draw(); });
-  if (bottomEl) bottomEl.addEventListener('input', function () { S.bottom = bottomEl.value; draw(); });
+  /* ── 上传自定义图片 ──────────────────────────────────── */
+  var fileEl = $('pst-file');
+  if (fileEl) {
+    fileEl.addEventListener('change', function () {
+      var f = fileEl.files && fileEl.files[0];
+      if (!f) return;
+      var url = URL.createObjectURL(f);
+      loadImage(url, function (img) {
+        S.img = img;
+        S.custom = true;
+        S.char = null;
+        S.stamp = null;
+        var chips = document.querySelectorAll('.pst-char-chip');
+        for (var i = 0; i < chips.length; i++) chips[i].classList.remove('active');
+        var stamps = gridEl.querySelectorAll('.pst-stamp');
+        for (var j = 0; j < stamps.length; j++) stamps[j].classList.remove('active');
+        if (statusEl) statusEl.textContent = '自定义图片';
+        draw();
+        toast('已上传自定义图片');
+      });
+    });
+  }
 
-  var sizeEl = $('pst-size'), sizeValEl = $('pst-size-val');
-  if (sizeEl) sizeEl.addEventListener('input', function () {
-    S.size = parseInt(sizeEl.value, 10);
-    if (sizeValEl) sizeValEl.textContent = S.size + '%';
+  /* ── 文本与字体控件 ───────────────────────────────────── */
+  var textEl = $('pst-text');
+  if (textEl) textEl.addEventListener('input', function () { S.text = textEl.value; draw(); });
+  var fontEl = $('pst-font');
+  if (fontEl) fontEl.addEventListener('change', function () {
+    S.font = fontEl.value;
+    ensureFont(S.font);
     draw();
   });
+  var verticalEl = $('pst-vertical');
+  if (verticalEl) verticalEl.addEventListener('change', function () { S.vertical = verticalEl.value === '1'; draw(); });
 
-  var rotEl = $('pst-rot');
-  if (rotEl) rotEl.addEventListener('change', function () { S.rot = parseFloat(rotEl.value) || 0; draw(); });
+  /* ── 滑块通用绑定 ─────────────────────────────────────── */
+  function bindSlider(key, id, formatter) {
+    var el = $(id), valEl = $('v-' + key);
+    if (!el) return;
+    el.addEventListener('input', function () {
+      var v = parseFloat(el.value);
+      S[key] = key === 'textX' || key === 'textY' ? v / 100 : v;
+      if (valEl) valEl.textContent = formatter ? formatter(v) : v;
+      draw();
+    });
+  }
+  bindSlider('fontSize', 'c-fontSize', function (v) { return v; });
+  bindSlider('rotate', 'c-rotate', function (v) { return v + '°'; });
+  bindSlider('letterSpacing', 'c-letterSpacing', function (v) { return v; });
+  bindSlider('lineSpacing', 'c-lineSpacing', function (v) { return v; });
+  bindSlider('textX', 'c-textX', function (v) { return v + '%'; });
+  bindSlider('textY', 'c-textY', function (v) { return v + '%'; });
+  bindSlider('arcRadius', 'c-arcRadius', function (v) { return v; });
+  bindSlider('strokeWidth', 'c-strokeWidth', function (v) { return v; });
+  bindSlider('outlineWidth', 'c-outlineWidth', function (v) { return v; });
+  bindSlider('imageScale', 'c-imageScale', function (v) { return v + '%'; });
+  bindSlider('brightness', 'c-brightness', function (v) { return v + '%'; });
+  bindSlider('contrast', 'c-contrast', function (v) { return v + '%'; });
+  bindSlider('saturate', 'c-saturate', function (v) { return v + '%'; });
+  bindSlider('hue', 'c-hue', function (v) { return v + '°'; });
 
-  var textColorEl = $('pst-text-color');
-  if (textColorEl) textColorEl.addEventListener('input', function () { S.textColor = textColorEl.value; draw(); });
+  /* ── 开关 ────────────────────────────────────────────── */
+  var arcEl = $('c-arcText');
+  if (arcEl) arcEl.addEventListener('change', function () { S.arcText = arcEl.checked; draw(); });
+  var outlineEl = $('c-outline');
+  if (outlineEl) outlineEl.addEventListener('change', function () { S.outline = outlineEl.checked; draw(); });
 
+  /* ── 颜色 ────────────────────────────────────────────── */
+  var color1El = $('pst-color1'), color2El = $('pst-color2');
+  function syncColors() {
+    if (color1El && color2El) {
+      if (S.textColors.length > 1) { color1El.value = S.textColors[0]; color2El.value = S.textColors[1] || S.textColors[0]; }
+    }
+  }
+  if (color1El) color1El.addEventListener('input', function () {
+    S.textColors = [color1El.value, color2El ? color2El.value : color1El.value];
+    draw();
+  });
+  if (color2El) color2El.addEventListener('input', function () {
+    S.textColors = [color1El ? color1El.value : '#ffffff', color2El.value];
+    draw();
+  });
+  var strokeColorEl = $('pst-stroke-color');
+  if (strokeColorEl) strokeColorEl.addEventListener('input', function () { S.strokeColor = strokeColorEl.value; draw(); });
+  var outlineColorEl = $('pst-outline-color');
+  if (outlineColorEl) outlineColorEl.addEventListener('input', function () { S.outlineColor = outlineColorEl.value; draw(); });
+
+  /* 渐变预设 */
+  var palettesEl = $('pst-palettes');
+  if (palettesEl) {
+    palettesEl.addEventListener('click', function (e) {
+      var btn = e.target.closest('.pst-palette');
+      if (!btn) return;
+      try {
+        S.textColors = JSON.parse(btn.dataset.colors);
+      } catch (err) { S.textColors = ['#ffffff']; }
+      syncColors();
+      draw();
+      toast('已应用渐变预设');
+    });
+  }
+
+  /* ── 背景 ────────────────────────────────────────────── */
   var bgEl = $('pst-bg'), gradWrapEl = $('pst-grad-wrap');
   function syncBgUI() {
-    if (gradWrapEl) gradWrapEl.style.display = S.bg === 'g' ? '' : 'none';
+    if (gradWrapEl) gradWrapEl.style.display = S.bg === 'g' ? 'grid' : 'none';
     var shell = $('pst-canvas-shell');
     if (shell) shell.classList.toggle('checker', S.bg === 't');
   }
@@ -464,22 +819,19 @@ const units = UNIT_ORDER
   if (bg1El) bg1El.addEventListener('input', function () { S.bg1 = bg1El.value; draw(); });
   if (bg2El) bg2El.addEventListener('input', function () { S.bg2 = bg2El.value; draw(); });
 
-  /* ── drag text on canvas ─────────────────────────────── */
+  /* ── 拖动 ────────────────────────────────────────────── */
   function canvasPos(e) {
     var r = cv.getBoundingClientRect();
-    return {
-      x: (e.clientX - r.left) * (cv.width / r.width),
-      y: (e.clientY - r.top) * (cv.height / r.height)
-    };
+    return { x: (e.clientX - r.left) * (cv.width / r.width), y: (e.clientY - r.top) * (cv.height / r.height) };
   }
   function hitTest(p) {
-    if (S.top && String(S.top).trim()) {
-      var tx = S.topX * cv.width, ty = S.topY * cv.height;
-      if (Math.hypot(p.x - tx, p.y - ty) < 46) return 'top';
+    if (String(S.text || '').trim()) {
+      var tx = S.textX * W, ty = S.textY * H;
+      if (Math.hypot(p.x - tx, p.y - ty) < 60) return 'text';
     }
-    if (S.bottom && String(S.bottom).trim()) {
-      var bx = S.bottomX * cv.width, by = S.bottomY * cv.height;
-      if (Math.hypot(p.x - bx, p.y - by) < 46) return 'bottom';
+    if (S.img) {
+      var ix = S.imageX * W, iy = S.imageY * H;
+      if (Math.hypot(p.x - ix, p.y - iy) < 55) return 'image';
     }
     return null;
   }
@@ -492,10 +844,11 @@ const units = UNIT_ORDER
     cv.addEventListener('pointermove', function (e) {
       if (!dragMode) return;
       var p = canvasPos(e);
-      var fx = Math.min(0.94, Math.max(0.06, p.x / cv.width));
-      var fy = Math.min(0.94, Math.max(0.06, p.y / cv.height));
-      if (dragMode === 'top') { S.topX = fx; S.topY = fy; }
-      else { S.bottomX = fx; S.bottomY = fy; }
+      var fx = Math.min(0.95, Math.max(0.05, p.x / W));
+      var fy = Math.min(0.95, Math.max(0.05, p.y / H));
+      if (dragMode === 'text') { S.textX = fx; S.textY = fy; }
+      else { S.imageX = fx; S.imageY = fy; }
+      syncSliders();
       draw();
     });
     var endDrag = function () {
@@ -504,163 +857,248 @@ const units = UNIT_ORDER
     cv.addEventListener('pointerup', endDrag);
     cv.addEventListener('pointercancel', endDrag);
     cv.addEventListener('pointermove', function (e) {
-      if (!dragMode) { cv.style.cursor = hitTest(canvasPos(e)) ? 'grab' : ''; }
+      if (!dragMode) cv.style.cursor = hitTest(canvasPos(e)) ? 'grab' : '';
     });
   }
 
-  /* ── actions ─────────────────────────────────────────── */
+  function syncSliders() {
+    var set = function (id, v) { var el = $(id); if (el) el.value = String(Math.round(v * 100)); };
+    set('c-textX', S.textX); set('c-textY', S.textY);
+    var vx = $('v-textX'), vy = $('v-textY');
+    if (vx) vx.textContent = Math.round(S.textX * 100) + '%';
+    if (vy) vy.textContent = Math.round(S.textY * 100) + '%';
+  }
+
+  /* ── 随机文案 ────────────────────────────────────────── */
   var randomEl = $('pst-random');
   if (randomEl) randomEl.addEventListener('click', function () {
-    S.top = pick(PHRASES_TOP);
-    S.bottom = pick(PHRASES_BOTTOM);
-    if (topEl) topEl.value = S.top;
-    if (bottomEl) bottomEl.value = S.bottom;
+    var p = pick(PHRASES);
+    S.text = p[0] + '\n' + p[1];
+    if (textEl) textEl.value = S.text;
     draw();
     toast('已生成随机文案');
   });
 
+  /* ── 导出 ────────────────────────────────────────────── */
   function currentName() {
+    if (S.custom) return 'pjsk-custom';
     if (!S.char) return 'pjsk';
     var base = CHAR_META[S.char] ? CHAR_META[S.char].cn : S.char;
-    var idx = S.stamp ? S.stamp.split('/').pop().replace(/\.png$/, '') : '';
+    var idx = S.stamp ? S.stamp.split('/').pop().replace(/\.webp$/, '') : '';
     return base + '-' + idx;
   }
-
-  var downloadEl = $('pst-download');
-  if (downloadEl) downloadEl.addEventListener('click', function () {
-    if (!S.img) { toast('请先选择一张贴纸'); return; }
+  function exportImage(type, ext, label) {
+    if (!S.img) { toast('请先选择贴纸或上传图片'); return; }
     cv.toBlob(function (blob) {
       if (!blob) { toast('导出失败'); return; }
       var url = URL.createObjectURL(blob);
       var a = document.createElement('a');
       a.href = url;
-      a.download = 'pjsk-' + currentName() + '.png';
+      a.download = 'pjsk-' + currentName() + '.' + ext;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
-      toast('已下载 PNG');
-    }, 'image/png');
-  });
+      toast('已下载 ' + ext.toUpperCase());
+    }, type);
+  }
+  var downloadEl = $('pst-download');
+  if (downloadEl) downloadEl.addEventListener('click', function () { exportImage('image/png', 'png', 'PNG'); });
+  var webpEl = $('pst-download-webp');
+  if (webpEl) webpEl.addEventListener('click', function () { exportImage('image/webp', 'webp', 'WEBP'); });
 
   var copyImgEl = $('pst-copy-img');
   if (copyImgEl) copyImgEl.addEventListener('click', function () {
-    if (!S.img) { toast('请先选择一张贴纸'); return; }
+    if (!S.img) { toast('请先选择贴纸或上传图片'); return; }
     cv.toBlob(function (blob) {
       if (!blob) { toast('导出失败'); return; }
-      if (navigator.clipboard && navigator.clipboard.write) {
+      if (navigator.clipboard && navigator.clipboard.write && window.ClipboardItem) {
         navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
           .then(function () { toast('图片已复制到剪贴板'); })
           .catch(function () { toast('复制失败，请用下载'); });
-      } else {
-        toast('当前浏览器不支持复制图片');
-      }
+      } else { toast('当前浏览器不支持复制图片'); }
     }, 'image/png');
   });
 
-  function shareUrl() {
-    var u = new URL(window.location.href);
-    u.search = '';
-    if (S.char) u.searchParams.set('char', S.char);
-    if (S.stamp) u.searchParams.set('stamp', encodeURIComponent(S.stamp.split('/').pop().replace(/\.png$/, '')));
-    if (S.top) u.searchParams.set('top', S.top);
-    if (S.bottom) u.searchParams.set('bottom', S.bottom);
-    return u.toString();
-  }
   function copyTextFallback(text) {
     var ta = document.createElement('textarea');
     ta.value = text;
     ta.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0';
     ta.setAttribute('readonly', '');
     document.body.appendChild(ta);
-    ta.focus();
-    ta.select();
-    ta.setSelectionRange(0, ta.value.length);
+    ta.focus(); ta.select(); ta.setSelectionRange(0, ta.value.length);
     var ok = false;
     try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
     document.body.removeChild(ta);
     return ok;
   }
 
+  function configObject() {
+    return {
+      text: S.text, font: S.font, fontSize: S.fontSize, rotate: S.rotate,
+      letterSpacing: S.letterSpacing, lineSpacing: S.lineSpacing,
+      textX: S.textX, textY: S.textY, arcText: S.arcText, arcRadius: S.arcRadius,
+      imageScale: S.imageScale, strokeWidth: S.strokeWidth, strokeColor: S.strokeColor,
+      outline: S.outline, outlineWidth: S.outlineWidth, outlineColor: S.outlineColor,
+      textColors: S.textColors, vertical: S.vertical, bg: S.bg, bg1: S.bg1, bg2: S.bg2,
+      brightness: S.brightness, contrast: S.contrast, saturate: S.saturate, hue: S.hue,
+      char: S.char, stamp: S.stamp,
+    };
+  }
+  function applyConfig(cfg) {
+    if (!cfg) return;
+    Object.keys(S).forEach(function (k) { if (k !== 'img' && k !== 'custom' && cfg[k] !== undefined) S[k] = cfg[k]; });
+    syncAllControls();
+    if (cfg.char && CHAR_META[cfg.char]) {
+      selectChar(cfg.char);
+      var meta = CHAR_META[cfg.char];
+      var target = null;
+      if (cfg.stamp) { for (var i = 0; i < meta.stamps.length; i++) if (meta.stamps[i].img === cfg.stamp) { target = meta.stamps[i]; break; } }
+      if (!target && meta.stamps.length) target = meta.stamps[0];
+      if (target) selectStamp(target);
+    }
+    syncAllControls();
+    draw();
+  }
+
   var linkEl = $('pst-copy-link');
   if (linkEl) linkEl.addEventListener('click', function () {
-    var url = shareUrl();
+    var u = new URL(window.location.href);
+    u.search = '';
+    var c = configObject();
+    if (c.char) u.searchParams.set('char', c.char);
+    if (c.stamp) u.searchParams.set('stamp', encodeURIComponent(c.stamp.split('/').pop().replace(/\.webp$/, '')));
+    if (c.text) u.searchParams.set('text', c.text);
+    u.searchParams.set('font', c.font);
+    u.searchParams.set('fs', c.fontSize);
+    u.searchParams.set('r', c.rotate);
+    var url = u.toString();
     if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(url).then(function () { toast('链接已复制'); }).catch(function () {
-        toast(copyTextFallback(url) ? '链接已复制' : '复制失败，请手动复制地址栏链接');
-      });
-    } else {
-      toast(copyTextFallback(url) ? '链接已复制' : '复制失败，请手动复制地址栏链接');
-    }
+      navigator.clipboard.writeText(url).then(function () { toast('链接已复制'); }).catch(function () { toast(copyTextFallback(url) ? '链接已复制' : '复制失败'); });
+    } else { toast(copyTextFallback(url) ? '链接已复制' : '复制失败'); }
+  });
+
+  var exportCfgEl = $('pst-export-config');
+  if (exportCfgEl) exportCfgEl.addEventListener('click', function () {
+    var blob = new Blob([JSON.stringify(configObject(), null, 2)], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = 'pjsk-config.json';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    toast('已导出配置');
+  });
+  var importCfgEl = $('pst-import-config');
+  if (importCfgEl) importCfgEl.addEventListener('change', function () {
+    var f = importCfgEl.files && importCfgEl.files[0];
+    if (!f) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      try { applyConfig(JSON.parse(reader.result)); toast('已导入配置'); }
+      catch (e) { toast('配置格式不正确'); }
+    };
+    reader.readAsText(f);
+    importCfgEl.value = '';
   });
 
   var resetEl = $('pst-reset');
   if (resetEl) resetEl.addEventListener('click', function () {
-    S.top = ''; S.bottom = '';
-    S.size = 100; S.rot = 0; S.textColor = '#ffffff';
-    S.bg = 't'; S.bg1 = '#ffe3ef'; S.bg2 = '#cfe8ff';
-    S.topX = 0.5; S.topY = 0.13;
-    S.bottomX = 0.5; S.bottomY = 0.88;
-    if (topEl) topEl.value = '';
-    if (bottomEl) bottomEl.value = '';
-    if (sizeEl) { sizeEl.value = '100'; if (sizeValEl) sizeValEl.textContent = '100%'; }
-    if (rotEl) rotEl.value = '0';
-    if (textColorEl) textColorEl.value = '#ffffff';
-    if (bgEl) bgEl.value = 't';
-    if (bg1El) bg1El.value = '#ffe3ef';
-    if (bg2El) bg2El.value = '#cfe8ff';
-    syncBgUI();
+    var keepChar = S.char, keepStamp = S.stamp, keepImg = S.img, keepCustom = S.custom;
+    S = {
+      char: keepChar, stamp: keepStamp, img: keepImg, custom: keepCustom,
+      text: '', font: 'YurukaStd', fontSize: 72, rotate: 0, letterSpacing: 0, lineSpacing: 0,
+      textX: 0.5, textY: 0.33, arcText: false, arcRadius: 280, imageScale: 1,
+      strokeWidth: 16, strokeColor: '#ffffff', outline: true, outlineWidth: 6, outlineColor: '#3b3b3b',
+      textColors: ['#ffffff', '#ffffff'], vertical: false, bg: 't', bg1: '#ffe3ef', bg2: '#cfe8ff',
+      brightness: 100, contrast: 100, saturate: 100, hue: 0, imageX: 0.5, imageY: 0.56,
+    };
+    syncAllControls();
     draw();
     toast('已重置');
   });
+
+  /* ── 控件状态同步 ────────────────────────────────────── */
+  function syncAllControls() {
+    if (textEl) textEl.value = S.text;
+    if (fontEl) fontEl.value = S.font;
+    if (verticalEl) verticalEl.value = S.vertical ? '1' : '0';
+    var sync = function (id, v) { var el = $(id); if (el) el.value = String(v); };
+    sync('c-fontSize', S.fontSize); sync('c-rotate', S.rotate); sync('c-letterSpacing', S.letterSpacing);
+    sync('c-lineSpacing', S.lineSpacing); sync('c-textX', Math.round(S.textX * 100)); sync('c-textY', Math.round(S.textY * 100));
+    sync('c-arcRadius', S.arcRadius); sync('c-strokeWidth', S.strokeWidth); sync('c-outlineWidth', S.outlineWidth);
+    sync('c-imageScale', Math.round(S.imageScale * 100));
+    sync('c-brightness', S.brightness); sync('c-contrast', S.contrast); sync('c-saturate', S.saturate); sync('c-hue', S.hue);
+    var setText = function (id, v) { var el = $(id); if (el) el.textContent = v; };
+    setText('v-fontSize', S.fontSize); setText('v-rotate', S.rotate + '°'); setText('v-letterSpacing', S.letterSpacing);
+    setText('v-lineSpacing', S.lineSpacing); setText('v-textX', Math.round(S.textX * 100) + '%'); setText('v-textY', Math.round(S.textY * 100) + '%');
+    setText('v-arcRadius', S.arcRadius); setText('v-strokeWidth', S.strokeWidth); setText('v-outlineWidth', S.outlineWidth);
+    setText('v-imageScale', Math.round(S.imageScale * 100) + '%');
+    setText('v-brightness', S.brightness + '%'); setText('v-contrast', S.contrast + '%'); setText('v-saturate', S.saturate + '%'); setText('v-hue', S.hue + '°');
+    if (arcEl) arcEl.checked = !!S.arcText;
+    if (outlineEl) outlineEl.checked = !!S.outline;
+    syncColors();
+    syncBgUI();
+  }
+
+  /* ── 字体加载 ────────────────────────────────────────── */
+  function ensureFont(name) {
+    if (document.fonts && document.fonts.load) {
+      document.fonts.load('bold 40px "' + name + '"').then(function () { draw(); }).catch(function () {});
+      document.fonts.ready.then(function () { draw(); }).catch(function () {});
+    }
+  }
 
   /* ── init ────────────────────────────────────────────── */
   function applyQuery() {
     if (queryHandled) return;
     queryHandled = true;
     var params = new URLSearchParams(window.location.search);
-    var top = params.get('top');
-    var bottom = params.get('bottom');
+    var text = params.get('text');
     var char = params.get('char');
     var stamp = params.get('stamp');
-    if (top != null) { S.top = top; if (topEl) topEl.value = top; }
-    if (bottom != null) { S.bottom = bottom; if (bottomEl) bottomEl.value = bottom; }
+    var font = params.get('font');
+    var fs = params.get('fs');
+    var r = params.get('r');
+    if (text != null) { S.text = text; if (textEl) textEl.value = text; }
+    if (font === 'SSFangTangTi' || font === 'YurukaStd') S.font = font;
+    if (fs != null) { S.fontSize = Math.min(160, Math.max(24, parseInt(fs, 10) || 72)); }
+    if (r != null) { S.rotate = Math.min(30, Math.max(-30, parseFloat(r) || 0)); }
+    syncAllControls();
     if (char && CHAR_META[char]) {
       selectChar(char);
       var meta = CHAR_META[char];
       var target = null;
       if (stamp) {
-        var name = stamp + '.png';
+        var name = stamp + '.webp';
         for (var i = 0; i < meta.stamps.length; i++) {
           if (meta.stamps[i].img.indexOf(name) !== -1) { target = meta.stamps[i]; break; }
         }
       }
       if (!target && meta.stamps.length) target = meta.stamps[0];
       if (target) selectStamp(target);
-    } else if (char && !CHAR_META[char]) {
-      // 角色不存在时退回到默认角色
+    } else if (!char || !CHAR_META[char]) {
       selectChar('miku');
       selectStamp(CHAR_META['miku'].stamps[0]);
     }
+    syncAllControls();
     draw();
   }
 
   function init() {
-    syncBgUI();
-    // 默认角色：Miku
-    if (CHAR_META['miku']) {
+    syncAllControls();
+    ensureFont('YurukaStd');
+    if (!S.img && CHAR_META['miku']) {
       selectChar('miku');
       selectStamp(CHAR_META['miku'].stamps[0]);
     }
     applyQuery();
     draw();
-    // 预加载字体，确保 canvas 使用得意黑渲染
-    if (document.fonts && document.fonts.load) {
-      document.fonts.load('900 40px SmileySans').then(function () { draw(); }).catch(function () {});
-      document.fonts.ready.then(function () { draw(); }).catch(function () {});
-    }
     if (emptyEl && S.char) emptyEl.style.display = 'none';
   }
+
+  window.__pstDebug = function () {
+    return { textX: S.textX, textY: S.textY, imageX: S.imageX, imageY: S.imageY, font: S.font, text: S.text, custom: S.custom };
+  };
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
