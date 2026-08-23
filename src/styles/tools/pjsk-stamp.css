@@ -1,0 +1,359 @@
+/* ============================================================
+   PJSK 表情包生成器
+   ============================================================ */
+#pst-root {
+  --pst-surface: oklch(var(--b1) / 0.92);
+  --pst-soft: oklch(var(--b2) / 0.68);
+  --pst-muted: oklch(var(--bc) / 0.6);
+  --pst-faint: oklch(var(--bc) / 0.34);
+  --pst-border: oklch(var(--bc) / 0.08);
+  --pst-border-strong: oklch(var(--bc) / 0.16);
+  --pst-accent: oklch(var(--p));
+  --pst-accent-soft: oklch(var(--p) / 0.12);
+}
+
+/* 字体：得意黑 Smiley Sans (SIL OFL-1.1) */
+@font-face {
+  font-family: 'SmileySans';
+  src: url('/fonts/SmileySans-Oblique.woff2') format('woff2');
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ----- 卡片头 -------------------------------------------- */
+.pst-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid var(--pst-border);
+  padding: 1.15rem 1.4rem;
+  background:
+    linear-gradient(135deg, oklch(var(--p) / 0.04), transparent 40%),
+    linear-gradient(180deg, oklch(var(--b2) / 0.75), transparent);
+}
+.pst-card-body { padding: 1.35rem 1.4rem 1.45rem; }
+.pst-step-label {
+  margin: 0;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: oklch(var(--p));
+}
+.pst-step-title {
+  margin: 0.28rem 0 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: oklch(var(--bc) / 0.96);
+}
+.pst-card-hint {
+  white-space: nowrap;
+  font-size: 0.72rem;
+  color: var(--pst-faint);
+}
+
+/* ----- 输入控件 ------------------------------------------ */
+.pst-input {
+  width: 100%;
+  border-radius: 0.85rem;
+  border: 1.5px solid var(--pst-border-strong);
+  background: oklch(var(--b1) / 0.85);
+  color: oklch(var(--bc) / 0.92);
+  padding: 0.62rem 0.85rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.pst-input:focus {
+  border-color: oklch(var(--p) / 0.55);
+  box-shadow: 0 0 0 3px oklch(var(--p) / 0.12);
+}
+.pst-input::placeholder { color: var(--pst-faint); font-weight: 500; }
+.pst-input:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.pst-color {
+  width: 100%;
+  height: 2.55rem;
+  border-radius: 0.85rem;
+  border: 1.5px solid var(--pst-border-strong);
+  background: oklch(var(--b1) / 0.85);
+  padding: 0.25rem;
+  cursor: pointer;
+}
+.pst-color::-webkit-color-swatch-wrapper { padding: 2px; }
+.pst-color::-webkit-color-swatch { border-radius: 0.5rem; border: none; }
+
+.pst-range {
+  width: 100%;
+  accent-color: oklch(var(--p));
+  cursor: pointer;
+}
+
+/* ----- 角色列表 ------------------------------------------ */
+.pst-search-row { margin-bottom: 1rem; }
+.pst-char-list { display: flex; flex-direction: column; gap: 1.1rem; max-height: 26rem; overflow-y: auto; padding-right: 0.35rem; }
+.pst-char-list::-webkit-scrollbar { width: 6px; }
+.pst-char-list::-webkit-scrollbar-thumb { background: var(--pst-border-strong); border-radius: 999px; }
+
+.pst-unit-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--pst-faint);
+  margin-bottom: 0.55rem;
+}
+.pst-unit-label span {
+  background: var(--pst-accent-soft);
+  color: oklch(var(--p));
+  border-radius: 999px;
+  padding: 0.05rem 0.5rem;
+  font-size: 0.65rem;
+  letter-spacing: 0.02em;
+}
+.pst-char-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+.pst-char-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border-radius: 999px;
+  border: 1.5px solid var(--pst-border);
+  background: oklch(var(--b2) / 0.6);
+  padding: 0.42rem 0.8rem;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: oklch(var(--bc) / 0.78);
+  cursor: pointer;
+  transition: transform 0.18s, border-color 0.18s, background 0.18s, color 0.18s, box-shadow 0.18s;
+}
+.pst-char-chip:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in oklab, var(--char-color) 55%, transparent);
+  background: oklch(var(--b1) / 0.9);
+  color: oklch(var(--bc) / 0.95);
+}
+.pst-char-chip.active {
+  border-color: var(--char-color);
+  background: color-mix(in oklab, var(--char-color) 16%, oklch(var(--b1)));
+  color: oklch(var(--bc) / 0.98);
+  box-shadow: 0 3px 0 -1px color-mix(in oklab, var(--char-color) 60%, transparent);
+}
+.pst-char-dot {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 999px;
+  background: var(--char-color);
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--char-color) 30%, transparent);
+  flex: none;
+}
+.pst-char-cn { line-height: 1; }
+.pst-char-en {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--pst-faint);
+  line-height: 1;
+}
+
+/* ----- 贴纸区 -------------------------------------------- */
+.pst-stamp-area { margin-top: 1.2rem; padding-top: 1.2rem; border-top: 1px solid var(--pst-border); }
+.pst-stamp-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.7rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--pst-faint);
+}
+.pst-stamp-empty { font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--pst-faint); }
+.pst-stamp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(86px, 1fr));
+  gap: 0.6rem;
+}
+.pst-stamp {
+  position: relative;
+  border-radius: 1rem;
+  border: 1.5px solid var(--pst-border);
+  background: linear-gradient(180deg, oklch(var(--b2) / 0.85), oklch(var(--b1) / 0.9));
+  padding: 0.45rem;
+  cursor: pointer;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  transition: transform 0.18s, border-color 0.18s, box-shadow 0.18s;
+}
+.pst-stamp:hover {
+  transform: translateY(-2px);
+  border-color: oklch(var(--p) / 0.45);
+  box-shadow: 0 14px 28px -18px oklch(var(--p) / 0.5);
+}
+.pst-stamp.active {
+  border-color: var(--pst-accent);
+  box-shadow: 0 0 0 3px oklch(var(--p) / 0.18);
+}
+.pst-stamp img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+.pst-stamp span {
+  position: absolute;
+  left: 0.4rem;
+  bottom: 0.3rem;
+  font-size: 0.6rem;
+  font-weight: 800;
+  color: oklch(var(--bc) / 0.5);
+  background: oklch(var(--b1) / 0.75);
+  border-radius: 999px;
+  padding: 0.05rem 0.4rem;
+  backdrop-filter: blur(2px);
+}
+
+/* ----- 预览画布 ------------------------------------------ */
+.pst-canvas-shell {
+  position: relative;
+  border-radius: 1.25rem;
+  border: 1.5px solid var(--pst-border-strong);
+  background: oklch(var(--b2) / 0.55);
+  padding: 0.75rem;
+  margin-bottom: 1.1rem;
+  overflow: hidden;
+}
+.pst-canvas-shell.checker {
+  background-image:
+    linear-gradient(45deg, oklch(var(--b3, var(--b2)) / 0.9) 25%, transparent 25%),
+    linear-gradient(-45deg, oklch(var(--b3, var(--b2)) / 0.9) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, oklch(var(--b3, var(--b2)) / 0.9) 75%),
+    linear-gradient(-45deg, transparent 75%, oklch(var(--b3, var(--b2)) / 0.9) 75%);
+  background-size: 18px 18px;
+  background-position: 0 0, 0 9px, 9px -9px, -9px 0;
+}
+.pst-canvas-shell canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 0.75rem;
+  touch-action: none;
+}
+.pst-canvas-tip {
+  position: absolute;
+  right: 1.15rem;
+  top: 1.15rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: oklch(var(--bc) / 0.55);
+  background: oklch(var(--b1) / 0.8);
+  border-radius: 999px;
+  padding: 0.25rem 0.6rem;
+  pointer-events: none;
+  backdrop-filter: blur(3px);
+}
+
+/* ----- 文案控件 ------------------------------------------ */
+.pst-text-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; }
+.pst-field { display: flex; flex-direction: column; gap: 0.4rem; min-width: 0; }
+.pst-field-label {
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: var(--pst-muted);
+}
+.pst-field-label b { color: oklch(var(--p)); font-variant-numeric: tabular-nums; }
+.pst-ctrl-grid {
+  margin-top: 0.9rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem 0.7rem;
+}
+.pst-grad-pair { display: flex; gap: 0.45rem; }
+.pst-grad-pair .pst-color { flex: 1; }
+
+/* ----- 按钮 ---------------------------------------------- */
+.pst-actions {
+  margin-top: 1.15rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+.pst-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  border-radius: 999px;
+  border: 1.5px solid var(--pst-border-strong);
+  background: oklch(var(--b2) / 0.6);
+  color: oklch(var(--bc) / 0.85);
+  padding: 0.6rem 0.95rem;
+  font-size: 0.84rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.16s, background 0.16s, border-color 0.16s, color 0.16s, box-shadow 0.16s;
+}
+.pst-btn:hover { transform: translateY(-1px); }
+.pst-btn:active { transform: translateY(1px); }
+.pst-btn-primary {
+  background: oklch(var(--p));
+  border-color: oklch(var(--p));
+  color: oklch(var(--pc));
+  box-shadow: 0 4px 14px -6px oklch(var(--p) / 0.7);
+}
+.pst-btn-primary:hover { background: color-mix(in oklab, oklch(var(--p)) 90%, black); }
+.pst-btn-soft {
+  background: var(--pst-accent-soft);
+  border-color: oklch(var(--p) / 0.35);
+  color: oklch(var(--p));
+}
+.pst-btn-outline { background: oklch(var(--b1) / 0.85); }
+.pst-btn-ghost { border-color: transparent; background: transparent; color: var(--pst-muted); }
+
+.pst-note {
+  margin-top: 1rem;
+  font-size: 0.72rem;
+  color: var(--pst-faint);
+  text-align: center;
+}
+
+/* ----- Toast --------------------------------------------- */
+.pst-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 1.6rem;
+  transform: translate(-50%, 1.2rem);
+  background: oklch(var(--bc) / 0.92);
+  color: oklch(var(--b1));
+  font-size: 0.85rem;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 0.65rem 1.3rem;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 60;
+  box-shadow: 0 14px 34px -12px oklch(var(--bc) / 0.6);
+  transition: opacity 0.25s, transform 0.25s;
+}
+.pst-toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* ----- 响应式 -------------------------------------------- */
+@media (max-width: 640px) {
+  .pst-text-row { grid-template-columns: 1fr; }
+  .pst-ctrl-grid { grid-template-columns: 1fr 1fr; }
+  .pst-actions { flex-direction: column; }
+  .pst-actions .pst-btn { width: 100%; }
+  .pst-canvas-tip { display: none; }
+}

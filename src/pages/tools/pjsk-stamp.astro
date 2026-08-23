@@ -1,0 +1,671 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/ui/PageHeader.astro';
+import pjskData from '../../data/pjsk-stamp.json';
+import '../../styles/tools/pjsk-stamp.css';
+
+// 按小队/虚拟歌手分组，方便侧栏展示
+const UNIT_ORDER = ['虚拟歌手', 'Leo/need', 'MORE MORE JUMP!', 'Vivid BAD SQUAD', 'Wonderlands×Showtime', '25时，Nightcord'];
+const charMeta = new Map();
+for (const s of pjskData) {
+  if (!charMeta.has(s.char)) {
+    charMeta.set(s.char, { key: s.char, cn: s.cn, unit: s.unit, color: s.color, count: 0 });
+  }
+  charMeta.get(s.char).count++;
+}
+const units = UNIT_ORDER
+  .map((u) => ({ unit: u, chars: [...charMeta.values()].filter((c) => c.unit === u) }))
+  .filter((g) => g.chars.length > 0);
+---
+
+<BaseLayout
+  title="PJSK 表情包生成器"
+  description="纯浏览器端的 Project Sekai / 世界计划表情包生成器：选择角色贴纸、添加顶部与底部文字，一键导出透明背景 PNG。"
+  ogImage="/HP.png"
+>
+  <section class="relative overflow-hidden">
+    <div class="pointer-events-none absolute left-[-6rem] top-[-5rem] h-52 w-52 rounded-full bg-primary/6 blur-3xl"></div>
+    <div class="pointer-events-none absolute bottom-[-6rem] right-[-4rem] h-56 w-56 rounded-full bg-secondary/6 blur-3xl"></div>
+
+    <div class="relative mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
+      <nav class="mb-6 text-sm text-base-content/40 reveal">
+        <a href="/" class="transition-colors hover:text-primary">首页</a>
+        <span class="mx-2">/</span>
+        <a href="/tools" class="transition-colors hover:text-primary">工具</a>
+        <span class="mx-2">/</span>
+        <span class="text-base-content/60">PJSK 表情包生成器</span>
+      </nav>
+
+      <div id="pst-root">
+        <PageHeader
+          label="Project Sekai Sticker Maker"
+          title="PJSK 表情包生成器"
+        />
+
+        <div class="mb-8 reveal rounded-[1.75rem] border border-base-content/8 bg-base-100/75 px-5 py-4 shadow-sm" style="--reveal-delay:40ms">
+          <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Four-step workflow</p>
+              <p class="mt-2 text-sm leading-6 text-base-content/65">选择角色与贴纸，输入顶部 / 底部文案，实时预览后一键导出透明背景 PNG。</p>
+            </div>
+            <div class="flex flex-wrap gap-2 text-xs text-base-content/55">
+              <span class="rounded-full border border-base-content/10 bg-base-200/60 px-3 py-1.5">Step 01 角色</span>
+              <span class="rounded-full border border-base-content/10 bg-base-200/60 px-3 py-1.5">Step 02 贴纸</span>
+              <span class="rounded-full border border-base-content/10 bg-base-200/60 px-3 py-1.5">Step 03 文案</span>
+              <span class="rounded-full border border-base-content/10 bg-base-200/60 px-3 py-1.5">Step 04 导出</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
+          <!-- 左侧：角色 + 贴纸选择 -->
+          <div class="space-y-6">
+            <div class="reveal overflow-hidden rounded-[1.75rem] border border-base-content/8 bg-base-100/88 shadow-sm" style="--reveal-delay:80ms">
+              <div class="pst-card-head">
+                <div>
+                  <p class="pst-step-label">Step 01 · 02</p>
+                  <h2 class="pst-step-title">选择角色与贴纸</h2>
+                </div>
+                <span class="pst-card-hint"><span id="pst-count"></span> 张贴纸</span>
+              </div>
+              <div class="pst-card-body">
+                <div class="pst-search-row">
+                  <input type="search" id="pst-search" class="pst-input" placeholder="🔍 搜索角色，如「miku / 初音 / 绘名」…" autocomplete="off" />
+                </div>
+
+                <div class="pst-char-list">
+                  {
+                    units.map((g) => (
+                      <div class="pst-unit-group">
+                        <div class="pst-unit-label">{g.unit}<span>{g.chars.length}</span></div>
+                        <div class="pst-char-chips">
+                          {g.chars.map((c) => (
+                            <button type="button" class="pst-char-chip" data-key={c.key} data-cn={c.cn} style={`--char-color:${c.color}`}>
+                              <i class="pst-char-dot"></i>
+                              <span class="pst-char-cn">{c.cn}</span>
+                              <span class="pst-char-en">{c.key}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ))
+                  }
+                </div>
+
+                <div class="pst-stamp-area">
+                  <div class="pst-stamp-head">
+                    <span>贴纸列表</span>
+                    <span id="pst-stamp-empty" class="pst-stamp-empty">← 先在上方选择角色</span>
+                  </div>
+                  <div class="pst-stamp-grid" id="pst-stamp-grid"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 右侧：预览 + 文案 + 导出 -->
+          <div class="space-y-6 lg:sticky lg:top-24 lg:self-start">
+            <div class="reveal overflow-hidden rounded-[1.75rem] border border-base-content/8 bg-base-100/88 shadow-sm" style="--reveal-delay:120ms">
+              <div class="pst-card-head">
+                <div>
+                  <p class="pst-step-label">Step 03 · 04</p>
+                  <h2 class="pst-step-title">预览与导出</h2>
+                </div>
+                <span class="pst-card-hint"><span id="pst-status">未选择贴纸</span></span>
+              </div>
+              <div class="pst-card-body">
+                <div class="pst-canvas-shell" id="pst-canvas-shell">
+                  <canvas id="pst-preview" width="640" height="640"></canvas>
+                  <div class="pst-canvas-tip">拖动文字可调整位置</div>
+                </div>
+
+                <div class="pst-text-row">
+                  <label class="pst-field">
+                    <span class="pst-field-label">顶部文字</span>
+                    <input type="text" id="pst-top" class="pst-input" maxlength="40" placeholder="绷不住了" />
+                  </label>
+                  <label class="pst-field">
+                    <span class="pst-field-label">底部文字</span>
+                    <input type="text" id="pst-bottom" class="pst-input" maxlength="40" placeholder="啊？？？" />
+                  </label>
+                </div>
+
+                <div class="pst-ctrl-grid">
+                  <label class="pst-field">
+                    <span class="pst-field-label">字号 <b id="pst-size-val">100%</b></span>
+                    <input type="range" id="pst-size" min="50" max="200" value="100" class="pst-range" />
+                  </label>
+                  <label class="pst-field">
+                    <span class="pst-field-label">倾斜</span>
+                    <select id="pst-rot" class="pst-input">
+                      <option value="0">不倾斜</option>
+                      <option value="-3">左倾 -3°</option>
+                      <option value="3">右倾 +3°</option>
+                    </select>
+                  </label>
+                  <label class="pst-field">
+                    <span class="pst-field-label">文字颜色</span>
+                    <input type="color" id="pst-text-color" class="pst-color" value="#ffffff" />
+                  </label>
+                  <label class="pst-field">
+                    <span class="pst-field-label">背景</span>
+                    <select id="pst-bg" class="pst-input">
+                      <option value="t">透明</option>
+                      <option value="w">白色</option>
+                      <option value="b">黑色</option>
+                      <option value="g">渐变色</option>
+                    </select>
+                  </label>
+                  <label class="pst-field pst-field-grad" id="pst-grad-wrap">
+                    <span class="pst-field-label">渐变起止</span>
+                    <span class="pst-grad-pair">
+                      <input type="color" id="pst-bg1" class="pst-color" value="#ffe3ef" />
+                      <input type="color" id="pst-bg2" class="pst-color" value="#cfe8ff" />
+                    </span>
+                  </label>
+                </div>
+
+                <div class="pst-actions">
+                  <button type="button" id="pst-random" class="pst-btn pst-btn-soft">🎲 随机文案</button>
+                  <button type="button" id="pst-download" class="pst-btn pst-btn-primary">⬇ 下载 PNG</button>
+                  <button type="button" id="pst-copy-img" class="pst-btn pst-btn-outline">📋 复制图片</button>
+                  <button type="button" id="pst-copy-link" class="pst-btn pst-btn-outline">🔗 复制链接</button>
+                  <button type="button" id="pst-reset" class="pst-btn pst-btn-ghost">↺ 重置</button>
+                </div>
+
+                <div class="pst-note">
+                  输出尺寸 640×640 · 透明背景导出 PNG · 文案与选择可随链接分享
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-8 reveal rounded-[1.75rem] border border-base-content/8 bg-base-100/70 px-5 py-4 text-xs leading-6 text-base-content/45" style="--reveal-delay:180ms">
+          <p class="font-bold text-base-content/60">素材说明</p>
+          <p>贴纸素材来自《世界计划 缤纷舞台！feat. 初音未来》游戏内角色贴纸（版权归 SEGA / Colorful Palette 所有），图像整理自 <a class="underline decoration-dotted underline-offset-2 hover:text-primary" href="https://github.com/kamicry/arcpjsk-hub" target="_blank" rel="noreferrer">kamicry/arcpjsk-hub</a>；字体使用开源字体「得意黑 Smiley Sans」（SIL OFL-1.1）。本工具仅供个人娱乐使用。</p>
+        </div>
+
+        <div class="pst-toast" id="pst-toast"></div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<script define:vars={{ pjskData }} is:inline>
+// @ts-nocheck
+(function () {
+  'use strict';
+
+  /* ── helpers ─────────────────────────────────────────── */
+  var $ = function (id) { return document.getElementById(id); };
+  var _tt;
+  function toast(m) {
+    clearTimeout(_tt);
+    var e = $('pst-toast');
+    if (!e) return;
+    e.textContent = m;
+    e.classList.add('show');
+    _tt = setTimeout(function () { e.classList.remove('show'); }, 2200);
+  }
+
+  /* ── state ───────────────────────────────────────────── */
+  var DATA = pjskData;
+  var CHAR_META = {};
+  DATA.forEach(function (s) {
+    if (!CHAR_META[s.char]) CHAR_META[s.char] = { key: s.char, cn: s.cn, unit: s.unit, color: s.color, count: 0, stamps: [] };
+    CHAR_META[s.char].count++;
+    CHAR_META[s.char].stamps.push(s);
+  });
+  Object.keys(CHAR_META).forEach(function (k) {
+    CHAR_META[k].stamps.sort(function (a, b) { return parseInt(a.id, 10) - parseInt(b.id, 10); });
+  });
+
+  var S = {
+    char: null,
+    stamp: null,
+    img: null,
+    top: '',
+    bottom: '',
+    size: 100,
+    rot: 0,
+    textColor: '#ffffff',
+    bg: 't',
+    bg1: '#ffe3ef',
+    bg2: '#cfe8ff',
+    topX: 0.5, topY: 0.13,
+    bottomX: 0.5, bottomY: 0.88
+  };
+  var imgCache = {};
+  var dragMode = null;
+  var queryHandled = false;
+
+  var PHRASES_TOP = [
+    '绷不住了', '笑死我了', '就这？', '我破防了', '这也太典了', '离谱', '急了急了', '好好好',
+    '怎么个事', '牛的牛的', '乐', '小丑竟是我自己', '已阅，滚', '典中典', '蚌埠住了', '大受震撼',
+    '雨我无瓜', '栓Q', '你真的…我哭死', '菜，就多练', '赢麻了', '退退退', '祖安模式启动', '你最好是'
+  ];
+  var PHRASES_BOTTOM = [
+    '啊？？？', '6', '啊这', '我不理解', '你没事吧', '救命', '真的假的', '我不道啊',
+    '逆天', '好家伙', '这也行？', '你礼貌吗', '尊嘟假嘟', '无语住了', '细说', '展开说说',
+    '告辞', '有被冒犯到', '捏捏的', '？', '坏了坏了', '别骂了别骂了', '人麻了', '寄'
+  ];
+
+  function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+  /* ── image loading ───────────────────────────────────── */
+  function loadImage(src, cb) {
+    if (imgCache[src]) { cb(imgCache[src]); return; }
+    var im = new Image();
+    im.onload = function () { imgCache[src] = im; cb(im); };
+    im.onerror = function () { toast('贴纸加载失败：' + src); };
+    im.src = src;
+  }
+
+  /* ── rendering ───────────────────────────────────────── */
+  var cv = $('pst-preview');
+  var ctx = cv ? cv.getContext('2d') : null;
+  var FONT_STACK = '"SmileySans","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif';
+
+  function wrapText(context, text, maxWidth) {
+    var lines = [];
+    var paras = String(text).split('\n');
+    for (var i = 0; i < paras.length; i++) {
+      var p = paras[i];
+      if (p === '') { lines.push(''); continue; }
+      var cur = '';
+      for (var j = 0; j < p.length; j++) {
+        var ch = p[j];
+        var t = cur + ch;
+        if (context.measureText(t).width > maxWidth && cur) { lines.push(cur); cur = ch; }
+        else { cur = t; }
+      }
+      if (cur) lines.push(cur);
+    }
+    return lines.length ? lines : [''];
+  }
+
+  function drawTextBlock(context, text, fx, fy, W, H) {
+    text = String(text || '').trim();
+    if (!text) return;
+    var maxW = W * 0.86;
+    var size = Math.max(20, Math.round(W * 0.092 * S.size / 100));
+    var lines, longest;
+    for (var tries = 0; tries < 30; tries++) {
+      context.font = '900 ' + size + 'px ' + FONT_STACK;
+      lines = wrapText(context, text, maxW);
+      longest = 0;
+      for (var i = 0; i < lines.length; i++) longest = Math.max(longest, context.measureText(lines[i]).width);
+      if (longest <= maxW && lines.length * size * 1.2 <= H * 0.34) break;
+      size -= 2;
+    }
+    var lineH = size * 1.2;
+    var totalH = lines.length * lineH;
+    context.save();
+    context.translate(fx * W, fy * H);
+    context.rotate(S.rot * Math.PI / 180);
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.lineJoin = 'round';
+    context.miterLimit = 2;
+    context.lineWidth = Math.max(4, size * 0.16);
+    context.strokeStyle = '#000000';
+    context.fillStyle = S.textColor || '#ffffff';
+    var startY = -totalH / 2 + lineH / 2;
+    for (var k = 0; k < lines.length; k++) {
+      var ly = startY + k * lineH;
+      context.strokeText(lines[k], 0, ly);
+      context.fillText(lines[k], 0, ly);
+    }
+    context.restore();
+  }
+
+  function draw() {
+    if (!ctx || !cv) return;
+    var W = cv.width, H = cv.height;
+    ctx.clearRect(0, 0, W, H);
+    if (S.bg === 'w') { ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H); }
+    else if (S.bg === 'b') { ctx.fillStyle = '#111111'; ctx.fillRect(0, 0, W, H); }
+    else if (S.bg === 'g') {
+      var g = ctx.createLinearGradient(0, 0, 0, H);
+      g.addColorStop(0, S.bg1); g.addColorStop(1, S.bg2);
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    }
+    if (S.img) {
+      var img = S.img;
+      var maxW = W - 90, maxH = H * 0.58;
+      var sc = Math.min(maxW / img.width, maxH / img.height);
+      var dw = img.width * sc, dh = img.height * sc;
+      var dx = (W - dw) / 2, dy = H * 0.585 - dh / 2;
+      ctx.drawImage(img, dx, dy, dw, dh);
+    }
+    drawTextBlock(ctx, S.top, S.topX, S.topY, W, H);
+    drawTextBlock(ctx, S.bottom, S.bottomX, S.bottomY, W, H);
+  }
+
+  /* ── character / stamp UI ────────────────────────────── */
+  var gridEl = $('pst-stamp-grid');
+  var emptyEl = $('pst-stamp-empty');
+  var statusEl = $('pst-status');
+  var countEl = $('pst-count');
+  if (countEl) countEl.textContent = String(DATA.length);
+
+  function selectChar(key) {
+    S.char = key;
+    var chips = document.querySelectorAll('.pst-char-chip');
+    for (var i = 0; i < chips.length; i++) {
+      chips[i].classList.toggle('active', chips[i].dataset.key === key);
+    }
+    var meta = CHAR_META[key];
+    if (!gridEl || !meta) return;
+    gridEl.innerHTML = '';
+    if (emptyEl) emptyEl.style.display = 'none';
+    meta.stamps.forEach(function (s, idx) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'pst-stamp' + (S.stamp === s.img ? ' active' : '');
+      b.dataset.idx = String(idx);
+      var im = document.createElement('img');
+      im.src = s.img;
+      im.alt = s.name;
+      im.loading = 'lazy';
+      var lab = document.createElement('span');
+      lab.textContent = String(idx + 1).padStart(2, '0');
+      b.appendChild(im);
+      b.appendChild(lab);
+      b.addEventListener('click', function () {
+        selectStamp(meta.stamps[idx]);
+      });
+      gridEl.appendChild(b);
+    });
+  }
+
+  function selectStamp(stampMeta) {
+    S.stamp = stampMeta.img;
+    S.char = stampMeta.char;
+    loadImage(stampMeta.img, function (img) {
+      S.img = img;
+      draw();
+    });
+    var stamps = gridEl.querySelectorAll('.pst-stamp');
+    for (var i = 0; i < stamps.length; i++) stamps[i].classList.toggle('active', stamps[i].querySelector('img').getAttribute('src') === stampMeta.img);
+    if (statusEl) statusEl.textContent = CHAR_META[stampMeta.char].cn + ' · ' + stampMeta.name;
+    var chips = document.querySelectorAll('.pst-char-chip');
+    for (var j = 0; j < chips.length; j++) chips[j].classList.toggle('active', chips[j].dataset.key === stampMeta.char);
+    toast('已选择 ' + CHAR_META[stampMeta.char].cn + ' 的贴纸');
+  }
+
+  // 角色点击
+  var charListEl = document.querySelector('.pst-char-list');
+  if (charListEl) {
+    charListEl.addEventListener('click', function (e) {
+      var chip = e.target.closest('.pst-char-chip');
+      if (!chip) return;
+      selectChar(chip.dataset.key);
+      var meta = CHAR_META[chip.dataset.key];
+      if (meta && meta.stamps.length) selectStamp(meta.stamps[0]);
+    });
+  }
+
+  // 搜索角色
+  var searchEl = $('pst-search');
+  if (searchEl) {
+    searchEl.addEventListener('input', function () {
+      var q = searchEl.value.trim().toLowerCase();
+      var chips = document.querySelectorAll('.pst-char-chip');
+      var any = false;
+      for (var i = 0; i < chips.length; i++) {
+        var key = chips[i].dataset.key;
+        var cn = chips[i].dataset.cn;
+        var hit = !q || key.indexOf(q) !== -1 || cn.indexOf(q) !== -1;
+        chips[i].style.display = hit ? '' : 'none';
+        if (hit) any = true;
+      }
+      var groups = document.querySelectorAll('.pst-unit-group');
+      for (var j = 0; j < groups.length; j++) {
+        var groupChips = groups[j].querySelectorAll('.pst-char-chip');
+        var visible = false;
+        for (var k = 0; k < groupChips.length; k++) {
+          if (groupChips[k].style.display !== 'none') { visible = true; break; }
+        }
+        groups[j].style.display = visible ? '' : 'none';
+      }
+      if (!any && emptyEl) { emptyEl.style.display = 'block'; emptyEl.textContent = '未找到匹配的角色'; }
+      else if (emptyEl && S.char) { emptyEl.style.display = 'none'; }
+    });
+  }
+
+  /* ── text controls ───────────────────────────────────── */
+  var topEl = $('pst-top'), bottomEl = $('pst-bottom');
+  if (topEl) topEl.addEventListener('input', function () { S.top = topEl.value; draw(); });
+  if (bottomEl) bottomEl.addEventListener('input', function () { S.bottom = bottomEl.value; draw(); });
+
+  var sizeEl = $('pst-size'), sizeValEl = $('pst-size-val');
+  if (sizeEl) sizeEl.addEventListener('input', function () {
+    S.size = parseInt(sizeEl.value, 10);
+    if (sizeValEl) sizeValEl.textContent = S.size + '%';
+    draw();
+  });
+
+  var rotEl = $('pst-rot');
+  if (rotEl) rotEl.addEventListener('change', function () { S.rot = parseFloat(rotEl.value) || 0; draw(); });
+
+  var textColorEl = $('pst-text-color');
+  if (textColorEl) textColorEl.addEventListener('input', function () { S.textColor = textColorEl.value; draw(); });
+
+  var bgEl = $('pst-bg'), gradWrapEl = $('pst-grad-wrap');
+  function syncBgUI() {
+    if (gradWrapEl) gradWrapEl.style.display = S.bg === 'g' ? '' : 'none';
+    var shell = $('pst-canvas-shell');
+    if (shell) shell.classList.toggle('checker', S.bg === 't');
+  }
+  if (bgEl) bgEl.addEventListener('change', function () { S.bg = bgEl.value; syncBgUI(); draw(); });
+  var bg1El = $('pst-bg1'), bg2El = $('pst-bg2');
+  if (bg1El) bg1El.addEventListener('input', function () { S.bg1 = bg1El.value; draw(); });
+  if (bg2El) bg2El.addEventListener('input', function () { S.bg2 = bg2El.value; draw(); });
+
+  /* ── drag text on canvas ─────────────────────────────── */
+  function canvasPos(e) {
+    var r = cv.getBoundingClientRect();
+    return {
+      x: (e.clientX - r.left) * (cv.width / r.width),
+      y: (e.clientY - r.top) * (cv.height / r.height)
+    };
+  }
+  function hitTest(p) {
+    if (S.top && String(S.top).trim()) {
+      var tx = S.topX * cv.width, ty = S.topY * cv.height;
+      if (Math.hypot(p.x - tx, p.y - ty) < 46) return 'top';
+    }
+    if (S.bottom && String(S.bottom).trim()) {
+      var bx = S.bottomX * cv.width, by = S.bottomY * cv.height;
+      if (Math.hypot(p.x - bx, p.y - by) < 46) return 'bottom';
+    }
+    return null;
+  }
+  if (cv) {
+    cv.addEventListener('pointerdown', function (e) {
+      var p = canvasPos(e);
+      dragMode = hitTest(p);
+      if (dragMode) { cv.setPointerCapture(e.pointerId); cv.style.cursor = 'grabbing'; e.preventDefault(); }
+    });
+    cv.addEventListener('pointermove', function (e) {
+      if (!dragMode) return;
+      var p = canvasPos(e);
+      var fx = Math.min(0.94, Math.max(0.06, p.x / cv.width));
+      var fy = Math.min(0.94, Math.max(0.06, p.y / cv.height));
+      if (dragMode === 'top') { S.topX = fx; S.topY = fy; }
+      else { S.bottomX = fx; S.bottomY = fy; }
+      draw();
+    });
+    var endDrag = function () {
+      if (dragMode) { dragMode = null; cv.style.cursor = ''; }
+    };
+    cv.addEventListener('pointerup', endDrag);
+    cv.addEventListener('pointercancel', endDrag);
+    cv.addEventListener('pointermove', function (e) {
+      if (!dragMode) { cv.style.cursor = hitTest(canvasPos(e)) ? 'grab' : ''; }
+    });
+  }
+
+  /* ── actions ─────────────────────────────────────────── */
+  var randomEl = $('pst-random');
+  if (randomEl) randomEl.addEventListener('click', function () {
+    S.top = pick(PHRASES_TOP);
+    S.bottom = pick(PHRASES_BOTTOM);
+    if (topEl) topEl.value = S.top;
+    if (bottomEl) bottomEl.value = S.bottom;
+    draw();
+    toast('已生成随机文案');
+  });
+
+  function currentName() {
+    if (!S.char) return 'pjsk';
+    var base = CHAR_META[S.char] ? CHAR_META[S.char].cn : S.char;
+    var idx = S.stamp ? S.stamp.split('/').pop().replace(/\.png$/, '') : '';
+    return base + '-' + idx;
+  }
+
+  var downloadEl = $('pst-download');
+  if (downloadEl) downloadEl.addEventListener('click', function () {
+    if (!S.img) { toast('请先选择一张贴纸'); return; }
+    cv.toBlob(function (blob) {
+      if (!blob) { toast('导出失败'); return; }
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'pjsk-' + currentName() + '.png';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+      toast('已下载 PNG');
+    }, 'image/png');
+  });
+
+  var copyImgEl = $('pst-copy-img');
+  if (copyImgEl) copyImgEl.addEventListener('click', function () {
+    if (!S.img) { toast('请先选择一张贴纸'); return; }
+    cv.toBlob(function (blob) {
+      if (!blob) { toast('导出失败'); return; }
+      if (navigator.clipboard && navigator.clipboard.write) {
+        navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
+          .then(function () { toast('图片已复制到剪贴板'); })
+          .catch(function () { toast('复制失败，请用下载'); });
+      } else {
+        toast('当前浏览器不支持复制图片');
+      }
+    }, 'image/png');
+  });
+
+  function shareUrl() {
+    var u = new URL(window.location.href);
+    u.search = '';
+    if (S.char) u.searchParams.set('char', S.char);
+    if (S.stamp) u.searchParams.set('stamp', encodeURIComponent(S.stamp.split('/').pop().replace(/\.png$/, '')));
+    if (S.top) u.searchParams.set('top', S.top);
+    if (S.bottom) u.searchParams.set('bottom', S.bottom);
+    return u.toString();
+  }
+  function copyTextFallback(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0';
+    ta.setAttribute('readonly', '');
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    ta.setSelectionRange(0, ta.value.length);
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+    document.body.removeChild(ta);
+    return ok;
+  }
+
+  var linkEl = $('pst-copy-link');
+  if (linkEl) linkEl.addEventListener('click', function () {
+    var url = shareUrl();
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(function () { toast('链接已复制'); }).catch(function () {
+        toast(copyTextFallback(url) ? '链接已复制' : '复制失败，请手动复制地址栏链接');
+      });
+    } else {
+      toast(copyTextFallback(url) ? '链接已复制' : '复制失败，请手动复制地址栏链接');
+    }
+  });
+
+  var resetEl = $('pst-reset');
+  if (resetEl) resetEl.addEventListener('click', function () {
+    S.top = ''; S.bottom = '';
+    S.size = 100; S.rot = 0; S.textColor = '#ffffff';
+    S.bg = 't'; S.bg1 = '#ffe3ef'; S.bg2 = '#cfe8ff';
+    S.topX = 0.5; S.topY = 0.13;
+    S.bottomX = 0.5; S.bottomY = 0.88;
+    if (topEl) topEl.value = '';
+    if (bottomEl) bottomEl.value = '';
+    if (sizeEl) { sizeEl.value = '100'; if (sizeValEl) sizeValEl.textContent = '100%'; }
+    if (rotEl) rotEl.value = '0';
+    if (textColorEl) textColorEl.value = '#ffffff';
+    if (bgEl) bgEl.value = 't';
+    if (bg1El) bg1El.value = '#ffe3ef';
+    if (bg2El) bg2El.value = '#cfe8ff';
+    syncBgUI();
+    draw();
+    toast('已重置');
+  });
+
+  /* ── init ────────────────────────────────────────────── */
+  function applyQuery() {
+    if (queryHandled) return;
+    queryHandled = true;
+    var params = new URLSearchParams(window.location.search);
+    var top = params.get('top');
+    var bottom = params.get('bottom');
+    var char = params.get('char');
+    var stamp = params.get('stamp');
+    if (top != null) { S.top = top; if (topEl) topEl.value = top; }
+    if (bottom != null) { S.bottom = bottom; if (bottomEl) bottomEl.value = bottom; }
+    if (char && CHAR_META[char]) {
+      selectChar(char);
+      var meta = CHAR_META[char];
+      var target = null;
+      if (stamp) {
+        var name = stamp + '.png';
+        for (var i = 0; i < meta.stamps.length; i++) {
+          if (meta.stamps[i].img.indexOf(name) !== -1) { target = meta.stamps[i]; break; }
+        }
+      }
+      if (!target && meta.stamps.length) target = meta.stamps[0];
+      if (target) selectStamp(target);
+    } else if (char && !CHAR_META[char]) {
+      // 角色不存在时退回到默认角色
+      selectChar('miku');
+      selectStamp(CHAR_META['miku'].stamps[0]);
+    }
+    draw();
+  }
+
+  function init() {
+    syncBgUI();
+    // 默认角色：Miku
+    if (CHAR_META['miku']) {
+      selectChar('miku');
+      selectStamp(CHAR_META['miku'].stamps[0]);
+    }
+    applyQuery();
+    draw();
+    // 预加载字体，确保 canvas 使用得意黑渲染
+    if (document.fonts && document.fonts.load) {
+      document.fonts.load('900 40px SmileySans').then(function () { draw(); }).catch(function () {});
+      document.fonts.ready.then(function () { draw(); }).catch(function () {});
+    }
+    if (emptyEl && S.char) emptyEl.style.display = 'none';
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
