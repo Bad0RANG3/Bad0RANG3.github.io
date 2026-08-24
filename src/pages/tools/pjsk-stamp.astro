@@ -35,7 +35,7 @@ const FONT_FACES = [
 
 <BaseLayout
   title="PJSK 表情包生成器"
-  description="纯浏览器端的 Project Sekai / 世界计划表情包生成器：26 个角色 359 张贴纸，游戏同款字体、弧形文字、渐变与双层描边，一键导出透明背景 PNG / WEBP。"
+  description="纯浏览器端的 Project Sekai / 世界计划表情包生成器：739 张无文字角色底图，游戏同款字体、弧形文字、渐变与双层描边，一键导出透明背景 PNG / WEBP。"
   ogImage="/HP.png"
 >
   <section class="relative overflow-hidden">
@@ -333,7 +333,7 @@ const FONT_FACES = [
 
         <div class="mt-8 reveal rounded-[1.75rem] border border-base-content/8 bg-base-100/70 px-5 py-4 text-xs leading-6 text-base-content/45" style="--reveal-delay:320ms">
           <p class="font-bold text-base-content/60">素材与字体说明</p>
-          <p>贴纸素材来自《世界计划 缤纷舞台！feat. 初音未来》游戏内角色贴纸（版权归 SEGA / Colorful Palette 所有），图像整理自 <a class="underline decoration-dotted underline-offset-2 hover:text-primary" href="https://github.com/kamicry/arcpjsk-hub" target="_blank" rel="noreferrer">kamicry/arcpjsk-hub</a>；字体使用「Yuruka Std」（© FONTWORKS，免费字体）与「上首方糖体」（© 上首字库，免费字体），均仅按需加载子集。本工具仅供个人娱乐与非商用同人交流使用。</p>
+          <p>贴纸素材为《世界计划 缤纷舞台！feat. 初音未来》游戏内无文字角色底图（739 张，已剔除官方带字贴纸，仅保留无字角色图；版权归 SEGA / Colorful Palette 所有），图像取自游戏官方素材镜像，并按游戏 master 数据整理归类；字体使用「Yuruka Std」（© FONTWORKS，免费字体）与「上首方糖体」（© 上首字库，免费字体），均仅按需加载子集。本工具仅供个人娱乐与非商用同人交流使用。</p>
         </div>
 
         <div class="pst-toast" id="pst-toast"></div>
@@ -482,7 +482,7 @@ const FONT_FACES = [
 
   /* ── rendering ───────────────────────────────────────── */
   var cv = $('pst-preview');
-  var ctx = cv ? cv.getContext('2d') : null;
+  var ctx = cv ? cv.getContext('2d', { alpha: true }) : null;  // alpha:true 保证导出/复制的 PNG 保留透明背景
   var W = 640, H = 640;
 
   function fontStack() {
@@ -925,6 +925,7 @@ const FONT_FACES = [
   }
   function exportImage(type, ext, label) {
     if (!S.img) { toast('请先选择贴纸或上传图片'); return; }
+    draw(); // 导出前重绘，确保画布与当前状态一致（透明背景为透明像素）
     cv.toBlob(function (blob) {
       if (!blob) { toast('导出失败'); return; }
       var url = URL.createObjectURL(blob);
@@ -946,6 +947,7 @@ const FONT_FACES = [
   var copyImgEl = $('pst-copy-img');
   if (copyImgEl) copyImgEl.addEventListener('click', function () {
     if (!S.img) { toast('请先选择贴纸或上传图片'); return; }
+    draw(); // 复制前重绘：背景选「透明」时复制出的 PNG 不带任何底色
     cv.toBlob(function (blob) {
       if (!blob) { toast('导出失败'); return; }
       if (navigator.clipboard && navigator.clipboard.write && window.ClipboardItem) {
