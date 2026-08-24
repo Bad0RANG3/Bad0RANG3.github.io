@@ -57,21 +57,6 @@ const FONT_FACES = [
           title="PJSK 表情包生成器"
         />
 
-        <div class="mb-8 reveal rounded-[1.75rem] border border-base-content/8 bg-base-100/75 px-5 py-4 shadow-sm" style="--reveal-delay:40ms">
-          <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Zero-delay live preview</p>
-              <p class="mt-2 text-sm leading-6 text-base-content/65">挑选角色贴纸（或上传自定义图片），使用游戏同款字体输入文字，弧形 / 渐变 / 双层描边自由调节，实时预览后一键导出透明 PNG / WEBP。</p>
-            </div>
-            <div class="flex flex-wrap gap-2 text-xs text-base-content/55">
-              <span class="rounded-full border border-base-content/10 bg-base-200/60 px-3 py-1.5">Step 01 素材</span>
-              <span class="rounded-full border border-base-content/10 bg-base-200/60 px-3 py-1.5">Step 02 文字</span>
-              <span class="rounded-full border border-base-content/10 bg-base-200/60 px-3 py-1.5">Step 03 排版</span>
-              <span class="rounded-full border border-base-content/10 bg-base-200/60 px-3 py-1.5">Step 04 导出</span>
-            </div>
-          </div>
-        </div>
-
         <!-- 预览区 -->
         <div class="mb-6 reveal overflow-hidden rounded-[1.75rem] border border-base-content/8 bg-base-100/88 shadow-sm" style="--reveal-delay:80ms">
           <div class="pst-card-head">
@@ -172,8 +157,8 @@ const FONT_FACES = [
                   <label class="pst-field">
                     <span class="pst-field-label">字体</span>
                     <select id="pst-font" class="pst-input">
-                      <option value="YurukaStd">游戏同款 YurukaStd</option>
-                      <option value="SSFangTangTi">中文圆体 上首方糖体</option>
+                      <option value="YurukaStd">游戏同款 YurukaStd（日文·部分汉字）</option>
+                      <option value="SSFangTangTi">中文圆体 上首方糖体（简体全覆盖）</option>
                     </select>
                   </label>
                   <label class="pst-field">
@@ -245,23 +230,17 @@ const FONT_FACES = [
               </div>
               <div class="pst-card-body pst-ctrl-body">
                 <div class="pst-palettes">
-                  <span class="pst-slider-label">渐变预设</span>
-                  <div class="pst-palette-row" id="pst-palettes">
-                    <button type="button" class="pst-palette" data-colors='["#ffffff"]' title="纯白"><i style="background:#ffffff"></i></button>
-                    <button type="button" class="pst-palette" data-colors='["#ff4d6d","#ffb84d"]' title="橙粉"><i style="background:linear-gradient(90deg,#ff4d6d,#ffb84d)"></i></button>
-                    <button type="button" class="pst-palette" data-colors='["#4dc3ff","#7dffb0"]' title="青绿"><i style="background:linear-gradient(90deg,#4dc3ff,#7dffb0)"></i></button>
-                    <button type="button" class="pst-palette" data-colors='["#a78bfa","#f472b6"]' title="紫粉"><i style="background:linear-gradient(90deg,#a78bfa,#f472b6)"></i></button>
-                    <button type="button" class="pst-palette" data-colors='["#fd6bb4","#6ad2c0","#ffa954","#71b7f5"]' title="彩虹"><i style="background:linear-gradient(90deg,#fd6bb4,#6ad2c0,#ffa954,#71b7f5)"></i></button>
-                  </div>
+                  <span class="pst-slider-label">角色色彩预设 <b id="pst-palette-char" class="font-bold text-base-content/55"></b></span>
+                  <div class="pst-palette-row" id="pst-palettes"><!-- 由 JS 按所选角色的代表色自动生成 --></div>
                 </div>
                 <div class="pst-ctrl-grid">
                   <label class="pst-field">
                     <span class="pst-field-label">文字颜色 1</span>
-                    <input type="color" id="pst-color1" class="pst-color" value="#ffffff" />
+                    <input type="color" id="pst-color1" class="pst-color" value="#a3e8e0" />
                   </label>
                   <label class="pst-field">
                     <span class="pst-field-label">文字颜色 2</span>
-                    <input type="color" id="pst-color2" class="pst-color" value="#ffffff" />
+                    <input type="color" id="pst-color2" class="pst-color" value="#33ccbb" />
                   </label>
                   <label class="pst-field">
                     <span class="pst-field-label">内描边</span>
@@ -269,7 +248,7 @@ const FONT_FACES = [
                   </label>
                   <label class="pst-field">
                     <span class="pst-field-label">外描边</span>
-                    <input type="color" id="pst-outline-color" class="pst-color" value="#3b3b3b" />
+                    <input type="color" id="pst-outline-color" class="pst-color" value="#21857a" />
                   </label>
                 </div>
                 <div class="pst-slider-row" data-key="strokeWidth">
@@ -320,11 +299,11 @@ const FONT_FACES = [
                 <div class="pst-ctrl-grid pst-grad-pair" id="pst-grad-wrap" style="display:none">
                   <label class="pst-field">
                     <span class="pst-field-label">渐变起</span>
-                    <input type="color" id="pst-bg1" class="pst-color" value="#ffe3ef" />
+                    <input type="color" id="pst-bg1" class="pst-color" value="#c6f1ec" />
                   </label>
                   <label class="pst-field">
                     <span class="pst-field-label">渐变止</span>
-                    <input type="color" id="pst-bg2" class="pst-color" value="#cfe8ff" />
+                    <input type="color" id="pst-bg2" class="pst-color" value="#8fe3da" />
                   </label>
                 </div>
               </div>
@@ -393,11 +372,63 @@ const FONT_FACES = [
     CHAR_META[k].stamps.sort(function (a, b) { return parseInt(a.id, 10) - parseInt(b.id, 10); });
   });
 
+  /* ── 角色代表色 → 色彩预设 ─────────────────────────────── */
+  // 生成代表色的浅 / 深变体（amt>0 变浅，amt<0 变深），用于渐变文字、外描边与渐变背景
+  function shade(hex, amt) {
+    var c = String(hex || '').replace('#', '');
+    if (c.length === 3) c = c.charAt(0) + c.charAt(0) + c.charAt(1) + c.charAt(1) + c.charAt(2) + c.charAt(2);
+    if (!/^[0-9a-fA-F]{6}$/.test(c)) return '#33CCBB';
+    var n = parseInt(c, 16);
+    var r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+    if (amt < 0) {
+      r = Math.round(r * (1 + amt)); g = Math.round(g * (1 + amt)); b = Math.round(b * (1 + amt));
+    } else {
+      r = Math.round(r + (255 - r) * amt); g = Math.round(g + (255 - g) * amt); b = Math.round(b + (255 - b) * amt);
+    }
+    return '#' + ((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1).toUpperCase();
+  }
+  function charPalette(key) {
+    var meta = CHAR_META[key];
+    var c = meta && meta.color ? meta.color : '#33CCBB';
+    return { color: c, light: shade(c, 0.55), dark: shade(c, -0.35), bg1: shade(c, 0.72), bg2: shade(c, 0.45) };
+  }
+  var palettesEl = $('pst-palettes');
+  var paletteCharEl = $('pst-palette-char');
+  function renderCharPalettes(key) {
+    if (!palettesEl) return;
+    var pal = charPalette(key);
+    var meta = CHAR_META[key];
+    if (paletteCharEl) paletteCharEl.textContent = meta ? meta.cn : '';
+    var items = [
+      { colors: [pal.color], title: (meta ? meta.cn : '') + ' 代表色', bg: pal.color },
+      { colors: [pal.light, pal.color], title: '浅色 → 代表色', bg: 'linear-gradient(90deg,' + pal.light + ',' + pal.color + ')' },
+      { colors: [pal.color, pal.dark], title: '代表色 → 深色', bg: 'linear-gradient(90deg,' + pal.color + ',' + pal.dark + ')' },
+      { colors: [pal.light, pal.dark], title: '浅色 → 深色', bg: 'linear-gradient(90deg,' + pal.light + ',' + pal.dark + ')' },
+    ];
+    palettesEl.innerHTML = items.map(function (it) {
+      return '<button type="button" class="pst-palette" data-colors=\'' + JSON.stringify(it.colors) + '\' title="' + it.title + '"><i style="background:' + it.bg + '"></i></button>';
+    }).join('');
+  }
+  // 选择角色时自动套用该角色代表色的配色：渐变文字 + 白内描边 + 深色外描边 + 渐变背景
+  function applyCharColors(key) {
+    var meta = CHAR_META[key];
+    if (!meta) return;
+    var pal = charPalette(key);
+    S.textColors = [pal.light, pal.color];
+    S.strokeColor = '#ffffff';
+    S.outlineColor = pal.dark;
+    S.bg1 = pal.bg1;
+    S.bg2 = pal.bg2;
+    renderCharPalettes(key);
+    syncColors();
+    draw();
+  }
+
   var S = {
     char: null,
     stamp: null,
     img: null,
-    text: '绷不住了\n啊？？？',
+    text: '',
     font: 'YurukaStd',
     fontSize: 72,
     rotate: 0,
@@ -412,12 +443,12 @@ const FONT_FACES = [
     strokeColor: '#ffffff',
     outline: true,
     outlineWidth: 6,
-    outlineColor: '#3b3b3b',
-    textColors: ['#ffffff', '#ffffff'],
+    outlineColor: '#21857a',
+    textColors: ['#a3e8e0', '#33ccbb'],
     vertical: false,
     bg: 't',
-    bg1: '#ffe3ef',
-    bg2: '#cfe8ff',
+    bg1: '#c6f1ec',
+    bg2: '#8fe3da',
     brightness: 100,
     contrast: 100,
     saturate: 100,
@@ -455,7 +486,10 @@ const FONT_FACES = [
   var W = 640, H = 640;
 
   function fontStack() {
-    return '"' + S.font + '","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif';
+    // 选中的字体缺字形时，先回退到另一个自带圆体（SSFangTangTi 简体全覆盖），
+    // 而不是直接掉到系统字体，避免同段文字出现两种风格
+    var secondary = S.font === 'SSFangTangTi' ? 'YurukaStd' : 'SSFangTangTi';
+    return '"' + S.font + '","' + secondary + '","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif';
   }
 
   function filterString() {
@@ -655,10 +689,11 @@ const FONT_FACES = [
     });
   }
 
-  function selectStamp(stampMeta) {
+  function selectStamp(stampMeta, applyColors) {
     S.stamp = stampMeta.img;
     S.char = stampMeta.char;
     S.custom = null;
+    if (applyColors !== false) applyCharColors(stampMeta.char);
     loadImage(stampMeta.img, function (img) { S.img = img; draw(); });
     var stamps = gridEl.querySelectorAll('.pst-stamp');
     for (var i = 0; i < stamps.length; i++) stamps[i].classList.toggle('active', stamps[i].querySelector('img').getAttribute('src') === stampMeta.img);
@@ -778,6 +813,8 @@ const FONT_FACES = [
     if (color1El && color2El) {
       if (S.textColors.length > 1) { color1El.value = S.textColors[0]; color2El.value = S.textColors[1] || S.textColors[0]; }
     }
+    if (bg1El) bg1El.value = S.bg1;
+    if (bg2El) bg2El.value = S.bg2;
   }
   if (color1El) color1El.addEventListener('input', function () {
     S.textColors = [color1El.value, color2El ? color2El.value : color1El.value];
@@ -792,8 +829,7 @@ const FONT_FACES = [
   var outlineColorEl = $('pst-outline-color');
   if (outlineColorEl) outlineColorEl.addEventListener('input', function () { S.outlineColor = outlineColorEl.value; draw(); });
 
-  /* 渐变预设 */
-  var palettesEl = $('pst-palettes');
+  /* 渐变预设（按钮由 renderCharPalettes 按角色生成） */
   if (palettesEl) {
     palettesEl.addEventListener('click', function (e) {
       var btn = e.target.closest('.pst-palette');
@@ -955,7 +991,7 @@ const FONT_FACES = [
       var target = null;
       if (cfg.stamp) { for (var i = 0; i < meta.stamps.length; i++) if (meta.stamps[i].img === cfg.stamp) { target = meta.stamps[i]; break; } }
       if (!target && meta.stamps.length) target = meta.stamps[0];
-      if (target) selectStamp(target);
+      if (target) selectStamp(target, false);
     }
     syncAllControls();
     draw();
@@ -1009,9 +1045,16 @@ const FONT_FACES = [
       text: '', font: 'YurukaStd', fontSize: 72, rotate: 0, letterSpacing: 0, lineSpacing: 0,
       textX: 0.5, textY: 0.33, arcText: false, arcRadius: 280, imageScale: 1,
       strokeWidth: 16, strokeColor: '#ffffff', outline: true, outlineWidth: 6, outlineColor: '#3b3b3b',
-      textColors: ['#ffffff', '#ffffff'], vertical: false, bg: 't', bg1: '#ffe3ef', bg2: '#cfe8ff',
+      textColors: ['#ffffff', '#ffffff'], vertical: false, bg: 't', bg1: '#f4f4f4', bg2: '#d9d9d9',
       brightness: 100, contrast: 100, saturate: 100, hue: 0, imageX: 0.5, imageY: 0.56,
     };
+    if (keepChar && CHAR_META[keepChar]) {
+      applyCharColors(keepChar);
+    } else {
+      if (palettesEl) palettesEl.innerHTML = '<button type="button" class="pst-palette" data-colors=\'["#ffffff"]\' title="纯白"><i style="background:#ffffff"></i></button>';
+      if (paletteCharEl) paletteCharEl.textContent = '';
+      syncColors();
+    }
     syncAllControls();
     draw();
     toast('已重置');
