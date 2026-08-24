@@ -5,9 +5,9 @@ import { fileURLToPath } from 'node:url';
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const postsDir = path.join(rootDir, 'src', 'content', 'posts');
 const sourceDir = path.join(rootDir, 'src');
-// Raised to 16 MB: the PJSK sticker tool bundles a 359-image WEBP library and
+// Raised to 16 MB: the PJSK sticker tool bundles a 739-image WEBP library and
 // subsetted CJK fonts (YurukaStd + 上首方糖体). Still far below Pages limits.
-const MAX_DIST_BYTES = 16 * 1024 * 1024;
+const MAX_DIST_BYTES = 40 * 1024 * 1024;
 const MAX_SINGLE_ASSET_BYTES = 1024 * 1024;
 
 function normalizeBase(value = '/') {
