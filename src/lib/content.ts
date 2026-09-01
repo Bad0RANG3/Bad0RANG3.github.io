@@ -72,20 +72,6 @@ export function getPostReadingMinutes(post: Post): number {
   return Math.max(1, Math.ceil(getPostWordCount(post) / 420));
 }
 
-export async function getRelatedPosts(post: Post, limit = 3): Promise<Post[]> {
-  const posts = await getPublishedPosts();
-  const scored = posts
-    .filter((candidate) => candidate.id !== post.id)
-    .map((candidate) => {
-      const sharedTags = candidate.data.tags.filter((tag) => post.data.tags.includes(tag)).length;
-      const sameCategory = candidate.data.category && candidate.data.category === post.data.category ? 1 : 0;
-      const sameSeries = candidate.data.series && candidate.data.series === post.data.series ? 3 : 0;
-      return { candidate, score: sharedTags * 2 + sameCategory + sameSeries };
-    })
-    .sort((a, b) => b.score - a.score || byDateDesc(a.candidate, b.candidate));
-  return scored.filter(({ score }) => score > 0).slice(0, limit).map(({ candidate }) => candidate);
-}
-
 export async function getSeriesGroups(): Promise<{ name: string; posts: Post[] }[]> {
   const posts = await getPublishedPosts();
   const groups = new Map<string, Post[]>();
