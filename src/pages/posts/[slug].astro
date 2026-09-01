@@ -5,10 +5,9 @@ import PostMeta from '../../components/blog/PostMeta.astro';
 import TagList from '../../components/blog/TagList.astro';
 import ArticleTools from '../../components/blog/ArticleTools.astro';
 import ArticleEnhancements from '../../components/blog/ArticleEnhancements.astro';
-import RelatedPosts from '../../components/blog/RelatedPosts.astro';
 import Comments from '../../components/Comments.astro';
 import Icon from '../../components/icons/Icons.astro';
-import { getPublishedPosts, getPostReadingMinutes, getPostWordCount, getRelatedPosts } from '../../lib/content';
+import { getPublishedPosts, getPostReadingMinutes, getPostWordCount } from '../../lib/content';
 import { formatDate } from '../../lib/date';
 import { STAGGER } from '../../constants';
 import type { MarkdownHeading } from 'astro';
@@ -25,7 +24,6 @@ const { post, previous, next } = Astro.props;
 const allPosts = await getPublishedPosts();
 const rendered = await post.render();
 const { Content, headings: renderedHeadings } = rendered;
-const related = await getRelatedPosts(post);
 const readingMinutes = getPostReadingMinutes(post);
 const wordCount = getPostWordCount(post);
 const headings = (renderedHeadings ?? []).filter((heading: MarkdownHeading) => heading.depth >= 2 && heading.depth <= 3);
@@ -124,6 +122,5 @@ const seriesNext = seriesIndex >= 0 ? seriesPosts[seriesIndex + 1] : undefined;
     </nav>}
 
     <div class="mx-auto mt-12 max-w-3xl"><Comments /></div>
-    <RelatedPosts posts={related} />
   </article>
 </BaseLayout>

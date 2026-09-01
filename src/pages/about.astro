@@ -21,8 +21,10 @@ const skillIconId: Record<string, string> = {
   'Tailwind CSS': 'tailwind', Flask: 'flask', 'Spring Boot': 'spring',
   MySQL: 'mysql', PostgreSQL: 'postgres',
   'Arch Linux': 'arch', 'Windows 11': 'windows', 'VS Code': 'vscode',
+  'IntelliJ IDEA': 'intellijidea', 'OpenAI Codex': 'openai', 'Claude Code': 'claude',
+  'Pi': 'pi', 'DeepSeek Harness': 'deepseek',
   Unity: 'unity', 'After Effects': 'ae', Photoshop: 'ps', Figma: 'figma',
-  'IDA Pro': '/ida.ico', Wireshark: '/Wireshark.ico',
+  'IDA Pro': '/ida.ico', Wireshark: '/Wireshark.ico', x64dbg: 'x64dbg',
 };
 const getIconUrl = (n: string) => {
   const id = skillIconId[n]; if (!id) return null;
