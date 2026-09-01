@@ -4,8 +4,7 @@ import { SOCIAL_ICONS } from '../../constants';
 import { withBase } from '../../lib/urls';
 
 const { author, socials, navigation } = siteConfig;
-const footerNav = [...navigation, { href: '/explore/', label: '探索' }, { href: '/tags/', label: '标签' }, { href: '/series/', label: '系列' }, { href: '/library/', label: '本地书架' }, { href: '/privacy/', label: '隐私说明' }].filter((item, index, items) => items.findIndex((candidate) => candidate.href === item.href) === index).map((item) => ({ href: item.href, text: item.label }));
-const marquee = ['Stay Curious', 'Ship the Work', 'Keep Going', 'Make It Sing', 'Trust the Process', 'Finish with Heart', 'Create Daily', 'Own Your Craft', 'Light the Signal', 'Begin Again'];
+const footerNav = [...navigation, { href: '/privacy/', label: '隐私说明' }].filter((item, index, items) => items.findIndex((candidate) => candidate.href === item.href) === index).map((item) => ({ href: item.href, text: item.label }));
 ---
 
 <footer class="relative mt-auto overflow-hidden border-t-2 border-base-content/10 bg-base-200/80">
@@ -28,21 +27,11 @@ const marquee = ['Stay Curious', 'Ship the Work', 'Keep Going', 'Make It Sing', 
           </div>
         </div>
 
-        <div class="marquee-band mt-8 overflow-hidden rounded-2xl border-2 px-4 py-3">
-          <div class="marquee-track gap-6 text-xs font-black uppercase tracking-[0.24em]">
-            {[...marquee, ...marquee].map((t) => (
-              <span class="inline-flex items-center gap-6 whitespace-nowrap">
-                <span>{t}</span>
-                <span class="marquee-dot h-1.5 w-1.5 rounded-full"></span>
-              </span>
-            ))}
-          </div>
-        </div>
       </div>
 
       <div class="grid gap-8 sm:grid-cols-2">
         <div>
-          <p class="text-xs font-black uppercase tracking-[0.22em] text-base-content/40">Navigate</p>
+          <p class="text-xs font-black uppercase tracking-[0.22em] text-base-content/40">导航</p>
           <ul class="mt-4 space-y-2">
             {footerNav.map((item) => (
               <li>
@@ -55,7 +44,7 @@ const marquee = ['Stay Curious', 'Ship the Work', 'Keep Going', 'Make It Sing', 
         </div>
 
         <div>
-          <p class="text-xs font-black uppercase tracking-[0.22em] text-base-content/40">Connect</p>
+          <p class="text-xs font-black uppercase tracking-[0.22em] text-base-content/40">联系</p>
           <div class="mt-4 flex flex-wrap gap-2">
             {socials.map((social) => (
               <a

@@ -1,6 +1,6 @@
 ---
 title: 'CS2 跑图配置文件使用指南'
-description: '今天给大家分享一个精心制作的 CS2 跑图配置文件仓库，帮助大家更好地练习和提升技术。'
+description: 'CS2 跑图配置文件的使用说明：下载、安装、加载，快速开始练习。'
 date: 2026-03-27
 updatedDate: 2026-07-23
 tags:
@@ -18,7 +18,7 @@ series: CS2 工具与工作流
 seriesOrder: 1
 ---
 
-今天给大家分享一个我精心制作的 CS2 跑图配置文件仓库：[CS2PraticeCFG](https://github.com/Bad0RANG3/CS2PraticeCFG)
+我整理了一套 CS2 跑图配置文件：[CS2PraticeCFG](https://github.com/Bad0RANG3/CS2PraticeCFG)
 
 ## 功能特点
 
@@ -27,7 +27,7 @@ seriesOrder: 1
 ### 🎯 专为跑图设计
 - 去除所有干扰因素
 - 优化移动速度和参数
-- 让你更专注于练习
+- 练枪更专注
 
 ### ⚡ 即插即用
 - 下载后直接放入 CS2 配置目录即可使用

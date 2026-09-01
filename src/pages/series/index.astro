@@ -14,7 +14,7 @@ const difficultyLabel = (posts: Post[]) => {
 ---
 <BaseLayout title="系列" description="按系列阅读连续文章。">
   <div class="site-frame py-5 sm:py-8">
-    <PageHeader label="Series" title="文章系列" description="从一个主题的第一篇开始，按顺序读完一整条线。" />
+    <PageHeader label="系列" title="文章系列" description="从一个主题的第一篇开始，按顺序读完整个系列。" />
     {groups.length === 0 ? <EmptyState message="还没有系列文章" /> : (
       <div class="grid gap-5 md:grid-cols-2">
         {groups.map((group, index) => {
@@ -40,7 +40,7 @@ const difficultyLabel = (posts: Post[]) => {
                 ))}
               </ol>
               <div class="mt-5 flex items-center justify-between text-xs font-black uppercase tracking-[0.14em] text-primary">
-                <span>{group.posts.length > 4 ? `还有 ${group.posts.length - 4} 篇` : '完整阅读路径'}</span>
+                <span>{group.posts.length > 4 ? `还有 ${group.posts.length - 4} 篇` : '按顺序阅读'}</span>
                 <span>开始阅读 →</span>
               </div>
             </a>

@@ -4,29 +4,18 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import PostCard from '../../components/blog/PostCard.astro';
 import PageHeader from '../../components/ui/PageHeader.astro';
 import EmptyState from '../../components/ui/EmptyState.astro';
-import { getPublishedPosts, getAllTags } from '../../lib/content';
+import { getPublishedPosts } from '../../lib/content';
 import { STAGGER } from '../../constants';
 
 const posts = await getPublishedPosts();
-const tags = await getAllTags();
 ---
 
 <BaseLayout title="文章" description="全部文章列表。">
   <div class="site-frame py-5 sm:py-8">
     <PageHeader
-      label="Archive Feed"
+      label="文章"
       title="文章"
     />
-
-    {tags.length > 0 && (
-      <div class="mb-8 flex flex-wrap gap-2 reveal">
-        {tags.map((tag) => (
-          <a href={withBase(`/tags/${encodeURIComponent(tag)}/`)} class="chip-signal transition hover:-translate-y-0.5 hover:bg-primary/20">
-            #{tag}
-          </a>
-        ))}
-      </div>
-    )}
 
     {posts.length === 0 ? (
       <EmptyState message="还没有文章哦" />

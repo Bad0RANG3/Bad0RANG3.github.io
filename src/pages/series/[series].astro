@@ -18,25 +18,24 @@ const difficultyLevels = [...new Set(group.posts.map((post) => post.data.difficu
 ---
 <BaseLayout title={`系列：${group.name}`} description={`按顺序阅读《${group.name}》系列文章。`}>
   <div class="site-frame py-5 sm:py-8">
-    <PageHeader label="Series archive" title={group.name} description={`${group.posts.length} 篇文章，按系列顺序排列。`} />
+    <PageHeader label="系列" title={group.name} description={`${group.posts.length} 篇文章，按系列顺序排列。`} />
 
     {group.posts.length === 0 ? <EmptyState message="这个系列还没有文章" /> : (
       <>
         <section class="reveal hard-card hard-card-citrus mx-auto mb-8 max-w-3xl rounded-[1.75rem] p-6 sm:p-8">
           <div class="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <p class="eyebrow">Reading route</p>
-              <h2 class="mt-2 text-2xl font-black">一条完整的阅读路径</h2>
+              <h2 class="mt-2 text-2xl font-black">按顺序读这个系列</h2>
             </div>
             <a href={withBase(`/posts/${firstPost.slug}/`)} class="brutal-button brutal-button-primary">从第一篇开始 →</a>
           </div>
           <div class="mt-6 grid gap-3 sm:grid-cols-3">
-            <div class="rounded-2xl border-2 border-base-content/10 bg-base-100/70 p-4"><span class="eyebrow">Articles</span><strong class="mt-1 block text-2xl font-black">{group.posts.length}</strong></div>
-            <div class="rounded-2xl border-2 border-base-content/10 bg-base-100/70 p-4"><span class="eyebrow">Reading time</span><strong class="mt-1 block text-2xl font-black">约 {totalMinutes} 分钟</strong></div>
-            <div class="rounded-2xl border-2 border-base-content/10 bg-base-100/70 p-4"><span class="eyebrow">Difficulty</span><strong class="mt-1 block text-lg font-black">{difficultyLevels.length > 0 ? difficultyLevels.join(' / ') : '自由阅读'}</strong></div>
+            <div class="rounded-2xl border-2 border-base-content/10 bg-base-100/70 p-4"><span class="eyebrow">篇数</span><strong class="mt-1 block text-2xl font-black">{group.posts.length}</strong></div>
+            <div class="rounded-2xl border-2 border-base-content/10 bg-base-100/70 p-4"><span class="eyebrow">阅读时间</span><strong class="mt-1 block text-2xl font-black">约 {totalMinutes} 分钟</strong></div>
+            <div class="rounded-2xl border-2 border-base-content/10 bg-base-100/70 p-4"><span class="eyebrow">难度</span><strong class="mt-1 block text-lg font-black">{difficultyLevels.length > 0 ? difficultyLevels.join(' / ') : '自由阅读'}</strong></div>
           </div>
           <div class="mt-6" aria-label={`系列进度，共 ${group.posts.length} 篇`}>
-            <div class="mb-2 flex items-center justify-between text-xs font-black uppercase tracking-[0.14em] text-base-content/45"><span>Series progress</span><span>0 / {group.posts.length}</span></div>
+            <div class="mb-2 flex items-center justify-between text-xs font-black uppercase tracking-[0.14em] text-base-content/45"><span>系列进度</span><span>0 / {group.posts.length}</span></div>
             <div class="h-3 overflow-hidden rounded-full border-2 border-base-content/15 bg-base-100/70"><div class="h-full w-0 rounded-full bg-primary"></div></div>
           </div>
         </section>

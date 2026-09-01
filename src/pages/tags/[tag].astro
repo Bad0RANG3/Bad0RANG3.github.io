@@ -23,7 +23,7 @@ const posts = await getPostsByTag(tag);
 <BaseLayout title={`标签：${tag}`} description={`查看与 ${tag} 相关的文章。`}>
   <div class="site-frame py-5 sm:py-8">
     <PageHeader
-      label="Tag archive"
+      label="标签"
       title={`#${tag}`}
     />
     {posts.length === 0 ? (

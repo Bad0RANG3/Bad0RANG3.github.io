@@ -12,15 +12,13 @@ const tags = [...new Set(projects.flatMap((project) => project.tags))].sort((a, 
 <BaseLayout title={`项目 · ${siteConfig.title}`} description="Bad0RANG3 的项目、工具和实验作品。可按类型、状态和技术标签筛选。">
   <div class="site-frame py-8 sm:py-12">
     <header class="reveal mb-8 max-w-3xl">
-      <p class="eyebrow">Selected Work</p>
       <h1 class="display-title mt-3 text-4xl sm:text-6xl">我正在做什么</h1>
-      <p class="mt-5 text-base leading-8 text-base-content/65 sm:text-lg">这里放我的工具、实验和长期项目。它们不一定都很大，但都应该真实解决一个问题。</p>
+      <p class="mt-5 text-base leading-8 text-base-content/65 sm:text-lg">这里放我的工具、实验和长期项目。不一定都很大，但都是真在用的东西。</p>
     </header>
 
     <section class="reveal mb-8 rounded-[1.5rem] border-2 border-base-content/10 bg-base-100/80 p-4 sm:p-5" aria-labelledby="project-filter-title" data-project-filters>
       <div class="flex flex-wrap items-baseline justify-between gap-3">
         <div>
-          <p class="eyebrow">Browse the work</p>
           <h2 id="project-filter-title" class="mt-1 text-lg font-black">筛选项目</h2>
         </div>
         <p class="text-sm text-base-content/55" aria-live="polite" data-project-filter-result>{projects.length} 个项目</p>

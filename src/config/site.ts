@@ -13,7 +13,7 @@ export const siteConfig = {
   },
   author: {
     name: 'Bad0RANG3',
-    intro: '喜欢在计算机方面折腾的普通菜鸟。把输入系统、配置工具和安装笔记做成能够直接上手的作品。',
+    intro: '喜欢在计算机方面折腾的普通菜鸟。',
     avatar: '/HP.webp',
     email: 'badorangeovo@outlook.com',
   },

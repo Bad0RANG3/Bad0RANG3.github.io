@@ -318,17 +318,19 @@ html[lang="zh"] .mega-title {
 }
 
 .hard-card {
+  --hard-card-shadow: color-mix(in oklab, var(--color-primary) 85%, transparent);
+  --hard-card-hover-shadow: color-mix(in oklab, var(--color-accent) 80%, transparent);
   background: color-mix(in oklab, var(--color-base-100) 92%, white);
   border: 2px solid color-mix(in oklab, var(--color-base-content) 14%, transparent);
-  box-shadow: 10px 10px 0 0 color-mix(in oklab, var(--color-primary) 85%, transparent);
+  box-shadow: 10px 10px 0 0 var(--hard-card-shadow);
   transition:
     transform 0.28s cubic-bezier(0.22, 0.61, 0.36, 1),
     box-shadow 0.28s cubic-bezier(0.22, 0.61, 0.36, 1),
     border-color 0.28s ease;
 }
 .hard-card:hover {
-  transform: translate(-4px, -4px) rotate(-0.4deg);
-  box-shadow: 14px 14px 0 0 color-mix(in oklab, var(--color-accent) 80%, transparent);
+  transform: translate(-4px, -4px);
+  box-shadow: 14px 14px 0 0 var(--hard-card-hover-shadow);
   border-color: color-mix(in oklab, var(--color-base-content) 28%, transparent);
 }
 
@@ -369,17 +371,13 @@ html[data-theme="paper-dark"] .mockup-code {
 }
 
 .hard-card-citrus {
-  box-shadow: 10px 10px 0 0 color-mix(in oklab, var(--color-secondary) 90%, transparent);
-}
-.hard-card-citrus:hover {
-  box-shadow: 14px 14px 0 0 color-mix(in oklab, var(--color-primary) 85%, transparent);
+  --hard-card-shadow: color-mix(in oklab, var(--color-secondary) 90%, transparent);
+  --hard-card-hover-shadow: color-mix(in oklab, var(--color-primary) 85%, transparent);
 }
 
 .hard-card-teal {
-  box-shadow: 10px 10px 0 0 color-mix(in oklab, var(--color-accent) 85%, transparent);
-}
-.hard-card-teal:hover {
-  box-shadow: 14px 14px 0 0 color-mix(in oklab, var(--color-secondary) 90%, transparent);
+  --hard-card-shadow: color-mix(in oklab, var(--color-accent) 85%, transparent);
+  --hard-card-hover-shadow: color-mix(in oklab, var(--color-secondary) 90%, transparent);
 }
 
 .panel-slice {
@@ -842,8 +840,8 @@ html[data-theme="paper-dark"] .lyric-block:hover {
   .mockup-code pre { font-size: 0.75rem; }
   .page-enter { animation-duration: 300ms; }
   .reveal { animation-duration: 350ms; }
-  .hard-card { box-shadow: 6px 6px 0 0 color-mix(in oklab, var(--color-primary) 80%, transparent); }
-  .hard-card:hover { box-shadow: 8px 8px 0 0 color-mix(in oklab, var(--color-accent) 75%, transparent); }
+  .hard-card { box-shadow: 6px 6px 0 0 var(--hard-card-shadow); }
+  .hard-card:hover { box-shadow: 8px 8px 0 0 var(--hard-card-hover-shadow); }
   .btn-brutal,
   .btn-brutal-outline {
     width: 100%;
@@ -862,7 +860,7 @@ html[data-theme="paper-dark"] .lyric-block:hover {
   .hard-card-citrus:hover,
   .hard-card-teal:hover {
     transform: none;
-    box-shadow: 6px 6px 0 0 color-mix(in oklab, var(--color-primary) 80%, transparent);
+    box-shadow: 6px 6px 0 0 var(--hard-card-shadow);
   }
 }
 

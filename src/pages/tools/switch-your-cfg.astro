@@ -25,20 +25,20 @@ import '../../styles/tools/switch-your-cfg.css';
 
       <div id="scfg-root">
         <PageHeader
-          label="Tools"
+          label="工具"
           title="SwitchYourCFG"
         />
 
         <div class="mb-8 reveal rounded-[1.75rem] border border-base-content/8 bg-base-100/75 px-5 py-4 shadow-sm" style="--reveal-delay:40ms">
           <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Three-step workflow</p>
+              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-primary">三步流程</p>
               <p class="mt-2 text-sm leading-6 text-base-content/65">先导入并整理配置，再完成键位绑定，最后检查结构化 CFG 并导出。</p>
             </div>
             <div class="flex flex-wrap gap-2 text-xs text-base-content/55">
-              <span class="rounded-full border border-base-content/10 bg-base-200/60 px-3 py-1.5">Step 01 输入 / 配置</span>
-              <span class="rounded-full border border-base-content/10 bg-base-200/60 px-3 py-1.5">Step 02 键盘绑定</span>
-              <span class="rounded-full border border-base-content/10 bg-base-200/60 px-3 py-1.5">Step 03 CFG 导出</span>
+              <span class="rounded-full border border-base-content/10 bg-base-200/60 px-3 py-1.5">第 1 步 输入 / 配置</span>
+              <span class="rounded-full border border-base-content/10 bg-base-200/60 px-3 py-1.5">第 2 步 键盘绑定</span>
+              <span class="rounded-full border border-base-content/10 bg-base-200/60 px-3 py-1.5">第 3 步 CFG 导出</span>
             </div>
           </div>
         </div>
@@ -47,7 +47,7 @@ import '../../styles/tools/switch-your-cfg.css';
           <div class="reveal overflow-hidden rounded-[1.75rem] border border-base-content/8 bg-base-100/88 shadow-sm" style="--reveal-delay:80ms">
             <div class="scfg-card-head">
               <div>
-                <p class="scfg-step-label">Step 01</p>
+                <p class="scfg-step-label">第 1 步</p>
                 <h2 class="scfg-step-title">导入并整理配置</h2>
               </div>
               <span class="scfg-card-hint">导入目录后即可继续</span>
@@ -71,7 +71,7 @@ import '../../styles/tools/switch-your-cfg.css';
               <div class="hidden scfg-options-panel" id="optionsCard">
                 <div class="scfg-subhead">
                   <div>
-                    <p class="scfg-subhead-label">Output Options</p>
+                    <p class="scfg-subhead-label">输出选项</p>
                     <h3 class="scfg-subhead-title">转换规则</h3>
                   </div>
                   <span class="scfg-card-hint">影响导出结果</span>
@@ -94,7 +94,7 @@ import '../../styles/tools/switch-your-cfg.css';
           <div class="hidden reveal overflow-hidden rounded-[1.75rem] border border-base-content/8 bg-base-100/88 shadow-sm" id="buyCard" style="--reveal-delay:140ms">
             <div class="scfg-card-head">
               <div>
-                <p class="scfg-step-label">Step 02</p>
+                <p class="scfg-step-label">第 2 步</p>
                 <h2 class="scfg-step-title">键盘绑定预览</h2>
               </div>
               <span class="scfg-card-hint">核心交互区</span>
@@ -170,7 +170,7 @@ import '../../styles/tools/switch-your-cfg.css';
           <div class="hidden reveal overflow-hidden rounded-[1.75rem] border border-base-content/8 bg-base-100/88 shadow-sm" id="outputCard" style="--reveal-delay:200ms">
             <div class="scfg-card-head">
               <div>
-                <p class="scfg-step-label">Step 03</p>
+                <p class="scfg-step-label">第 3 步</p>
                 <h2 class="scfg-step-title">检查并导出 CFG</h2>
               </div>
               <span class="scfg-pv-info" id="pvInfo"></span>

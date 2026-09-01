@@ -10,7 +10,7 @@ const groups = await getTagGroups();
 ---
 <BaseLayout title="标签" description="按主题浏览文章标签。">
   <div class="site-frame py-5 sm:py-8">
-    <PageHeader label="Topics" title="标签" description="把文章按兴趣和技术主题重新连起来。" />
+    <PageHeader label="标签" title="标签" description="按标签浏览文章。" />
     {groups.length === 0 ? <EmptyState message="还没有标签" /> : (
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {groups.map((group, index) => (
