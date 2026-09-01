@@ -1,335 +1,88 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PostCard from '../components/blog/PostCard.astro';
-import EmptyState from '../components/ui/EmptyState.astro';
+import ProjectCard from '../components/profile/ProjectCard.astro';
+import ProfileOverviewCard from '../components/profile/ProfileOverviewCard.astro';
 import Icon from '../components/icons/Icons.astro';
+import SectionHeader from '../components/ui/SectionHeader.astro';
+import { projects } from '../config/projects';
 import { siteConfig } from '../config/site';
-import { getPublishedPosts, getCategoryGroups, getTagGroups, getSeriesGroups } from '../lib/content';
-import { getThoughts } from '../lib/thoughts';
-import { formatDate } from '../lib/date';
-import { LAYOUT, STAGGER, ROUTES } from '../constants';
+import { getPublishedPosts } from '../lib/content';
+import { LAYOUT, ROUTES, STAGGER } from '../constants';
 import { withBase } from '../lib/urls';
 
 const posts = await getPublishedPosts();
-const featuredPosts = posts.filter((p) => p.data.featured);
-const heroPosts =
-  featuredPosts.length > 0
-    ? featuredPosts.slice(0, LAYOUT.HERO_POSTS_COUNT)
-    : posts.slice(0, LAYOUT.HERO_POSTS_COUNT);
 const recentPosts = posts.slice(0, LAYOUT.RECENT_POSTS_COUNT);
-const categoryGroups = await getCategoryGroups();
-const tagGroups = await getTagGroups();
-const seriesGroups = await getSeriesGroups();
-const thoughts = await getThoughts();
-const latestThought = thoughts[0];
-const latestThoughtPreview = latestThought?.body
-  ?.replace(/```[\s\S]*?```/g, '')
-  .replace(/[#>*_`~]/g, '')
-  .replace(/\s+/g, ' ')
-  .trim()
-  .slice(0, 128);
-const { hero, author, about } = siteConfig;
+const { author, hero } = siteConfig;
 
-const projectShowcase = [
-  {
-    code: '01',
-    name: 'VirtualWait',
-    href: '/posts/virtualwait-template',
-    tag: '全栈系统',
-    blurb: '机台场地的虚拟排队系统：队首确认、管理台与 QQ 群提醒一条链路。',
-    tone: 'teal' as const,
-  },
-  {
-    code: '02',
-    name: 'SOCD Cleaner',
-    href: '/posts/socd-cleaner',
-    tag: '输入系统',
-    blurb: '把普通键盘洗成 Hitbox 级方向裁决，三种冲突策略即开即用。',
-    tone: 'coral' as const,
-  },
-  {
-    code: '03',
-    name: 'SwitchYourCFG',
-    href: '/tools/switch-your-cfg',
-    tag: '在线工具',
-    blurb: 'CS2 配置可视化改造器：拖放、选键、一键导出。',
-    tone: 'citrus' as const,
-  },
-  {
-    code: '04',
-    name: 'CS2 HLAE Preset',
-    href: '/posts/cs2-hlae-preset',
-    tag: '视频录制',
-    blurb: 'Demo POV 高画质录制预设，CPU/GPU 编码器与音视频合并脚本一次配齐。',
-    tone: 'coral' as const,
-  },
-  {
-    code: '05',
-    name: 'Arch 安装笔记',
-    href: '/posts/archlinuxinstallguide',
-    tag: '系统折腾',
-    blurb: 'CachyOS 双系统 + Niri 实操记录，懒人也能落地的安装路径。',
-    tone: 'teal' as const,
-  },
-];
-
-const pulse = [
+const profileMetrics = [
   { label: '文章', value: String(posts.length).padStart(2, '0') },
-  { label: '工具', value: '01' },
-  { label: '兴趣', value: String(about.interests.length).padStart(2, '0') },
-  { label: '信号', value: 'ON' },
-];
-
-const marqueeItems = [
-  'STAY CURIOUS',
-  'SHIP THE WORK',
-  'KEEP GOING',
-  'MAKE IT SING',
-  'TRUST THE PROCESS',
-  'FINISH WITH HEART',
-  'CREATE DAILY',
-  'OWN YOUR CRAFT',
-  'LIGHT THE SIGNAL',
-  'BEGIN AGAIN',
+  { label: '项目', value: String(projects.length).padStart(2, '0') },
+  { label: '状态', value: '在线' },
 ];
 ---
 
 <BaseLayout title={siteConfig.title} description={siteConfig.description}>
-  <!-- ═══ HERO — asymmetric editorial spread ═══ -->
-  <section class="relative overflow-hidden pt-4 sm:pt-6">
-    <div class="pointer-events-none absolute -left-16 top-10 h-64 w-64 rounded-full bg-primary/15 blur-3xl animate-blob"></div>
-    <div class="pointer-events-none absolute right-0 top-24 h-72 w-72 rounded-full bg-secondary/40 blur-3xl animate-blob [animation-delay:-3s]"></div>
-    <div class="pointer-events-none absolute bottom-0 left-1/3 h-56 w-56 rounded-full bg-accent/20 blur-3xl animate-blob [animation-delay:-5s]"></div>
+  <section class="site-frame py-5 sm:py-8">
+    <div class="hero-grid">
+      <ProfileOverviewCard
+        layout="stack"
+        eyebrow="个人档案"
+        heading={author.name}
+        headingTag="h2"
+        subtitle=""
+        metrics={profileMetrics}
+      />
 
-    <div class="site-frame-wide">
-      <div class="hero-grid">
-        <!-- Right: lyric-first editorial stage -->
-        <div class="relative order-1 overflow-hidden rounded-[2rem] border-2 border-base-content/15 bg-base-100/85 shadow-[12px_12px_0_0] shadow-primary/70 lg:order-2">
-          <!-- layered paper planes -->
-          <div class="pointer-events-none absolute inset-0">
-            <div class="absolute -left-10 top-8 h-40 w-40 rotate-12 rounded-[2rem] bg-secondary/70"></div>
-            <div class="absolute right-6 top-4 h-24 w-24 -rotate-6 rounded-full bg-accent/25"></div>
-            <div class="absolute bottom-8 right-10 h-28 w-48 -rotate-3 rounded-[1.5rem] bg-primary/15"></div>
-            <div class="absolute inset-x-0 bottom-0 h-1.5 bg-gradient-to-r from-primary via-secondary to-accent"></div>
+      <section class="reveal relative overflow-hidden rounded-[2rem] border-2 dark-soft-border-strong bg-base-100/80 p-6 shadow-hard sm:p-8 lg:p-9" aria-labelledby="home-title">
+        <div class="flex h-full flex-col">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="paper-sticker">歌词</span>
+            <span class="chip-teal">Main Heroine</span>
           </div>
 
-          <div class="relative z-10 flex h-full flex-col p-6 sm:p-8 lg:p-9">
-            <div class="flex flex-wrap items-center justify-between gap-3">
-              <div class="flex flex-wrap items-center gap-2">
-                <span class="paper-sticker">Track 01</span>
-                <span class="chip-teal">Main Heroine</span>
-              </div>
-              <span class="rounded-full border-2 border-base-content/10 bg-base-200/80 px-3 py-1 text-[0.68rem] font-black uppercase tracking-[0.16em] text-base-content/45">
-                opening scene
-              </span>
+          <div class="flex flex-1 flex-col justify-center py-8 sm:py-10">
+            <p class="eyebrow">欢迎</p>
+            <h1 id="home-title" class="display-title mt-3 max-w-3xl text-4xl leading-[1.14] sm:text-5xl lg:text-6xl">
+              {hero.lyric}
+            </h1>
+            <div class="mt-5 inline-flex w-fit items-center gap-2 rounded-full border-2 border-base-content/10 bg-base-200/70 px-3 py-1.5 text-xs font-bold text-base-content/70">
+              <span class="marquee-dot h-2 w-2 rounded-full"></span>
+              {hero.lyricSource}
             </div>
+          </div>
 
-            <div class="mt-8 flex-1">
-              <p class="text-xs font-black uppercase tracking-[0.22em] text-primary/80">Lyric Drop</p>
-
-              <h1 class="mt-4 max-w-3xl text-[clamp(1.85rem,4.6vw,3.35rem)] font-black leading-[1.18] tracking-[-0.03em] text-base-content">
-                <span class="relative inline-block">
-                  <span class="absolute inset-x-0 bottom-1 h-3 rounded-sm bg-secondary/80 sm:bottom-1.5 sm:h-3.5"></span>
-                  <span class="relative">{hero.lyric}</span>
-                </span>
-              </h1>
-
-              <div class="mt-5 flex flex-wrap items-center gap-3">
-                <span class="inline-flex items-center gap-2 rounded-full border-2 border-base-content bg-base-100 px-3 py-1.5 text-xs font-bold text-base-content/70 shadow-[3px_3px_0_0] shadow-accent/50">
-                  <span class="marquee-dot h-2 w-2 rounded-full"></span>
-                  {hero.lyricSource}
-                </span>
-                <span class="text-xs font-bold uppercase tracking-[0.16em] text-base-content/35">kept from the first frame</span>
-              </div>
-
-              <p class="mt-7 max-w-xl text-sm leading-7 text-base-content/65 sm:text-base">
-                这里是 {author.name} 的实验台：输入系统、配置工具、特效笔记与可上手作品，全部摊在台面上。
-              </p>
-            </div>
-
-            <div class="mt-8 grid gap-3 sm:grid-cols-[1.1fr_0.9fr]">
-              <a href={withBase(ROUTES.POSTS)} class="btn-brutal w-full">
-                <Icon name="book" class="h-4 w-4" />
-                进入文章流
-              </a>
-              <div class="grid grid-cols-2 gap-3">
-                <a href={withBase(ROUTES.TOOLS)} class="btn-brutal-outline w-full px-3 text-sm">
-                  工具台
-                </a>
-                <a href={withBase(ROUTES.ABOUT)} class="btn-brutal-outline w-full px-3 text-sm">
-                  关于
-                </a>
-              </div>
-            </div>
-
-            <div class="mt-6 flex flex-wrap items-center gap-2 border-t-2 border-dashed border-base-content/10 pt-5">
-              {['VFX', 'CFG', 'INPUT', 'LINUX'].map((tag) => (
-                <span class="chip-lime">{tag}</span>
-              ))}
-              <span class="ml-auto hidden text-xs font-black uppercase tracking-[0.18em] text-base-content/35 sm:inline">
-                studio signal live
-              </span>
+          <div class="grid gap-3 border-t-2 border-dashed border-base-content/10 pt-5 sm:grid-cols-[1.1fr_0.9fr]">
+            <a href={withBase(ROUTES.POSTS)} class="btn-brutal w-full">
+              <Icon name="book" class="h-4 w-4" />
+              我的博文
+            </a>
+            <div class="grid grid-cols-2 gap-3">
+              <a href={withBase(ROUTES.TOOLS)} class="btn-brutal-outline w-full px-3 text-sm">工具页</a>
+              <a href={withBase(ROUTES.ABOUT)} class="btn-brutal-outline w-full px-3 text-sm">关于我</a>
             </div>
           </div>
         </div>
-
-        <!-- Left: profile dossier -->
-        <div class="order-2 flex flex-col gap-4 lg:order-1">
-          <div class="hard-card hard-card-citrus relative overflow-hidden rounded-[1.75rem]">
-            <!-- portrait stage: full avatar, no crop -->
-            <div class="relative border-b-2 border-base-content/10 bg-gradient-to-br from-secondary/50 via-base-100 to-accent/20 px-5 pt-5 pb-4">
-              <div class="pointer-events-none absolute -right-6 -top-6 h-28 w-28 rounded-full bg-primary/15"></div>
-              <div class="pointer-events-none absolute bottom-3 left-4 h-16 w-16 rotate-12 rounded-2xl bg-accent/20"></div>
-
-              <div class="relative mx-auto w-full max-w-[15.5rem]">
-                <div class="absolute -inset-2 rotate-[-2deg] rounded-[1.6rem] bg-gradient-to-br from-primary via-secondary to-accent opacity-80"></div>
-                <div class="relative overflow-hidden rounded-[1.35rem] border-2 border-base-content bg-base-100 shadow-[6px_6px_0_0] shadow-base-content">
-                  <img
-                    src={withBase(author.avatar)}
-                    alt={author.name}
-                    width="248"
-                    height="248"
-                    loading="eager"
-                    fetchpriority="high"
-                    class="aspect-square h-auto w-full object-contain object-center"
-                  />
-                </div>
-              </div>
-
-              <div class="relative mt-4 text-center">
-                <p class="text-[0.68rem] font-black uppercase tracking-[0.2em] text-base-content/45">Operator File</p>
-                <h2 class="mt-1 text-2xl font-black tracking-tight sm:text-3xl">{author.name}</h2>
-              </div>
-            </div>
-
-            <div class="space-y-4 p-5 sm:p-6">
-              <p class="text-sm leading-7 text-base-content/65">{author.intro}</p>
-
-              <div class="flex flex-wrap justify-center gap-2 sm:justify-start">
-                {about.interests.map((item) => (
-                  <span class="chip-signal">{item}</span>
-                ))}
-              </div>
-
-              <div class="grid grid-cols-4 gap-2">
-                {pulse.map((item, i) => (
-                  <div
-                    class:list={[
-                      'rounded-2xl border-2 border-base-content/10 bg-base-100 px-2 py-3 text-center',
-                      i % 2 === 0 ? 'shadow-[3px_3px_0_0] shadow-primary/50' : 'shadow-[3px_3px_0_0] shadow-accent/50',
-                    ]}
-                  >
-                    <p class="text-[0.6rem] font-black uppercase tracking-[0.12em] text-base-content/40">{item.label}</p>
-                    <p class="mt-1 text-lg font-black tracking-tight sm:text-xl">{item.value}</p>
-                  </div>
-                ))}
-              </div>
-
-              <div class="rounded-2xl border-2 border-dashed border-base-content/12 bg-gradient-to-r from-primary/8 via-secondary/25 to-accent/10 p-4">
-                <p class="text-[0.68rem] font-black uppercase tracking-[0.18em] text-base-content/40">Focus</p>
-                <p class="mt-1 text-sm font-black tracking-tight">配置 · 特效 · 输入系统 · 安装笔记</p>
-                <p class="mt-1 text-xs leading-5 text-base-content/55">能上手的作品摆前台，灵感不进草稿箱。</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Marquee -->
-    <div class="marquee-band mt-8 sm:mt-12">
-      <div class="marquee-track gap-8 py-3 text-xs font-black uppercase tracking-[0.28em] sm:text-sm">
-        {[...marqueeItems, ...marqueeItems].map((item) => (
-          <span class="inline-flex items-center gap-8 whitespace-nowrap">
-            <span>{item}</span>
-            <span class="marquee-dot h-2 w-2 rounded-full"></span>
-          </span>
-        ))}
-      </div>
+      </section>
     </div>
   </section>
 
-  <!-- ═══ PROJECT SHOWCASE — bold numbered rail ═══ -->
-  <section class="diagonal-band site-frame py-10 sm:py-14">
-    <div class="mb-8 sm:mb-10">
-      <p class="eyebrow">Selected Works</p>
-      <h2 class="display-title mt-3 text-4xl sm:text-5xl md:text-6xl">
-        项目<br class="sm:hidden" />
-        <span class="text-primary">正面硬刚</span>
-      </h2>
-    </div>
-
-    <div class="project-rail">
-      {projectShowcase.map((project, i) => (
-        <a
-          href={withBase(project.href)}
-          class:list={[
-            'group reveal relative overflow-hidden rounded-[1.75rem] border-2 border-base-content/15 p-6 transition-transform duration-300 hover:-translate-y-1 sm:p-7',
-            project.tone === 'coral' && 'bg-gradient-to-br from-primary/15 via-base-100 to-base-100 hard-card',
-            project.tone === 'citrus' && 'bg-gradient-to-br from-secondary/55 via-base-100 to-base-100 hard-card-citrus hard-card',
-            project.tone === 'teal' && 'bg-gradient-to-br from-accent/20 via-base-100 to-base-100 hard-card-teal hard-card',
-          ]}
-          style={`--reveal-delay:${STAGGER.CARD_START + i * STAGGER.CARD_STEP}ms`}
-        >
-          <div class="flex items-start justify-between gap-4">
-            <span class="text-5xl font-black tracking-tightest text-base-content/10 transition-colors group-hover:text-primary/30">
-              {project.code}
-            </span>
-            <span class="chip-lime">{project.tag}</span>
-          </div>
-          <h3 class="mt-8 text-2xl font-black tracking-tight transition-colors group-hover:text-primary">
-            {project.name}
-          </h3>
-          <p class="mt-3 text-sm leading-7 text-base-content/65">{project.blurb}</p>
-          <div class="mt-6 inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-base-content/50">
-            查看作品
-            <Icon name="chevron-right" class="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
-          </div>
-        </a>
+  <section class="site-frame pb-12 sm:pb-16" aria-labelledby="projects-title">
+    <SectionHeader label="Projects" title="项目" titleId="projects-title" />
+    <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+      {projects.map((project, index) => (
+        <div class="reveal min-w-0" style={`--reveal-delay:${STAGGER.CARD_START + index * STAGGER.CARD_STEP}ms`}>
+          <ProjectCard project={project} featured />
+        </div>
       ))}
     </div>
   </section>
 
-  <!-- ═══ FEATURED POSTS — editorial bento ═══ -->
-  <section class="site-frame pb-10 sm:pb-14">
-    <div class="mb-8 flex flex-col gap-3 sm:mb-10 sm:flex-row sm:items-end sm:justify-between">
-      <div>
-        <p class="eyebrow">Featured</p>
-        <h2 class="display-title mt-3 text-4xl sm:text-5xl">精选文章</h2>
-      </div>
-      <a href={withBase(ROUTES.POSTS)} class="link-underline text-sm font-black uppercase tracking-[0.18em]">
-        全部文章 →
-      </a>
-    </div>
-
-    {heroPosts.length === 0 ? (
-      <EmptyState message="还没有文章哦" />
-    ) : (
-      <div class="bento-editorial">
-        {heroPosts.map((post, i) => (
-          <div style={`--reveal-delay:${STAGGER.CARD_START + i * STAGGER.CARD_STEP}ms`} class="min-h-0">
-            <PostCard post={post} featured={i === 0} />
-          </div>
-        ))}
-      </div>
-    )}
-  </section>
-
-  <!-- ═══ RECENT — staggered magazine list ═══ -->
-  <section class="site-frame pb-12 sm:pb-16">
-    <div class="mb-8 flex items-end justify-between gap-4">
-      <div>
-        <p class="eyebrow">Latest</p>
-        <h2 class="display-title mt-3 text-4xl sm:text-5xl">最近更新</h2>
-      </div>
-      <div class="hidden rotate-[-3deg] rounded-2xl border-2 border-base-content/15 bg-secondary px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-secondary-content sm:block">
-        live feed
-      </div>
-    </div>
-
-    <div class="grid gap-4 md:grid-cols-2">
-      {recentPosts.map((post, i) => (
-        <div style={`--reveal-delay:${STAGGER.LIST_START + i * STAGGER.LIST_STEP}ms`}>
+  <section class="site-frame pb-12 sm:pb-16" aria-labelledby="recent-posts-title">
+    <SectionHeader label="Latest" title="最近更新" titleId="recent-posts-title" />
+    <div class="grid gap-6 md:grid-cols-2">
+      {recentPosts.map((post, index) => (
+        <div class="min-w-0" style={`--reveal-delay:${STAGGER.LIST_START + index * STAGGER.LIST_STEP}ms`}>
           <PostCard post={post} compact />
         </div>
       ))}
@@ -345,105 +98,20 @@ const marqueeItems = [
     )}
   </section>
 
-  <!-- ═══ CONTENT MAP — make the archive feel like a living studio ═══ -->
-  <section id="content-map" class="site-frame pb-12 sm:pb-16">
-    <div class="mb-8 flex flex-col gap-4 sm:mb-10 sm:flex-row sm:items-end sm:justify-between">
-      <div>
-        <p class="eyebrow">Studio Index</p>
-        <h2 class="display-title mt-3 text-4xl sm:text-5xl">把内容串起来</h2>
-      </div>
-      <a href={withBase(ROUTES.EXPLORE)} class="link-underline text-sm font-black uppercase tracking-[0.18em]">进入探索页 →</a>
-    </div>
-
-    <div class="grid gap-4 lg:grid-cols-[1.08fr_0.92fr]">
-      <div class="hard-card hard-card-teal rounded-[1.75rem] p-6 sm:p-8">
-        <div class="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p class="text-xs font-black uppercase tracking-[0.2em] text-base-content/45">Content signal</p>
-            <h3 class="mt-2 text-2xl font-black tracking-tight sm:text-3xl">这里不只有文章</h3>
-          </div>
-          <span class="paper-sticker rotate-2">INDEX 2026</span>
-        </div>
-
-        <div class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {[
-            { label: '文章', value: posts.length, href: ROUTES.POSTS },
-            { label: '分类', value: categoryGroups.length, href: ROUTES.EXPLORE },
-            { label: '标签', value: tagGroups.length, href: ROUTES.TAGS },
-            { label: '系列', value: seriesGroups.length, href: ROUTES.SERIES },
-          ].map((item, i) => (
-            <a
-              href={withBase(item.href)}
-              class:list={[
-                'rounded-2xl border-2 border-base-content/10 bg-base-100/75 p-4 transition hover:-translate-y-1 hover:border-primary/40',
-                i % 2 === 0 ? 'shadow-[4px_4px_0_0] shadow-primary/35' : 'shadow-[4px_4px_0_0] shadow-accent/35',
-              ]}
-            >
-              <p class="text-[0.65rem] font-black uppercase tracking-[0.16em] text-base-content/45">{item.label}</p>
-              <p class="mt-1 text-3xl font-black tracking-tight text-primary">{String(item.value).padStart(2, '0')}</p>
-            </a>
-          ))}
-        </div>
-
-        <div class="mt-6 flex flex-wrap gap-2">
-          {tagGroups.slice(0, 10).map((group) => (
-            <a href={withBase(`/tags/${encodeURIComponent(group.name)}/`)} class="chip-lime transition hover:-translate-y-0.5">#{group.name}</a>
-          ))}
-        </div>
-      </div>
-
-      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
-        <a href={withBase(ROUTES.THOUGHTS)} class="hard-card rounded-[1.75rem] p-6 transition hover:-translate-y-1">
-          <div class="flex items-center justify-between gap-3">
-            <p class="eyebrow">Latest thought</p>
-            <span class="text-xs font-black text-base-content/40">{latestThought ? formatDate(latestThought.data.date) : 'soon'}</span>
-          </div>
-          <h3 class="mt-4 text-xl font-black tracking-tight">{latestThought ? '刚刚写下的一点信号' : '碎碎念正在等待更新'}</h3>
-          <p class="mt-3 line-clamp-3 text-sm leading-7 text-base-content/60">
-            {latestThoughtPreview || '把还没整理成文章的想法，先放在这里。短一点、真一点，也是一种记录。'}
-          </p>
-          <span class="mt-5 inline-flex text-xs font-black uppercase tracking-[0.18em] text-primary">打开碎碎念 →</span>
-        </a>
-
-        <a href={withBase(ROUTES.LIBRARY)} class="hard-card hard-card-citrus rounded-[1.75rem] p-6 transition hover:-translate-y-1">
-          <p class="eyebrow">Your shelf</p>
-          <h3 class="mt-4 text-xl font-black tracking-tight">把喜欢的文章留下来</h3>
-          <p class="mt-3 text-sm leading-7 text-base-content/60">收藏、继续阅读、查看进度。这个小书架只存在于你的浏览器里，不需要登录。</p>
-          <span class="mt-5 inline-flex text-xs font-black uppercase tracking-[0.18em] text-primary">打开本地书架 →</span>
-        </a>
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══ CTA band ═══ -->
-  <section class="site-frame pb-12 sm:pb-16">
-    <div class="relative overflow-hidden rounded-[2rem] border-2 border-base-content bg-[linear-gradient(135deg,oklch(64%_0.22_28)_0%,oklch(72%_0.18_45)_42%,oklch(72%_0.13_195)_100%)] p-8 text-base-100 shadow-[12px_12px_0_0] shadow-base-content sm:p-12">
-      <div class="pointer-events-none absolute -right-10 -top-10 h-48 w-48 rounded-full bg-secondary/50 blur-2xl"></div>
-      <div class="pointer-events-none absolute -bottom-12 left-10 h-40 w-40 rounded-full bg-base-100/25 blur-2xl"></div>
-      <div class="pointer-events-none absolute inset-x-0 top-0 h-1.5 bg-secondary"></div>
-
-      <div class="relative z-10 grid gap-8 lg:grid-cols-[1.4fr_0.8fr] lg:items-end">
+  <section class="site-frame pb-12 sm:pb-16" aria-labelledby="contact-title">
+    <div class="reveal rounded-[2rem] border-2 dark-soft-border-strong bg-base-100/80 p-6 shadow-hard sm:p-8 lg:p-10">
+      <div class="grid gap-8 lg:grid-cols-[1.4fr_0.8fr] lg:items-end">
         <div>
-          <p class="text-xs font-black uppercase tracking-[0.28em] text-secondary">Open Channel</p>
-          <h2 class="mt-3 max-w-2xl text-4xl font-black leading-[1.05] tracking-tight text-white sm:text-5xl md:text-6xl" style="text-shadow: 0 2px 0 oklch(22% 0.03 50 / 0.25)">
-            有想法？
-            <br />
-            来一起把信号打亮。
-          </h2>
-          <p class="mt-4 max-w-xl text-sm leading-7 text-white/90 sm:text-base">
-            工具、配置、特效实验都欢迎交流。先从一篇文章或一个工具开始。
+          <SectionHeader label="Contact" title="想聊点什么？" titleId="contact-title" />
+          <p class="max-w-xl text-sm leading-7 text-base-content/65 sm:text-base">
+            工具、配置、特效实验都欢迎交流。
           </p>
         </div>
         <div class="flex flex-col gap-3 sm:flex-row lg:flex-col">
-          <a href={withBase(ROUTES.ABOUT)} class="inline-flex items-center justify-center rounded-full border-2 border-base-content bg-secondary px-5 py-3 text-sm font-black text-secondary-content shadow-[5px_5px_0_0] shadow-base-content transition hover:-translate-x-0.5 hover:-translate-y-0.5">
-            关于我
-          </a>
-          <a href="mailto:badorangeovo@outlook.com" class="inline-flex items-center justify-center rounded-full border-2 border-base-content bg-base-100 px-5 py-3 text-sm font-black text-base-content shadow-[5px_5px_0_0] shadow-base-content transition hover:-translate-x-0.5 hover:-translate-y-0.5">
-            发邮件
-          </a>
+          <a href={withBase(ROUTES.ABOUT)} class="btn-brutal-outline w-full">关于我</a>
+          <a href={`mailto:${author.email}`} class="btn-brutal w-full">发送邮件</a>
         </div>
       </div>
     </div>
   </section>
 </BaseLayout>
-

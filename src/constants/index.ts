@@ -42,7 +42,6 @@ export const ROUTES = {
   TAGS: '/tags',
   SERIES: '/series',
   EXPLORE: '/explore',
-  LIBRARY: '/library',
   PRIVACY: '/privacy',
   SEARCH_INDEX: '/search-index.json',
   RSS: '/rss.xml',

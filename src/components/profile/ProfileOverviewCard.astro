@@ -1,0 +1,81 @@
+---
+import { siteConfig } from '../../config/site';
+import { withBase } from '../../lib/urls';
+
+interface ProfileMetric {
+  label: string;
+  value: string;
+}
+
+interface Props {
+  layout?: 'inline' | 'stack';
+  eyebrow?: string;
+  heading?: string;
+  headingTag?: 'h1' | 'h2';
+  subtitle?: string;
+  metrics?: readonly ProfileMetric[];
+}
+
+const {
+  layout = 'inline',
+  eyebrow = '关于',
+  heading = siteConfig.about.greeting,
+  headingTag = 'h1',
+  subtitle = siteConfig.about.subtitle,
+  metrics = [],
+} = Astro.props;
+const { author } = siteConfig;
+const stacked = layout === 'stack';
+const Heading = headingTag;
+---
+
+<section
+  class:list={[
+    'reveal relative overflow-hidden rounded-[2rem] border-2 dark-soft-border-strong bg-base-100/80 shadow-hard',
+    stacked ? 'p-5 sm:p-6' : 'p-6 sm:p-8',
+  ]}
+>
+  <div class:list={[
+    'relative gap-6',
+    stacked ? 'flex flex-col' : 'grid lg:grid-cols-[auto_1fr] lg:items-center lg:gap-8',
+  ]}>
+    <div class:list={['relative shrink-0', stacked ? 'mx-auto w-full max-w-[13rem]' : 'mx-auto lg:mx-0']}>
+      <div class="absolute -inset-2 rotate-3 rounded-[1.75rem] bg-gradient-to-br from-primary via-secondary to-accent opacity-80"></div>
+      <img
+        class:list={[
+          'relative aspect-square rounded-[1.5rem] border-2 dark-soft-border-strong bg-base-100 object-contain shadow-xl',
+          stacked ? 'w-full max-w-[13rem]' : 'h-28 w-28 sm:h-36 sm:w-36',
+        ]}
+        src={withBase(author.avatar)}
+        alt={author.name}
+        width="248"
+        height="248"
+        loading="eager"
+      />
+    </div>
+
+    <div class:list={[stacked ? 'text-center' : 'text-center lg:text-left']}>
+      <p class:list={['eyebrow', !stacked && 'justify-center lg:justify-start', stacked && 'justify-center']}>{eyebrow}</p>
+      <Heading class:list={['display-title mt-3', stacked ? 'text-3xl sm:text-4xl' : 'text-4xl sm:text-5xl md:text-6xl']}>{heading}</Heading>
+      {subtitle && <p class="mt-3 text-lg font-black text-primary">{subtitle}</p>}
+      <p class="mt-4 max-w-2xl text-base leading-8 text-base-content/70">{author.intro}</p>
+
+    </div>
+  </div>
+
+  {metrics.length > 0 && (
+    <div class:list={['mt-6 grid grid-cols-2 gap-3', metrics.length === 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-4']}>
+      {metrics.map((metric, index) => (
+        <div
+          class:list={[
+            'rounded-2xl border-2 border-base-content/10 bg-base-100/70 px-2 py-3 text-center',
+            index % 2 === 0 ? 'shadow-[3px_3px_0_0] shadow-primary/50' : 'shadow-[3px_3px_0_0] shadow-accent/50',
+          ]}
+        >
+          <p class="text-[0.6rem] font-black uppercase tracking-[0.12em] text-base-content/40">{metric.label}</p>
+          <p class="mt-1 text-lg font-black sm:text-xl">{metric.value}</p>
+        </div>
+      ))}
+    </div>
+  )}
+</section>

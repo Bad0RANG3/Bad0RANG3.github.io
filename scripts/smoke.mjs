@@ -93,7 +93,7 @@ try {
   const required = [
     'index.html', '404.html', 'about/index.html', 'archive/index.html',
     'posts/index.html', 'projects/index.html', 'thoughts/index.html',
-    'tags/index.html', 'series/index.html', 'explore/index.html', 'library/index.html', 'privacy/index.html',
+    'tags/index.html', 'series/index.html', 'explore/index.html', 'privacy/index.html',
     'tools/index.html', 'atom.xml', 'feed.json', 'manifest.webmanifest', 'offline/index.html', 'sw.js',
     'rss.xml', 'robots.txt', 'sitemap-index.xml', 'sitemap-0.xml', 'search-index.json',
   ];
@@ -170,7 +170,7 @@ try {
   for (const slug of projectSlugs) {
     const projectRoute = path.join(options.distDir, 'projects', slug, 'index.html');
     if (!await isFile(projectRoute)) fail(`Missing generated project case study: /projects/${slug}/`);
-    if (!projectsPage.includes(prefixed(`/projects/${slug}/`))) fail(`Projects overview does not link to case study: /projects/${slug}/`);
+    if (projectsPage.includes(prefixed(`/projects/${slug}/`))) fail(`Projects overview still links to a case study: /projects/${slug}/`);
   }
 
   const renderedTextFiles = await existingTextFiles(options.distDir, new Set(['.html', '.css', '.js', '.json', '.xml', '.txt', '.webmanifest']));

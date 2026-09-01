@@ -1,11 +1,12 @@
 ---
 import { withBase } from '../lib/urls';
 import BaseLayout from '../layouts/BaseLayout.astro';
+import ProfileOverviewCard from '../components/profile/ProfileOverviewCard.astro';
 import SectionHeader from '../components/ui/SectionHeader.astro';
 import { siteConfig } from '../config/site';
 import { SOCIAL_ICONS } from '../constants';
 
-const { author, about, socials } = siteConfig;
+const { about, socials } = siteConfig;
 
 const socialCards = socials.map((s) => ({
   ...s,
@@ -32,26 +33,7 @@ const statusLines = about.currentStatus.split('\n');
 
 <BaseLayout title="关于" description="了解博主和常用技术栈。">
   <div class="about-page site-frame min-w-0 space-y-6 py-5 sm:py-8">
-    <section class="reveal relative overflow-hidden rounded-[2rem] border-2 dark-soft-border-strong bg-base-100/80 p-6 shadow-hard sm:p-8">
-      <div class="pointer-events-none absolute -right-10 top-0 h-40 w-40 rounded-full bg-primary/20 blur-3xl"></div>
-      <div class="pointer-events-none absolute bottom-0 left-10 h-32 w-32 rounded-full bg-secondary/40 blur-3xl"></div>
-
-      <div class="relative grid gap-8 lg:grid-cols-[auto_1fr] lg:items-center">
-        <div class="relative mx-auto lg:mx-0">
-          <div class="absolute -inset-2 rotate-3 rounded-[1.75rem] bg-gradient-to-br from-primary via-secondary to-accent opacity-80"></div>
-          <img class="relative h-28 w-28 rounded-[1.5rem] border-2 dark-soft-border-strong object-cover shadow-xl sm:h-36 sm:w-36" src={withBase(author.avatar)} alt={author.name} width="144" height="144" loading="eager" />
-        </div>
-        <div class="text-center lg:text-left">
-          <p class="eyebrow justify-center lg:justify-start">About</p>
-          <h1 class="display-title mt-3 text-4xl sm:text-5xl md:text-6xl">{about.greeting}</h1>
-          <p class="mt-3 text-lg font-black text-primary">{about.subtitle}</p>
-          <p class="mt-4 max-w-2xl text-base leading-8 text-base-content/70">{author.intro}</p>
-          <div class="mt-5 flex flex-wrap justify-center gap-2 lg:justify-start">
-            {about.interests.map((x) => <span class="chip-lime">{x}</span>)}
-          </div>
-        </div>
-      </div>
-    </section>
+    <ProfileOverviewCard />
 
     <div class="grid gap-6 lg:grid-cols-2">
       <section class="reveal hard-card rounded-[1.75rem] p-6 sm:p-8">

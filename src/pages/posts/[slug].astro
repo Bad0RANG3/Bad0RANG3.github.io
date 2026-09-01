@@ -90,7 +90,7 @@ const seriesNext = seriesIndex >= 0 ? seriesPosts[seriesIndex + 1] : undefined;
     <div class:list={['article-layout', headings.length > 0 && 'has-toc']}>
       {headings.length > 0 && (
         <aside class="article-toc not-prose" aria-label="文章目录">
-          <p class="eyebrow mb-3">On this page</p>
+          <p class="eyebrow mb-3">目录</p>
           <nav><ol class="space-y-2">{headings.map((heading) => <li class:list={[heading.depth === 3 && 'pl-3']}><a href={`#${heading.slug}`} data-toc-link={heading.slug}>{heading.text}</a></li>)}</ol></nav>
         </aside>
       )}
@@ -103,7 +103,7 @@ const seriesNext = seriesIndex >= 0 ? seriesPosts[seriesIndex + 1] : undefined;
       <section class="mt-12 rounded-[1.5rem] border-2 border-base-content/10 bg-secondary/25 p-5 sm:p-6" aria-labelledby="series-navigation-title">
         <div class="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <p class="eyebrow">Reading path</p>
+            <p class="eyebrow">系列进度</p>
             <h2 id="series-navigation-title" class="mt-2 text-xl font-black">{post.data.series}</h2>
           </div>
           <span class="chip-signal">第 {seriesIndex + 1} / {seriesPosts.length} 篇</span>

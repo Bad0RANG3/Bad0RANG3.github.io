@@ -1,6 +1,6 @@
 ---
 title: 'Minecraft 26.2 vs 1.21：从数据包到组件，我的世界经历了什么'
-description: '深度对比 Minecraft 26.2 与 1.21 的命令系统差异：组件系统、execute 进化、/item 与 /data 变迁、Display Entity、Macro 函数、新武器、附魔解禁。'
+description: '对比 Minecraft 26.2 与 1.21 的命令系统差异：组件系统、execute 进化、/item 与 /data 变迁、Display Entity、Macro 函数、新武器、附魔解禁。'
 date: 2026-07-27
 tags:
   - Minecraft
@@ -20,11 +20,11 @@ audience: Minecraft 数据包与命令作者
 
 Minecraft 从 1.21 到 26.2，横跨了二十多个大版本。如果你是从 1.21 直接跳到 26.2 的回归玩家，打开游戏的第一反应大概率是——**这命令怎么写不了了？**
 
-确实，命令系统的底层经历了颠覆性的重构。这篇文章带你梳理 1.21 → 26.2 最核心的变化。
+确实，命令系统的变化很大，底层基本重写了。这篇整理 1.21 → 26.2 最核心的变化。
 
 ---
 
-## 1. 物品 NBT → 组件系统（最大的变化）
+## 1. 物品 NBT → 组件系统
 
 ### 1.21 时代：NBT 标签
 
@@ -278,9 +278,9 @@ execute if dimension minecraft:the_nether unless predicate safe_zone run damage 
 
 ---
 
-## 7. Display Entity：地图制作的可视化革命
+## 7. Display Entity 的变化
 
-Display Entity（`item_display`、`block_display`、`text_display`）在 1.19.4 首次引入，1.21 趋于成熟，26.2 成为地图作者的瑞士军刀。
+Display Entity（`item_display`、`block_display`、`text_display`）在 1.19.4 首次引入，1.21 趋于成熟，26.2 里已经很好用了。
 
 ### 三种 Display Entity 的 26.2 新能力
 
@@ -323,7 +323,7 @@ summon minecraft:item_display ~ ~ ~ {
 
 ---
 
-## 8. Macro：函数动态生成的终局
+## 8. Macro：函数模板增强
 
 Minecraft 1.20.2 引入了函数宏（Function Macro），让数据包函数不再是「写死的指令列表」，而是可以**接受参数、动态展开**的模板。
 
