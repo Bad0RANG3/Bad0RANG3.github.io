@@ -36,20 +36,12 @@ const profileMetrics = [
 
       <section class="reveal relative overflow-hidden rounded-[2rem] border-2 dark-soft-border-strong bg-base-100/80 p-6 shadow-hard sm:p-8 lg:p-9" aria-labelledby="home-title">
         <div class="flex h-full flex-col">
-          <div class="flex flex-wrap items-center gap-2">
-            <span class="paper-sticker">歌词</span>
-            <span class="chip-teal">Main Heroine</span>
-          </div>
-
-          <div class="flex flex-1 flex-col justify-center py-8 sm:py-10">
+          <div class="flex flex-1 flex-col justify-center py-4 sm:py-6">
             <p class="eyebrow">欢迎</p>
             <h1 id="home-title" class="display-title mt-3 max-w-3xl text-4xl leading-[1.14] sm:text-5xl lg:text-6xl">
               {hero.lyric}
             </h1>
-            <div class="mt-5 inline-flex w-fit items-center gap-2 rounded-full border-2 border-base-content/10 bg-base-200/70 px-3 py-1.5 text-xs font-bold text-base-content/70">
-              <span class="marquee-dot h-2 w-2 rounded-full"></span>
-              {hero.lyricSource}
-            </div>
+            <p class="mt-5 text-xs font-bold text-base-content/60">{hero.lyricSource}</p>
           </div>
 
           <div class="grid gap-3 border-t-2 border-dashed border-base-content/10 pt-5 sm:grid-cols-[1.1fr_0.9fr]">
@@ -71,8 +63,8 @@ const profileMetrics = [
     <SectionHeader label="Projects" title="项目" titleId="projects-title" />
     <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
       {projects.map((project, index) => (
-        <div class="reveal min-w-0" style={`--reveal-delay:${STAGGER.CARD_START + index * STAGGER.CARD_STEP}ms`}>
-          <ProjectCard project={project} featured />
+        <div class="min-w-0" style={`--reveal-delay:${STAGGER.CARD_START + index * STAGGER.CARD_STEP}ms`}>
+          <ProjectCard project={project} />
         </div>
       ))}
     </div>
@@ -83,7 +75,7 @@ const profileMetrics = [
     <div class="grid gap-6 md:grid-cols-2">
       {recentPosts.map((post, index) => (
         <div class="min-w-0" style={`--reveal-delay:${STAGGER.LIST_START + index * STAGGER.LIST_STEP}ms`}>
-          <PostCard post={post} compact />
+          <PostCard post={post} />
         </div>
       ))}
     </div>

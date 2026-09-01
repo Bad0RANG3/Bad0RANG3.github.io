@@ -1,70 +1,43 @@
 ---
-import { withBase } from '../../lib/urls';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHeader from '../../components/ui/PageHeader.astro';
-import Icon from '../../components/icons/Icons.astro';
+import ContentCard from '../../components/ui/ContentCard.astro';
 
 const tools = [
   {
     name: 'PJSK 表情包生成器',
-    href: withBase('/tools/pjsk-stamp/'),
-    icon: '🎤',
-    desc: 'Project Sekai / 世界计划表情包生成器。739 张无文字角色底图素材，游戏同款字体、弧形文字、渐变与双层描边，一键导出透明背景 PNG / WEBP。',
-    tags: ['PJSK', '表情包', '贴纸'],
+    href: '/tools/pjsk-stamp/',
+    icon: '🎨',
+    description: '使用角色底图和游戏同款字体生成表情包，可导出透明背景 PNG 或 WEBP。',
   },
   {
     name: 'SwitchYourCFG',
-    href: withBase('/tools/switch-your-cfg/'),
-    icon: '⚙️',
-    desc: 'CS2 配置 → CS2 CFG 转换器。拖放 CS2 配置文件夹，可视化键盘选键，一键买枪绑定，导出 CS2 格式文件。',
-    tags: ['CS2', 'CFG', '配置'],
+    href: '/tools/switch-your-cfg/',
+    icon: '⌨️',
+    description: '可视化编辑和导出 CS2 配置文件。',
   },
   {
     name: 'NCM 解密',
-    href: withBase('/tools/ncm/'),
+    href: '/tools/ncm/',
     icon: '♫',
-    desc: '纯浏览器端将 NCM 文件转换为 MP3 / FLAC，支持批量处理与歌曲信息保留。',
-    tags: ['NCM', 'MP3', 'FLAC'],
+    description: '在浏览器中将 NCM 文件转换为 MP3 或 FLAC。',
   },
 ];
 ---
 
-<BaseLayout title="工具" description="实用在线小工具合集。">
-  <div class="site-frame py-6 sm:py-10">
-    <PageHeader
-      label="工具"
-      title="在线小工具"
-    />
-
+<BaseLayout title="工具" description="实用的在线小工具。">
+  <div class="site-frame py-5 sm:py-8">
+    <PageHeader label="Tools" title="在线工具" description="实用的在线小工具。" />
     <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
       {tools.map((tool) => (
-        <a
+        <ContentCard
           href={tool.href}
-          class="group reveal hard-card overflow-hidden rounded-[1.75rem] transition-all"
-        >
-          <div class="p-6 sm:p-7">
-            <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl border-2 border-primary/30 bg-primary/10 text-2xl transition-transform duration-300 group-hover:scale-110">
-              {tool.icon}
-            </div>
-            <h3 class="mb-2 text-lg font-black tracking-tight text-base-content transition-colors duration-200 group-hover:text-primary">
-              {tool.name}
-            </h3>
-            <p class="mb-4 text-sm leading-relaxed text-base-content/60">
-              {tool.desc}
-            </p>
-            <div class="flex flex-wrap gap-1.5">
-              {tool.tags.map((tag) => (
-                <span class="chip-lime">{tag}</span>
-              ))}
-            </div>
-          </div>
-          <div class="flex items-center justify-between border-t-2 border-base-content/10 bg-base-200/40 px-6 py-3 text-xs font-bold uppercase tracking-[0.16em] text-base-content/45">
-            <span>打开工具</span>
-            <Icon name="chevron-right" class="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-1" />
-          </div>
-        </a>
+          title={tool.name}
+          description={tool.description}
+          icon={tool.icon}
+          tone="citrus"
+        />
       ))}
     </div>
-
   </div>
 </BaseLayout>

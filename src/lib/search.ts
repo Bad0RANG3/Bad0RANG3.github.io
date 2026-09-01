@@ -58,14 +58,13 @@ export async function getSearchDocuments(): Promise<SearchDocument[]> {
     url: withBase('/thoughts/'),
   }));
   const projectDocuments: SearchDocument[] = projects.map((project) => ({
-    slug: project.code,
+    slug: project.name,
     title: project.name,
-    description: `${project.summary} ${project.description}`,
-    body: `${project.summary} ${project.description}`,
-    tags: project.tags,
-    category: project.type,
+    description: project.summary,
+    body: project.summary,
+    tags: [],
     date: '2099-12-31',
-    featured: Boolean(project.featured),
+    featured: false,
     type: 'project',
     url: withBase(project.href),
   }));

@@ -1,49 +1,33 @@
 ---
-import { withBase } from '../../lib/urls';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHeader from '../../components/ui/PageHeader.astro';
 import EmptyState from '../../components/ui/EmptyState.astro';
+import ContentCard from '../../components/ui/ContentCard.astro';
 import { getPostReadingMinutes, getSeriesGroups, type Post } from '../../lib/content';
 
 const groups = await getSeriesGroups();
 const totalMinutes = (posts: Post[]) => posts.reduce((sum, post) => sum + getPostReadingMinutes(post), 0);
-const difficultyLabel = (posts: Post[]) => {
-  const levels = [...new Set(posts.map((post) => post.data.difficulty).filter(Boolean))];
-  return levels.length > 0 ? levels.join(' / ') : '自由阅读';
-};
 ---
-<BaseLayout title="系列" description="按系列阅读连续文章。">
+
+<BaseLayout title="系列" description="按顺序阅读同一主题的文章。">
   <div class="site-frame py-5 sm:py-8">
-    <PageHeader label="系列" title="文章系列" description="从一个主题的第一篇开始，按顺序读完整个系列。" />
-    {groups.length === 0 ? <EmptyState message="还没有系列文章" /> : (
+    <PageHeader label="Series" title="文章系列" description="按顺序阅读同一主题的文章。" />
+    {groups.length === 0 ? <EmptyState message="还没有系列文章。" /> : (
       <div class="grid gap-5 md:grid-cols-2">
         {groups.map((group, index) => {
           const minutes = totalMinutes(group.posts);
           const firstPost = group.posts[0];
           return (
-            <a href={withBase(`/series/${encodeURIComponent(group.name)}/`)} class="reveal hard-card hard-card-teal rounded-[1.5rem] p-6 transition hover:-translate-y-1" style={`--reveal-delay:${index * 60}ms`}>
-              <div class="flex items-start justify-between gap-4">
-                <h2 class="text-2xl font-black">{group.name}</h2>
-                <span class="paper-sticker">{group.posts.length} 篇</span>
-              </div>
-              <p class="mt-3 text-sm leading-6 text-base-content/60">从「{firstPost.data.title}」开始，预计 {minutes} 分钟读完。</p>
-              <div class="mt-4 flex flex-wrap gap-1.5 text-xs font-bold">
-                <span class="badge badge-sm border border-base-content/10 bg-base-100/70">约 {minutes} 分钟</span>
-                <span class="badge badge-sm border border-primary/20 bg-primary/10">{difficultyLabel(group.posts)}</span>
-              </div>
-              <ol class="mt-5 space-y-2 text-sm text-base-content/65">
-                {group.posts.slice(0, 4).map((post, i) => (
-                  <li class="flex gap-3">
-                    <span class="font-mono font-black text-primary">{String(post.data.seriesOrder ?? i + 1).padStart(2, '0')}</span>
-                    <span class="line-clamp-1">{post.data.title}</span>
-                  </li>
-                ))}
-              </ol>
-              <div class="mt-5 flex items-center justify-between text-xs font-black uppercase tracking-[0.14em] text-primary">
-                <span>{group.posts.length > 4 ? `还有 ${group.posts.length - 4} 篇` : '按顺序阅读'}</span>
-                <span>开始阅读 →</span>
-              </div>
-            </a>
+            <div style={`--reveal-delay:${index * 60}ms`}>
+              <ContentCard
+                href={`/series/${encodeURIComponent(group.name)}/`}
+                title={group.name}
+                description={`从《${firstPost.data.title}》开始，按顺序读完这个主题。`}
+                meta={`${group.posts.length} 篇 · 约 ${minutes} 分钟阅读`}
+                tone="teal"
+                headingTag="h2"
+              />
+            </div>
           );
         })}
       </div>
