@@ -163,15 +163,12 @@ try {
   if (!/self\.registration\.scope/.test(serviceWorker) || /const OFFLINE_URL = ['"]\//.test(serviceWorker)) fail('Service worker is not base-path aware.');
 
   const projectsPage = await readFile(path.join(options.distDir, 'projects', 'index.html'), 'utf8');
-  if (!/data-project-filters/.test(projectsPage) || !/data-project-filter="type"/.test(projectsPage) || !/data-project-filter="status"/.test(projectsPage) || !/data-project-filter="tag"/.test(projectsPage)) fail('Projects overview is missing the progressive-enhancement filters.');
+  if (/data-project-(?:filters|filter|card)/.test(projectsPage)) fail('Projects overview still contains retired filters or card metadata.');
+  if (/\/projects\/[^"']+\//.test(projectsPage)) fail('Projects overview still links to a retired case-study route.');
+  const projectEntries = await readdir(path.join(options.distDir, 'projects'), { withFileTypes: true });
+  if (projectEntries.some((entry) => entry.isDirectory())) fail('Retired project case-study routes were generated.');
   const projectConfig = await readFile(path.join(sourceDir, 'config', 'projects.ts'), 'utf8');
-  const projectSlugs = [...projectConfig.matchAll(/slug:\s*'([^']+)'/g)].map((match) => match[1]);
-  if (!projectSlugs.length) fail('Project configuration has no case-study slugs.');
-  for (const slug of projectSlugs) {
-    const projectRoute = path.join(options.distDir, 'projects', slug, 'index.html');
-    if (!await isFile(projectRoute)) fail(`Missing generated project case study: /projects/${slug}/`);
-    if (projectsPage.includes(prefixed(`/projects/${slug}/`))) fail(`Projects overview still links to a case study: /projects/${slug}/`);
-  }
+  if (/\b(?:code|slug|status|tags|featured|highlights|primaryActionLabel|description):/.test(projectConfig)) fail('Project configuration still contains retired card or case-study fields.');
 
   const renderedTextFiles = await existingTextFiles(options.distDir, new Set(['.html', '.css', '.js', '.json', '.xml', '.txt', '.webmanifest']));
   let distBytes = 0;

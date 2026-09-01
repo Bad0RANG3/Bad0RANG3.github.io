@@ -1,0 +1,37 @@
+---
+type ResourceTone = 'secondary' | 'accent';
+
+interface Resource {
+  name: string;
+  url: string;
+  iconSrc: string | null;
+}
+
+interface Props {
+  items: readonly Resource[];
+  tone: ResourceTone;
+}
+
+const { items, tone } = Astro.props;
+---
+
+<div class="relative z-[1] grid gap-3 sm:grid-cols-2">
+  {items.map((item, index) => (
+    <a
+      href={item.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      style={`--reveal-delay:${index * 40}ms`}
+      class:list={[
+        'reveal group flex items-center gap-3 rounded-xl border-2 dark-soft-border bg-base-100/70 p-3 transition-all',
+        tone === 'secondary' && 'hover:border-secondary/50 hover:bg-secondary/20',
+        tone === 'accent' && 'hover:border-accent/40 hover:bg-accent/10',
+      ]}
+    >
+      <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-base-200">
+        {item.iconSrc ? <img src={item.iconSrc} alt="" class="h-5 w-5" loading="lazy" /> : <span class="text-xs font-black">{item.name.slice(0, 2)}</span>}
+      </span>
+      <span class="text-sm font-bold">{item.name}</span>
+    </a>
+  ))}
+</div>

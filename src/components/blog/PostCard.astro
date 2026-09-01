@@ -1,111 +1,24 @@
 ---
-import { withBase } from '../../lib/urls';
 import type { Post } from '../../lib/content';
 import { getPostReadingMinutes } from '../../lib/content';
 import { formatDate } from '../../lib/date';
-import Icon from '../icons/Icons.astro';
+import ContentCard from '../ui/ContentCard.astro';
 
 interface Props {
   post: Post;
-  featured?: boolean;
-  compact?: boolean;
 }
 
-const { post, featured = false, compact = false } = Astro.props;
+const { post } = Astro.props;
 const readingMinutes = getPostReadingMinutes(post);
+const latestDate = post.data.updatedDate ?? post.data.date;
+const meta = `${formatDate(latestDate)} · ${readingMinutes} 分钟阅读`;
 ---
 
-<a href={withBase(`/posts/${post.slug}/`)} class="group block h-full reveal">
-  <article
-    class:list={[
-      'hard-card flex h-full flex-col overflow-hidden rounded-[1.5rem] bg-base-100/90',
-      featured && 'min-h-full',
-      compact && 'hard-card-teal',
-    ]}
-  >
-    {post.data.cover ? (
-      <div class:list={['relative overflow-hidden border-b-2 border-base-content/10', featured ? 'h-56 sm:h-72' : 'h-40']}>
-        <img
-          src={withBase(post.data.cover)}
-          alt=""
-          class="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-          loading="lazy"
-        />
-        <div class="absolute inset-0 bg-gradient-to-t from-base-100 via-base-100/10 to-transparent"></div>
-        {featured && (
-          <div class="absolute left-4 top-4">
-            <span class="paper-sticker">精选</span>
-          </div>
-        )}
-      </div>
-    ) : (
-      <div
-        class:list={[
-          'relative overflow-hidden border-b-2 border-base-content/10',
-          featured ? 'h-40 sm:h-52' : compact ? 'h-2' : 'h-3',
-          !compact && 'bg-gradient-to-r from-primary via-secondary to-accent',
-          compact && 'bg-gradient-to-r from-accent via-primary to-secondary',
-        ]}
-      >
-        {featured && !post.data.cover && (
-          <div class="absolute inset-0 flex items-end p-5">
-            <span class="paper-sticker">主打文章</span>
-          </div>
-        )}
-      </div>
-    )}
-
-    <div class:list={['flex flex-1 flex-col gap-3', featured ? 'p-6 sm:p-8' : 'p-5 sm:p-6']}>
-      <div class="flex flex-wrap items-center gap-2">
-        {post.data.featured && (
-          <span class="chip-signal gap-1">
-            <Icon name="star" class="h-3 w-3" />
-            精选
-          </span>
-        )}
-        {post.data.category && <span class="chip-lime">{post.data.category}</span>}
-        {post.data.series && <span class="badge badge-sm border border-secondary/30 bg-secondary/10 font-bold">系列</span>}
-      </div>
-
-      <h3
-        class:list={[
-          'font-black leading-[1.05] tracking-tight text-base-content transition-colors group-hover:text-primary',
-          featured ? 'text-2xl sm:text-4xl' : 'text-xl',
-        ]}
-      >
-        {post.data.title}
-      </h3>
-
-      <p class:list={['leading-relaxed text-base-content/60', featured ? 'line-clamp-4 text-base' : 'line-clamp-3 text-sm']}>
-        {post.data.description}
-      </p>
-
-      <div class="mt-auto flex flex-col gap-3 pt-2">
-        <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-bold uppercase tracking-[0.14em] text-base-content/40">
-          <time datetime={post.data.date.toISOString()}>{formatDate(post.data.date)}</time>
-          {post.data.updatedDate && post.data.updatedDate.valueOf() !== post.data.date.valueOf() && (
-            <time datetime={post.data.updatedDate.toISOString()}>更新 {formatDate(post.data.updatedDate)}</time>
-          )}
-        </div>
-
-        <div class="flex flex-wrap items-center gap-1.5 text-xs font-bold text-base-content/55">
-          <span class="badge badge-sm gap-1 border border-base-content/10 bg-base-200/70">
-            <Icon name="clock" class="h-3 w-3" />
-            约 {readingMinutes} 分钟
-          </span>
-          {post.data.difficulty && <span class="badge badge-sm border border-primary/20 bg-primary/10">{post.data.difficulty}</span>}
-          {post.data.hasCode && <span class="badge badge-sm border border-secondary/25 bg-secondary/10">源码</span>}
-          {post.data.hasDownload && <span class="badge badge-sm border border-accent/25 bg-accent/10">下载</span>}
-        </div>
-
-        {post.data.tags.length > 0 && (
-          <div class="flex flex-wrap gap-1.5">
-            {post.data.tags.slice(0, featured ? 6 : 4).map((t) => (
-              <span class="badge badge-ghost badge-sm border border-base-content/10 bg-base-200/70">#{t}</span>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  </article>
-</a>
+<ContentCard
+  href={`/posts/${post.slug}/`}
+  title={post.data.title}
+  description={post.data.description}
+  label={post.data.category}
+  meta={meta}
+  tone="teal"
+/>

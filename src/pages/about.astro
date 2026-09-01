@@ -2,6 +2,7 @@
 import { withBase } from '../lib/urls';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ProfileOverviewCard from '../components/profile/ProfileOverviewCard.astro';
+import ResourceGrid from '../components/profile/ResourceGrid.astro';
 import SectionHeader from '../components/ui/SectionHeader.astro';
 import { siteConfig } from '../config/site';
 import { SOCIAL_ICONS } from '../constants';
@@ -29,6 +30,13 @@ const getIconUrl = (n: string) => {
 };
 
 const statusLines = about.currentStatus.split('\n');
+const resourceGroups = [
+  { label: 'Stack', title: '技术栈', tone: 'secondary' as const, items: about.techStack },
+  { label: 'Toolkit', title: '开发工具', tone: 'accent' as const, items: about.devTools },
+].map((group) => ({
+  ...group,
+  items: group.items.map((item) => ({ ...item, iconSrc: getIconUrl(item.name) })),
+}));
 ---
 
 <BaseLayout title="关于" description="了解博主和常用技术栈。">
@@ -62,43 +70,12 @@ const statusLines = about.currentStatus.split('\n');
     </div>
 
     <div class="grid gap-6 lg:grid-cols-2">
-      <section class="reveal panel-slice rounded-[1.75rem] p-6 sm:p-8">
-        <SectionHeader label="Stack" title="技术栈" />
-        <div class="relative z-[1] grid gap-3 sm:grid-cols-2">
-          {about.techStack.map((t, i) => {
-            const u = getIconUrl(t.name);
-            return (
-              <div style={`--reveal-delay:${i * 40}ms`}>
-                <a href={t.url} target="_blank" rel="noopener noreferrer" class="reveal group flex items-center gap-3 rounded-xl border-2 dark-soft-border bg-base-100/70 p-3 transition-all hover:border-secondary/50 hover:bg-secondary/20">
-                  <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-base-200">
-                    {u ? <img src={u} alt="" class="h-5 w-5" loading="lazy" /> : <span class="text-xs font-black">{t.name.slice(0,2)}</span>}
-                  </span>
-                  <span class="text-sm font-bold">{t.name}</span>
-                </a>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      <section class="reveal panel-slice rounded-[1.75rem] p-6 sm:p-8">
-        <SectionHeader label="Toolkit" title="开发工具" />
-        <div class="relative z-[1] grid gap-3 sm:grid-cols-2">
-          {about.devTools.map((t, i) => {
-            const u = getIconUrl(t.name);
-            return (
-              <div style={`--reveal-delay:${i * 40}ms`}>
-                <a href={t.url} target="_blank" rel="noopener noreferrer" class="reveal group flex items-center gap-3 rounded-xl border-2 dark-soft-border bg-base-100/70 p-3 transition-all hover:border-accent/40 hover:bg-accent/10">
-                  <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-base-200">
-                    {u ? <img src={u} alt="" class="h-5 w-5" loading="lazy" /> : <span class="text-xs font-black">{t.name.slice(0,2)}</span>}
-                  </span>
-                  <span class="text-sm font-bold">{t.name}</span>
-                </a>
-              </div>
-            );
-          })}
-        </div>
-      </section>
+      {resourceGroups.map((group) => (
+        <section class="reveal panel-slice rounded-[1.75rem] p-6 sm:p-8">
+          <SectionHeader label={group.label} title={group.title} />
+          <ResourceGrid items={group.items} tone={group.tone} />
+        </section>
+      ))}
     </div>
 
     <section class="reveal">

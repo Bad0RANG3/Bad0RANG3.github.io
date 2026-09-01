@@ -52,6 +52,11 @@ const socialImageUrl = siteUrl(ogImage);
 const authorImageUrl = siteUrl(siteConfig.author.avatar);
 const pageExitDuration = ANIMATION.PAGE_EXIT_DURATION;
 const backToTopThreshold = LAYOUT.BACK_TO_TOP_THRESHOLD;
+const japaneseFontFaces = [
+  ['yuruka-kana.woff2', 'U+3000-303F,U+3040-309F,U+30A0-30FF,U+31F0-31FF,U+FF00-FFEF'],
+  ['yuruka-cjk1.woff2', 'U+4E00-77FF'],
+  ['yuruka-cjk2.woff2', 'U+7800-9FFF'],
+].map(([file, range]) => `@font-face{font-family:"Yuruka Article";src:url("${withBase(`/fonts/${file}`)}") format("woff2");font-weight:400 700;font-style:normal;font-display:swap;unicode-range:${range};}`).join('');
 const pageBreadcrumbs = breadcrumbs ?? [
   { name: '首页', path: '/' },
   ...(currentPath === withBase('/') ? [] : [{ name: title, path: currentPath }]),
@@ -127,6 +132,7 @@ const jsonLd = {
   <meta name="author" content={siteConfig.author.name}>
   <meta name="theme-color" id="meta-theme-color" content={SITE.THEME_COLOR}>
   <meta name="color-scheme" content="light dark">
+  <style is:inline set:html={japaneseFontFaces}></style>
   <script is:inline define:vars={{ themeStorageKey: SITE.THEME_STORAGE_KEY, themeLight: SITE.THEME, themeDark: 'paper-dark', themeColorLight: SITE.THEME_COLOR, themeColorDark: SITE.THEME_COLOR_DARK }}>
     // @ts-nocheck
     (function () {

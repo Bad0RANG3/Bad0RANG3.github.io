@@ -131,10 +131,10 @@ coverAlt: '蓝色氰版照片风格的文章封面'
 《雪割草》我也很喜欢。
 
 <div class="lyric-block">
-<p><i class="lyric-en lyric-ja">雪は積もる，</i><br><span class="lyric-cn">白雪仍在堆积，</span></p>
-<p><i class="lyric-en lyric-ja">透明な結晶が，</i><br><span class="lyric-cn">透明的冰晶，</span></p>
-<p><i class="lyric-en lyric-ja">僕をふさいでも，</i><br><span class="lyric-cn">即使将我层层覆盖，</span></p>
-<p><i class="lyric-en lyric-ja">花は咲くから、いつか，</i><br><span class="lyric-cn">花朵终将绽放，终有一日。</span></p>
+<p><span class="lyric-ja" lang="ja">雪は積もる，</span><br><span class="lyric-cn">白雪仍在堆积，</span></p>
+<p><span class="lyric-ja" lang="ja">透明な結晶が，</span><br><span class="lyric-cn">透明的冰晶，</span></p>
+<p><span class="lyric-ja" lang="ja">僕をふさいでも，</span><br><span class="lyric-cn">即使将我层层覆盖，</span></p>
+<p><span class="lyric-ja" lang="ja">花は咲くから、いつか，</span><br><span class="lyric-cn">花朵终将绽放，终有一日。</span></p>
 </div>
 
 我一直相信成绩不能定义一个人，也相信自己只是开花慢，不是不会开花。风雪压着也没关系，我还在等自己的花期。就算只是一株没人注意的草，就算是别人的背景板，又怎样呢。
