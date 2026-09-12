@@ -48,14 +48,16 @@ function objectSnippet(project) {
   ].join('\n');
 }
 
-const { options } = parseOptions(process.argv.slice(2));
-if (options.help) {
-  usage();
-  process.exit(0);
-}
-
 let prompt;
 try {
+  // Parsed inside the try so that a mistyped flag is reported through the same
+  // error path as a failed write, instead of as an uncaught stack trace.
+  const { options } = parseOptions(process.argv.slice(2));
+  if (options.help) {
+    usage();
+    process.exit(0);
+  }
+
   const getValue = async (key, label) => {
     if (options[key] !== undefined) return options[key];
     if (!prompt) prompt = await createPrompter();

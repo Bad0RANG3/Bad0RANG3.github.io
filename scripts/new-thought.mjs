@@ -32,13 +32,15 @@ async function promptForSlug() {
   }
 }
 
-const { options, positional } = parseOptions(process.argv.slice(2), { allowPositional: true });
-if (options.help) {
-  usage();
-  process.exit(0);
-}
-
 try {
+  // Parsed inside the try so that a mistyped flag is reported through the same
+  // error path as a failed write, instead of as an uncaught stack trace.
+  const { options, positional } = parseOptions(process.argv.slice(2), { allowPositional: true });
+  if (options.help) {
+    usage();
+    process.exit(0);
+  }
+
   const slug = normalizeSlug(positional[0] ?? options.slug ?? await promptForSlug());
   const date = String(options.date ?? localDate()).trim();
   if (!isValidDate(date)) throw new Error('Date must use YYYY-MM-DD and be a real calendar date.');
