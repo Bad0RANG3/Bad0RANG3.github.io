@@ -11,7 +11,8 @@
                     "new:thought":  "node scripts/new-thought.mjs",
                     "new:project":  "node scripts/new-project.mjs",
                     "validate:content":  "node scripts/validate-content.mjs",
-                    "smoke":  "node scripts/smoke.mjs"
+                    "smoke":  "node scripts/smoke.mjs",
+                    "dist:fingerprint":  "node scripts/dist-fingerprint.mjs"
                 },
     "dependencies":  {
                          "astro":  "^5.0.0",
