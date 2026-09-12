@@ -95,19 +95,7 @@ function collectMarkdownTargets(source) {
   return targets;
 }
 
-const parsed = parseFlags(process.argv.slice(2), { booleans: ['warn-as-error'], values: ['max-image-size'] });
-if (parsed.help) {
-  usage();
-  process.exit(0);
-}
-
-const options = {
-  maxImageSize: parsed.maxImageSize === undefined ? defaultMaxImageSize : Number(parsed.maxImageSize),
-  warnAsError: parsed.warnAsError === true,
-};
-if (!Number.isSafeInteger(options.maxImageSize) || options.maxImageSize < 1) {
-  throw new Error('--max-image-size must be a positive integer measured in bytes.');
-}
+let options;
 
 const errors = [];
 const warnings = [];
@@ -117,6 +105,21 @@ function addError(file, message) { errors.push(`${path.relative(rootDir, file)}:
 function addWarning(file, message) { warnings.push(`${path.relative(rootDir, file)}: ${message}`); }
 
 try {
+  // Parsed inside the try so that a mistyped flag is reported through the same
+  // error path as a failed validation, instead of as an uncaught stack trace.
+  const parsed = parseFlags(process.argv.slice(2), { booleans: ['warn-as-error'], values: ['max-image-size'] });
+  if (parsed.help) {
+    usage();
+    process.exit(0);
+  }
+  options = {
+    maxImageSize: parsed.maxImageSize === undefined ? defaultMaxImageSize : Number(parsed.maxImageSize),
+    warnAsError: parsed.warnAsError === true,
+  };
+  if (!Number.isSafeInteger(options.maxImageSize) || options.maxImageSize < 1) {
+    throw new Error('--max-image-size must be a positive integer measured in bytes.');
+  }
+
   const records = [];
   for (const collection of ['posts', 'thoughts']) {
     const directory = path.join(contentDir, collection);

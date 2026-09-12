@@ -156,7 +156,10 @@ pnpm validate:content && pnpm check && pnpm build && pnpm smoke
 
 ---
 
-## 7. 当前已知待办
+## 7. 脚本约定
 
-- `src/lib/content.ts` 的 `getAllPosts` 与 `src/lib/taxonomy.ts` 的 `getAllCategories`、`getCategoryGroups` 目前**无任何调用方**，属于可清理的死导出。
-- `scripts/*.mjs` 的用法错误（未知参数、缺少取值）在 `parseArgs` 阶段抛出，位于 `try` 之外，因此会打印 Node 栈追踪而非干净的错误消息。
+- **参数解析必须放在 `try` 内**（配合模块作用域的 `let options;`）。放在 `try` 之外抛出时会打印 Node 栈追踪，而不是统一的 `<script> failed: <message>`。
+- 共享逻辑放 `scripts/lib/`：`paths.mjs`（rootDir / fromRoot）、`fs.mjs`（walk / isFile）、`args.mjs`（parseFlags / parseOptions）、`content.mjs`（日期与 slug 校验）。不要在各脚本里重复实现。
+- 路径一律用 `fromRoot(...)` 拼接，不要用 `process.cwd()`——脚本要能在任意工作目录下运行。
+- `parseFlags` 与 `parseOptions` 会把 `--max-image-size` 这类键转成 camelCase（`options.maxImageSize`）；未知参数会直接报错，避免 CI 里的拼写错误被静默放过。
+- 改动脚本后**指纹比对帮不上忙**（它只覆盖 `dist/`），请另行对比 stdout、错误消息与生成的文件内容。

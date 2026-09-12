@@ -60,18 +60,20 @@ async function createPrompter() {
   };
 }
 
-const { options, positional } = parseOptions(process.argv.slice(2), {
-  booleans: ['draft', 'featured'],
-  allowPositional: true,
-  allowNegation: true,
-});
-if (options.help) {
-  usage();
-  process.exit(0);
-}
-
 let prompt;
 try {
+  // Parsed inside the try so that a mistyped flag is reported through the same
+  // error path as a failed write, instead of as an uncaught stack trace.
+  const { options, positional } = parseOptions(process.argv.slice(2), {
+    booleans: ['draft', 'featured'],
+    allowPositional: true,
+    allowNegation: true,
+  });
+  if (options.help) {
+    usage();
+    process.exit(0);
+  }
+
   const getValue = async (key, label, fallback = '') => {
     if (options[key] !== undefined) return options[key];
     if (!prompt) prompt = await createPrompter();

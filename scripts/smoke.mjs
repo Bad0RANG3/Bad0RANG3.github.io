@@ -47,22 +47,25 @@ function extractJsonLd(source, fail, label) {
   });
 }
 
-const parsed = parseFlags(process.argv.slice(2), { values: ['dist', 'base'] });
-if (parsed.help) {
-  console.log('Usage: pnpm smoke [-- --dist=dist] [--base=/repository/]');
-  process.exit(0);
-}
-
-const options = {
-  distDir: parsed.dist ? path.resolve(rootDir, parsed.dist) : fromRoot('dist'),
-  base: normalizeBase(parsed.base ?? '/'),
-};
+let options;
 
 const failures = [];
 const fail = (message) => failures.push(message);
 const prefixed = (sitePath) => `${options.base === '/' ? '' : options.base.slice(0, -1)}${sitePath}`;
 
 try {
+  // Parsed inside the try so that a mistyped flag is reported through the same
+  // error path as a failed assertion, instead of as an uncaught stack trace.
+  const parsed = parseFlags(process.argv.slice(2), { values: ['dist', 'base'] });
+  if (parsed.help) {
+    console.log('Usage: pnpm smoke [-- --dist=dist] [--base=/repository/]');
+    process.exit(0);
+  }
+  options = {
+    distDir: parsed.dist ? path.resolve(rootDir, parsed.dist) : fromRoot('dist'),
+    base: normalizeBase(parsed.base ?? '/'),
+  };
+
   if (!await isFile(path.join(options.distDir, 'index.html'))) {
     throw new Error('dist/index.html is missing; run pnpm build first.');
   }

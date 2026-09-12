@@ -58,23 +58,26 @@ function readManifest(source, label) {
   return parsed;
 }
 
-const parsed = parseFlags(process.argv.slice(2), { booleans: ['quiet'], values: ['dist', 'write', 'compare'] });
-if (parsed.help) {
-  usage();
-  process.exit(0);
-}
-
-const options = {
-  distDir: parsed.dist ? path.resolve(rootDir, parsed.dist) : fromRoot('dist'),
-  write: parsed.write ? path.resolve(rootDir, parsed.write) : undefined,
-  compare: parsed.compare ? path.resolve(rootDir, parsed.compare) : undefined,
-  quiet: parsed.quiet === true,
-};
-if (!options.write && !options.compare) {
-  throw new Error('Pass --write=<file>, --compare=<file>, or both.');
-}
+let options;
 
 try {
+  // Parsed inside the try so that a mistyped flag is reported through the same
+  // error path as a failed check, instead of as an uncaught stack trace.
+  const parsed = parseFlags(process.argv.slice(2), { booleans: ['quiet'], values: ['dist', 'write', 'compare'] });
+  if (parsed.help) {
+    usage();
+    process.exit(0);
+  }
+  options = {
+    distDir: parsed.dist ? path.resolve(rootDir, parsed.dist) : fromRoot('dist'),
+    write: parsed.write ? path.resolve(rootDir, parsed.write) : undefined,
+    compare: parsed.compare ? path.resolve(rootDir, parsed.compare) : undefined,
+    quiet: parsed.quiet === true,
+  };
+  if (!options.write && !options.compare) {
+    throw new Error('Pass --write=<file>, --compare=<file>, or both.');
+  }
+
   if (!await isDirectory(options.distDir)) {
     throw new Error(`${path.relative(rootDir, options.distDir)} is missing; run pnpm build first.`);
   }
