@@ -1,5 +1,5 @@
 ---
-// Reusable SVG icon components — import { Icon } from '../icons/Icons.astro'
+// Reusable SVG icon components — import Icon from '../icons/Icon.astro'
 export type IconName = 'calendar' | 'clock' | 'search' | 'menu' | 'close' | 'chevron-right' | 'star' | 'book' | 'info' | 'location' | 'arrow-up' | 'logo' | 'external-link' | 'arrow-up-right' | 'sun' | 'moon';
 interface Props { name: IconName; class?: string; }
 const { name, class: className = 'h-5 w-5' } = Astro.props;
