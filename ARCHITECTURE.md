@@ -1,7 +1,6 @@
 # 架构说明
 
-> 本站（Bad0RANG3.github.io）的代码组织与验证方式速查。
-> 配合 [`DESIGN_STYLE.md`](./DESIGN_STYLE.md) 使用：那一份讲**视觉系统**，这一份讲**代码结构**。
+> 本站（Bad0RANG3.github.io）的代码组织与验证方式速查：目录该放什么、模块边界在哪、改完怎么验证。
 
 ---
 
@@ -37,7 +36,7 @@ Astro 5 静态站点（`output: 'static'`），Tailwind 3 + daisyUI 5，部署�
 │   └── dist-fingerprint.mjs    pnpm dist:fingerprint
 └── src/
     ├── components/            全部按域分目录，不往 components/ 根目录放文件
-    │   ├── blog/                PostCard、PostMeta、TagList、RelatedPosts、ArticleTools、ArticleEnhancements、Comments
+    │   ├── blog/                PostCard、PostMeta、TagList、ArticleTools、ArticleEnhancements、Comments
     │   ├── icons/               Icon.astro（唯一图标入口）
     │   ├── layout/              SiteHeader、SiteFooter、MobileDrawer
     │   ├── profile/             ProfileOverviewCard、ProjectCard、ResourceGrid
@@ -63,7 +62,7 @@ Astro 5 静态站点（`output: 'static'`），Tailwind 3 + daisyUI 5，部署�
     │   └── urls.ts               withBase / siteUrl
     ├── pages/                  路由（目录结构即 URL 结构）
     └── styles/
-        ├── global.css            设计 token + 全局组件类（见 DESIGN_STYLE.md）
+        ├── global.css            设计 token + 全局组件类（视觉系统的唯一来源）
         └── tools/*.css           各工具页私有样式
 ```
 
