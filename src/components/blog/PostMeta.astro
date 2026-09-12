@@ -1,6 +1,6 @@
 ---
 import { formatDate, formatLongDate } from '../../lib/date';
-import Icon from '../icons/Icons.astro';
+import Icon from '../icons/Icon.astro';
 interface Props { date: Date; updatedDate?: Date; centered?: boolean; long?: boolean; }
 const { date, updatedDate, centered = false, long = false } = Astro.props;
 const fmt = long ? formatLongDate : formatDate;
