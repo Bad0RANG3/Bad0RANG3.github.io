@@ -1,7 +1,7 @@
 import { byDateDesc, getPublishedPosts, type Post } from './content';
 
 /**
- * Tag, category, series, and archive groupings built from published posts.
+ * Tag, series, and archive groupings built from published posts.
  * Every helper here reads the same published set and only changes the shape or
  * the ordering, so index pages and per-value routes stay consistent.
  */
@@ -27,23 +27,6 @@ export async function getTagGroups(): Promise<{ name: string; posts: Post[] }[]>
   return [...groups.entries()]
     .map(([name, items]) => ({ name, posts: items.sort(byDateDesc) }))
     .sort((a, b) => b.posts.length - a.posts.length || a.name.localeCompare(b.name, 'zh-CN'));
-}
-
-export async function getAllCategories(): Promise<string[]> {
-  const posts = await getPublishedPosts();
-  return [...new Set(posts.map((post) => post.data.category).filter((category): category is string => Boolean(category)))].sort((a, b) => a.localeCompare(b, 'zh-CN'));
-}
-
-export async function getCategoryGroups(): Promise<{ name: string; posts: Post[] }[]> {
-  const posts = await getPublishedPosts();
-  const groups = new Map<string, Post[]>();
-  for (const post of posts) {
-    if (!post.data.category) continue;
-    groups.set(post.data.category, [...(groups.get(post.data.category) ?? []), post]);
-  }
-  return [...groups.entries()]
-    .map(([name, items]) => ({ name, posts: items.sort(byDateDesc) }))
-    .sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'));
 }
 
 export async function getSeriesGroups(): Promise<{ name: string; posts: Post[] }[]> {

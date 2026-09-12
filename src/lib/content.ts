@@ -9,11 +9,6 @@ export const byDateDesc = (a: Post, b: Post) => {
   return right.valueOf() - left.valueOf();
 };
 
-export async function getAllPosts(): Promise<Post[]> {
-  const posts = await getCollection('posts');
-  return posts.sort(byDateDesc);
-}
-
 export async function getPublishedPosts(): Promise<Post[]> {
   const posts = await getCollection('posts', ({ data }) => !data.draft);
   return posts.sort(byDateDesc);
