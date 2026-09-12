@@ -8,9 +8,9 @@ import ArticleEnhancements from '../../components/blog/ArticleEnhancements.astro
 import RelatedPosts from '../../components/blog/RelatedPosts.astro';
 import Comments from '../../components/Comments.astro';
 import Icon from '../../components/icons/Icons.astro';
+import { STAGGER } from '../../config/ui';
 import { getPublishedPosts, getPostReadingMinutes, getPostWordCount, getRelatedPosts } from '../../lib/content';
 import { formatDate } from '../../lib/date';
-import { STAGGER } from '../../constants';
 import type { MarkdownHeading } from 'astro';
 
 export async function getStaticPaths() {

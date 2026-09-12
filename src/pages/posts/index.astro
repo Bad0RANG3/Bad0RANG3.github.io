@@ -3,8 +3,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import PostCard from '../../components/blog/PostCard.astro';
 import PageHeader from '../../components/ui/PageHeader.astro';
 import EmptyState from '../../components/ui/EmptyState.astro';
+import { STAGGER } from '../../config/ui';
 import { getPublishedPosts } from '../../lib/content';
-import { STAGGER } from '../../constants';
 
 const posts = await getPublishedPosts();
 ---

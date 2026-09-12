@@ -1,4 +1,4 @@
-import { ROUTES } from '../constants';
+import { ROUTES } from './routes';
 
 export const siteConfig = {
   title: "Bad0RANG3's Studio",
@@ -88,4 +88,29 @@ int main() {
     ],
     interests: ['Minecraft', 'CS2', '视频特效', '折腾硬件与软件'],
   },
+} as const;
+
+/** Document-level metadata consumed by layouts and the web manifest. */
+export const SITE = {
+  LANG: 'zh-CN',
+  LOCALE: 'zh-CN',
+  THEME: 'paper',
+  THEME_COLOR: '#f4efe4',
+  THEME_COLOR_DARK: '#1a1612',
+  THEME_STORAGE_KEY: 'b0-theme',
+} as const;
+
+/**
+ * Maps each name in `siteConfig.socials` to its icon in public/.
+ * Names must match the entries in `siteConfig.socials` exactly.
+ */
+export const SOCIAL_ICONS = {
+  GitHub: '/github.svg',
+  X: '/x.svg',
+  Instagram: '/instagram.svg',
+  抖音: '/tiktok.svg',
+  Email: '/email.svg',
+  Telegram: '/telegram.svg',
+  YouTube: '/youtube.svg',
+  BiliBili: '/bilibili.svg',
 } as const;

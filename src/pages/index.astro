@@ -6,9 +6,10 @@ import ProfileOverviewCard from '../components/profile/ProfileOverviewCard.astro
 import Icon from '../components/icons/Icons.astro';
 import SectionHeader from '../components/ui/SectionHeader.astro';
 import { projects } from '../config/projects';
+import { ROUTES } from '../config/routes';
 import { siteConfig } from '../config/site';
+import { LAYOUT, STAGGER } from '../config/ui';
 import { getPublishedPosts } from '../lib/content';
-import { LAYOUT, ROUTES, STAGGER } from '../constants';
 import { withBase } from '../lib/urls';
 
 const posts = await getPublishedPosts();
