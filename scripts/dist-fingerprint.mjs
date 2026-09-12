@@ -1,9 +1,10 @@
 import { createHash } from 'node:crypto';
-import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 
-const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+import { parseFlags } from './lib/args.mjs';
+import { isDirectory, walk } from './lib/fs.mjs';
+import { fromRoot, rootDir } from './lib/paths.mjs';
 
 function usage() {
   console.log(`
@@ -21,35 +22,6 @@ Options:
 
 Exit code is 1 when --compare finds any added, removed, or modified file.
 `);
-}
-
-function parseArgs(argv) {
-  const options = { distDir: path.join(rootDir, 'dist') };
-  for (const argument of argv) {
-    if (argument === '--help') options.help = true;
-    else if (argument === '--quiet') options.quiet = true;
-    else if (argument.startsWith('--dist=')) options.distDir = path.resolve(rootDir, argument.slice('--dist='.length));
-    else if (argument.startsWith('--write=')) options.write = path.resolve(rootDir, argument.slice('--write='.length));
-    else if (argument.startsWith('--compare=')) options.compare = path.resolve(rootDir, argument.slice('--compare='.length));
-    else throw new Error(`Unknown argument: ${argument}`);
-  }
-  if (!options.help && !options.write && !options.compare) {
-    throw new Error('Pass --write=<file>, --compare=<file>, or both.');
-  }
-  return options;
-}
-
-async function walk(directory) {
-  const entries = await readdir(directory, { withFileTypes: true });
-  const groups = await Promise.all(entries.map(async (entry) => {
-    const filename = path.join(directory, entry.name);
-    return entry.isDirectory() ? walk(filename) : [filename];
-  }));
-  return groups.flat();
-}
-
-async function isDirectory(directory) {
-  try { return (await stat(directory)).isDirectory(); } catch { return false; }
 }
 
 function toPosix(value) {
@@ -86,10 +58,20 @@ function readManifest(source, label) {
   return parsed;
 }
 
-const options = parseArgs(process.argv.slice(2));
-if (options.help) {
+const parsed = parseFlags(process.argv.slice(2), { booleans: ['quiet'], values: ['dist', 'write', 'compare'] });
+if (parsed.help) {
   usage();
   process.exit(0);
+}
+
+const options = {
+  distDir: parsed.dist ? path.resolve(rootDir, parsed.dist) : fromRoot('dist'),
+  write: parsed.write ? path.resolve(rootDir, parsed.write) : undefined,
+  compare: parsed.compare ? path.resolve(rootDir, parsed.compare) : undefined,
+  quiet: parsed.quiet === true,
+};
+if (!options.write && !options.compare) {
+  throw new Error('Pass --write=<file>, --compare=<file>, or both.');
 }
 
 try {

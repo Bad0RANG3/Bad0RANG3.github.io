@@ -1,9 +1,10 @@
 import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { createInterface } from 'node:readline/promises';
 
-const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+import { parseOptions } from './lib/args.mjs';
+import { rootDir } from './lib/paths.mjs';
+
 const allowedTones = new Set(['teal', 'coral', 'citrus']);
 
 function usage() {
@@ -17,29 +18,6 @@ Options:
   --tone teal            One of: teal, coral, citrus (default: teal).
   --output path/to/file  Write the snippet to a new file instead of stdout.
 `);
-}
-
-function parseArgs(argv) {
-  const options = {};
-  for (let index = 0; index < argv.length; index += 1) {
-    const argument = argv[index];
-    if (argument === '--') continue;
-    if (!argument.startsWith('--')) throw new Error(`Unexpected positional argument: ${argument}`);
-    const [key, inlineValue] = argument.slice(2).split(/=(.*)/s, 2);
-    if (key === 'help') {
-      options.help = true;
-      continue;
-    }
-    if (inlineValue !== undefined) {
-      options[key] = inlineValue;
-      continue;
-    }
-    const next = argv[index + 1];
-    if (!next || next.startsWith('--')) throw new Error(`Missing a value for --${key}.`);
-    options[key] = next;
-    index += 1;
-  }
-  return options;
 }
 
 function text(value, label) {
@@ -70,7 +48,7 @@ function objectSnippet(project) {
   ].join('\n');
 }
 
-const options = parseArgs(process.argv.slice(2));
+const { options } = parseOptions(process.argv.slice(2));
 if (options.help) {
   usage();
   process.exit(0);

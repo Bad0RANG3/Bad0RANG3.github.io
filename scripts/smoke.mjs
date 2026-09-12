@@ -1,44 +1,16 @@
 import { readdir, readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 
-const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const postsDir = path.join(rootDir, 'src', 'content', 'posts');
-const sourceDir = path.join(rootDir, 'src');
+import { parseFlags } from './lib/args.mjs';
+import { isFile, walk } from './lib/fs.mjs';
+import { fromRoot, normalizeBase, rootDir } from './lib/paths.mjs';
+
+const postsDir = fromRoot('src', 'content', 'posts');
+const sourceDir = fromRoot('src');
 // Raised to 16 MB: the PJSK sticker tool bundles a 739-image WEBP library and
 // subsetted CJK fonts (YurukaStd + 上首方糖体). Still far below Pages limits.
 const MAX_DIST_BYTES = 40 * 1024 * 1024;
 const MAX_SINGLE_ASSET_BYTES = 1024 * 1024;
-
-function normalizeBase(value = '/') {
-  if (!value || value === '/') return '/';
-  return `/${value.replace(/^\/+|\/+$/g, '')}/`;
-}
-
-function parseArgs(argv) {
-  let distDir = path.join(rootDir, 'dist');
-  let base = '/';
-  for (const argument of argv) {
-    if (argument === '--help') return { help: true };
-    if (argument.startsWith('--dist=')) distDir = path.resolve(rootDir, argument.slice('--dist='.length));
-    else if (argument.startsWith('--base=')) base = normalizeBase(argument.slice('--base='.length));
-    else throw new Error(`Unknown argument: ${argument}`);
-  }
-  return { distDir, base };
-}
-
-async function walk(directory) {
-  const entries = await readdir(directory, { withFileTypes: true });
-  const groups = await Promise.all(entries.map(async (entry) => {
-    const filename = path.join(directory, entry.name);
-    return entry.isDirectory() ? walk(filename) : [filename];
-  }));
-  return groups.flat();
-}
-
-async function isFile(filename) {
-  try { return (await stat(filename)).isFile(); } catch { return false; }
-}
 
 async function existingTextFiles(directory, extensions) {
   const files = await walk(directory);
@@ -75,11 +47,16 @@ function extractJsonLd(source, fail, label) {
   });
 }
 
-const options = parseArgs(process.argv.slice(2));
-if (options.help) {
+const parsed = parseFlags(process.argv.slice(2), { values: ['dist', 'base'] });
+if (parsed.help) {
   console.log('Usage: pnpm smoke [-- --dist=dist] [--base=/repository/]');
   process.exit(0);
 }
+
+const options = {
+  distDir: parsed.dist ? path.resolve(rootDir, parsed.dist) : fromRoot('dist'),
+  base: normalizeBase(parsed.base ?? '/'),
+};
 
 const failures = [];
 const fail = (message) => failures.push(message);

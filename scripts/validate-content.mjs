@@ -1,10 +1,13 @@
-import { readdir, readFile, stat } from 'node:fs/promises';
+import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 
-const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const contentDir = path.join(rootDir, 'src', 'content');
-const publicDir = path.join(rootDir, 'public');
+import { parseFlags } from './lib/args.mjs';
+import { isValidDate } from './lib/content.mjs';
+import { walk } from './lib/fs.mjs';
+import { fromRoot, rootDir } from './lib/paths.mjs';
+
+const contentDir = fromRoot('src', 'content');
+const publicDir = fromRoot('public');
 const imageExtensions = new Set(['.avif', '.gif', '.jpeg', '.jpg', '.png', '.svg', '.webp']);
 const defaultMaxImageSize = 5 * 1024 * 1024;
 
@@ -18,29 +21,6 @@ Usage:
 
 The default local-image limit is 5 MiB.
 `);
-}
-
-function parseArgs(argv) {
-  const options = { maxImageSize: defaultMaxImageSize, warnAsError: false };
-  for (const argument of argv) {
-    if (argument === '--help') options.help = true;
-    else if (argument === '--warn-as-error') options.warnAsError = true;
-    else if (argument.startsWith('--max-image-size=')) options.maxImageSize = Number(argument.slice('--max-image-size='.length));
-    else throw new Error(`Unknown argument: ${argument}`);
-  }
-  if (!Number.isSafeInteger(options.maxImageSize) || options.maxImageSize < 1) {
-    throw new Error('--max-image-size must be a positive integer measured in bytes.');
-  }
-  return options;
-}
-
-async function walk(directory) {
-  const entries = await readdir(directory, { withFileTypes: true });
-  const paths = await Promise.all(entries.map(async (entry) => {
-    const entryPath = path.join(directory, entry.name);
-    return entry.isDirectory() ? walk(entryPath) : [entryPath];
-  }));
-  return paths.flat();
 }
 
 function unquote(value) {
@@ -91,13 +71,6 @@ function parseFrontmatter(source) {
   return { data, body: lines.slice(closingIndex + 1).join('\n') };
 }
 
-function isValidDate(value) {
-  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-  const [year, month, day] = value.split('-').map(Number);
-  const date = new Date(Date.UTC(year, month - 1, day));
-  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
-}
-
 function asBoolean(value) { return value === true || value === 'true'; }
 function isNonEmptyString(value) { return typeof value === 'string' && value.trim().length > 0; }
 function collectionId(collection, filename) {
@@ -122,10 +95,18 @@ function collectMarkdownTargets(source) {
   return targets;
 }
 
-const options = parseArgs(process.argv.slice(2));
-if (options.help) {
+const parsed = parseFlags(process.argv.slice(2), { booleans: ['warn-as-error'], values: ['max-image-size'] });
+if (parsed.help) {
   usage();
   process.exit(0);
+}
+
+const options = {
+  maxImageSize: parsed.maxImageSize === undefined ? defaultMaxImageSize : Number(parsed.maxImageSize),
+  warnAsError: parsed.warnAsError === true,
+};
+if (!Number.isSafeInteger(options.maxImageSize) || options.maxImageSize < 1) {
+  throw new Error('--max-image-size must be a positive integer measured in bytes.');
 }
 
 const errors = [];
