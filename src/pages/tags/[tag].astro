@@ -3,7 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import PostCard from '../../components/blog/PostCard.astro';
 import PageHeader from '../../components/ui/PageHeader.astro';
 import EmptyState from '../../components/ui/EmptyState.astro';
-import { getAllTags, getPostsByTag } from '../../lib/content';
+import { getAllTags, getPostsByTag } from '../../lib/taxonomy';
 
 export async function getStaticPaths() {
   const tags = await getAllTags();

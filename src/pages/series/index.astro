@@ -3,7 +3,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHeader from '../../components/ui/PageHeader.astro';
 import EmptyState from '../../components/ui/EmptyState.astro';
 import ContentCard from '../../components/ui/ContentCard.astro';
-import { getPostReadingMinutes, getSeriesGroups, type Post } from '../../lib/content';
+import { getPostReadingMinutes, type Post } from '../../lib/content';
+import { getSeriesGroups } from '../../lib/taxonomy';
 
 const groups = await getSeriesGroups();
 const totalMinutes = (posts: Post[]) => posts.reduce((sum, post) => sum + getPostReadingMinutes(post), 0);
