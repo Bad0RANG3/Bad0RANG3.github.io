@@ -1,10 +1,12 @@
 import { access, mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { createInterface } from 'node:readline/promises';
 
-const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const thoughtsDir = path.join(rootDir, 'src', 'content', 'thoughts');
+import { parseOptions } from './lib/args.mjs';
+import { isValidDate, localDate, normalizeSlug } from './lib/content.mjs';
+import { fromRoot, rootDir } from './lib/paths.mjs';
+
+const thoughtsDir = fromRoot('src', 'content', 'thoughts');
 
 function usage() {
   console.log(`
@@ -16,58 +18,6 @@ Usage:
 The resulting file only requires a date in frontmatter; write the thought below it.
 Run without a slug in an interactive terminal to answer a prompt.
 `);
-}
-
-function localDate() {
-  const now = new Date();
-  const offset = now.getTimezoneOffset() * 60_000;
-  return new Date(now.getTime() - offset).toISOString().slice(0, 10);
-}
-
-function isValidDate(value) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-  const [year, month, day] = value.split('-').map(Number);
-  const date = new Date(Date.UTC(year, month - 1, day));
-  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
-}
-
-function normalizeSlug(value) {
-  const slug = String(value ?? '')
-    .normalize('NFKC')
-    .trim()
-    .replace(/\.(?:md|mdx)$/i, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-');
-  if (!slug || slug === '.' || slug === '..' || /[\\/\0]/.test(slug) || slug.includes('..')) {
-    throw new Error('Slug must be a simple file name and cannot contain path separators or "..".');
-  }
-  return slug;
-}
-
-function parseArgs(argv) {
-  const options = {};
-  const positional = [];
-  for (let index = 0; index < argv.length; index += 1) {
-    const argument = argv[index];
-    if (!argument.startsWith('--')) {
-      positional.push(argument);
-      continue;
-    }
-    const [key, inlineValue] = argument.slice(2).split(/=(.*)/s, 2);
-    if (key === 'help') {
-      options.help = true;
-      continue;
-    }
-    if (inlineValue !== undefined) {
-      options[key] = inlineValue;
-      continue;
-    }
-    const next = argv[index + 1];
-    if (!next || next.startsWith('--')) throw new Error(`Missing a value for --${key}.`);
-    options[key] = next;
-    index += 1;
-  }
-  return { options, positional };
 }
 
 async function promptForSlug() {
@@ -82,7 +32,7 @@ async function promptForSlug() {
   }
 }
 
-const { options, positional } = parseArgs(process.argv.slice(2));
+const { options, positional } = parseOptions(process.argv.slice(2), { allowPositional: true });
 if (options.help) {
   usage();
   process.exit(0);

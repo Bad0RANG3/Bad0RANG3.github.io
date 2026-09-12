@@ -1,10 +1,12 @@
 import { access, mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { createInterface } from 'node:readline/promises';
 
-const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const postsDir = path.join(rootDir, 'src', 'content', 'posts');
+import { parseOptions } from './lib/args.mjs';
+import { isValidDate, localDate, normalizeSlug } from './lib/content.mjs';
+import { fromRoot, rootDir } from './lib/paths.mjs';
+
+const postsDir = fromRoot('src', 'content', 'posts');
 
 function usage() {
   console.log(`
@@ -25,66 +27,6 @@ Options:
 
 Run without values in an interactive terminal to answer prompts.
 `);
-}
-
-function parseArgs(argv) {
-  const options = {};
-  const positional = [];
-  for (let index = 0; index < argv.length; index += 1) {
-    const argument = argv[index];
-    if (!argument.startsWith('--')) {
-      positional.push(argument);
-      continue;
-    }
-    const [rawKey, inlineValue] = argument.slice(2).split(/=(.*)/s, 2);
-    if (rawKey.startsWith('no-')) {
-      options[rawKey.slice(3)] = false;
-      continue;
-    }
-    if (rawKey === 'help') {
-      options.help = true;
-      continue;
-    }
-    if (rawKey === 'draft' || rawKey === 'featured') {
-      options[rawKey] = inlineValue === undefined ? true : inlineValue !== 'false';
-      continue;
-    }
-    if (inlineValue !== undefined) {
-      options[rawKey] = inlineValue;
-      continue;
-    }
-    const next = argv[index + 1];
-    if (!next || next.startsWith('--')) throw new Error(`Missing a value for --${rawKey}.`);
-    options[rawKey] = next;
-    index += 1;
-  }
-  return { options, positional };
-}
-
-function localDate() {
-  const now = new Date();
-  const offset = now.getTimezoneOffset() * 60_000;
-  return new Date(now.getTime() - offset).toISOString().slice(0, 10);
-}
-
-function isValidDate(value) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-  const [year, month, day] = value.split('-').map(Number);
-  const date = new Date(Date.UTC(year, month - 1, day));
-  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
-}
-
-function normalizeSlug(value) {
-  const slug = String(value ?? '')
-    .normalize('NFKC')
-    .trim()
-    .replace(/\.(?:md|mdx)$/i, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-');
-  if (!slug || slug === '.' || slug === '..' || /[\\/\0]/.test(slug) || slug.includes('..')) {
-    throw new Error('Slug must be a simple file name and cannot contain path separators or "..".');
-  }
-  return slug;
 }
 
 function requiredText(value, label) {
@@ -118,7 +60,11 @@ async function createPrompter() {
   };
 }
 
-const { options, positional } = parseArgs(process.argv.slice(2));
+const { options, positional } = parseOptions(process.argv.slice(2), {
+  booleans: ['draft', 'featured'],
+  allowPositional: true,
+  allowNegation: true,
+});
 if (options.help) {
   usage();
   process.exit(0);
@@ -140,9 +86,9 @@ try {
   const date = String(options.date ?? localDate()).trim();
   const language = String(options.lang ?? 'zh-CN').trim() || 'zh-CN';
   const cover = options.cover ? requiredText(options.cover, 'Cover') : '';
-  const coverAlt = options['cover-alt'] ? requiredText(options['cover-alt'], 'Cover alt') : '';
+  const coverAlt = options.coverAlt ? requiredText(options.coverAlt, 'Cover alt') : '';
   const series = options.series ? requiredText(options.series, 'Series') : '';
-  const seriesOrder = options['series-order'] === undefined ? undefined : Number(options['series-order']);
+  const seriesOrder = options.seriesOrder === undefined ? undefined : Number(options.seriesOrder);
 
   if (!isValidDate(date)) throw new Error('Date must use YYYY-MM-DD and be a real calendar date.');
   if (cover && !coverAlt) throw new Error('--cover requires --cover-alt.');
