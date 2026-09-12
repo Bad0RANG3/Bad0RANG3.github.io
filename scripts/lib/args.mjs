@@ -20,11 +20,17 @@ function splitArgument(argument) {
  * what keeps typos in CI workflows from silently passing.
  *
  * `--help` short-circuits and returns as soon as it is seen.
+ *
+ * A bare `--` separator is skipped, matching `parseOptions` below. pnpm only
+ * consumes the separator itself on Windows; on Linux it reaches the script as a
+ * literal argument, so the `pnpm <script> -- <flag>` form printed in every
+ * usage message would otherwise fail on CI.
  */
 export function parseFlags(argv, { booleans = [], values = [] } = {}) {
   const options = {};
   for (const argument of argv) {
     if (argument === '--help') return { help: true };
+    if (argument === '--') continue;
 
     const { flagName, inlineValue } = splitArgument(argument);
     if (booleans.includes(flagName)) {

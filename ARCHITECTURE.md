@@ -161,4 +161,5 @@ pnpm validate:content && pnpm check && pnpm build && pnpm smoke
 - 共享逻辑放 `scripts/lib/`：`paths.mjs`（rootDir / fromRoot）、`fs.mjs`（walk / isFile）、`args.mjs`（parseFlags / parseOptions）、`content.mjs`（日期与 slug 校验）。不要在各脚本里重复实现。
 - 路径一律用 `fromRoot(...)` 拼接，不要用 `process.cwd()`——脚本要能在任意工作目录下运行。
 - `parseFlags` 与 `parseOptions` 会把 `--max-image-size` 这类键转成 camelCase（`options.maxImageSize`）；未知参数会直接报错，避免 CI 里的拼写错误被静默放过。
+- **两个解析器都必须跳过裸 `--`。** pnpm 只在 Windows 上吞掉这个分隔符；在 Linux（也就是 CI）上它会原样传给脚本。所有用法提示里印的都是 `pnpm <script> -- <flag>` 这种形式，少了这个跳过逻辑，该形式在 CI 上会以 `Unknown argument: --` 失败。这正是 `ci.yml` 里 "Validate project Pages base path` 这一步失败的原因——而它在项目建立起的前 20 次运行中从未真正执行过任何断言，因为解析阶段就先挂了。**断言全在解析之后，所以参数解析的健壮性直接决定这些检查是否真的生效。**
 - 改动脚本后**指纹比对帮不上忙**（它只覆盖 `dist/`），请另行对比 stdout、错误消息与生成的文件内容。
