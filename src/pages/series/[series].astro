@@ -3,8 +3,9 @@ import { withBase } from '../../lib/urls';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHeader from '../../components/ui/PageHeader.astro';
 import EmptyState from '../../components/ui/EmptyState.astro';
-import { getPostReadingMinutes, getSeriesGroups } from '../../lib/content';
+import { getPostReadingMinutes } from '../../lib/content';
 import { formatDate } from '../../lib/date';
+import { getSeriesGroups } from '../../lib/taxonomy';
 
 export async function getStaticPaths() {
   const groups = await getSeriesGroups();

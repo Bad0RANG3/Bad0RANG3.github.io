@@ -1,5 +1,4 @@
-import { getPublishedPosts } from './content';
-import { getThoughts } from './thoughts';
+import { getPublishedPosts, getThoughts } from './content';
 import { projects } from '../config/projects';
 import { withBase } from './urls';
 

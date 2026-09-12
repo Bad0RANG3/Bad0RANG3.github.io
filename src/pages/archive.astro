@@ -2,8 +2,8 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PageHeader from '../components/ui/PageHeader.astro';
 import EmptyState from '../components/ui/EmptyState.astro';
-import { getArchiveGroups } from '../lib/content';
 import { formatDate } from '../lib/date';
+import { getArchiveGroups } from '../lib/taxonomy';
 import { withBase } from '../lib/urls';
 
 const groups = await getArchiveGroups();
