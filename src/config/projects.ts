@@ -9,6 +9,12 @@ export interface Project {
 
 export const projects: Project[] = [
   {
+    name: 'Yukinal',
+    summary: '把远程运维与可审批的 AI Agent 放进同一个桌面工作区。',
+    href: '/posts/yukinal/',
+    tone: 'citrus',
+  },
+  {
     name: 'VirtualWait',
     summary: '给线下机台场地用的虚拟排队系统。',
     href: '/posts/virtualwait-template/',
