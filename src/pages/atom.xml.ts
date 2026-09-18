@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { siteConfig } from '../config/site';
+import { postPath } from '../config/routes';
 import { getPublishedPosts } from '../lib/content';
 import { siteUrl } from '../lib/urls';
 
@@ -18,7 +19,7 @@ export const GET: APIRoute = async () => {
   const updated = posts[0]?.data.updatedDate ?? posts[0]?.data.date ?? new Date();
 
   const entries = posts.map((post) => {
-    const url = siteUrl(`/posts/${post.slug}/`);
+    const url = siteUrl(postPath(post.slug));
     const published = post.data.date.toISOString();
     const modified = (post.data.updatedDate ?? post.data.date).toISOString();
     const categories = post.data.tags.map((tag) => `    <category term="${xmlEscape(tag)}" />`).join('\n');

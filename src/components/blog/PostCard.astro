@@ -2,6 +2,7 @@
 import type { Post } from '../../lib/content';
 import { getPostReadingMinutes } from '../../lib/content';
 import { formatDate } from '../../lib/date';
+import { postPath } from '../../config/routes';
 import ContentCard from '../ui/ContentCard.astro';
 
 interface Props {
@@ -15,7 +16,7 @@ const meta = `${formatDate(latestDate)} · ${readingMinutes} 分钟阅读`;
 ---
 
 <ContentCard
-  href={`/posts/${post.slug}/`}
+  href={postPath(post.slug)}
   title={post.data.title}
   description={post.data.description}
   label={post.data.category}

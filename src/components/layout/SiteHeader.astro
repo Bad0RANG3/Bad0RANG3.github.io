@@ -2,11 +2,11 @@
 import { siteConfig } from '../../config/site';
 import MobileDrawer from './MobileDrawer.astro';
 import Icon from '../icons/Icon.astro';
-import { withBase } from '../../lib/urls';
+import { isActivePath, withBase } from '../../lib/urls';
 
 interface Props { currentPath: string; }
 const { currentPath } = Astro.props;
-const isActive = (href: string) => href === '/' ? currentPath === '/' : currentPath === href || currentPath.startsWith(`${href}/`);
+const isActive = (href: string) => isActivePath(currentPath, href);
 ---
 
 <header class="sticky top-0 z-50 border-b-2 border-base-content/10 bg-base-100/80 backdrop-blur-xl">

@@ -22,6 +22,8 @@ hasCode: true
 hasDownload: false
 ---
 
+> 文章经由Deepseek V4.1 flash润色，很抱歉我的文笔并不好。
+
 ## 从一张常见的求助截图说起
 
 群里经常出现这样的画面。`amdaemon` 闪一下就没，`Sinmai` 停在黑屏，`Package` 目录看起来又都对。发图的人补一句，真的按教程做了。

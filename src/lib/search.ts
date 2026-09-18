@@ -1,5 +1,7 @@
 import { getPublishedPosts, getThoughts } from './content';
 import { projects } from '../config/projects';
+import { tools } from '../config/tools';
+import { postPath, toolPath } from '../config/routes';
 import { withBase } from './urls';
 
 export type SearchDocumentType = 'post' | 'thought' | 'project' | 'tool';
@@ -42,7 +44,7 @@ export async function getSearchDocuments(): Promise<SearchDocument[]> {
     date: post.data.date.toISOString().slice(0, 10),
     featured: post.data.featured,
     type: 'post',
-    url: withBase(`/posts/${post.slug}/`),
+    url: withBase(postPath(post.slug)),
   }));
   const thoughtDocuments: SearchDocument[] = thoughts.map((thought) => ({
     slug: thought.id,
@@ -67,17 +69,17 @@ export async function getSearchDocuments(): Promise<SearchDocument[]> {
     type: 'project',
     url: withBase(project.href),
   }));
-  const toolDocuments: SearchDocument[] = [{
-    slug: 'switch-your-cfg',
-    title: 'SwitchYourCFG',
-    description: 'CS2 配置文件可视化切换与导出工具。',
-    body: 'CS2 CFG 配置 工具 键位 导出',
-    tags: ['CS2', 'CFG', '配置'],
+  const toolDocuments: SearchDocument[] = tools.map((tool) => ({
+    slug: tool.slug,
+    title: tool.name,
+    description: tool.description,
+    body: tool.search.body,
+    tags: tool.search.tags,
     category: '在线工具',
     date: '2099-12-31',
     featured: true,
     type: 'tool',
-    url: withBase('/tools/switch-your-cfg/'),
-  }];
+    url: withBase(toolPath(tool.slug)),
+  }));
   return [...postDocuments, ...thoughtDocuments, ...projectDocuments, ...toolDocuments];
 }

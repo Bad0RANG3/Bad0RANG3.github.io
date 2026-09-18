@@ -1,6 +1,6 @@
 ---
-title: 'Minecraft 26.2 vs 1.21：从数据包到组件，我的世界经历了什么'
-description: '对比 Minecraft 26.2 与 1.21 的命令系统差异：组件系统、execute 进化、/item 与 /data 变迁、Display Entity、Macro 函数、新武器、附魔解禁。'
+title: 'Minecraft 26.2 与 1.21，从数据包到组件发生了什么'
+description: '对比 Minecraft 26.2 与 1.21 的命令系统差异，包括组件系统、execute 进化、item 与 data 变迁、Display Entity、Macro 函数、新武器和附魔解禁。'
 date: 2026-07-27
 tags:
   - Minecraft
@@ -18,27 +18,29 @@ audience: Minecraft 数据包与命令作者
 
 ## 前言
 
-Minecraft 从 1.21 到 26.2，横跨了二十多个大版本。如果你是从 1.21 直接跳到 26.2 的回归玩家，打开游戏的第一反应大概率是——**这命令怎么写不了了？**
+> 文章经由Deepseek V4.1 flash润色，很抱歉我的文笔并不好。
 
-确实，命令系统的变化很大，底层基本重写了。这篇整理 1.21 → 26.2 最核心的变化。
+从 1.21 跳到 26.2，很多旧命令会直接失效。NBT 写法、附魔字段、item 和 data 的职责都变了，数据包作者如果照着旧教程迁移，通常会在第一条命令上撞墙。
+
+下面按日常使用频率整理主要变化。命令示例保留原格式，方便直接复制测试。
 
 ---
 
 ## 1. 物品 NBT → 组件系统
 
-### 1.21 时代：NBT 标签
+### 1.21 时代的 NBT 标签
 
-在 1.21 及更早版本中，给物品附加属性靠的是 NBT（Named Binary Tag）：
+在 1.21 及更早版本中，给物品附加属性靠的是 NBT（Named Binary Tag）。
 
 ```text
 /give @p netherite_sword{display:{Name:'{"text":"断罪之刃","color":"dark_red"}'},Enchantments:[{id:"minecraft:sharpness",lvl:255}]}
 ```
 
-大括号套大括号，少一个引号直接报错。写一把满附魔神剑，手抖一下就是半小时 debug。
+大括号一层套一层，名称里面还要再包一段 JSON。写一把带名字和附魔的剑，少一个引号就要重新找。
 
-### 26.2：组件系统（Component System）
+### 26.2 的组件系统
 
-26.x 彻底废弃了旧 NBT 格式，全面转向**物品组件（Item Components）**：
+26.x 把物品属性改成组件格式。每一类属性有名字，值单独写在后面。
 
 ```text
 /give @p netherite_sword[
@@ -56,7 +58,7 @@ Minecraft 从 1.21 到 26.2，横跨了二十多个大版本。如果你是从 1
 ### 对比一览
 
 | 特性 | 1.21 (NBT) | 26.2 (组件) |
-|:--|:--|:--|
+| --- | --- | --- |
 | 语法风格 | `{...}` 嵌套 | `[...]` 方括号 + 命名空间 |
 | 名称设置 | `display:{Name:'...'}` | `minecraft:custom_name={...}` |
 | 描述 Lore | `display:{Lore:[...]}` | `minecraft:lore=[...]` |
@@ -65,15 +67,15 @@ Minecraft 从 1.21 到 26.2，横跨了二十多个大版本。如果你是从 1
 | 可读性 | 反人类 | 一目了然 |
 | 错误提示 | 不存在的，自己找 | 精确到组件级别 |
 
-**核心优势**：组件格式使用命名空间（`minecraft:`），结构化清晰，JSON 原生兼容。再也不用在单引号和双引号之间反复横跳了。
+组件使用命名空间区分来源，结构和 JSON 更接近。名称、描述、附魔各占一项，出错时也更容易定位到具体组件。
 
 ---
 
-## 2. 新武器：Mace（重锤）与 Spear（长矛）
+## 2. Mace 重锤与 Spear 长矛
 
 ### Mace · 天罚之锤
 
-1.21 引入了 Mace（重锤）作为试炼密室奖励，26.2 进一步扩展了它的附魔池：
+1.21 加入了 Mace 重锤，最初主要来自试炼密室。26.2 扩展了它的附魔池，也让获取方式多了一条合成路线。
 
 ```text
 /give @p mace[
@@ -90,7 +92,7 @@ Minecraft 从 1.21 到 26.2，横跨了二十多个大版本。如果你是从 1
 ```
 
 | 对比 | 1.21 | 26.2 |
-|:--|:--|:--|
+| --- | --- | --- |
 | 获取方式 | 试炼密室专属 | 合成 + 试炼密室 |
 | 附魔上限 | 标准上限（V） | 255（与鞘翅同款待遇） |
 | Smite 兼容 | ❌ | ✅ |
@@ -98,7 +100,7 @@ Minecraft 从 1.21 到 26.2，横跨了二十多个大版本。如果你是从 1
 
 ### Spear · 贯穿星辰
 
-长矛是 26.x 新增的武器类型，介于剑和三叉戟之间：
+长矛是 26.x 新增的武器，定位介于剑和三叉戟之间。
 
 ```text
 /give @p netherite_spear[
@@ -112,7 +114,7 @@ Minecraft 从 1.21 到 26.2，横跨了二十多个大版本。如果你是从 1
 ]
 ```
 
-- **Lunge（突刺）**：26.x 新增附魔，类似 1.21 三叉戟的激流，但无需水域环境。**注意别拉满——Lunge 等级过高会产生回弹效果，5 级刚好流畅突刺不反弹。**
+- Lunge 是 26.x 新增附魔，类似 1.21 三叉戟的激流，但不需要水域。Lunge 等级过高会产生回弹，5 级通常比较流畅。
 - 伤害介于剑和斧之间，攻击距离 +1 格
 - 不可投掷（投掷是三叉戟的专属）
 
@@ -122,7 +124,7 @@ Minecraft 从 1.21 到 26.2，横跨了二十多个大版本。如果你是从 1
 
 ### 附魔上限解禁
 
-1.21 中，大多数附魔的上限是 V（5 级）。26.2 在 `/give` 命令层面**移除了所有附魔上限**：
+1.21 中，大多数附魔上限是 V。26.2 在 `/give` 命令层面取消了这些限制。
 
 ```text
 // 26.2：这是合法的
@@ -131,11 +133,11 @@ Minecraft 从 1.21 到 26.2，横跨了二十多个大版本。如果你是从 1
 "minecraft:efficiency":255
 ```
 
-当然，生存模式中铁砧仍然受原版上限约束——255 级只在命令/数据包层面有效。
+生存模式中的铁砧仍然受原版上限约束，255 级只在命令和数据包层面有效。
 
 ### 冲突附魔共存
 
-1.21 禁止 Sharpness / Smite / Bane of Arthropods 共存。26.2 在命令层面**解除了互斥限制**：
+1.21 不允许 Sharpness、Smite 和 Bane of Arthropods 共存。26.2 在命令层面解除了互斥。
 
 ```text
 /give @p netherite_sword[
@@ -149,12 +151,12 @@ Minecraft 从 1.21 到 26.2，横跨了二十多个大版本。如果你是从 1
 
 一把剑同时克制所有生物类型。创造模式玩家的终极玩具。
 
-### 合理数值建议：不是所有附魔都该拉满
+### 合理数值建议
 
-命令层面解除上限 ≠ 实际体验最佳。有些附魔堆到 255 反而破坏游戏：
+命令可以写 255，体验未必更好。掉落、击退和位移类附魔堆高以后，游戏会迅速失去平衡。
 
 | 附魔 | 推荐值 | 255 会发生什么 |
-|:--|:--|:--|
+| --- | --- | --- |
 | Fortune / Looting | 5 | 掉落物铺满屏幕，捡到背包爆炸 |
 | Knockback / Punch | 3 | 一拳把怪物打到未加载区块，尸体都找不到 |
 | Lunge | 5 | 回弹比突刺还远，自己飞出去 |
@@ -162,7 +164,7 @@ Minecraft 从 1.21 到 26.2，横跨了二十多个大版本。如果你是从 1
 | Thorns | 5 | 反弹伤害附带巨量击退，近战体验全无 |
 | Quick Charge | 5 | 5 级已经秒射，255 纯属浪费 |
 
-**大原则**：伤害/减伤/效率类放心拉满（一刀秒是神器的浪漫），击退/掉落/位移类务必克制。词条多才好玩，数值平衡得好才不会变成自虐模拟器。
+伤害、减伤和效率类可以按需要提高。击退、掉落和位移类最好停在正常范围。神器需要的是词条配合，不必把所有数字都塞满。
 
 ---
 
@@ -174,7 +176,7 @@ Minecraft 从 1.21 到 26.2，横跨了二十多个大版本。如果你是从 1
 display:{Name:'{"text":"剑","color":"red","bold":true}'}
 ```
 
-单引号包裹 JSON，转义地狱。
+名称要被单引号包住，里面的 JSON 还要处理转义。
 
 ### 26.2
 
@@ -182,13 +184,13 @@ display:{Name:'{"text":"剑","color":"red","bold":true}'}
 minecraft:custom_name={text:"剑",color:"red",bold:true,obfuscated:true}
 ```
 
-原生 JSON 对象，直接写。新增 `obfuscated` 属性让文字动态乱码（类似附魔台的符文效果），中文字符的 obfuscated 渲染终于不崩了——不过实际用起来字符闪得太快，盯着看两秒就眼花。想要可爱二次元风格，不如用 Unicode 装饰符号（✦ ❄ ♪ ✧ ★ ☆）搭配柔和配色，比疯狂闪烁耐看多了：`minecraft:custom_name={text:"✦ 神器之名 ✦",color:"light_purple",bold:true}`。
+26.2 直接使用 JSON 对象。新增的 `obfuscated` 属性可以制作动态乱码，中文字符也能正常渲染。字符闪烁很快，长时间观看并不舒服。需要装饰时，Unicode 符号配合柔和颜色更稳定。
 
 ---
 
 ## 5. execute 命令的进化
 
-execute 是 Minecraft 命令体系的脊梁骨——几乎所有高级机制都依赖它。1.21 的子命令链已经比老版的 `@e[name=xxx]` 清晰很多，但 26.2 又往前迈了一大步。
+execute 负责组合条件、目标和执行位置，几乎所有高级机制都会用到。1.21 的子命令链已经比单独堆选择器清晰，26.2 又加入了相机、粒子和维度控制。
 
 ### 1.21 的 execute
 
@@ -203,15 +205,15 @@ execute as @a at @s if entity @e[type=creeper,distance=..10] run effect give @s 
 execute positioned 0 64 0 align xyz run setblock ~ ~ ~ stone
 ```
 
-五个核心子命令——`as`、`at`、`positioned`、`if`/`unless`、`run`——足以应对大部分场景，但遇到复杂需求时往往需要 summon 标记实体（marker）做跳板。
+`as`、`at`、`positioned`、`if` 或 `unless` 与 `run` 能处理大部分场景。需要临时坐标或状态时，仍然经常会 summon 一个 marker。
 
 ### 26.2 新增的子命令
 
 ```text
-## 相机控制：电影级过场动画
+## 相机控制
 execute as @a[tag=cinematic] at @s camera lerp 3s ease-in-out facing entity @e[type=warden,limit=1]
 
-## 粒子直发：不再需要 summon area_effect_cloud
+## 粒子直发
 execute at @a[tag=charged] particle minecraft:electric_spark ~ ~1 ~ 2 2 2 0.1 100 force
 
 ## 维度检测 + 条件组合
@@ -219,23 +221,23 @@ execute if dimension minecraft:the_nether unless predicate safe_zone run damage 
 ```
 
 | 新增子命令 | 作用 | 替代的 1.21 做法 |
-|:--|:--|:--|
+| --- | --- | --- |
 | `camera` | 控制玩家相机，支持 lerp/cut 过渡 | 需要资源包 + shader 配合 |
 | `particle` | 在 execute 链中直发粒子 | summon area_effect_cloud + particle |
 | `dimension` | 按所在维度筛选 | `if biome` + 坐标硬编码 |
 | `facing` | 精确朝向实体/坐标（原版强化） | `rotated` 手动算角度 |
 
-**最大的提升**：`particle` 和 `camera` 两个子命令让 execute 从一个「条件执行器」变成了一个完整的场景控制器。做地图时终于不用在命令方块和函数之间反复横跳了。
+`particle` 和 `camera` 让 execute 可以直接控制场景。制作地图时，少了一层命令方块和函数之间的转发。
 
 ---
 
-## 6. /item 与 /data：告别 NBT 的最后一步
+## 6. /item 与 /data 的变化
 
-物品组件系统（第 1 节）解决了 `/give` 的问题，但 `/item` 和 `/data` 才是日常操作中碰得最多的命令。26.2 对这两条命令的改造，才是 NBT 真正退出历史舞台的时刻。
+组件解决了 `/give` 属性怎么写的问题，`/item` 和 `/data` 则影响日常修改。26.2 把物品修改收回物品系统，把生命值、无敌状态一类数据交给属性系统。
 
-### /item 命令：组件原生支持
+### /item 命令原生支持组件
 
-1.21 的 `/item` 只负责「移动物品」，想修改物品属性？请走 `/data`：
+1.21 的 `/item` 主要负责替换物品，属性修改需要再调用 `/data`。
 
 ```text
 ## 1.21：先给物品，再用 /data 改 NBT（分两步）
@@ -243,7 +245,7 @@ execute if dimension minecraft:the_nether unless predicate safe_zone run damage 
 /data merge entity @p SelectedItem{tag:{Enchantments:[{id:"minecraft:sharpness",lvl:10}]}}
 ```
 
-26.2 的 `/item` 一步到位：
+26.2 的 `/item` 可以直接带组件。
 
 ```text
 ## 26.2：/item 直接支持组件
@@ -258,7 +260,7 @@ execute if dimension minecraft:the_nether unless predicate safe_zone run damage 
 
 ### /data 命令的落幕
 
-1.21 时代 `/data` 是探索和修改实体 NBT 的唯一途径：
+1.21 里，`/data` 是查看和修改实体 NBT 的主要入口。
 
 ```
 /data get entity @p              ## 读 NBT
@@ -266,26 +268,26 @@ execute if dimension minecraft:the_nether unless predicate safe_zone run damage 
 /data remove entity @p SomeTag   ## 删 NBT
 ```
 
-26.2 中 `/data get` 仍然可用（调试时确实方便），但 `/data merge` 和 `/data remove` 已被组件命令取代：
+26.2 中 `/data get` 仍然可用，调试实体数据时很方便。`/data merge` 和 `/data remove` 已经被组件与属性命令取代。
 
 | 1.21 操作 | 26.2 替代 |
-|:--|:--|
+| --- | --- |
 | `data merge entity @s {Health:20f}` | `attribute @s minecraft:generic.max_health base set 20` |
 | `data merge block ~ ~ ~ {Items:[...]}` | `item replace block ~ ~ ~ container.0 with ...` |
 | `data remove entity @s Invulnerable` | `attribute @s minecraft:generic.invulnerable base set 0` |
 
-核心原则：**属性归属性系统管，物品归物品系统管，不再用一个大 JSON 包揽一切。**
+现在属性归属性系统，物品归物品系统，容器也有对应命令。这个变化会让迁移时的命令拆得更散，也更容易查出错误。
 
 ---
 
 ## 7. Display Entity 的变化
 
-Display Entity（`item_display`、`block_display`、`text_display`）在 1.19.4 首次引入，1.21 趋于成熟，26.2 里已经很好用了。
+Display Entity 包括 `item_display`、`block_display` 和 `text_display`。它在 1.19.4 加入，1.21 逐渐稳定，26.2 又补齐了光照、背景和变换。
 
 ### 三种 Display Entity 的 26.2 新能力
 
 ```text
-## text_display：完整的 JSON 文本组件 + 背景渲染
+## text_display
 summon minecraft:text_display ~ ~1 ~ {
   text: {text:"第 1 关",color:"gold",bold:true},
   background: 0x88000000,       ## 新增：半透明黑底
@@ -293,14 +295,14 @@ summon minecraft:text_display ~ ~1 ~ {
   see_through: true
 }
 
-## block_display：任意方块预览 + 自定义光照
+## block_display
 summon minecraft:block_display ~ ~ ~ {
   block_state: "minecraft:beacon",
   brightness: {sky: 15, block: 15},  ## 新增：独立光照控制（不受环境光影响）
   interpolation_duration: 5           ## 平滑过渡
 }
 
-## item_display：组件覆盖 + 动态动画
+## item_display
 summon minecraft:item_display ~ ~ ~ {
   item: {
     id: "minecraft:diamond_sword",
@@ -314,18 +316,18 @@ summon minecraft:item_display ~ ~ ~ {
 
 ### 为什么 Display Entity 是革命性的
 
-1.21 时代，想在世界上渲染一个浮动文字或展示物品，你需要：
+1.21 想在世界上显示浮动文字或者物品，常见办法有下面这些。
 - 盔甲架 + 命名牌（粗糙，有物理碰撞）
 - 资源包修改 GUI 贴图（学习成本高）
 - 大量粒子模拟（性能灾难）
 
-26.2 的 Display Entity 把这一切浓缩成一条命令。**无碰撞、无视距限制、不占实体数量、纯客户端渲染**——地图制作的门槛从「你需要学 3 个月」降到「你会写命令就行」。
+Display Entity 不参与碰撞，也可以在客户端完成渲染。地图作者仍然要学习变换、插值和文本组件，但不用再绕资源包和粒子系统。
 
 ---
 
-## 8. Macro：函数模板增强
+## 8. Macro 函数模板增强
 
-Minecraft 1.20.2 引入了函数宏（Function Macro），让数据包函数不再是「写死的指令列表」，而是可以**接受参数、动态展开**的模板。
+1.20.2 引入函数宏以后，数据包函数可以接受参数并动态展开。26.2 继续允许对象、数组和内联宏。
 
 ### 1.21 的 Macro
 
@@ -339,7 +341,7 @@ give @p $(tool){Enchantments:[{id:"$(ench)",lvl:5}]}
 function give_tool {tool:"minecraft:netherite_sword", ench:"minecraft:sharpness"}
 ```
 
-参数只能是 NBT 格式的字符串替换。局限性明显：无法传数组、无法做条件判断、类型检查靠祈祷。
+旧宏主要做字符串替换，无法直接传数组，也没有真正的类型检查。
 
 ### 26.2 的 Macro 增强
 
@@ -362,21 +364,21 @@ function give_enchant_set {
 ```
 
 | 特性 | 1.21 | 26.2 |
-|:--|:--|:--|
+| --- | --- | --- |
 | 参数替换 | 字符串（`$(var)`） | 字符串 + JSON 对象（`$(var)`） |
 | 数组参数 | ❌ | ✅ JSON 数组 |
 | 内联 macro | ❌ 必须创建文件 | ✅ `!macro` 直接展开 |
 | 类型校验 | 无 | 编译期错误提示 |
 | 组件感知 | ❌ 需要手动拼 NBT | ✅ 原生组件对象传参 |
 
-对于维护大型数据包的开发者来说，Macro 的进化意味着：**一个函数模板替代几十个重复的函数文件**。改了逻辑只需要改一处，而不是 `find-and-replace` 到手抽筋。
+大型数据包里，宏可以减少重复函数。逻辑改动集中在一处，不再依靠全项目替换。
 
 ---
 
 ## 9. 新附魔一览（26.x）
 
 | 附魔 | 效果 | 适用物品 |
-|:--|:--|:--|
+| --- | --- | --- |
 | `lunge` | 蓄力突刺，高速位移+伤害（建议 ≤5，过高会回弹） | 长矛 |
 | `soul_speed` | 灵魂沙上加速（1.21 已有，上限提升至 3） | 靴子 |
 | `depth_strider` | 水下加速（上限 255） | 靴子 |
@@ -384,9 +386,9 @@ function give_enchant_set {
 
 ---
 
-## 10. 迁移指南：1.21 → 26.2
+## 10. 从 1.21 迁移到 26.2
 
-如果你有大量 1.21 的命令方块/数据包需要迁移，以下对照表能救你一命：
+下面的对照表覆盖最常见的迁移项。
 
 ### 物品命名
 
@@ -441,7 +443,7 @@ function give_enchant_set {
 
 ## 11. 26.2 神器套装（完整命令）
 
-以下是我在 26.2 中使用的全套神器装备，直接复制到命令方块即可：
+下面是一套 26.2 命令生成的神器装备，可以直接复制到命令方块。
 
 <details>
 <summary>🪖 幽夜冠冕（头盔）</summary>
@@ -567,19 +569,8 @@ function give_enchant_set {
 
 ## 总结
 
-从 1.21 到 26.2，Minecraft 的命令系统完成了一次脱胎换骨的重构：
+从 1.21 到 26.2，命令系统变化最大的地方在于数据和物品不再共用一套大 NBT。组件负责物品，属性负责实体数值，Display Entity 和 Macro 则补上了地图展示与模板复用。
 
-- **语法**：从 NBT 大括号嵌套 → 组件方括号 + 命名空间
-- **命令**：`execute` 新增 camera/particle/dimension 子命令，场景控制力飞跃
-- **工具链**：`/item` 原生支持组件，`/data merge` 退役，一个命令搞定一切
-- **武器**：Mace 强化 + 全新 Spear 长矛 + Lunge 附魔
-- **附魔**：命令层面解除等级上限和互斥限制
-- **文本**：原生 JSON 组件，`obfuscated` 中文不乱码
-- **渲染**：Display Entity 让地图可视化从「需要资源包艺术」变成「会写命令就行」
-- **开发**：Macro 函数支持对象传参和内联展开，模板化告别重复劳动
+迁移旧数据包时，先处理名称、描述和附魔，再检查 `/data merge` 与所有旧 NBT 选择器。命令能解析以后，再调整数值。满附魔装备只适合创造模式测试，不要把这种数值直接带进生存存档。
 
-对于地图作者和数据包开发者来说，26.2 的组件系统是一次生产力的飞跃。对于生存玩家来说——这些满附魔神器反正也只能在创造模式玩，图一乐就好 😏
-
-> "1.21 的命令是写给计算机看的，26.2 的命令是写给人看的。"
->
-> ——某位迁移了 3000 行数据包的开发者
+如果有人还在说 1.21 的数据包可以原样运行，让他先检查一次 `pack_format` 和 `/give`。
