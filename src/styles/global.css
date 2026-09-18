@@ -1,6 +1,6 @@
 /* =================================================================
-   PAPER PUNCH — cream editorial design system
-   Coral vermillion · Yuzu citrus · Electric teal
+   PAPER PUNCH — pink editorial design system
+   Rose · Sakura · Berry
    ================================================================= */
 @tailwind base;
 @tailwind components;
@@ -8,33 +8,33 @@
 
 /* =================================================================
    PAPER THEME TOKENS — daisyUI 5 custom theme via CSS variables
-   Cream paper · Coral vermillion · Yuzu citrus · Electric teal
+   Blush paper · Rose · Sakura · Berry
    ================================================================= */
 :root,
 [data-theme="paper"],
 [data-theme="light"] {
   color-scheme: light;
-  --color-ink: oklch(22% 0.03 50);
-  --color-base-100: oklch(96.5% 0.018 90);
-  --color-base-200: oklch(93% 0.022 88);
-  --color-base-300: oklch(88% 0.028 85);
-  --color-base-content: oklch(22% 0.03 50);
-  --color-primary: oklch(64% 0.22 28);
-  --color-primary-content: oklch(98% 0.01 90);
-  --color-secondary: oklch(90% 0.18 98);
-  --color-secondary-content: oklch(28% 0.05 70);
-  --color-accent: oklch(72% 0.13 195);
-  --color-accent-content: oklch(16% 0.03 200);
-  --color-neutral: oklch(28% 0.03 55);
-  --color-neutral-content: oklch(97% 0.01 90);
-  --color-info: oklch(70% 0.12 220);
-  --color-info-content: oklch(18% 0.03 220);
-  --color-success: oklch(72% 0.15 150);
+  --color-ink: oklch(24% 0.045 345);
+  --color-base-100: oklch(97.5% 0.012 355);
+  --color-base-200: oklch(94.5% 0.024 350);
+  --color-base-300: oklch(89.5% 0.038 350);
+  --color-base-content: oklch(24% 0.045 345);
+  --color-primary: oklch(64% 0.23 355);
+  --color-primary-content: oklch(99% 0.008 350);
+  --color-secondary: oklch(88% 0.11 350);
+  --color-secondary-content: oklch(28% 0.06 350);
+  --color-accent: oklch(70% 0.16 320);
+  --color-accent-content: oklch(99% 0.008 330);
+  --color-neutral: oklch(28% 0.045 340);
+  --color-neutral-content: oklch(97.5% 0.01 350);
+  --color-info: oklch(70% 0.13 305);
+  --color-info-content: oklch(18% 0.04 305);
+  --color-success: oklch(70% 0.15 150);
   --color-success-content: oklch(18% 0.04 150);
-  --color-warning: oklch(84% 0.16 85);
-  --color-warning-content: oklch(28% 0.05 70);
-  --color-error: oklch(62% 0.22 25);
-  --color-error-content: oklch(98% 0.01 90);
+  --color-warning: oklch(84% 0.15 82);
+  --color-warning-content: oklch(28% 0.06 70);
+  --color-error: oklch(62% 0.22 20);
+  --color-error-content: oklch(99% 0.008 20);
   --radius-selector: 1rem;
   --radius-field: 0.75rem;
   --radius-box: 1.25rem;
@@ -46,31 +46,31 @@
 }
 
 /* =================================================================
-   PAPER DARK — warm charcoal, not cool-black / not purple
+   PAPER DARK — deep plum, not warm brown or neutral charcoal
    ================================================================= */
 [data-theme="paper-dark"] {
   color-scheme: dark;
-  --color-ink: oklch(76% 0.02 85);
-  --color-base-100: oklch(18% 0.02 60);
-  --color-base-200: oklch(22% 0.022 58);
-  --color-base-300: oklch(28% 0.024 55);
-  --color-base-content: oklch(80% 0.018 85);
-  --color-primary: oklch(72% 0.19 35);
-  --color-primary-content: oklch(18% 0.03 50);
-  --color-secondary: oklch(88% 0.16 98);
-  --color-secondary-content: oklch(24% 0.05 70);
-  --color-accent: oklch(78% 0.12 195);
-  --color-accent-content: oklch(16% 0.03 200);
-  --color-neutral: oklch(30% 0.02 55);
-  --color-neutral-content: oklch(80% 0.015 85);
-  --color-info: oklch(74% 0.11 220);
-  --color-info-content: oklch(18% 0.03 220);
+  --color-ink: oklch(88% 0.02 340);
+  --color-base-100: oklch(18% 0.022 340);
+  --color-base-200: oklch(22% 0.026 340);
+  --color-base-300: oklch(28% 0.03 340);
+  --color-base-content: oklch(84% 0.018 340);
+  --color-primary: oklch(74% 0.2 355);
+  --color-primary-content: oklch(17% 0.035 350);
+  --color-secondary: oklch(82% 0.12 345);
+  --color-secondary-content: oklch(20% 0.05 345);
+  --color-accent: oklch(76% 0.15 315);
+  --color-accent-content: oklch(17% 0.04 315);
+  --color-neutral: oklch(30% 0.025 340);
+  --color-neutral-content: oklch(82% 0.015 340);
+  --color-info: oklch(76% 0.12 305);
+  --color-info-content: oklch(18% 0.04 305);
   --color-success: oklch(76% 0.14 150);
   --color-success-content: oklch(18% 0.04 150);
-  --color-warning: oklch(84% 0.15 85);
-  --color-warning-content: oklch(24% 0.05 70);
-  --color-error: oklch(68% 0.2 25);
-  --color-error-content: oklch(98% 0.01 90);
+  --color-warning: oklch(84% 0.15 82);
+  --color-warning-content: oklch(24% 0.06 70);
+  --color-error: oklch(69% 0.2 20);
+  --color-error-content: oklch(98% 0.008 20);
   --radius-selector: 1rem;
   --radius-field: 0.75rem;
   --radius-box: 1.25rem;
