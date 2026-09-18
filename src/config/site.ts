@@ -2,8 +2,8 @@ import { ROUTES } from './routes';
 
 export const siteConfig = {
   title: "Bad0RANG3's Studio",
-  description: '关注塔菲谢谢喵',
-  siteUrl: 'https://bad0rang3.github.io',
+  description: 'Bad0RANG3 的个人博客，记录软件推荐、CS2、Minecraft、开发工具、项目实践与日常思考。',
+  siteUrl: 'https://bad0rang3.xyz',
   ogImage: '/HP.webp',
   giscus: {
     repo: 'Bad0RANG3/Bad0RANG3.github.io',
