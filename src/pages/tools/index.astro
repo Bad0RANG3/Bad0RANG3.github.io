@@ -2,27 +2,8 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHeader from '../../components/ui/PageHeader.astro';
 import ContentCard from '../../components/ui/ContentCard.astro';
-
-const tools = [
-  {
-    name: 'PJSK 表情包生成器',
-    href: '/tools/pjsk-stamp/',
-    icon: '🎨',
-    description: '使用角色底图和游戏同款字体生成表情包，可导出透明背景 PNG 或 WEBP。',
-  },
-  {
-    name: 'SwitchYourCFG',
-    href: '/tools/switch-your-cfg/',
-    icon: '⌨️',
-    description: '可视化编辑和导出 CS2 配置文件。',
-  },
-  {
-    name: 'NCM 解密',
-    href: '/tools/ncm/',
-    icon: '♫',
-    description: '在浏览器中将 NCM 文件转换为 MP3 或 FLAC。',
-  },
-];
+import { tools } from '../../config/tools';
+import { toolPath } from '../../config/routes';
 ---
 
 <BaseLayout title="工具" description="实用的在线小工具。">
@@ -31,7 +12,7 @@ const tools = [
     <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
       {tools.map((tool) => (
         <ContentCard
-          href={tool.href}
+          href={toolPath(tool.slug)}
           title={tool.name}
           description={tool.description}
           icon={tool.icon}

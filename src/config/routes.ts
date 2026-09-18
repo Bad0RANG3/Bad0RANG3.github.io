@@ -23,3 +23,16 @@ export const ROUTES = {
   ATOM: '/atom.xml',
   JSON_FEED: '/feed.json',
 } as const;
+
+/** Builds paths for content addressed by a runtime value. */
+export const postPath = (slug: string) =>
+  `${ROUTES.POSTS}/${encodeURIComponent(slug)}/`;
+
+export const tagPath = (tag: string) =>
+  `${ROUTES.TAGS}/${encodeURIComponent(tag)}/`;
+
+export const seriesPath = (series: string) =>
+  `${ROUTES.SERIES}/${encodeURIComponent(series)}/`;
+
+export const toolPath = (tool: string) =>
+  `${ROUTES.TOOLS}/${encodeURIComponent(tool)}/`;

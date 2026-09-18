@@ -5,6 +5,7 @@ import EmptyState from '../../components/ui/EmptyState.astro';
 import ContentCard from '../../components/ui/ContentCard.astro';
 import { getPostReadingMinutes, type Post } from '../../lib/content';
 import { getSeriesGroups } from '../../lib/taxonomy';
+import { seriesPath } from '../../config/routes';
 
 const groups = await getSeriesGroups();
 const totalMinutes = (posts: Post[]) => posts.reduce((sum, post) => sum + getPostReadingMinutes(post), 0);
@@ -21,7 +22,7 @@ const totalMinutes = (posts: Post[]) => posts.reduce((sum, post) => sum + getPos
           return (
             <div style={`--reveal-delay:${index * 60}ms`}>
               <ContentCard
-                href={`/series/${encodeURIComponent(group.name)}/`}
+                href={seriesPath(group.name)}
                 title={group.name}
                 description={`从《${firstPost.data.title}》开始，按顺序读完这个主题。`}
                 meta={`${group.posts.length} 篇 · 约 ${minutes} 分钟阅读`}

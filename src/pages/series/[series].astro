@@ -6,6 +6,7 @@ import EmptyState from '../../components/ui/EmptyState.astro';
 import { getPostReadingMinutes } from '../../lib/content';
 import { formatDate } from '../../lib/date';
 import { getSeriesGroups } from '../../lib/taxonomy';
+import { postPath } from '../../config/routes';
 
 export async function getStaticPaths() {
   const groups = await getSeriesGroups();
@@ -28,7 +29,7 @@ const difficultyLevels = [...new Set(group.posts.map((post) => post.data.difficu
             <div>
               <h2 class="mt-2 text-2xl font-black">按顺序读这个系列</h2>
             </div>
-            <a href={withBase(`/posts/${firstPost.slug}/`)} class="brutal-button brutal-button-primary">从第一篇开始 →</a>
+            <a href={withBase(postPath(firstPost.slug))} class="brutal-button brutal-button-primary">从第一篇开始 →</a>
           </div>
           <div class="mt-6 grid gap-3 sm:grid-cols-3">
             <div class="rounded-2xl border-2 border-base-content/10 bg-base-100/70 p-4"><span class="eyebrow">篇数</span><strong class="mt-1 block text-2xl font-black">{group.posts.length}</strong></div>
@@ -44,7 +45,7 @@ const difficultyLevels = [...new Set(group.posts.map((post) => post.data.difficu
         <ol class="mx-auto max-w-3xl space-y-4">
           {group.posts.map((post, index) => (
             <li class="reveal" style={`--reveal-delay:${index * 65}ms`}>
-              <a href={withBase(`/posts/${post.slug}/`)} class="group flex gap-4 rounded-[1.5rem] border-2 border-base-content/10 bg-base-100/80 p-5 transition hover:-translate-x-1 hover:border-primary/40 sm:gap-6 sm:p-6">
+              <a href={withBase(postPath(post.slug))} class="group flex gap-4 rounded-[1.5rem] border-2 border-base-content/10 bg-base-100/80 p-5 transition hover:-translate-x-1 hover:border-primary/40 sm:gap-6 sm:p-6">
                 <span class="font-mono text-2xl font-black text-primary">{String(post.data.seriesOrder ?? index + 1).padStart(2, '0')}</span>
                 <span class="min-w-0 flex-1">
                   <span class="flex flex-wrap items-center gap-2">

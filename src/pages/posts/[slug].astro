@@ -8,6 +8,7 @@ import ArticleEnhancements from '../../components/blog/ArticleEnhancements.astro
 import Comments from '../../components/blog/Comments.astro';
 import Icon from '../../components/icons/Icon.astro';
 import { STAGGER } from '../../config/ui';
+import { postPath } from '../../config/routes';
 import { getPublishedPosts, getPostReadingMinutes, getPostWordCount } from '../../lib/content';
 import { formatDate } from '../../lib/date';
 import type { MarkdownHeading } from 'astro';
@@ -51,7 +52,7 @@ const seriesNext = seriesIndex >= 0 ? seriesPosts[seriesIndex + 1] : undefined;
   breadcrumbs={[
     { name: '首页', path: '/' },
     { name: '文章', path: '/posts/' },
-    { name: post.data.title, path: `/posts/${post.slug}/` },
+    { name: post.data.title, path: postPath(post.slug) },
   ]}
 >
   <ArticleEnhancements />
@@ -110,15 +111,15 @@ const seriesNext = seriesIndex >= 0 ? seriesPosts[seriesIndex + 1] : undefined;
           <div class="h-full rounded-full bg-primary" style={`width:${((seriesIndex + 1) / seriesPosts.length) * 100}%`}></div>
         </div>
         <div class="mt-4 flex flex-col gap-3 sm:flex-row sm:justify-between">
-          {seriesPrevious ? <a href={withBase(`/posts/${seriesPrevious.slug}/`)} class="text-sm font-bold text-base-content/65 hover:text-primary">← 上一篇：{seriesPrevious.data.title}</a> : <span class="text-sm text-base-content/40">已经是系列第一篇</span>}
-          {seriesNext ? <a href={withBase(`/posts/${seriesNext.slug}/`)} class="text-sm font-bold text-base-content/65 hover:text-primary sm:text-right">下一篇：{seriesNext.data.title} →</a> : <span class="text-sm text-base-content/40 sm:text-right">已经是系列最后一篇</span>}
+          {seriesPrevious ? <a href={withBase(postPath(seriesPrevious.slug))} class="text-sm font-bold text-base-content/65 hover:text-primary">← 上一篇：{seriesPrevious.data.title}</a> : <span class="text-sm text-base-content/40">已经是系列第一篇</span>}
+          {seriesNext ? <a href={withBase(postPath(seriesNext.slug))} class="text-sm font-bold text-base-content/65 hover:text-primary sm:text-right">下一篇：{seriesNext.data.title} →</a> : <span class="text-sm text-base-content/40 sm:text-right">已经是系列最后一篇</span>}
         </div>
       </section>
     )}
 
     {(previous || next) && <nav class="mt-12 grid gap-4 border-t-2 border-base-content/10 pt-8 sm:grid-cols-2" aria-label="文章导航">
-      {previous ? <a href={withBase(`/posts/${previous.slug}/`)} class="hard-card rounded-2xl p-4"><span class="eyebrow">上一篇</span><strong class="mt-2 block">{previous.data.title}</strong></a> : <span />}
-      {next ? <a href={withBase(`/posts/${next.slug}/`)} class="hard-card rounded-2xl p-4 text-right"><span class="eyebrow">下一篇</span><strong class="mt-2 block">{next.data.title}</strong></a> : <span />}
+      {previous ? <a href={withBase(postPath(previous.slug))} class="hard-card rounded-2xl p-4"><span class="eyebrow">上一篇</span><strong class="mt-2 block">{previous.data.title}</strong></a> : <span />}
+      {next ? <a href={withBase(postPath(next.slug))} class="hard-card rounded-2xl p-4 text-right"><span class="eyebrow">下一篇</span><strong class="mt-2 block">{next.data.title}</strong></a> : <span />}
     </nav>}
 
     <div class="mx-auto mt-12 max-w-3xl"><Comments /></div>

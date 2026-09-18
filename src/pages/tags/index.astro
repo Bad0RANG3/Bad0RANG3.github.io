@@ -5,6 +5,7 @@ import EmptyState from '../../components/ui/EmptyState.astro';
 import ContentCard from '../../components/ui/ContentCard.astro';
 import { formatDate } from '../../lib/date';
 import { getTagGroups } from '../../lib/taxonomy';
+import { tagPath } from '../../config/routes';
 
 const groups = await getTagGroups();
 ---
@@ -17,7 +18,7 @@ const groups = await getTagGroups();
         {groups.map((group, index) => (
           <div style={`--reveal-delay:${index * 45}ms`}>
             <ContentCard
-              href={`/tags/${encodeURIComponent(group.name)}/`}
+              href={tagPath(group.name)}
               title={`#${group.name}`}
               description={group.posts[0].data.title}
               meta={`${group.posts.length} 篇 · 更新 ${formatDate(group.posts[0].data.updatedDate ?? group.posts[0].data.date)}`}

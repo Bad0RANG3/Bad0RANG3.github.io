@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { siteConfig } from '../config/site';
+import { postPath } from '../config/routes';
 import { getPublishedPosts } from '../lib/content';
 import { siteUrl } from '../lib/urls';
 
@@ -26,7 +27,7 @@ export const GET: APIRoute = async () => {
     }],
     ...(newest ? { expired: false, _updated: newest.toISOString() } : {}),
     items: posts.map((post) => {
-      const url = siteUrl(`/posts/${post.slug}/`);
+      const url = siteUrl(postPath(post.slug));
       return {
         id: url,
         url,

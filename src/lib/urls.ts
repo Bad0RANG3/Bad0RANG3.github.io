@@ -28,3 +28,24 @@ export function withBase(path = '/'): string {
 export function siteUrl(path = '/'): string {
   return new URL(withBase(path), import.meta.env.SITE).toString();
 }
+
+/**
+ * Checks a route against Astro.url.pathname in both root and project Pages
+ * deployments. Navigation entries stay site-relative while the browser path
+ * may include BASE_URL.
+ */
+export function isActivePath(currentPath: string, href: string): boolean {
+  const normalize = (value: string) => {
+    const pathname = value.split(/[?#]/, 1)[0] || '/';
+    const trimmed = pathname.replace(/\/+$/, '');
+    return trimmed || '/';
+  };
+
+  const current = normalize(currentPath);
+  const base = normalize(withBase('/'));
+  const target = normalize(withBase(href));
+
+  return target === base
+    ? current === base
+    : current === target || current.startsWith(`${target}/`);
+}

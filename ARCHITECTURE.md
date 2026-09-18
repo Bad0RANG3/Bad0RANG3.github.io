@@ -45,7 +45,7 @@ Astro 5 静态站点（`output: 'static'`），Tailwind 3 + daisyUI 5，部署�
     ├── config/                 站点静态数据，一个模块一个关注点
     │   ├── routes.ts             ROUTES —— 全部内部 URL 的唯一来源
     │   ├── site.ts               siteConfig / SITE / SOCIAL_ICONS
-    │   ├── ui.ts                 ANIMATION / LAYOUT / STAGGER
+    │   ├── ui.ts                 LAYOUT / STAGGER
     │   └── projects.ts           projects
     ├── content/                Astro 内容集合（路径由框架约定，不要移动）
     │   ├── config.ts             posts / thoughts 的 frontmatter schema
@@ -142,16 +142,17 @@ pnpm validate:content && pnpm check && pnpm build && pnpm smoke
 - `.ts` 文件里的**标识符、字符串、属性名，甚至注释里的普通英文单词**都会成为候选；
 - daisyUI 5 会为命中的候选生成整套组件样式。
 
-实测过的两个例子：
+实测过的三个例子：
 
 | 来源 | 后果 |
 |---|---|
 | 某个死文件里的 `timeline:` 属性名 | 凭空生成 10 条 daisyUI `.timeline` 规则（约 3 KB），无任何元素使用 |
 | `SOCIAL_ICONS` 文档注释里的单词 `list` | 凭空生成 10 条 daisyUI `.list` 规则（约 2.5 KB） |
+| Astro 模板里的 `class:list` 指令 | 同上：`list` 作为裸词被提取，`.list` 规则至今仍在产物里（`dist/_astro/about.*.css`，约 2.5 KB），而且把 glob 收窄到 `.astro` 也消除不掉 |
 
 **实践建议**：新增/改写 `.ts` 或注释后，若指纹出现只增不减的 CSS 差异，先检查是否引入了 `list`、`timeline`、`filter`、`table`、`card`、`btn`、`badge`、`modal`、`drawer`、`menu`、`tab` 这类与组件同名的裸词。需要保留的字面量可以写进 `tailwind.config.mjs` 的 `safelist`（现有 `lyric-block` 等即为此用途）。
 
-更彻底的解法是收窄 content glob，但会一次性改动大量既有样式，属于独立议题。
+更彻底的解法是收窄 content glob，但既会一次性改动大量既有样式、也治不了 `class:list`，属于独立议题。
 
 ---
 

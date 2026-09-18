@@ -1,5 +1,5 @@
 ---
-title: 'CS2 HLAE Preset：高画质录制 Demo POV 的一套现成预设'
+title: 'CS2 HLAE Preset，一套现成的高画质 Demo POV 录制配置'
 description: '基于 HLAE 与 FFmpeg 的 CS2 Demo POV 录制工具，内置 CPU、NVIDIA、AMD、Intel 多编码器预设和音视频合并脚本。'
 date: 2026-06-24
 tags:
@@ -19,11 +19,13 @@ audience: 想录制 CS2 Demo POV 的玩家
 hasDownload: true
 ---
 
-> 想从 CS2 Demo 里导出干净的第一人称镜头，又不想每次都手配 HLAE 和 FFmpeg？这套预设可以直接拿来录。
+> 文章经由Deepseek V4.1 flash润色，很抱歉我的文笔并不好。
 
-[CS2_HLAE_Preset](https://github.com/Bad0RANG3/CS2_HLAE_Preset) 是一套用于录制 CS2 Demo POV 视频的配置集合。它基于 [HLAE](https://www.advancedfx.org/) 和 FFmpeg，准备好了 HLAE 运镜/通道设置、多种硬件编码预设，以及录制完成后合并音视频的脚本。
+录一份干净的 CS2 Demo 第一人称镜头，通常要先配 HLAE，再处理 FFmpeg 和音视频合并。中间能调的参数不少，录完一次以后下次还得重新来。[CS2_HLAE_Preset](https://github.com/Bad0RANG3/CS2_HLAE_Preset) 把这些步骤收成了一套现成配置。
 
-## 包含哪些文件
+它基于 [HLAE](https://www.advancedfx.org/) 和 FFmpeg，里面包含运镜与通道设置、硬件编码预设，以及录制结束后合并音视频的脚本。
+
+## 文件
 
 ```text
 pov.vpk       POV 视角模型与材质包
@@ -32,42 +34,41 @@ ffmpeg.cfg    CPU / NVIDIA / AMD / Intel 编码预设
 merge.bat     合并 raw.mp4 与 audio.wav
 ```
 
-其中 `hlae.cfg` 只绑定上下方向键，不会覆盖你原有的个人快捷键：`↑` 开始录制并恢复 Demo 播放，`↓` 暂停 Demo 并结束录制。
+`hlae.cfg` 只绑定上下方向键，不会覆盖你原来设置的个人快捷键。`↑` 用来开始录制并恢复 Demo 播放，`↓` 用来暂停 Demo 并结束录制。
 
-## 安装要点
+## 安装
 
-先安装 HLAE，并通过它的安装工具把 FFmpeg 装进 HLAE 目录。接着将 `hlae.cfg` 与 `ffmpeg.cfg` 放到：
+先安装 HLAE，再通过它的安装工具把 FFmpeg 装进 HLAE 目录。之后把 `hlae.cfg` 和 `ffmpeg.cfg` 放到这里。
 
 ```text
 <CS2安装目录>\game\csgo\cfg\
 ```
 
-将 `pov.vpk` 放到 `cfg` 的上一级 `game\csgo`，然后在 `gameinfo.gi` 的 `SearchPaths` 中加入一行：
+把 `pov.vpk` 放到 `cfg` 的上一级 `game\csgo`，再打开 `gameinfo.gi`，在 `SearchPaths` 中加入下面这一行。
 
 ```text
 Game    csgo/pov.vpk
 ```
 
-只添加这一行即可，其他搜索路径不要改动。
+只需要加这一行，其他搜索结果不要动。
 
-## 录制流程
+## 录制
 
-1. 在 CS2 控制台执行 `playdemo <demo名称>`；
-2. 依次输入 `exec hlae` 和 `exec ffmpeg`；
-3. 输入编码预设指令，例如 `c1` 或 `n1`；
-4. 按 `↑` 开始录制，按 `↓` 结束录制；
-5. 将生成的 `raw.mp4` 和 `audio.wav` 与 `merge.bat` 放在一起，双击脚本合成 `output.mp4`。
+1. 在 CS2 控制台执行 `playdemo <demo名称>`。
+2. 依次输入 `exec hlae` 和 `exec ffmpeg`。
+3. 选择编码预设，例如 `c1` 或 `n1`。
+4. 按 `↑` 开始，按 `↓` 结束。
+5. 把生成的 `raw.mp4`、`audio.wav` 和 `merge.bat` 放到同一个目录，双击脚本得到 `output.mp4`。
 
-## 编码器怎么选
+## 选编码器
 
-默认的 `c1` 是 x264 CPU 高画质预设，适合绝大多数情况。NVIDIA 显卡可优先试 `n1`（HEVC NVENC 高画质），RTX 40 系还可以使用 `nav1` 的 AV1 NVENC；AMD、Intel 分别有 `a1` 与 `i1` 的高画质硬件预设。
+默认的 `c1` 是 x264 CPU 高画质预设，多数情况下直接用它就行。NVIDIA 显卡可以先试 `n1`，也就是 HEVC NVENC 高画质。RTX 40 系还能使用 `nav1` 的 AV1 NVENC。AMD 和 Intel 对应的是 `a1` 和 `i1`。
 
-如果需要后期空间，可用 `p0` 录 ProRes 4444，或者用 `c0` / `n0` 录无损。所有预设也提供 4:4:4 或 16:9 拉伸的变体，具体指令可在仓库 README 查询。
+需要后期空间时，可以用 `p0` 录 ProRes 4444，也可以用 `c0` 或 `n0` 录无损。仓库还提供了 4 比 4 比 4 色度和 16 比 9 拉伸变体，具体指令可以查 README。
 
-预设默认以 240 FPS 录制，并同时输出 raw 与 depth 通道；同时关闭后台失焦降帧，并固定雷达为圆形，方便录第一人称镜头。
+预设默认以 240 FPS 录制，同时输出 raw 与 depth 通道，并关闭后台失焦降帧。雷达会被固定成圆形，录第一人称镜头时少一层干扰。
 
-## 项目地址与致谢
+## 项目地址
 
-- GitHub：[Bad0RANG3/CS2_HLAE_Preset](https://github.com/Bad0RANG3/CS2_HLAE_Preset)
-- FFmpeg 录制预设（v2.6e）：[Purp1e 紫](https://space.bilibili.com/73115492)
-
+- GitHub，[Bad0RANG3/CS2_HLAE_Preset](https://github.com/Bad0RANG3/CS2_HLAE_Preset)
+- FFmpeg 录制预设 v2.6e 来源，[Purp1e 紫](https://space.bilibili.com/73115492)

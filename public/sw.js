@@ -1,10 +1,10 @@
-const CACHE_VERSION = 'b0-static-v2';
+const CACHE_VERSION = 'b0-static-v3';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 
 const scopeUrl = new URL(self.registration.scope);
 const scopedPath = (path = '') => new URL(path.replace(/^\/+/, ''), scopeUrl).pathname;
-const OFFLINE_URL = scopedPath('offline.html');
+const OFFLINE_URL = scopedPath('offline/');
 const PRECACHE_URLS = [
   OFFLINE_URL,
   scopedPath(),
