@@ -1,8 +1,9 @@
 /* Offline shell for the static site.
-   Navigation is network-first so a deploy is picked up immediately; subresources
-   use stale-while-revalidate so hashed assets are instant while still updating.
-   Range requests (the music player's audio seeks) bypass the cache entirely. */
-const CACHE_VERSION = 'b0-static-v5';
+   Page requests (full navigations AND Astro's ClientRouter fetches) are
+   network-first with revalidation, so a swap never pulls stale HTML that points
+   at a previous CSS build. Subresources use stale-while-revalidate, and Range
+   requests (the player's audio seeks) bypass the cache entirely. */
+const CACHE_VERSION = 'b0-static-v6';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 
@@ -29,14 +30,24 @@ self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
     await Promise.all(keys.filter((key) => key !== STATIC_CACHE && key !== RUNTIME_CACHE).map((key) => caches.delete(key)));
-    if (self.registration.navigationPreload) await self.registration.navigationPreload.enable();
     await self.clients.claim();
   })());
 });
 
 const isSameOrigin = (request) => new URL(request.url).origin === self.location.origin;
-const isNavigation = (request) => request.mode === 'navigate' || request.destination === 'document';
 const isCacheableResponse = (response) => response && response.ok && response.type === 'basic';
+
+/**
+ * A page request is a real navigation OR Astro's ClientRouter fetch. The latter
+ * is an ordinary same-origin fetch with no `document` destination, so it is
+ * recognised by its extensionless path (assets always carry an extension).
+ */
+const isPageRequest = (request) => {
+  if (request.mode === 'navigate' || request.destination === 'document') return true;
+  if ((request.headers.get('accept') || '').includes('text/html')) return true;
+  const { pathname } = new URL(request.url);
+  return !/\.[a-z\d]+$/i.test(pathname);
+};
 
 const stash = (request, response) => {
   if (!isCacheableResponse(response)) return response;
@@ -50,11 +61,12 @@ self.addEventListener('fetch', (event) => {
   // Let the browser handle range requests and non-GET traffic directly.
   if (request.method !== 'GET' || !isSameOrigin(request) || request.headers.has('range')) return;
 
-  if (isNavigation(request)) {
+  if (isPageRequest(request)) {
     event.respondWith((async () => {
       try {
-        const preloaded = await event.preloadResponse;
-        const response = preloaded || await fetch(request);
+        // Revalidate instead of trusting the HTTP cache, so a deploy is picked
+        // up immediately and ClientRouter never swaps in an outdated document.
+        const response = await fetch(request, { cache: 'no-cache' });
         return stash(request, response);
       } catch {
         return (await caches.match(request)) || (await caches.match(OFFLINE_URL));
