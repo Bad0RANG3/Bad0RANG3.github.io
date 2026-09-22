@@ -312,6 +312,9 @@ const jsonLd = {
       let width = 0;
       let height = 0;
       let ratio = 1;
+      // The canvas is taller than the viewport so the parallax translate never
+      // exposes an empty band at the bottom.
+      const PARALLAX_TRACK = 320;
 
       const seed = () => {
         // Keep the scene visibly lively without letting the canvas become a frame-rate tax.
@@ -343,7 +346,7 @@ const jsonLd = {
       const resize = () => {
         ratio = Math.min(window.devicePixelRatio || 1, 1.4);
         width = window.innerWidth;
-        height = window.innerHeight;
+        height = window.innerHeight + PARALLAX_TRACK;
         canvas.width = Math.round(width * ratio);
         canvas.height = Math.round(height * ratio);
         canvas.style.width = `${width}px`;
@@ -452,14 +455,17 @@ const jsonLd = {
       if (window.__b0ParallaxBound) return;
       window.__b0ParallaxBound = true;
       const root = document.documentElement;
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
       let frame = 0;
       const update = () => {
         frame = 0;
+        if (reduceMotion.matches) return;
         root.style.setProperty('--b0-scroll', `${window.scrollY || window.pageYOffset || 0}px`);
       };
       const schedule = () => { if (!frame) frame = requestAnimationFrame(update); };
       window.addEventListener('scroll', schedule, { passive: true });
       window.addEventListener('resize', schedule, { passive: true });
+      reduceMotion.addEventListener?.('change', schedule);
       document.addEventListener('astro:page-load', update);
       update();
     })();
