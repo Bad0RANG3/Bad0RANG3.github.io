@@ -1,10 +1,10 @@
 // Extracted from BaseLayout.astro. Bundled and cached by Astro/Vite.
-import { ROUTES } from '../config/routes';
-import { withBase } from '../lib/urls';
-
+// The base-aware URLs are rendered onto <html> by BaseLayout so the
+// service worker path stays visible to the smoke test.
+const root = document.documentElement;
 const isProduction = import.meta.env.PROD;
-const serviceWorkerUrl = withBase(ROUTES.SERVICE_WORKER);
-const serviceWorkerScope = withBase(ROUTES.HOME);
+const serviceWorkerUrl = root.dataset.serviceWorker || '/sw.js';
+const serviceWorkerScope = root.dataset.serviceWorkerScope || '/';
 if (!isProduction && 'serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then((registrations) => {
         registrations.forEach((registration) => registration.unregister());

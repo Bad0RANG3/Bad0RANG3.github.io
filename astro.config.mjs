@@ -14,6 +14,9 @@ export default defineConfig({
     remarkPlugins: [[remarkWithBase, { base }]],
   },
   integrations: [sitemap()],
+  // With ClientRouter, prefetch same-origin links on hover/tap so navigation
+  // feels instant without eagerly downloading the whole site.
+  prefetch: true,
   vite: {
     plugins: [tailwindcss()],
   },

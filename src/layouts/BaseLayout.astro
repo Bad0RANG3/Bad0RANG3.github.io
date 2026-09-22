@@ -140,7 +140,7 @@ const jsonLd = {
 ---
 
 <!doctype html>
-<html lang={lang} data-theme={SITE.THEME} data-theme-ready="false">
+<html lang={lang} data-theme={SITE.THEME} data-theme-ready="false" data-service-worker={withBase(ROUTES.SERVICE_WORKER)} data-service-worker-scope={withBase(ROUTES.HOME)}>
 <head>
 
 
@@ -225,6 +225,7 @@ const jsonLd = {
     height="640"
     aria-hidden="true"
     decoding="async"
+    fetchpriority="low"
     transition:persist="site-mascot"
   />
   <SiteHeader currentPath={currentPath} />
