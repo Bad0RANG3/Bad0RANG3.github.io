@@ -8,9 +8,9 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["'MiSans'", 'system-ui', 'sans-serif'],
-        mono: ["'JetBrains Mono'", 'ui-monospace', 'monospace'],
-        display: ["'MiSans'", 'system-ui', 'sans-serif'],
+        sans: ["'JetBrains Mono'", "'Noto Sans SC'", 'ui-monospace', 'SFMono-Regular', 'Consolas', 'monospace'],
+        mono: ["'JetBrains Mono'", "'Noto Sans SC'", 'ui-monospace', 'SFMono-Regular', 'Consolas', 'monospace'],
+        display: ["'JetBrains Mono'", "'Noto Sans SC'", 'ui-monospace', 'SFMono-Regular', 'Consolas', 'monospace'],
       },
       letterSpacing: {
         tightest: '-0.07em',

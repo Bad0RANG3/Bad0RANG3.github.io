@@ -69,6 +69,7 @@ const Heading = headingTag;
         <div
           class:list={[
             'rounded-2xl border-2 border-base-content/10 bg-base-100/70 px-2 py-3 text-center',
+            metrics.length === 3 && 'profile-metric-card--roomy',
             index % 2 === 0 ? 'shadow-[3px_3px_0_0] shadow-primary/50' : 'shadow-[3px_3px_0_0] shadow-accent/50',
           ]}
         >

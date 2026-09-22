@@ -253,6 +253,9 @@ const jsonLd = {
   <link rel="alternate" type="application/rss+xml" title={`${siteConfig.title} RSS`} href={withBase(ROUTES.RSS)}>
   <link rel="alternate" type="application/atom+xml" title={`${siteConfig.title} Atom`} href={withBase(ROUTES.ATOM)}>
   <link rel="alternate" type="application/feed+json" title={`${siteConfig.title} JSON Feed`} href={withBase(ROUTES.JSON_FEED)}>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&display=swap">
   <link rel="icon" href={withBase('/ico.ico')} type="image/x-icon">
 
   <!-- Open Graph -->
@@ -290,6 +293,16 @@ const jsonLd = {
     <span class="atmosphere-grid"></span>
     <span class="atmosphere-noise"></span>
   </div>
+  <img
+    class="site-mascot"
+    src={withBase('/mascot/chibi-girl.png')}
+    alt=""
+    width="1280"
+    height="1280"
+    aria-hidden="true"
+    decoding="async"
+    transition:persist="site-mascot"
+  />
   <SiteHeader currentPath={currentPath} />
   <main id="main-content" class="page-enter w-full flex-1">
     <slot />
@@ -312,32 +325,28 @@ const jsonLd = {
       let width = 0;
       let height = 0;
       let ratio = 1;
-      // The canvas is taller than the viewport so the parallax translate never
-      // exposes an empty band at the bottom.
-      const PARALLAX_TRACK = 320;
-
       const seed = () => {
-        // Keep the scene visibly lively without letting the canvas become a frame-rate tax.
-        const amount = Math.min(36, Math.max(16, Math.round((width * height) / 90000)));
+        // A denser, faster scene that still caps its work on large displays.
+        const amount = Math.min(96, Math.max(42, Math.round((width * height) / 36000)));
         blossoms = Array.from({ length: amount }, (_, index) => ({
           x: Math.random() * width,
           y: Math.random() * height,
-          radius: 18 + Math.random() * 46,
+          radius: 16 + Math.random() * 38,
           depth: 0.38 + Math.random() * 0.62,
-          speed: 0.05 + Math.random() * 0.1,
-          sway: 0.00016 + Math.random() * 0.00034,
+          speed: 0.18 + Math.random() * 0.34,
+          sway: 0.00042 + Math.random() * 0.00058,
           phase: Math.random() * Math.PI * 2,
-          alpha: 0.07 + Math.random() * 0.13,
-          spin: (Math.random() - 0.5) * 0.0009,
+          alpha: 0.08 + Math.random() * 0.15,
+          spin: (Math.random() - 0.5) * 0.0026,
           angle: Math.random() * Math.PI,
           tone: index % 3,
         }));
 
-        motes = Array.from({ length: Math.min(18, Math.max(10, Math.round(width / 96))) }, () => ({
+        motes = Array.from({ length: Math.min(36, Math.max(18, Math.round(width / 58))) }, () => ({
           x: Math.random() * width,
           y: Math.random() * height,
           size: 1 + Math.random() * 2.8,
-          speed: 0.08 + Math.random() * 0.22,
+          speed: 0.18 + Math.random() * 0.36,
           phase: Math.random() * Math.PI * 2,
           alpha: 0.08 + Math.random() * 0.14,
         }));
@@ -346,7 +355,7 @@ const jsonLd = {
       const resize = () => {
         ratio = Math.min(window.devicePixelRatio || 1, 1.4);
         width = window.innerWidth;
-        height = window.innerHeight + PARALLAX_TRACK;
+        height = window.innerHeight;
         canvas.width = Math.round(width * ratio);
         canvas.height = Math.round(height * ratio);
         canvas.style.width = `${width}px`;
@@ -356,8 +365,8 @@ const jsonLd = {
       };
 
       const drawBlossom = (flower, time) => {
-        const driftX = Math.sin(time * flower.sway + flower.phase) * 22 * flower.depth;
-        const driftY = Math.cos(time * flower.sway * 0.72 + flower.phase) * 13 * flower.depth;
+        const driftX = Math.sin(time * flower.sway + flower.phase) * 34 * flower.depth;
+        const driftY = Math.cos(time * flower.sway * 0.72 + flower.phase) * 20 * flower.depth;
         const colors = [
           ['#ff91af', '#ffd3df'],
           ['#e56e91', '#ffb6c9'],
@@ -443,31 +452,6 @@ const jsonLd = {
         else refresh();
       });
       refresh();
-    })();
-  </script>
-
-  <script is:inline>
-    // @ts-nocheck
-    /* Scroll-linked parallax for the fixed atmosphere layer. Kept separate from
-       the canvas renderer and bound once, since ClientRouter de-duplicates this
-       script on later navigations. */
-    (() => {
-      if (window.__b0ParallaxBound) return;
-      window.__b0ParallaxBound = true;
-      const root = document.documentElement;
-      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-      let frame = 0;
-      const update = () => {
-        frame = 0;
-        if (reduceMotion.matches) return;
-        root.style.setProperty('--b0-scroll', `${window.scrollY || window.pageYOffset || 0}px`);
-      };
-      const schedule = () => { if (!frame) frame = requestAnimationFrame(update); };
-      window.addEventListener('scroll', schedule, { passive: true });
-      window.addEventListener('resize', schedule, { passive: true });
-      reduceMotion.addEventListener?.('change', schedule);
-      document.addEventListener('astro:page-load', update);
-      update();
     })();
   </script>
 
