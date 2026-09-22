@@ -6,7 +6,7 @@
 
 ## 1. 概览
 
-Astro 5 静态站点（`output: 'static'`），Tailwind 3 + daisyUI 5，部署到 GitHub Pages。
+Astro 5 静态站点（`output: 'static'`），Tailwind CSS 4（通过 `@tailwindcss/vite` 接入）+ daisyUI 5，部署到 GitHub Pages。
 
 两条贯穿全局的设计约束：
 
@@ -18,8 +18,7 @@ Astro 5 静态站点（`output: 'static'`），Tailwind 3 + daisyUI 5，部署�
 ## 2. 目录结构
 
 ```
-├── astro.config.mjs          站点与构建配置
-├── tailwind.config.mjs       Tailwind/daisyUI 配置（见第 6 节的坑）
+├── astro.config.mjs          站点与构建配置（Tailwind v4 走 Vite 插件）
 ├── plugins/                  构建期插件，只被 astro.config.mjs 消费
 │   └── remark-with-base.mjs    在 Markdown 渲染前改写原始 HTML 里的根相对 URL
 ├── scripts/                  开发与 CI 脚本
@@ -54,6 +53,12 @@ Astro 5 静态站点（`output: 'static'`），Tailwind 3 + daisyUI 5，部署�
     ├── data/                   运行时数据载荷，按所属功能分目录
     │   └── tools/pjsk-stamp.json
     ├── layouts/BaseLayout.astro
+    ├── scripts/                浏览器端入口，由 Astro 打包为可缓存模块
+    │   ├── theme.ts              主题控制器（首屏由 BaseLayout 内联小脚本兜底）
+    │   ├── atmosphere.ts         樱花背景（精灵缓存 + 约 30fps）
+    │   ├── player.ts             动态岛音乐播放器
+    │   ├── site.ts               页面进入动画 / 表格包裹 / 回到顶部
+    │   └── service-worker.ts     注册 Service Worker
     ├── lib/                    运行时工具，只放这一层
     │   ├── content.ts            集合读取（posts / thoughts）+ 单篇统计
     │   ├── taxonomy.ts           tag / category / series / archive 分组视图
@@ -63,9 +68,11 @@ Astro 5 静态站点（`output: 'static'`），Tailwind 3 + daisyUI 5，部署�
     ├── pages/                  路由（目录结构即 URL 结构）
     └── styles/
         ├── theme.css              设计 token（亮/暗两套）——颜色的唯一来源
-        ├── global.css             全局组件类与页面样式
+        ├── global.css             Tailwind v4 入口（@import / @plugin / @theme / @source）+ 全局组件类
         └── tools/*.css           各工具页私有样式
 ```
+
+字体自托管在 `public/fonts/`：`jetbrains-mono-*`（拉丁，UI/等宽）与 `yuruka-*`（日文正文），不依赖任何外部 CDN。
 
 ### 放置规则
 
@@ -86,7 +93,7 @@ Astro 5 静态站点（`output: 'static'`），Tailwind 3 + daisyUI 5，部署�
 
 - **`src/styles/theme.css` 是颜色的唯一来源**：`paper`（亮色，SSR 默认）与 `paper-dark`（暗色）两套 token 都在这里定义，`BaseLayout.astro` 在 `global.css` 之前引入。
 - 组件**不允许**写死与主题相关的颜色（如 `#fff`、`text-white`）。文字用 `--fx-text` / `--color-base-content`，次要文字用 `--text-dim` / `--text-faint`，面板用 `--surface*` / `--fx-surface*`，边框用 `--line*` / `--fx-line`。代码块在两种主题下都是深底浅字，统一用 `--code-block-bg` / `--code-block-text`。
-- 主题切换由 `BaseLayout.astro` `<head>` 里的控制器负责：解析 `localStorage` 或 `prefers-color-scheme`，在 `astro:before-swap` / `astro:after-swap` 前后重绘，并用 `MutationObserver` 兜底。改动后请用两种主题分别过一遍所有页面（`pnpm smoke` 不覆盖对比度）。
+- 主题切换由两段代码负责：`BaseLayout.astro` `<head>` 里的内联小脚本（首屏前解析 `localStorage` / `prefers-color-scheme` 并上色，避免闪烁），以及打包在 `src/scripts/theme.ts` 的控制器（切换、监听 `astro:before-swap` / `astro:after-swap`、`MutationObserver` 兜底）。改动后请用两种主题分别过一遍所有页面（`pnpm smoke` 不覆盖对比度）。
 
 ---
 
@@ -142,24 +149,16 @@ pnpm validate:content && pnpm check && pnpm build && pnpm smoke
 
 ---
 
-## 6. 已知构建陷阱：Tailwind 会扫描 `.ts` 与注释
+## 6. 样式编译：Tailwind v4 + daisyUI 5
 
-`tailwind.config.mjs` 的 content glob 是 `./src/**/*.{astro,ts}`。Tailwind 按**原始文本**提取 class 候选，规则很宽松，于是：
+样式入口是 `src/styles/global.css`：`@import 'tailwindcss'`、`@plugin '@tailwindcss/typography'`、`@plugin 'daisyui' { exclude: ... }`、`@theme`（原 `tailwind.config.mjs` 的扩展）与 `@source`。几个必须记住的点：
 
-- `.ts` 文件里的**标识符、字符串、属性名，甚至注释里的普通英文单词**都会成为候选；
-- daisyUI 5 会为命中的候选生成整套组件样式。
+- **daisyUI 5 不会自动 tree-shake。** 它的 `addComponents` 默认输出全部组件，所以 `global.css` 用 `exclude` 明确排掉了本站未使用的约 58 个组件。**新增组件类前，先用渲染后的 HTML 确认组件名已在 `exclude` 里移除**，否则会静默丢失样式。当前实际用到的是 `button` / `badge` / `modal`。
+- **Tailwind v4 默认扫描整个项目**（遵守 `.gitignore`）。`@source not '../content/**'` 把文章正文排除，避免散文里的普通词（`card`、`step`、`stack`…）命中 daisyUI 组件名、把整套组件样式拉进产物。
+- **不要写死 daisyUI 旧版本的变量名。** v5 使用 `--color-primary` / `--color-base-content`（完整 oklch 颜色），不再有 `--p` / `--bc` / `--b1`。工具页里的半透明色统一写成 `oklch(from var(--color-primary) l c h / .2)`，或 `color-mix()`。
+- 产物仍集中在单个 `dist/_astro/about.*.css`（约 155 KB，gzip 约 26 KB），工具页样式单独成文件。
 
-实测过的三个例子：
-
-| 来源 | 后果 |
-|---|---|
-| 某个死文件里的 `timeline:` 属性名 | 凭空生成 10 条 daisyUI `.timeline` 规则（约 3 KB），无任何元素使用 |
-| `SOCIAL_ICONS` 文档注释里的单词 `list` | 凭空生成 10 条 daisyUI `.list` 规则（约 2.5 KB） |
-| Astro 模板里的 `class:list` 指令 | 同上：`list` 作为裸词被提取，`.list` 规则至今仍在产物里（`dist/_astro/about.*.css`，约 2.5 KB），而且把 glob 收窄到 `.astro` 也消除不掉 |
-
-**实践建议**：新增/改写 `.ts` 或注释后，若指纹出现只增不减的 CSS 差异，先检查是否引入了 `list`、`timeline`、`filter`、`table`、`card`、`btn`、`badge`、`modal`、`drawer`、`menu`、`tab` 这类与组件同名的裸词。需要保留的字面量可以写进 `tailwind.config.mjs` 的 `safelist`（现有 `lyric-block` 等即为此用途）。
-
-更彻底的解法是收窄 content glob，但既会一次性改动大量既有样式、也治不了 `class:list`，属于独立议题。
+修改样式后如果只想确认体积变化，直接看 `dist/_astro/about.*.css` 的原始/ gzip 大小即可；`pnpm dist:fingerprint` 会如实列出差异。
 
 ---
 
