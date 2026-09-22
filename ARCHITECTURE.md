@@ -62,7 +62,8 @@ Astro 5 静态站点（`output: 'static'`），Tailwind 3 + daisyUI 5，部署�
     │   └── urls.ts               withBase / siteUrl
     ├── pages/                  路由（目录结构即 URL 结构）
     └── styles/
-        ├── global.css            设计 token + 全局组件类（视觉系统的唯一来源）
+        ├── theme.css              设计 token（亮/暗两套）——颜色的唯一来源
+        ├── global.css             全局组件类与页面样式
         └── tools/*.css           各工具页私有样式
 ```
 
@@ -80,6 +81,12 @@ Astro 5 静态站点（`output: 'static'`），Tailwind 3 + daisyUI 5，部署�
 | 可被多个脚本复用的逻辑 | `scripts/lib/` |
 
 `src/lib/` **不放**构建期插件；`src/` **不放**脚本；组件**不裸放**在 `components/` 根目录。
+
+### 主题与颜色
+
+- **`src/styles/theme.css` 是颜色的唯一来源**：`paper`（亮色，SSR 默认）与 `paper-dark`（暗色）两套 token 都在这里定义，`BaseLayout.astro` 在 `global.css` 之前引入。
+- 组件**不允许**写死与主题相关的颜色（如 `#fff`、`text-white`）。文字用 `--fx-text` / `--color-base-content`，次要文字用 `--text-dim` / `--text-faint`，面板用 `--surface*` / `--fx-surface*`，边框用 `--line*` / `--fx-line`。代码块在两种主题下都是深底浅字，统一用 `--code-block-bg` / `--code-block-text`。
+- 主题切换由 `BaseLayout.astro` `<head>` 里的控制器负责：解析 `localStorage` 或 `prefers-color-scheme`，在 `astro:before-swap` / `astro:after-swap` 前后重绘，并用 `MutationObserver` 兜底。改动后请用两种主题分别过一遍所有页面（`pnpm smoke` 不覆盖对比度）。
 
 ---
 
