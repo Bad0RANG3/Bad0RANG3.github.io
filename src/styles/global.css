@@ -2633,16 +2633,17 @@ html[data-theme="paper-dark"] .ncm-profile-card {
     width: min(calc(100% - 1.25rem), 68rem);
   }
 
-  /* Compact dynamic island on phones: a small pill that stays clear of the
-     single remaining header action, instead of a near-full-width bar. */
+  /* Compact dynamic island on phones. The summary copy is hidden here, so the
+     collapsed pill only needs to hold the album art and the visualiser; keep it
+     narrow and centred instead of a mostly-empty 250px bar. */
   .music-island {
-    width: min(250px, calc(100vw - 124px)) !important;
+    width: min(156px, calc(100vw - 104px)) !important;
     height: 44px !important;
     border-radius: 22px !important;
   }
 
   .music-island[data-cue-active="true"][data-open="false"] {
-    width: min(250px, calc(100vw - 124px)) !important;
+    width: min(156px, calc(100vw - 104px)) !important;
     height: 44px !important;
     border-radius: 22px !important;
   }
@@ -2655,8 +2656,9 @@ html[data-theme="paper-dark"] .ncm-profile-card {
 
   .music-island .island-summary {
     height: 44px !important;
-    gap: 0.5rem;
-    padding: 0 0.55rem;
+    justify-content: center;
+    gap: 0.6rem;
+    padding: 0 0.5rem;
   }
 
   .music-island .island-mini-art {
@@ -2667,7 +2669,7 @@ html[data-theme="paper-dark"] .ncm-profile-card {
 
   .music-island .island-track-title { font-size: 0.66rem; }
   .music-island .island-track-artist { font-size: 0.54rem; }
-  .music-island .island-mini-wave { width: 30px; gap: 2px; }
+  .music-island .island-mini-wave { width: 30px; gap: 2px; margin-left: 0; }
   .music-island .island-mini-wave i { width: 2.5px; }
   .music-island .island-volume-menu { width: 168px; }
 
