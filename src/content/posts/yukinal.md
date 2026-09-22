@@ -1,9 +1,9 @@
 ---
-title: 'Yukinal，让 AI Agent 在你的批准下操作服务器'
-description: '一个把远程开发、服务器运维与可审批 AI Agent 放进同一扇桌面窗口的工作区，覆盖 SSH、MCP、附件输入、审计和 21 条架构决策。'
+title: 'Yukinal，让 AI Agent 在批准和计划下管理服务器'
+description: '一个把远程开发、服务器运维、可审批 Agent 与托管 MCP 服务放进同一扇桌面窗口的工作区，覆盖任务、证据、变更计划与审计。'
 date: 2026-09-13
-updatedDate: 2026-09-18
-verifiedDate: 2026-09-18
+updatedDate: 2026-09-22
+verifiedDate: 2026-09-22
 tags:
   - AI Agent
   - Tauri
@@ -29,7 +29,7 @@ hasCode: true
 
 项目地址在 [Bad0RANG3/Yukinal](https://github.com/Bad0RANG3/Yukinal)。当前以 `1.0.0` 作为首个稳定接口基线，使用 MIT 许可。
 
-截至 2026-09-18，主分支在 `v1.0.0` 之后加入了 MCP Streamable HTTP、OAuth、权限守卫、附件输入，以及一批安全和恢复路径修复。下面的内容按当前仓库状态说明，并区分已经落地和尚未在真实环境验证的部分。
+截至 2026-09-22，主分支在 `v1.0.0` 基线之上补齐了可持久化的 Agent 任务、证据、变更计划、有限恢复和持续巡检，同时把 MCP 服务接进同一条执行与审计链路。下面的内容按当前仓库状态说明，并区分已经落地和尚未在真实环境验证的部分。
 
 ![Yukinal 首次使用工作区与 Agent 面板](/yukinal/yukinal-workspace.png)
 
@@ -52,7 +52,7 @@ Agent 面板提供两个独立方向。
 
 高风险操作始终需要逐项批准，也不能记成“以后都允许”。`docker.restart` 标记为 `high`，即使运行在 `auto` 模式，也会回落为单独审批。外部 MCP 工具全部按 `critical` 处理，服务器自己声明的风险等级不会直接采信。
 
-MCP 工具和内置工具共用同一套 registry、执行路径与取消令牌。宿主负责启动或连接 MCP server、读取工具目录并校验名称，sidecar 只能看到被放行的工具。
+MCP 工具和内置工具共用同一套 registry、执行路径与取消令牌。宿主负责启动或连接 MCP server、读取工具目录并校验名称，sidecar 只能看到被放行的工具。任何会产生副作用的内置工具和 MCP 调用，都要绑定具体任务、变更计划和计划步骤，普通聊天拿不到这条执行路径。
 
 ## 桌面工作区
 
@@ -64,27 +64,35 @@ MCP 工具和内置工具共用同一套 registry、执行路径与取消令牌�
 
 连接、配置变更和 Agent 工具执行都会写入活动表。Agent 对话记录也保存在 SQLite 中，可以按时间分组、搜索标题与正文、筛选状态、分页、重命名、归档和删除。
 
-## Agent 运行时
+## Agent 从对话变成任务
 
 Node.js sidecar 负责一轮完整 agent loop，包含组装上下文、调用模型、解析工具、请求授权、执行和回填结果。单次运行默认最多 25 步，墙钟上限为 15 分钟。
 
-内置工具包括 `system.echo`、`server.info`、`docker.ps`、`docker.logs`、`docker.inspect`、`docker.restart`、`filesystem.read`、`filesystem.write` 和 `filesystem.edit`。除了 `system.echo`，其余工具都通过宿主侧执行。
+Agent 现在可以把一次排查保存为任务。只读健康巡检会按健康快照、日志、服务和 Docker 清单收集证据，模型再据此整理 finding、决策摘要或变更计划。证据带有宿主计算的新鲜度，旧样本仍能回看，但变更前必须重新采集。
+
+写入、编辑、备份与恢复、重启、包安装和 MCP 调用不能从对话直接跳到远端。它们必须落在已批准的 ChangePlan 步骤上，宿主会复核任务、目标、输入指纹和审批 ticket。换了文件路径、服务名或包版本，就会重新进入授权流程。
+
+任务可以设置时间窗口、禁止的内部工具和绝对路径前缀。失败后的恢复会关闭旧 run、审批、基线和观察窗口，迟到事件也不能把已经停止或恢复过的任务重新打开。持续巡检只会在应用运行时按本地调度执行，比较当前样本和固定或最近的成功基线。发现变化后，它只能在原有范围内继续做只读复核，不能自行写文件、重启服务或扩大目标。
+
+内置工具覆盖服务器信息、Docker、日志与服务发现、受限文件读写、宿主生成备份与守卫恢复，以及证据检索、比较、关联和候选信号整理。除了 `system.echo`，涉及本机资源或远端服务器的工具都通过宿主侧执行。
 
 附件输入已经接通。图片支持 PNG、JPEG、WebP 和 GIF，文档支持 PDF 与 UTF-8 文本，音频支持 WAV、MP3、OGG 和 FLAC。格式按魔数校验，文件数量和总大小都有上限。
 
-每次运行都会记录 trace。被策略拒绝或被驳回的调用也会正常收尾，不会留下永久处于 `running` 的步骤。Agent 回复使用独立 Markdown 解析器渲染，HTML 只按文本显示，远程图片默认不加载。
+每次运行都会记录 trace。被策略拒绝或被驳回的调用也会正常收尾，不会留下永久处于 `running` 的步骤。Agent 回复使用独立 Markdown 解析器渲染，HTML 只按文本显示，远程图片需要用户同意后才会加载。
 
 ![Yukinal 终端工作区](/yukinal/yukinal-terminal.png)
 
-## MCP 同时支持 stdio 和 HTTP
+## MCP 服务由宿主托管
 
-主分支已经支持 stdio 与 Streamable HTTP 两种传输。HTTP 会处理 `Mcp-Session-Id`、协议版本、JSON 与 SSE 回包、可选 GET 事件流、取消通知和会话删除。
+主分支已经支持 stdio 与 Streamable HTTP 两种传输。stdio 进程、HTTP 会话、`initialize` 握手、工具目录、调用超时、取消和退出记录都在 Rust 宿主里完成。Agent 只把经审核的目录注册成工具，不会自己派生进程或建立网络连接。
+
+HTTP 会处理 `Mcp-Session-Id`、协议版本、JSON 与 SSE 回包、可选 GET 事件流、取消通知和会话删除。远程 endpoint 必须使用 HTTPS，明文 HTTP 只允许回环地址，URL 里的凭据、查询参数和 fragment 会被拒绝，重定向也不会跟随。
 
 每个 endpoint 最多可以配置 16 条有序静态认证头。secret 只进入系统凭据库，配置文件里保留引用。OAuth 支持 authorization code 与 PKCE S256，也支持 RFC 8628 设备码流程，以及 `client_secret_post` 和 `client_secret_basic`。
 
 DPoP 可以按需开启。开启后每台服务器使用一把 Ed25519 密钥，请求 proof 绑定方法、URL 和 access token，密钥仍然只进入系统凭据库。
 
-MCP server 崩溃后会进行有界退避重建。工具需要先在设置页审核，之后每次调用仍然要经过审批。
+MCP server 崩溃后会进行有界退避重建，恢复时只重建进程和工具目录，不会重放中断的调用。工具需要先在设置页审核，只有 `allowedTools` 中的条目会交给 Agent。审核决定模型能否看见工具，不能降低风险等级，每次调用仍然需要逐项批准和计划步骤。
 
 2026-09-15 的互操作测试覆盖了官方 `@modelcontextprotocol/server-everything` 的 Streamable HTTP、官方 TypeScript SDK 的 JSON 回包，以及两个独立 stdio server。这些结果说明主路径可用，不能代表所有第三方实现都兼容。
 
@@ -96,11 +104,11 @@ React 19 + Vite
         | Tauri IPC
         v
 Rust 宿主
-  SSH · PTY · 采集 · SQLite · 凭据库 · sidecar · MCP
+  SSH · PTY · 采集 · SQLite · 凭据库 · 任务 · 计划 · MCP
         |                           |
         v                           v
   远程服务器                  Node.js Agent sidecar
-  systemd / Docker            agent loop · tools · providers · MCP
+  systemd / Docker            agent loop · 证据 · tools · providers · MCP
                                       |
                                       v
                               OpenAI-compatible / Anthropic / Gemini
@@ -116,7 +124,7 @@ sidecar 的 stdout 只承载协议帧，双方使用 NDJSON 编码的 JSON-RPC 2
 
 SSH 认证覆盖密码、私钥、带口令私钥、OpenSSH 用户证书、ssh-agent 和 keyboard-interactive 多因素认证。第二因素提示只存在于当前认证轮次，不写 SQLite、keychain、活动审计或日志。
 
-首次连接会记录主机与端口指纹。后续指纹不一致时连接会被拒绝，界面同时显示已保存和服务器出示的两个指纹。服务器还可以配置受信 host CA、principal 模式和 OpenSSH KRL，KRL 支持本地文件或 HTTPS，并有独立的 signer 轮换和 16 MiB 下载上限。
+首次连接不会自动信任主机。用户需要先探测并对照服务器出示的指纹，再明确保存信任记录。后续指纹不一致时连接会被拒绝，界面同时显示已保存和服务器出示的两个指纹。服务器还可以配置受信 host CA、principal 模式和 OpenSSH KRL，KRL 支持本地文件或 HTTPS，并有独立的 signer 轮换和 16 MiB 下载上限。
 
 SQLite 只保存凭据引用，密钥进入操作系统凭据库。Provider key 在每次运行开始时由 Rust 解析，通过一次性参数交给 sidecar，不写配置和日志。审计输入会按键名脱敏，`filesystem.read` 的正文不会进入审计，sidecar 日志离开进程前也会清理凭据。
 
@@ -155,6 +163,8 @@ Windows 的 NSIS 安装包和 WiX `.msi` 已经在本机构建成功，但没有
 真实 Provider API、图片、PDF 和音频映射还没有经过真实端点确认。Anthropic Messages 不支持音频块，带音频时会明确失败。多模态预算也有上限，图片单张最多 4 MiB、最多 4 张，PDF 单文件最多 3 MiB、最多 2 个，音频单段最多 4 MiB、最多 2 段，三者共用 5 MiB 原始字节预算。
 
 MCP 互操作只完成了抽样验证，不构成兼容保证。取消是标准通知，不是回滚，server 可以忽略通知。`filesystem.edit` 有并发守卫，但不能做到完整的 compare-and-swap，同秒同大小的远端改写仍可能无法区分。
+
+任务、计划、恢复和持续巡检的主要验收目前是本地 SQLite、受控 fixture、回环 sidecar 和 WSL OpenSSH 路径。它们证明了状态机和边界的实现，不能外推出真实公网服务器、第三方 MCP 或长期运行时的行为。持续巡检也不是系统服务，应用退出期间不会在后台补跑。
 
 仓库的剩余缺口写在 [limitations](https://github.com/Bad0RANG3/Yukinal/blob/main/docs/limitations.md)，设计取舍记在 [ADR](https://github.com/Bad0RANG3/Yukinal/blob/main/docs/adr.md)。
 
