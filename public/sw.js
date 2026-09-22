@@ -2,7 +2,7 @@
    Navigation is network-first so a deploy is picked up immediately; subresources
    use stale-while-revalidate so hashed assets are instant while still updating.
    Range requests (the music player's audio seeks) bypass the cache entirely. */
-const CACHE_VERSION = 'b0-static-v4';
+const CACHE_VERSION = 'b0-static-v5';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 
