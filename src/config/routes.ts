@@ -22,6 +22,8 @@ export const ROUTES = {
   RSS: '/rss.xml',
   ATOM: '/atom.xml',
   JSON_FEED: '/feed.json',
+  MANIFEST: '/manifest.webmanifest',
+  SERVICE_WORKER: '/sw.js',
 } as const;
 
 /** Builds paths for content addressed by a runtime value. */

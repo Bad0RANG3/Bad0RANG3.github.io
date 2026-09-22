@@ -1,11 +1,12 @@
 ---
 import '../styles/global.css';
+import { ClientRouter } from 'astro:transitions';
 import SiteHeader from '../components/layout/SiteHeader.astro';
 import SiteFooter from '../components/layout/SiteFooter.astro';
 import SearchModal from '../components/search/SearchModal.astro';
 import { ROUTES } from '../config/routes';
 import { SITE, siteConfig } from '../config/site';
-import { ANIMATION, LAYOUT } from '../config/ui';
+import { LAYOUT } from '../config/ui';
 import { siteUrl, withBase } from '../lib/urls';
 
 interface Breadcrumb {
@@ -51,8 +52,12 @@ const siteRootUrl = siteUrl('/');
 const canonicalUrl = canonical ? siteUrl(canonical) : siteUrl(currentPath);
 const socialImageUrl = siteUrl(ogImage);
 const authorImageUrl = siteUrl(siteConfig.author.avatar);
-const pageExitDuration = ANIMATION.PAGE_EXIT_DURATION;
 const backToTopThreshold = LAYOUT.BACK_TO_TOP_THRESHOLD;
+const themeLight = 'paper';
+const themeDark = 'paper-dark';
+const themeColorLight = SITE.THEME_COLOR_DARK;
+const themeColorDark = SITE.THEME_COLOR;
+const isProduction = import.meta.env.PROD;
 const japaneseFontFaces = [
   ['yuruka-kana.woff2', 'U+3000-303F,U+3040-309F,U+30A0-30FF,U+31F0-31FF,U+FF00-FFEF'],
   ['yuruka-cjk1.woff2', 'U+4E00-77FF'],
@@ -60,7 +65,7 @@ const japaneseFontFaces = [
 ].map(([file, range]) => `@font-face{font-family:"Yuruka Article";src:url("${withBase(`/fonts/${file}`)}") format("woff2");font-weight:400 700;font-style:normal;font-display:swap;unicode-range:${range};}`).join('');
 const pageBreadcrumbs = breadcrumbs ?? [
   { name: '首页', path: '/' },
-  ...(currentPath === withBase('/') ? [] : [{ name: title, path: currentPath }]),
+  ...(currentPath === withBase(ROUTES.HOME) ? [] : [{ name: title, path: currentPath }]),
 ];
 
 const personJsonLd = {
@@ -133,14 +138,15 @@ const jsonLd = {
   <meta name="author" content={siteConfig.author.name}>
   <meta name="theme-color" id="meta-theme-color" content={SITE.THEME_COLOR}>
   <meta name="color-scheme" content="light dark">
+  <ClientRouter />
   <style is:inline set:html={japaneseFontFaces}></style>
-  <script is:inline define:vars={{ themeStorageKey: SITE.THEME_STORAGE_KEY, themeLight: SITE.THEME, themeDark: 'paper-dark', themeColorLight: SITE.THEME_COLOR, themeColorDark: SITE.THEME_COLOR_DARK }}>
+  <script is:inline define:vars={{ themeStorageKey: SITE.THEME_STORAGE_KEY, themeLight, themeDark, themeColorLight, themeColorDark }}>
     // @ts-nocheck
     (function () {
       try {
         var key = themeStorageKey;
         var stored = localStorage.getItem(key);
-        var theme = stored === 'paper-dark' || stored === 'paper'
+        var theme = stored === themeDark || stored === themeLight
           ? stored
           : (window.matchMedia('(prefers-color-scheme: dark)').matches ? themeDark : themeLight);
         document.documentElement.setAttribute('data-theme', theme);
@@ -154,10 +160,10 @@ const jsonLd = {
   <meta name="robots" content={noindex ? "noindex, follow" : "index, follow"}>
 
   <link rel="canonical" href={canonicalUrl}>
-  <link rel="manifest" href={withBase('/manifest.webmanifest')}>
+  <link rel="manifest" href={withBase(ROUTES.MANIFEST)}>
   <link rel="alternate" type="application/rss+xml" title={`${siteConfig.title} RSS`} href={withBase(ROUTES.RSS)}>
-  <link rel="alternate" type="application/atom+xml" title={`${siteConfig.title} Atom`} href={withBase('/atom.xml')}>
-  <link rel="alternate" type="application/feed+json" title={`${siteConfig.title} JSON Feed`} href={withBase('/feed.json')}>
+  <link rel="alternate" type="application/atom+xml" title={`${siteConfig.title} Atom`} href={withBase(ROUTES.ATOM)}>
+  <link rel="alternate" type="application/feed+json" title={`${siteConfig.title} JSON Feed`} href={withBase(ROUTES.JSON_FEED)}>
   <link rel="icon" href={withBase('/ico.ico')} type="image/x-icon">
 
   <!-- Open Graph -->
@@ -186,7 +192,15 @@ const jsonLd = {
   <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)}></script>
 </head>
 
-<body class="flex flex-col min-h-screen bg-base-100 text-base-content overflow-x-hidden">
+  <body class="site-body flex min-h-screen flex-col overflow-x-hidden bg-base-100 text-base-content">
+  <div class="site-atmosphere" aria-hidden="true" transition:persist="site-atmosphere">
+    <canvas id="sakura-canvas"></canvas>
+    <span class="atmosphere-orb atmosphere-orb--pink"></span>
+    <span class="atmosphere-orb atmosphere-orb--violet"></span>
+    <span class="atmosphere-orb atmosphere-orb--blue"></span>
+    <span class="atmosphere-grid"></span>
+    <span class="atmosphere-noise"></span>
+  </div>
   <SiteHeader currentPath={currentPath} />
   <main id="main-content" class="page-enter w-full flex-1">
     <slot />
@@ -194,18 +208,162 @@ const jsonLd = {
   <SiteFooter />
   <SearchModal />
 
+  <script is:inline>
+    (() => {
+      const canvas = document.getElementById('sakura-canvas');
+      if (!(canvas instanceof HTMLCanvasElement) || canvas.dataset.bound === '1') return;
+      canvas.dataset.bound = '1';
+      const context = canvas.getContext('2d');
+      if (!context) return;
+
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+      let blossoms = [];
+      let motes = [];
+      let frame = 0;
+      let width = 0;
+      let height = 0;
+      let ratio = 1;
+
+      const seed = () => {
+        // Keep the scene visibly lively without letting the canvas become a frame-rate tax.
+        const amount = Math.min(36, Math.max(16, Math.round((width * height) / 90000)));
+        blossoms = Array.from({ length: amount }, (_, index) => ({
+          x: Math.random() * width,
+          y: Math.random() * height,
+          radius: 18 + Math.random() * 46,
+          depth: 0.38 + Math.random() * 0.62,
+          speed: 0.05 + Math.random() * 0.1,
+          sway: 0.00016 + Math.random() * 0.00034,
+          phase: Math.random() * Math.PI * 2,
+          alpha: 0.07 + Math.random() * 0.13,
+          spin: (Math.random() - 0.5) * 0.0009,
+          angle: Math.random() * Math.PI,
+          tone: index % 3,
+        }));
+
+        motes = Array.from({ length: Math.min(18, Math.max(10, Math.round(width / 96))) }, () => ({
+          x: Math.random() * width,
+          y: Math.random() * height,
+          size: 1 + Math.random() * 2.8,
+          speed: 0.08 + Math.random() * 0.22,
+          phase: Math.random() * Math.PI * 2,
+          alpha: 0.08 + Math.random() * 0.14,
+        }));
+      };
+
+      const resize = () => {
+        ratio = Math.min(window.devicePixelRatio || 1, 1.4);
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = Math.round(width * ratio);
+        canvas.height = Math.round(height * ratio);
+        canvas.style.width = `${width}px`;
+        canvas.style.height = `${height}px`;
+        context.setTransform(ratio, 0, 0, ratio, 0, 0);
+        seed();
+      };
+
+      const drawBlossom = (flower, time) => {
+        const driftX = Math.sin(time * flower.sway + flower.phase) * 22 * flower.depth;
+        const driftY = Math.cos(time * flower.sway * 0.72 + flower.phase) * 13 * flower.depth;
+        const colors = [
+          ['#ff91af', '#ffd3df'],
+          ['#e56e91', '#ffb6c9'],
+          ['#b174b7', '#efafd5'],
+        ];
+        const [outer, inner] = colors[flower.tone];
+
+        context.save();
+        context.translate(flower.x + driftX, flower.y + driftY);
+        context.rotate(flower.angle);
+        const edgeDistance = Math.abs((flower.x / Math.max(width, 1)) - 0.5) * 2;
+        context.globalAlpha = flower.alpha * (0.42 + edgeDistance * 0.58);
+        context.lineWidth = Math.max(0.7, flower.radius * 0.018);
+        context.strokeStyle = outer;
+
+        for (let petal = 0; petal < 5; petal += 1) {
+          context.save();
+          context.rotate((Math.PI * 2 * petal) / 5);
+          context.beginPath();
+          context.ellipse(0, -flower.radius * 0.37, flower.radius * 0.25, flower.radius * 0.46, 0, 0, Math.PI * 2);
+          context.fillStyle = petal % 2 === 0 ? outer : inner;
+          context.fill();
+          context.stroke();
+          context.restore();
+        }
+
+        context.beginPath();
+        context.arc(0, 0, flower.radius * 0.13, 0, Math.PI * 2);
+        context.fillStyle = '#ffe2c5';
+        context.fill();
+        context.restore();
+      };
+
+      const drawMote = (mote, time) => {
+        context.save();
+        context.translate(mote.x + Math.sin(time * 0.00045 + mote.phase) * 18, mote.y);
+        context.rotate(mote.phase + time * 0.00016);
+        context.globalAlpha = mote.alpha;
+        context.fillStyle = '#ffd1df';
+        context.beginPath();
+        context.ellipse(0, 0, mote.size * 1.8, mote.size, Math.PI / 4, 0, Math.PI * 2);
+        context.fill();
+        context.restore();
+      };
+
+      const render = () => {
+        const time = performance.now();
+        context.clearRect(0, 0, width, height);
+        blossoms.forEach((flower) => {
+          drawBlossom(flower, time);
+          if (!reduceMotion.matches) {
+            flower.y += flower.speed;
+            flower.angle += flower.spin;
+          }
+          if (flower.y - flower.radius > height + 50) {
+            flower.x = Math.random() * width;
+            flower.y = -flower.radius - Math.random() * height * 0.18;
+          }
+        });
+
+        motes.forEach((mote) => {
+          drawMote(mote, time);
+          if (!reduceMotion.matches) mote.y += mote.speed;
+          if (mote.y > height + 12) {
+            mote.x = Math.random() * width;
+            mote.y = -12;
+          }
+        });
+
+        if (!reduceMotion.matches) frame = requestAnimationFrame(render);
+      };
+
+      const refresh = () => {
+        cancelAnimationFrame(frame);
+        resize();
+        render();
+      };
+
+      window.addEventListener('resize', refresh, { passive: true });
+      reduceMotion.addEventListener?.('change', refresh);
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) cancelAnimationFrame(frame);
+        else refresh();
+      });
+      refresh();
+    })();
+  </script>
+
   <!-- Back to top -->
-  <button id="back-to-top" class="fixed bottom-6 right-6 z-50 btn btn-circle btn-primary border-2 border-base-content shadow-[4px_4px_0_0] shadow-base-content" aria-label="回到顶部" title="回到顶部">
+  <button id="back-to-top" class="back-to-top fixed bottom-6 right-6 z-50" aria-label="回到顶部" title="回到顶部" transition:persist="back-to-top">
     <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 15l-6-6-6 6"/></svg>
   </button>
 
-  <script is:inline define:vars={{ pageExitDuration, backToTopThreshold }}>
+  <script is:inline define:vars={{ backToTopThreshold }}>
     // @ts-nocheck
     /* ── Page transition + back-to-top + table wrapping ── */
     (function(){
-      const PAGE_EXIT_DURATION = pageExitDuration;
       const BACK_TO_TOP_THRESHOLD = backToTopThreshold;
-      let navigationLocked = false;
 
       const getPageRoot = () => {
         const el = document.querySelector('.page-enter');
@@ -218,33 +376,6 @@ const jsonLd = {
         root.style.animation = 'none';
         void root.offsetWidth;
         root.style.animation = '';
-      };
-
-      /* Smooth SPA-like navigation */
-      const handleTransition = (e) => {
-        const t = e.target;
-        if (!(t instanceof Element)) return;
-        const a = t.closest('a');
-        if (!(a instanceof HTMLAnchorElement)) return;
-        if (navigationLocked || e.defaultPrevented) return;
-        if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-        if (a.target && a.target !== '_self') return;
-        if (a.hasAttribute('download')) return;
-        const href = a.getAttribute('href');
-        if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:')) return;
-
-        let url;
-        try { url = new URL(a.href, window.location.href); } catch(_) { return; }
-        if (url.origin !== window.location.origin) return;
-        if (url.pathname === window.location.pathname && url.search === window.location.search) return;
-
-        const root = getPageRoot();
-        if (!root || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-        e.preventDefault();
-        navigationLocked = true;
-        root.classList.add('is-leaving');
-        setTimeout(() => { window.location.assign(url.toString()); }, PAGE_EXIT_DURATION);
       };
 
       /* Keep article tables readable on narrow screens without widening the page. */
@@ -260,17 +391,14 @@ const jsonLd = {
 
       /* Init */
       const init = () => {
-        navigationLocked = false;
         const root = getPageRoot();
         if (root) root.classList.remove('is-leaving');
         triggerPageEnter();
         wrapTables();
       };
 
-      document.addEventListener('click', handleTransition);
       document.addEventListener('astro:page-load', init);
       window.addEventListener('pageshow', () => {
-        navigationLocked = false;
         const root = getPageRoot();
         if (root) {
           root.classList.remove('is-leaving');
@@ -289,7 +417,7 @@ const jsonLd = {
     })();
   </script>
 
-  <script is:inline define:vars={{ themeStorageKey: SITE.THEME_STORAGE_KEY, themeLight: SITE.THEME, themeDark: 'paper-dark', themeColorLight: SITE.THEME_COLOR, themeColorDark: SITE.THEME_COLOR_DARK }}>
+  <script is:inline define:vars={{ themeStorageKey: SITE.THEME_STORAGE_KEY, themeLight, themeDark, themeColorLight, themeColorDark }}>
     // @ts-nocheck
     (function () {
       var KEY = themeStorageKey;
@@ -298,6 +426,14 @@ const jsonLd = {
 
       function currentTheme() {
         return document.documentElement.getAttribute('data-theme') === DARK ? DARK : LIGHT;
+      }
+
+      function storedTheme() {
+        try {
+          var stored = localStorage.getItem(KEY);
+          if (stored === DARK || stored === LIGHT) return stored;
+        } catch (e) {}
+        return currentTheme();
       }
 
       function updateToggleUI(theme) {
@@ -332,14 +468,23 @@ const jsonLd = {
         updateToggleUI(currentTheme());
       }
 
-      bindToggle();
-      document.addEventListener('astro:page-load', bindToggle);
-      window.addEventListener('pageshow', function () { updateToggleUI(currentTheme()); });
+      function refreshTheme() {
+        applyTheme(storedTheme(), false);
+        bindToggle();
+      }
+
+      refreshTheme();
+      document.addEventListener('astro:page-load', refreshTheme);
+      window.addEventListener('pageshow', refreshTheme);
     })();
   </script>
 
-  <script is:inline define:vars={{ serviceWorkerUrl: withBase('/sw.js'), serviceWorkerScope: withBase('/') }}>
-    if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  <script is:inline define:vars={{ isProduction, serviceWorkerUrl: withBase(ROUTES.SERVICE_WORKER), serviceWorkerScope: withBase(ROUTES.HOME) }}>
+    if (!isProduction && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        registrations.forEach((registration) => registration.unregister());
+      }).catch(() => {});
+    } else if ('serviceWorker' in navigator && location.protocol === 'https:') {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register(serviceWorkerUrl, { scope: serviceWorkerScope }).catch(() => {});
       });

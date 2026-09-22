@@ -1,6 +1,6 @@
 ---
 // Reusable SVG icon components — import Icon from '../icons/Icon.astro'
-export type IconName = 'calendar' | 'clock' | 'search' | 'menu' | 'close' | 'chevron-right' | 'star' | 'book' | 'info' | 'location' | 'arrow-up' | 'logo' | 'external-link' | 'arrow-up-right' | 'sun' | 'moon';
+export type IconName = 'calendar' | 'clock' | 'search' | 'menu' | 'close' | 'chevron-right' | 'star' | 'book' | 'info' | 'location' | 'arrow-up' | 'logo' | 'external-link' | 'arrow-up-right' | 'sun' | 'moon' | 'tool' | 'github' | 'music';
 interface Props { name: IconName; class?: string; }
 const { name, class: className = 'h-5 w-5' } = Astro.props;
 ---
@@ -20,3 +20,6 @@ const { name, class: className = 'h-5 w-5' } = Astro.props;
 {name === 'external-link' && <svg class={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>}
 {name === 'sun' && <svg class={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>}
 {name === 'moon' && <svg class={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 14.5A8.5 8.5 0 1 1 9.5 3a7 7 0 0 0 11.5 11.5z"/></svg>}
+{name === 'tool' && <svg class={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a4 4 0 0 0-5-5L7.3 3.7l3 3L12.7 4.3a4 4 0 0 0 2 5L6 18l-2 2 2 2 2-2 8.7-8.7a4 4 0 0 0 5-5l-2.4 2.4-3-3z"/></svg>}
+{name === 'github' && <svg class={className} viewBox="0 0 24 24" fill="currentColor"><path d="M12 .7a11.5 11.5 0 0 0-3.6 22.4c.6.1.8-.2.8-.5v-2.2c-3.3.7-4-1.4-4-1.4-.5-1.4-1.3-1.8-1.3-1.8-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1.1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.8-1.6-2.6-.3-5.4-1.3-5.4-5.7 0-1.3.4-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.2 1.2a11 11 0 0 1 5.9 0c2.2-1.5 3.2-1.2 3.2-1.2.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.4 5.7.4.4.8 1.1.8 2.2v3.3c0 .3.2.6.8.5A11.5 11.5 0 0 0 12 .7z"/></svg>}
+{name === 'music' && <svg class={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>}

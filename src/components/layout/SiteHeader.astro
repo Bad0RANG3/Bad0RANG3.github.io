@@ -1,5 +1,6 @@
 ---
 import { siteConfig } from '../../config/site';
+import { ROUTES } from '../../config/routes';
 import MobileDrawer from './MobileDrawer.astro';
 import Icon from '../icons/Icon.astro';
 import { isActivePath, withBase } from '../../lib/urls';
@@ -7,77 +8,559 @@ import { isActivePath, withBase } from '../../lib/urls';
 interface Props { currentPath: string; }
 const { currentPath } = Astro.props;
 const isActive = (href: string) => isActivePath(currentPath, href);
+const islandHrefs = [ROUTES.HOME, ROUTES.POSTS, ROUTES.PROJECTS, ROUTES.TOOLS, ROUTES.ABOUT];
+const islandNavigation = islandHrefs
+  .map((href) => siteConfig.navigation.find((item) => item.href === href))
+  .filter((item): item is (typeof siteConfig.navigation)[number] => Boolean(item));
+const player = siteConfig.music;
+const navigationIconByHref = {
+  [ROUTES.HOME]: 'logo',
+  [ROUTES.POSTS]: 'book',
+  [ROUTES.PROJECTS]: 'arrow-up-right',
+  [ROUTES.TOOLS]: 'tool',
+  [ROUTES.ABOUT]: 'info',
+} as const;
+const playerCover = withBase(player.cover);
+const playerAudio = withBase(player.audio);
+const playerLyrics = withBase(player.lyrics);
 ---
 
-<header class="sticky top-0 z-50 border-b-2 border-base-content/10 bg-base-100/80 backdrop-blur-xl">
-  <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[999] focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-content">跳到内容</a>
+<header class="site-header">
+  <a href="#main-content" class="skip-link">跳到内容</a>
 
-  <div class="site-frame">
-    <div class="flex h-[4.25rem] items-center justify-between gap-4">
-      <a href={withBase('/')} class="group flex min-w-0 items-center gap-3" aria-label={siteConfig.title}>
-        <span class="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-[1rem] border-2 border-base-content bg-gradient-to-br from-primary via-secondary to-accent p-[2px] shadow-[4px_4px_0_0] shadow-base-content">
-          <img
-            src={withBase(siteConfig.author.avatar)}
-            alt={siteConfig.author.name}
-            width="44"
-            height="44"
-            class="h-full w-full rounded-[0.85rem] object-cover object-center bg-base-100"
-            loading="eager"
-            decoding="async"
-          />
-        </span>
-        <span class="min-w-0">
-          <span class="block truncate text-sm font-black tracking-tight sm:text-base">
-            <span class="bg-gradient-to-r from-primary via-[#ff2d87] to-accent bg-clip-text text-transparent">Bad0RANG3</span>
-          </span>
-          <span class="hidden text-[0.65rem] font-black uppercase tracking-[0.16em] text-base-content/40 sm:block">个人空间</span>
-        </span>
-      </a>
+  <div class="dynamic-island music-island" id="site-island" data-open="false" data-volume-open="false" data-cue-active="false" data-player-state="idle" data-api-base={player.apiBase} data-audio-src={playerAudio} data-lyrics-src={playerLyrics} data-song-id={String(player.id)} data-song-duration={String(player.durationSeconds)} data-song-title={player.title} transition:persist="site-music-player">
+    <button
+      class="island-summary"
+      id="site-island-toggle"
+      type="button"
+      aria-expanded="false"
+      aria-controls="site-island-panel"
+      aria-label={`展开 ${player.title} 的播放器`}
+    >
+      <img class="island-mini-art" src={playerCover} alt="" width="32" height="32" loading="eager" />
+      <span class="island-summary-copy">
+        <span class="island-track-title">{player.title}</span>
+        <span class="island-track-artist">{player.artist}</span>
+      </span>
+      <span class="island-mini-wave" data-audio-visualizer="compact" aria-hidden="true">
+        {Array.from({ length: 8 }).map((_, index) => <i style={`--visualizer-index:${index}`} />)}
+      </span>
+    </button>
 
-      <nav class="hidden items-center gap-1 rounded-full border-2 border-base-content/10 bg-base-200/70 p-1 lg:flex" aria-label="主导航">
-        {siteConfig.navigation.map(item => {
-          const active = isActive(item.href);
-          return (
-            <a
-              href={withBase(item.href)}
-              class:list={[
-                'relative rounded-full px-3.5 py-2 text-sm font-bold transition-all',
-                active
-                  ? 'border border-base-content bg-primary text-primary-content shadow-[3px_3px_0_0] shadow-base-content'
-                  : 'text-base-content/65 hover:bg-base-100 hover:text-base-content',
-              ]}
-              aria-current={active ? 'page' : undefined}
-            >
-              {item.label}
-            </a>
-          );
-        })}
-      </nav>
+    <div class="island-section-cue" id="island-section-cue" aria-hidden="true">
+      <span class="island-cue-pulse"></span>
+      <span class="island-cue-copy">
+        <small>SECTION</small>
+        <strong id="island-section-label">首页概览</strong>
+      </span>
+    </div>
 
-      <div class="flex items-center gap-2">
-        <button
-          id="theme-toggle"
-          type="button"
-          class="btn btn-ghost btn-circle border-2 border-base-content/10 bg-base-200/50 hover:border-secondary/50 hover:bg-secondary/15"
-          aria-label="切换深色模式"
-          title="切换亮色 / 深色"
-        >
-          <span class="theme-icon-sun" aria-hidden="true">
-            <Icon name="sun" class="h-5 w-5" />
-          </span>
-          <span class="theme-icon-moon" aria-hidden="true">
-            <Icon name="moon" class="h-5 w-5" />
-          </span>
+    <div class="island-panel island-player-panel" id="site-island-panel">
+      <div class="island-player-heading">
+        <img class="island-player-art" src={playerCover} alt={`${player.album} 封面`} width="66" height="66" loading="eager" />
+        <div class="island-player-copy">
+          <div class="island-player-kicker-row">
+            <span class="island-player-kicker">网易云音乐 · LOCAL</span>
+            <span class="island-player-status" id="island-player-status" role="status" aria-live="polite"></span>
+          </div>
+          <strong>{player.title}</strong>
+          <span>{player.artist} · {player.album}</span>
+          <p class="island-player-lyric" id="island-player-lyric">前奏里，故事正准备开始。</p>
+        </div>
+      </div>
+      <div class="island-audio-visualizer" data-audio-visualizer="full" aria-hidden="true">
+        {Array.from({ length: 24 }).map((_, index) => <i style={`--visualizer-index:${index}`} />)}
+      </div>
+      <div class="island-player-timeline">
+        <input id="island-player-scrubber" type="range" min="0" max={player.durationSeconds} value="0" step="0.1" disabled aria-label="播放进度" />
+        <div><span id="island-player-elapsed">0:00</span><span id="island-player-duration">{player.durationLabel}</span></div>
+      </div>
+      <div class="island-player-actions">
+        <div class="island-player-secondary">
+          <a class="island-player-external" href={player.officialUrl} target="_blank" rel="noreferrer" aria-label="在网易云音乐中打开这首歌" title="在网易云音乐中打开">
+            <Icon name="external-link" class="h-4 w-4" />
+          </a>
+          <div class="island-volume-control" id="island-volume-control">
+            <button class="island-volume-button" id="island-volume-button" type="button" aria-label="调整音量" aria-controls="island-volume-menu" aria-expanded="false">
+              <svg class="volume-icon volume-icon--on" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              <svg class="volume-icon volume-icon--muted" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="m17 9 4 4m0-4-4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </button>
+            <div class="island-volume-menu" id="island-volume-menu" role="group" aria-label="音量控制">
+              <button class="island-volume-mute" id="island-volume-mute" type="button" aria-label="静音">
+                <svg class="volume-icon volume-icon--on" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 8.5a5 5 0 0 1 0 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                <svg class="volume-icon volume-icon--muted" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="m17 9 4 4m0-4-4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              </button>
+              <input id="island-volume-slider" type="range" min="0" max="1" value="0.72" step="0.01" aria-label="播放器音量" />
+              <output id="island-volume-value" for="island-volume-slider">72%</output>
+            </div>
+          </div>
+        </div>
+        <button class="island-player-toggle" id="island-player-toggle" type="button" aria-label={`播放 ${player.title}`}>
+          <svg class="player-icon player-icon--play" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7z" /></svg>
+          <svg class="player-icon player-icon--pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5h3v14H8zm5 0h3v14h-3z" /></svg>
         </button>
-        <button id="search-btn" type="button" class="btn btn-ghost btn-circle border-2 border-base-content/10 bg-base-200/50 hover:border-primary/40 hover:bg-primary/10" aria-label="搜索" title="搜索">
-          <Icon name="search" class="h-5 w-5" />
-        </button>
-        <button id="mobile-menu-btn" type="button" class="btn btn-ghost btn-circle border-2 border-base-content/10 bg-base-200/50 lg:hidden" aria-label="菜单" aria-controls="mobile-drawer" aria-expanded="false">
-          <Icon name="menu" class="h-5 w-5" />
+        <button class="island-player-close" id="island-player-close" type="button" aria-label="收起播放器">
+          <Icon name="close" class="h-4 w-4" />
         </button>
       </div>
     </div>
+    <audio id="site-island-audio" src={playerAudio} preload="metadata" data-source-ready="true"></audio>
+  </div>
+
+  <div class="header-actions">
+    <button id="theme-toggle" type="button" class="header-action" aria-label="切换深色模式" title="切换亮色 / 深色">
+      <span class="theme-icon-sun" aria-hidden="true"><Icon name="sun" class="h-4 w-4" /></span>
+      <span class="theme-icon-moon" aria-hidden="true"><Icon name="moon" class="h-4 w-4" /></span>
+    </button>
+    <button id="search-btn" type="button" class="header-action" aria-label="搜索" title="搜索"><Icon name="search" class="h-4 w-4" /></button>
+    <button id="mobile-menu-btn" type="button" class="header-action mobile-menu-action" aria-label="打开全部入口" aria-controls="mobile-drawer" aria-expanded="false" data-drawer-trigger><Icon name="menu" class="h-4 w-4" /></button>
   </div>
 </header>
 
+<aside class="site-nav-rail" aria-label="站点导航">
+  <nav>
+    {islandNavigation.map((item) => {
+      const active = isActive(item.href);
+      return (
+        <a href={withBase(item.href)} class:list={['rail-link', active && 'is-active']} aria-current={active ? 'page' : undefined}>
+          <span class="rail-icon"><Icon name={navigationIconByHref[item.href as keyof typeof navigationIconByHref]} class="h-4 w-4" /></span>
+          <span class="rail-label">{item.label}</span>
+        </a>
+      );
+    })}
+    <span class="rail-divider" aria-hidden="true"></span>
+    <button class="rail-link rail-menu-button" id="rail-menu-btn" type="button" aria-label="打开全部入口" aria-controls="mobile-drawer" aria-expanded="false" data-drawer-trigger>
+      <span class="rail-icon"><Icon name="menu" class="h-4 w-4" /></span>
+      <span class="rail-label">全部入口</span>
+    </button>
+  </nav>
+</aside>
+
 <MobileDrawer currentPath={currentPath} />
+
+<script is:inline>
+  (() => {
+    const island = document.getElementById('site-island');
+    const toggle = document.getElementById('site-island-toggle');
+    const audio = document.getElementById('site-island-audio');
+    if (!(island instanceof HTMLElement) || !(toggle instanceof HTMLButtonElement) || !(audio instanceof HTMLAudioElement) || island.dataset.bound === '1') return;
+    island.dataset.bound = '1';
+    const songId = island.dataset.songId || '';
+    const songDuration = Number(island.dataset.songDuration || 0);
+    const playbackApiBase = island.dataset.apiBase || '';
+    const localSource = island.dataset.audioSrc || '';
+    const lyricsSource = island.dataset.lyricsSrc || '';
+    const songTitle = island.dataset.songTitle || '当前歌曲';
+
+    const panelPlay = document.getElementById('island-player-toggle');
+    const close = document.getElementById('island-player-close');
+    const scrubber = document.getElementById('island-player-scrubber');
+    const elapsed = document.getElementById('island-player-elapsed');
+    const duration = document.getElementById('island-player-duration');
+    const status = document.getElementById('island-player-status');
+    const lyric = document.getElementById('island-player-lyric');
+    const cueLabel = document.getElementById('island-section-label');
+    const volumeControl = document.getElementById('island-volume-control');
+    const volumeButton = document.getElementById('island-volume-button');
+    const volumeMute = document.getElementById('island-volume-mute');
+    const volumeSlider = document.getElementById('island-volume-slider');
+    const volumeValue = document.getElementById('island-volume-value');
+    let closeTimer = 0;
+    let cueTimer = 0;
+    let cueCleanup = () => {};
+    let isResolving = false;
+    let lyricTimeline = [];
+    let lastLyricText = '';
+    let audioContext = null;
+    let analyser = null;
+    let audioSourceNode = null;
+    let visualizerData = null;
+    let visualizerFrame = 0;
+    const visualizerBars = [...document.querySelectorAll('[data-audio-visualizer] i')];
+
+    const setVolumeMenuOpen = (open) => {
+      island.dataset.volumeOpen = open ? 'true' : 'false';
+      if (volumeButton instanceof HTMLButtonElement) volumeButton.setAttribute('aria-expanded', open ? 'true' : 'false');
+    };
+
+    const setOpen = (open) => {
+      window.clearTimeout(closeTimer);
+      island.dataset.open = open ? 'true' : 'false';
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      if (open) {
+        window.clearTimeout(cueTimer);
+        island.dataset.cueActive = 'false';
+      }
+      if (!open) setVolumeMenuOpen(false);
+    };
+
+    const setVisualizerBaseline = () => {
+      visualizerBars.forEach((bar) => {
+        if (!(bar instanceof HTMLElement)) return;
+        bar.style.setProperty('--visualizer-height', '4px');
+        bar.style.setProperty('--visualizer-opacity', '0.56');
+      });
+    };
+
+    const renderAudioVisualizer = () => {
+      visualizerFrame = 0;
+      if (!analyser || !visualizerData || audio.paused || !visualizerBars.length) {
+        setVisualizerBaseline();
+        return;
+      }
+
+      analyser.getByteFrequencyData(visualizerData);
+      const bucketSize = visualizerData.length / visualizerBars.length;
+      visualizerBars.forEach((bar, index) => {
+        if (!(bar instanceof HTMLElement)) return;
+        const start = Math.floor(index * bucketSize);
+        const end = Math.max(start + 1, Math.floor((index + 1) * bucketSize));
+        let total = 0;
+        let samples = 0;
+        for (let cursor = start; cursor < end && cursor < visualizerData.length; cursor += 1) {
+          total += visualizerData[cursor];
+          samples += 1;
+        }
+        const energy = samples ? total / samples : 0;
+        const height = Math.max(4, Math.round(4 + (energy / 255) * 20));
+        bar.style.setProperty('--visualizer-height', `${height}px`);
+        bar.style.setProperty('--visualizer-opacity', String(Math.min(1, 0.48 + energy / 300)));
+      });
+      visualizerFrame = window.requestAnimationFrame(renderAudioVisualizer);
+    };
+
+    const stopAudioVisualizer = () => {
+      if (visualizerFrame) window.cancelAnimationFrame(visualizerFrame);
+      visualizerFrame = 0;
+      setVisualizerBaseline();
+    };
+
+    const prepareAudioGraph = async () => {
+      if (!analyser) {
+        const AudioContextConstructor = window.AudioContext || window['webkitAudioContext'];
+        if (!AudioContextConstructor) return;
+        try {
+          audioContext = new AudioContextConstructor();
+          analyser = audioContext.createAnalyser();
+          analyser.fftSize = 128;
+          analyser.smoothingTimeConstant = 0.72;
+          visualizerData = new Uint8Array(analyser.frequencyBinCount);
+          audioSourceNode = audioContext.createMediaElementSource(audio);
+          audioSourceNode.connect(analyser);
+          analyser.connect(audioContext.destination);
+        } catch (_) {
+          audioContext = null;
+          analyser = null;
+          audioSourceNode = null;
+          visualizerData = null;
+          return;
+        }
+      }
+      if (audioContext?.state === 'suspended') await audioContext.resume();
+    };
+
+    const formatTime = (value) => {
+      const seconds = Math.max(0, Math.floor(Number(value) || 0));
+      return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+    };
+    const formatDuration = (value) => {
+      const seconds = Math.max(0, Math.round(Number(value) || 0));
+      return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+    };
+
+    const publishLyric = (text) => {
+      if (!text) return;
+      const changed = text !== lastLyricText;
+      lastLyricText = text;
+      if (lyric) lyric.textContent = text;
+      document.querySelectorAll('[data-live-lyric]').forEach((node) => {
+        node.textContent = text;
+      });
+      if (changed) document.dispatchEvent(new CustomEvent('b0-player-lyric', { detail: { text } }));
+    };
+
+    const updateLyric = () => {
+      if (!lyricTimeline.length) return;
+      const current = audio.currentTime || 0;
+      let next = current < lyricTimeline[0].time ? '前奏里，故事正准备开始。' : lyricTimeline[0].text;
+      for (let index = lyricTimeline.length - 1; index >= 0; index -= 1) {
+        if (current >= lyricTimeline[index].time) {
+          next = lyricTimeline[index].text;
+          break;
+        }
+      }
+      publishLyric(next);
+    };
+
+    const updateProgress = () => {
+      const total = Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : songDuration;
+      const current = Math.min(total, audio.currentTime || 0);
+      const progress = total > 0 ? `${(current / total) * 100}%` : '0%';
+      if (scrubber instanceof HTMLInputElement) {
+        scrubber.max = String(total);
+        scrubber.value = String(current);
+        scrubber.style.setProperty('--player-progress', progress);
+      }
+      if (elapsed) elapsed.textContent = formatTime(current);
+      if (duration) duration.textContent = formatDuration(total);
+      document.querySelectorAll('[data-live-elapsed]').forEach((node) => { node.textContent = formatTime(current); });
+      document.querySelectorAll('[data-live-duration]').forEach((node) => { node.textContent = formatTime(total); });
+      document.querySelectorAll('[data-live-progress]').forEach((node) => {
+        if (node instanceof HTMLElement) node.style.setProperty('--live-progress', progress);
+      });
+      updateLyric();
+    };
+
+    const setPlayerState = (state, message) => {
+      island.dataset.playerState = state;
+      if (status) status.textContent = message;
+      const playing = state === 'playing';
+      const label = `${playing ? '暂停' : '播放'} ${songTitle}`;
+      if (panelPlay instanceof HTMLButtonElement) panelPlay.setAttribute('aria-label', label);
+    };
+
+    const syncVolumeUI = () => {
+      const level = audio.muted ? 0 : audio.volume;
+      const percent = Math.round(level * 100);
+      island.dataset.muted = level <= 0 ? 'true' : 'false';
+      if (volumeSlider instanceof HTMLInputElement) {
+        volumeSlider.value = String(level);
+        volumeSlider.style.setProperty('--volume-progress', `${percent}%`);
+      }
+      if (volumeValue instanceof HTMLOutputElement) volumeValue.textContent = `${percent}%`;
+      if (volumeMute instanceof HTMLButtonElement) volumeMute.setAttribute('aria-label', level <= 0 ? '取消静音' : '静音');
+      if (volumeButton instanceof HTMLButtonElement) volumeButton.setAttribute('aria-label', `调整音量，当前 ${percent}%`);
+    };
+
+    try {
+      const storedVolume = Number(localStorage.getItem('b0-player-volume'));
+      if (Number.isFinite(storedVolume) && storedVolume >= 0 && storedVolume <= 1) audio.volume = storedVolume;
+      else audio.volume = 0.72;
+      audio.muted = localStorage.getItem('b0-player-muted') === 'true';
+    } catch (_) {
+      audio.volume = 0.72;
+    }
+
+    const loadLyrics = async () => {
+      if (!lyricsSource) return;
+      try {
+        const response = await fetch(lyricsSource, { credentials: 'same-origin' });
+        if (!response.ok) return;
+        const source = await response.text();
+        lyricTimeline = source.split(/\r?\n/).flatMap((line) => {
+          const text = line.replace(/\[[^\]]+\]/g, '').trim();
+          if (!text) return [];
+          return [...line.matchAll(/\[(\d{1,2}):(\d{2}(?:\.\d+)?)\]/g)].map((match) => ({
+            time: Number(match[1]) * 60 + Number(match[2]),
+            text,
+          }));
+        }).sort((a, b) => a.time - b.time);
+      } catch (_) {}
+    };
+
+    const resolveSource = async () => {
+      if (audio.dataset.sourceReady === 'true' && audio.src) return audio.src;
+      if (localSource) {
+        audio.src = localSource;
+        audio.dataset.sourceReady = 'true';
+        audio.load();
+        return audio.src;
+      }
+      if (!playbackApiBase) throw new Error('missing-source');
+      const response = await fetch(`${playbackApiBase}/song/url/v1?id=${encodeURIComponent(songId)}&level=standard`, {
+        credentials: 'omit',
+        mode: 'cors',
+      });
+      if (!response.ok) throw new Error(`api-${response.status}`);
+      const payload = await response.json();
+      const source = payload?.data?.[0]?.url;
+      if (typeof source !== 'string' || !/^https?:\/\//.test(source)) throw new Error('missing-stream-url');
+      audio.crossOrigin = 'anonymous';
+      audio.src = source;
+      audio.dataset.sourceReady = 'true';
+      audio.referrerPolicy = 'no-referrer';
+      audio.load();
+      return source;
+    };
+
+    const play = async () => {
+      if (isResolving) return;
+      isResolving = true;
+      setPlayerState('loading', '正在载入');
+      try {
+        await prepareAudioGraph();
+        await resolveSource();
+        if (scrubber instanceof HTMLInputElement) scrubber.disabled = false;
+        await audio.play();
+      } catch (_) {
+        setOpen(true);
+        setPlayerState('unavailable', '音频不可用');
+      } finally {
+        isResolving = false;
+      }
+    };
+
+    const togglePlayback = (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (audio.paused) void play();
+      else audio.pause();
+    };
+
+    toggle.addEventListener('click', () => {
+      setOpen(true);
+    });
+    panelPlay?.addEventListener('click', togglePlayback);
+    volumeButton?.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      setVolumeMenuOpen(island.dataset.volumeOpen !== 'true');
+    });
+    volumeMute?.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      audio.muted = !audio.muted;
+      try { localStorage.setItem('b0-player-muted', String(audio.muted)); } catch (_) {}
+      syncVolumeUI();
+    });
+    volumeSlider?.addEventListener('input', () => {
+      if (!(volumeSlider instanceof HTMLInputElement)) return;
+      audio.volume = Math.min(1, Math.max(0, Number(volumeSlider.value)));
+      audio.muted = false;
+      try {
+        localStorage.setItem('b0-player-volume', String(audio.volume));
+        localStorage.setItem('b0-player-muted', 'false');
+      } catch (_) {}
+      syncVolumeUI();
+    });
+    close?.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      toggle.focus({ preventScroll: true });
+      setOpen(false);
+    });
+    scrubber?.addEventListener('input', () => {
+      if (!(scrubber instanceof HTMLInputElement) || audio.dataset.sourceReady !== 'true') return;
+      audio.currentTime = Number(scrubber.value);
+      updateProgress();
+    });
+    if (matchMedia('(hover:hover) and (pointer:fine)').matches) {
+      const openFromPointer = () => setOpen(true);
+      const closeFromPointer = (event) => {
+        const nextTarget = event.relatedTarget;
+        if (nextTarget instanceof Node && island.contains(nextTarget)) return;
+        closeTimer = window.setTimeout(() => setOpen(false), 420);
+      };
+      island.addEventListener('pointerenter', openFromPointer);
+      island.addEventListener('pointermove', openFromPointer, { passive: true });
+      island.addEventListener('pointerleave', closeFromPointer);
+    }
+    document.addEventListener('click', (event) => {
+      const target = event.target instanceof Element ? event.target : null;
+      const playerAction = target?.closest('[data-site-player-action]');
+      if (playerAction) {
+        togglePlayback(event);
+        return;
+      }
+      if (target && volumeControl && !volumeControl.contains(target)) setVolumeMenuOpen(false);
+      if (target && !island.contains(target)) setOpen(false);
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        if (island.dataset.volumeOpen === 'true') {
+          setVolumeMenuOpen(false);
+          if (volumeButton instanceof HTMLButtonElement) volumeButton.focus({ preventScroll: true });
+          return;
+        }
+        toggle.focus({ preventScroll: true });
+        setOpen(false);
+      }
+    });
+    island.addEventListener('focusin', () => setOpen(true));
+    island.addEventListener('focusout', (event) => {
+      if (!(event.relatedTarget instanceof Node) || !island.contains(event.relatedTarget)) setOpen(false);
+    });
+    audio.addEventListener('loadedmetadata', () => {
+      if (scrubber instanceof HTMLInputElement) scrubber.disabled = false;
+      updateProgress();
+    });
+    audio.addEventListener('canplay', () => {
+      if (scrubber instanceof HTMLInputElement) scrubber.disabled = false;
+    });
+    audio.addEventListener('timeupdate', updateProgress);
+    audio.addEventListener('play', () => {
+      setPlayerState('playing', '正在播放');
+      updateLyric();
+      if (!visualizerFrame) visualizerFrame = window.requestAnimationFrame(renderAudioVisualizer);
+    });
+    audio.addEventListener('pause', () => {
+      stopAudioVisualizer();
+      if (!audio.ended) setPlayerState('paused', '已暂停');
+    });
+    audio.addEventListener('ended', () => {
+      stopAudioVisualizer();
+      audio.currentTime = 0;
+      updateProgress();
+      setPlayerState('ready', '播放结束');
+    });
+    audio.addEventListener('error', () => setPlayerState('unavailable', '音频加载失败'));
+    audio.addEventListener('volumechange', syncVolumeUI);
+
+    const pulseSection = (label) => {
+      if (!label || island.dataset.open === 'true') return;
+      if (cueLabel) cueLabel.textContent = label;
+      window.clearTimeout(cueTimer);
+      island.dataset.cueActive = 'true';
+      cueTimer = window.setTimeout(() => { island.dataset.cueActive = 'false'; }, 1500);
+    };
+
+    const bindSectionCues = () => {
+      cueCleanup();
+      cueCleanup = () => {};
+      const cueSections = [...document.querySelectorAll('[data-island-cue]')];
+      if (!cueSections.length) return;
+      let currentSection = '';
+      let frame = 0;
+      const syncSection = () => {
+        frame = 0;
+        const marker = window.innerHeight * 0.42;
+        let active = cueSections[0];
+        cueSections.forEach((section) => {
+          if (section.getBoundingClientRect().top <= marker) active = section;
+        });
+        const label = active instanceof HTMLElement ? active.dataset.islandCue || '' : '';
+        if (!label || label === currentSection) return;
+        currentSection = label;
+        pulseSection(label);
+      };
+      const scheduleSync = () => {
+        if (!frame) frame = requestAnimationFrame(syncSection);
+      };
+      window.addEventListener('scroll', scheduleSync, { passive: true });
+      window.addEventListener('resize', scheduleSync, { passive: true });
+      cueCleanup = () => {
+        window.removeEventListener('scroll', scheduleSync);
+        window.removeEventListener('resize', scheduleSync);
+        if (frame) cancelAnimationFrame(frame);
+      };
+      syncSection();
+    };
+
+    const refreshForPage = () => {
+      bindSectionCues();
+      updateProgress();
+      syncVolumeUI();
+    };
+
+    document.addEventListener('astro:before-preparation', () => setOpen(false));
+    document.addEventListener('astro:page-load', refreshForPage);
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', refreshForPage, { once: true });
+    else refreshForPage();
+
+    void loadLyrics();
+    updateProgress();
+    syncVolumeUI();
+    setVisualizerBaseline();
+    setPlayerState(localSource || playbackApiBase ? 'ready' : 'unavailable', localSource ? '本地音频' : (playbackApiBase ? 'API 音源' : '无播放源'));
+  })();
+</script>

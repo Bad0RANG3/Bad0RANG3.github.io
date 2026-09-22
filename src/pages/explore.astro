@@ -4,18 +4,18 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import PostCard from '../components/blog/PostCard.astro';
 import PageHeader from '../components/ui/PageHeader.astro';
 import { getFeaturedPosts, getPublishedPosts } from '../lib/content';
-import { postPath } from '../config/routes';
+import { postPath, ROUTES } from '../config/routes';
 
 const posts = await getPublishedPosts();
 const featured = (await getFeaturedPosts()).slice(0, 3);
 const randomPool = posts.map((post) => ({ url: withBase(postPath(post.slug)) }));
 const browseLinks = [
-  ['/posts/', '全部文章'],
-  ['/archive/', '归档'],
-  ['/tags/', '标签'],
-  ['/series/', '系列'],
-  ['/projects/', '项目'],
-  ['/tools/', '工具'],
+  [ROUTES.POSTS, '全部文章'],
+  [ROUTES.ARCHIVE, '归档'],
+  [ROUTES.TAGS, '标签'],
+  [ROUTES.SERIES, '系列'],
+  [ROUTES.PROJECTS, '项目'],
+  [ROUTES.TOOLS, '工具'],
 ];
 ---
 
@@ -36,7 +36,7 @@ const browseLinks = [
     <section class="mt-12" aria-labelledby="latest-title">
       <div class="mb-5 flex items-end justify-between gap-4">
         <h2 id="latest-title" class="text-xl font-black sm:text-2xl">最近更新</h2>
-        <a href={withBase('/posts/')} class="link-underline text-sm font-bold">全部文章</a>
+        <a href={withBase(ROUTES.POSTS)} class="link-underline text-sm font-bold">全部文章</a>
       </div>
       <div class="grid gap-5 md:grid-cols-2 lg:grid-cols-3">{posts.slice(0, 6).map((post) => <PostCard post={post} />)}</div>
     </section>
@@ -47,10 +47,15 @@ const browseLinks = [
   </div>
 </BaseLayout>
 
-<script is:inline define:vars={{ randomPool }}>
+<script is:inline data-astro-rerun define:vars={{ randomPool }}>
   const randomButton = document.getElementById('random-post');
   randomButton?.addEventListener('click', () => {
     if (!randomPool.length) return;
-    window.location.href = randomPool[Math.floor(Math.random() * randomPool.length)].url;
+    const anchor = document.createElement('a');
+    anchor.href = randomPool[Math.floor(Math.random() * randomPool.length)].url;
+    anchor.hidden = true;
+    document.body.append(anchor);
+    anchor.click();
+    anchor.remove();
   });
 </script>

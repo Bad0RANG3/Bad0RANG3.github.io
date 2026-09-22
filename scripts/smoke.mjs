@@ -7,10 +7,12 @@ import { fromRoot, normalizeBase, rootDir } from './lib/paths.mjs';
 
 const postsDir = fromRoot('src', 'content', 'posts');
 const sourceDir = fromRoot('src');
-// Raised to 16 MB: the PJSK sticker tool bundles a 739-image WEBP library and
-// subsetted CJK fonts (YurukaStd + 上首方糖体). Still far below Pages limits.
+// Keep the complete static output within a conservative GitHub Pages budget;
+// the PJSK sticker tool and subsetted CJK fonts account for most of it.
 const MAX_DIST_BYTES = 40 * 1024 * 1024;
-const MAX_SINGLE_ASSET_BYTES = 1024 * 1024;
+// The homepage player ships one deliberately compressed, browser-ready song.
+// Keep the cap tight enough to catch accidental FLAC/video commits.
+const MAX_SINGLE_ASSET_BYTES = 8 * 1024 * 1024;
 
 async function existingTextFiles(directory, extensions) {
   const files = await walk(directory);

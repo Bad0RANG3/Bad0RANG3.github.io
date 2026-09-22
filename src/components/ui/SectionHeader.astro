@@ -3,7 +3,7 @@ interface Props { label: string; title: string; titleId?: string; }
 const { label, title, titleId } = Astro.props;
 ---
 
-<div class="mb-5">
+<div class="section-heading mb-5">
   <p class="eyebrow">{label}</p>
   <h2 id={titleId} class="mt-2 text-xl font-black tracking-tight sm:text-2xl">{title}</h2>
 </div>

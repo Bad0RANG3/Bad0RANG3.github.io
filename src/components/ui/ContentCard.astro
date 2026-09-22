@@ -1,5 +1,6 @@
 ---
 import { withBase } from '../../lib/urls';
+import Icon from '../icons/Icon.astro';
 
 type CardTone = 'default' | 'teal' | 'coral' | 'citrus';
 
@@ -27,25 +28,27 @@ const {
 const Heading = headingTag;
 ---
 
-<a href={withBase(href)} class="group block h-full reveal">
+<a href={withBase(href)} class="content-card group block h-full reveal">
   <article
     class:list={[
       'hard-card flex h-full flex-col rounded-[1.5rem] bg-base-100/90 p-5 sm:p-6',
       tone === 'teal' && 'hard-card-teal',
       tone === 'citrus' && 'hard-card-citrus',
+      tone === 'coral' && 'hard-card-coral',
     ]}
   >
-    {(icon || label) && (
-      <div class="flex min-h-8 items-center gap-3">
-        {icon && <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-2 border-base-content/10 bg-base-200 text-xl">{icon}</span>}
+    <div class="content-card-top flex min-h-8 items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        {icon && <span class="card-emoji flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-base-content/10 bg-base-200 text-xl">{icon}</span>}
         {label && <p class="eyebrow">{label}</p>}
       </div>
-    )}
+      <Icon name="arrow-up-right" class="card-arrow h-4 w-4" />
+    </div>
 
-    <Heading class:list={['text-xl font-black leading-tight text-base-content transition-colors group-hover:text-primary sm:text-2xl', (icon || label) && 'mt-5']}>
+    <Heading class:list={['content-card-title text-xl font-black leading-tight text-base-content transition-colors group-hover:text-primary sm:text-2xl', (icon || label) && 'mt-5']}>
       {title}
     </Heading>
-    <p class="mt-3 line-clamp-3 text-sm leading-7 text-base-content/60">{description}</p>
-    {meta && <p class="mt-auto pt-6 text-xs font-bold text-base-content/45">{meta}</p>}
+    <p class="content-card-description mt-3 line-clamp-3 text-sm leading-7 text-base-content/60">{description}</p>
+    {meta && <p class="content-card-meta mt-auto pt-6 text-xs font-bold text-base-content/45">{meta}</p>}
   </article>
 </a>
