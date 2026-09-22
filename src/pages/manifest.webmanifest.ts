@@ -18,9 +18,15 @@ const manifest = {
   icons: [
     {
       src: withBase('/HP.webp'),
-      sizes: '1868x1868',
+      sizes: '1200x1200',
       type: 'image/webp',
       purpose: 'any maskable',
+    },
+    {
+      src: withBase('/HP-avatar.webp'),
+      sizes: '256x256',
+      type: 'image/webp',
+      purpose: 'any',
     },
     {
       src: withBase('/ico.ico'),

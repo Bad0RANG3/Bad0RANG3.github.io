@@ -21,7 +21,7 @@ export const siteConfig = {
   author: {
     name: 'Bad0RANG3',
     intro: '喜欢在计算机方面折腾的普通菜鸟。',
-    avatar: '/HP.webp',
+    avatar: '/HP-avatar.webp',
     email: 'badorangeovo@outlook.com',
   },
   navigation: [
@@ -81,7 +81,7 @@ export const siteConfig = {
     durationLabel: formatMusicDuration(266.67),
     audio: '/media/main-heroine.mp3',
     lyrics: '/media/main-heroine.lrc',
-    cover: '/media/main-heroine-cover.jpg',
+    cover: '/media/main-heroine-cover.webp',
     officialUrl: 'https://music.163.com/song?id=3315349142',
     // Set PUBLIC_NCM_API_BASE to your authorised NeteaseCloudMusicApiEnhanced deployment.
     apiBase: musicApiBase,

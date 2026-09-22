@@ -1,6 +1,6 @@
 import { defineConfig } from 'astro/config';
-import tailwind from '@astrojs/tailwind';
 import sitemap from '@astrojs/sitemap';
+import tailwindcss from '@tailwindcss/vite';
 import remarkWithBase from './plugins/remark-with-base.mjs';
 
 const base = process.env.BASE_PATH || '/';
@@ -13,5 +13,8 @@ export default defineConfig({
   markdown: {
     remarkPlugins: [[remarkWithBase, { base }]],
   },
-  integrations: [tailwind(), sitemap()],
+  integrations: [sitemap()],
+  vite: {
+    plugins: [tailwindcss()],
+  },
 });
