@@ -11,7 +11,7 @@
 
 @layer base {
   :root {
-    font-family: 'MiSans', 'Noto Sans SC', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: 'JetBrains Mono', 'Noto Sans SC', 'Microsoft YaHei', ui-monospace, SFMono-Regular, Consolas, monospace;
     font-synthesis: none;
     text-rendering: optimizeLegibility;
   }
@@ -291,7 +291,7 @@
 .site-footer { margin-top: auto; overflow: hidden; border-top: 1px solid var(--line-soft); background: rgba(8, 7, 12, 0.42); }
 .footer-avatar { width: 3.8rem; height: 3.8rem; flex: 0 0 auto; overflow: hidden; border: 1px solid rgba(255, 143, 182, 0.36); border-radius: 1.15rem; box-shadow: 0 14px 30px -16px rgba(255, 143, 182, 0.8); }
 .footer-brand { color: #fff7fb; font-size: 1.05rem; font-weight: 780; }
-.footer-caption { margin-top: 1.5rem; color: var(--text-faint); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 0.65rem; letter-spacing: 0.06em; }
+.footer-caption { margin-top: 1.5rem; color: var(--text-faint); font-family: 'JetBrains Mono', 'Noto Sans SC', ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 0.65rem; letter-spacing: 0.06em; }
 .footer-label,
 .drawer-label { margin: 0; color: var(--text-faint); font-size: 0.63rem; font-weight: 750; letter-spacing: 0.2em; text-transform: uppercase; }
 .footer-link { color: var(--text-dim); font-size: 0.78rem; font-weight: 650; transition: color 0.25s var(--ease), transform 0.25s var(--spring); }
@@ -534,7 +534,7 @@ html[data-theme="paper-dark"] .panel-slice {
 .lyric-stage-window { display: grid; min-height: 9rem; align-items: center; margin: 1.4rem 0; }
 .lyric-stage-line { grid-area: 1 / 1; margin: 0; }
 .lyric-stage-line { max-width: 12ch; color: var(--color-base-content); font-size: clamp(1.55rem, 4vw, 3.35rem); font-weight: 900; letter-spacing: -0.04em; line-height: 1.18; text-wrap: balance; animation: lyric-rise 4.8s var(--spring) infinite; }
-.lyric-stage-footer { display: flex; align-items: center; gap: 0.75rem; color: color-mix(in oklab, var(--color-base-content) 52%, transparent); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 0.63rem; font-weight: 700; letter-spacing: 0.08em; }
+.lyric-stage-footer { display: flex; align-items: center; gap: 0.75rem; color: color-mix(in oklab, var(--color-base-content) 52%, transparent); font-family: 'JetBrains Mono', 'Noto Sans SC', ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 0.63rem; font-weight: 700; letter-spacing: 0.08em; }
 .lyric-progress { display: block; height: 5px; flex: 1; overflow: hidden; border: 1px solid color-mix(in oklab, var(--color-base-content) 18%, transparent); border-radius: 999px; background: color-mix(in oklab, var(--color-base-100) 50%, transparent); }
 .lyric-progress i { display: block; width: 44%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--color-primary), var(--color-accent)); animation: lyric-progress 4.8s ease-in-out infinite; }
 
@@ -610,9 +610,8 @@ body.site-body {
   width: min(calc(100% - 2rem), 68rem);
 }
 
-/* Fixed background stage. The base fill stays put; a taller depth layer
-   (::before) and the petal canvas translate with scroll (--b0-scroll) so the
-   background parallaxes while the foreground scrolls normally. */
+/* Fixed background stage. It is a dedicated, non-interactive layer below every
+   blog element, so scrolling and foreground layout can never move the BGA. */
 .site-atmosphere {
   position: fixed;
   inset: 0;
@@ -631,8 +630,6 @@ body.site-body {
     radial-gradient(circle at 60% 44%, rgb(145 202 255 / 0.09), transparent 42%);
   content: '';
   pointer-events: none;
-  transform: translate3d(0, calc(min(var(--b0-scroll, 0px) * 0.36, 55vh) * -1), 0);
-  will-change: transform;
 }
 
 .site-atmosphere::after {
@@ -657,8 +654,6 @@ html[data-theme="paper"] .site-atmosphere::after {
   height: 100%;
   opacity: 0.42;
   filter: saturate(0.9) contrast(0.96) blur(0.3px);
-  transform: translate3d(0, calc(min(var(--b0-scroll, 0px) * 0.5, 240px) * -1), 0);
-  will-change: transform;
 }
 
 html[data-theme="paper"] #sakura-canvas {
@@ -675,6 +670,35 @@ html[data-theme="paper"] #sakura-canvas {
 .site-footer {
   position: relative;
   z-index: 1;
+}
+
+/* Persistent decorative mascot: visually above the page but never interactive. */
+.site-mascot {
+  position: fixed;
+  bottom: max(0.75rem, env(safe-area-inset-bottom));
+  left: clamp(0.75rem, 2vw, 2rem);
+  z-index: 45;
+  width: clamp(8.75rem, 14vw, 13.5rem);
+  height: auto;
+  pointer-events: none;
+  user-select: none;
+  filter: drop-shadow(0 14px 18px rgb(26 13 28 / 0.26));
+  transform-origin: bottom left;
+  animation: mascot-idle 4.6s ease-in-out infinite;
+}
+
+@keyframes mascot-idle {
+  0%, 100% { transform: translateY(0) rotate(-1deg); }
+  50% { transform: translateY(-7px) rotate(1deg); }
+}
+
+@media (max-width: 720px) {
+  .site-mascot {
+    bottom: max(0.4rem, env(safe-area-inset-bottom));
+    left: 0.4rem;
+    width: clamp(6.25rem, 25vw, 8.5rem);
+    filter: drop-shadow(0 8px 12px rgb(26 13 28 / 0.2));
+  }
 }
 
 /* Dynamic island: collapsed and expanded player are separate states. */
@@ -766,7 +790,7 @@ html[data-theme="paper"] #sakura-canvas {
 
 /* Apple-like music state bar. Navigation stays available through the menu and rail. */
 .music-island {
-  width: 272px !important;
+  width: 250px !important;
   height: 48px !important;
   border-radius: 25px !important;
 }
@@ -778,9 +802,9 @@ html[data-theme="paper"] #sakura-canvas {
 }
 
 .music-island[data-cue-active="true"][data-open="false"] {
-  width: min(310px, calc(100vw - 24px)) !important;
-  height: 58px !important;
-  border-color: rgb(255 143 182 / 0.28);
+  width: 250px !important;
+  height: 48px !important;
+  border-color: rgb(255 255 255 / 0.07);
 }
 
 .music-island .island-summary {
@@ -811,7 +835,7 @@ html[data-theme="paper"] #sakura-canvas {
 }
 
 .music-island .island-summary-copy {
-  display: grid;
+  display: none;
   min-width: 0;
   gap: 0.08rem;
 }
@@ -905,12 +929,13 @@ html[data-theme="paper"] #sakura-canvas {
   pointer-events: none;
   transform: translateY(5px) scale(0.98);
   transition: opacity 0.12s ease, transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+  display: none;
 }
 
 .music-island[data-cue-active="true"][data-open="false"] .island-summary {
-  opacity: 0;
-  pointer-events: none;
-  transition: none;
+  opacity: 1;
+  pointer-events: auto;
+  transform: none;
 }
 
 .music-island[data-cue-active="true"][data-open="false"] .island-section-cue {
@@ -1103,7 +1128,7 @@ html[data-theme="paper"] #sakura-canvas {
   justify-content: space-between;
   margin-top: 0.3rem;
   color: rgb(255 236 245 / 0.46);
-  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-family: 'JetBrains Mono', 'Noto Sans SC', ui-monospace, SFMono-Regular, Consolas, monospace;
   font-size: 0.53rem;
 }
 
@@ -1225,7 +1250,7 @@ html[data-theme="paper"] #sakura-canvas {
 
 .music-island .island-volume-menu output {
   color: rgb(255 236 245 / 0.62);
-  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-family: 'JetBrains Mono', 'Noto Sans SC', ui-monospace, SFMono-Regular, Consolas, monospace;
   font-size: 0.55rem;
   text-align: right;
 }
@@ -1237,6 +1262,199 @@ html[data-theme="paper"] #sakura-canvas {
   background: rgb(255 255 255 / 0.9);
   color: #2b101d;
   transition: background 0.2s ease, transform 0.2s ease;
+}
+
+/* Expanded player follows the large, media-first Dynamic Island treatment. */
+.music-island { container-type: inline-size; }
+
+.music-island[data-open="true"] {
+  width: min(34rem, calc(100vw - 24px)) !important;
+  height: min(17.875rem, calc((100vw - 24px) * 0.526)) !important;
+  border: 0 !important;
+  border-radius: min(3.65rem, calc((100vw - 24px) * 0.107)) !important;
+  background: #000 !important;
+  box-shadow: 0 18px 52px rgb(0 0 0 / 0.56) !important;
+}
+
+.music-island[data-open="true"] ~ .header-actions {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-8px);
+}
+
+.music-island[data-open="true"] .island-player-panel {
+  display: block;
+  padding: 6.2cqw 6.7cqw 5.2cqw 5.7cqw !important;
+}
+
+.music-island .island-player-heading {
+  display: grid;
+  height: 17.55cqw;
+  grid-template-columns: 17.55cqw minmax(0, 1fr) 7.2cqw;
+  align-items: center;
+  gap: 5.1cqw;
+}
+
+.music-island .island-player-art {
+  width: 17.55cqw;
+  height: 17.55cqw;
+  border: 0;
+  border-radius: 3.65cqw;
+  box-shadow: none;
+}
+
+.music-island .island-player-copy {
+  display: grid;
+  gap: 0.35cqw;
+  font-family: Inter, "SF Pro Display", "Noto Sans SC", system-ui, sans-serif;
+  transform: translateY(-1cqw);
+}
+
+.music-island .island-player-copy strong {
+  color: #fff;
+  font-size: 4.05cqw;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1.1;
+}
+
+.music-island .island-player-copy > span:not(.island-player-status) {
+  color: rgb(255 255 255 / 0.62);
+  font-size: 3.55cqw;
+  font-weight: 560;
+  letter-spacing: -0.03em;
+  line-height: 1.08;
+}
+
+.music-island .island-player-status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.music-island .island-expanded-wave {
+  display: flex;
+  width: 7.2cqw;
+  height: 8.2cqw;
+  align-items: center;
+  justify-content: center;
+  gap: 0.72cqw;
+  transform: translateX(-0.8cqw);
+}
+
+.music-island .island-expanded-wave i {
+  display: block;
+  width: 0.72cqw;
+  height: var(--visualizer-height, 4px);
+  border-radius: 999px;
+  background: linear-gradient(180deg, #a89de3, #79729f);
+  box-shadow: none;
+  opacity: var(--visualizer-opacity, 0.86);
+  transition: height 0.08s linear, opacity 0.12s ease;
+}
+
+.music-island .island-player-timeline {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: 0.7cqw;
+  margin: 5.4cqw 0 0;
+}
+
+.music-island .island-player-timeline input {
+  grid-column: 1;
+  grid-row: 1;
+  width: 100%;
+  height: 1.9cqw;
+  background: linear-gradient(90deg, #dedee2 0 var(--player-progress, 0%), #242427 var(--player-progress, 0%) 100%);
+}
+
+.music-island .island-player-timeline input::-webkit-slider-thumb {
+  width: 0.8cqw;
+  height: 1.9cqw;
+  border-radius: 999px;
+  background: #fff;
+}
+
+.music-island .island-player-timeline > div {
+  display: flex;
+  grid-column: 1;
+  grid-row: 2;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0;
+  padding: 0 0.25cqw;
+}
+.music-island .island-player-timeline > div span {
+  color: rgb(255 255 255 / 0.5);
+  font-family: Inter, "SF Pro Display", "Noto Sans SC", system-ui, sans-serif;
+  font-size: 3cqw;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.music-island .island-player-actions {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  align-items: center;
+  justify-items: center;
+  height: 9.1cqw;
+  margin: 3cqw -3cqw 0;
+}
+
+.music-island .island-player-favorite,
+.music-island .island-player-skip,
+.music-island .island-volume-button,
+.music-island .island-player-toggle {
+  display: grid;
+  width: 9.1cqw;
+  height: 9.1cqw;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+}
+
+.music-island .island-player-favorite svg,
+.music-island .island-player-skip svg {
+  width: 12.8cqw;
+  height: 11.5cqw;
+  fill: currentColor;
+}
+
+.music-island .island-player-favorite svg { width: 8.9cqw; height: 8.9cqw; color: rgb(255 255 255 / 0.58); }
+.music-island .island-player-skip--previous svg { transform: scaleX(-1); }
+.music-island .island-player-toggle {
+  width: 9.1cqw;
+  height: 9.1cqw;
+  background: transparent;
+  color: #fff;
+}
+.music-island .player-icon { width: 10cqw; height: 12cqw; }
+.music-island .island-player-toggle:hover,
+.music-island .island-player-toggle:focus-visible { background: rgb(255 255 255 / 0.13); color: #fff; }
+.music-island .island-player-favorite:hover,
+.music-island .island-player-favorite:focus-visible,
+.music-island .island-player-skip:hover,
+.music-island .island-player-skip:focus-visible,
+.music-island .island-volume-button:hover,
+.music-island .island-volume-button:focus-visible { background: rgb(255 255 255 / 0.13); color: #fff; outline: 0; }
+
+.music-island .island-volume-control { position: relative; justify-self: center; }
+.music-island .island-volume-button { color: rgb(255 255 255 / 0.58); }
+.music-island .island-volume-button .island-output-icon { width: 8cqw; height: 8cqw; }
+.music-island .island-volume-menu .volume-icon { width: 15px; height: 15px; }
+.music-island .island-volume-menu {
+  right: 0;
+  bottom: calc(100% + 0.65rem);
+  left: auto;
+  transform-origin: bottom right;
 }
 
 .header-actions {
@@ -1355,6 +1573,18 @@ html[data-theme="paper"] #sakura-canvas {
     transition: width 0.28s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s ease, color 0.2s ease;
   }
 
+  .rail-glyph {
+    width: 21px;
+    height: 21px;
+    overflow: visible;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.7;
+    transition: transform 0.24s cubic-bezier(0.16, 1, 0.3, 1), stroke-width 0.2s ease;
+  }
+
   .rail-label {
     position: absolute;
     top: 50%;
@@ -1389,6 +1619,13 @@ html[data-theme="paper"] #sakura-canvas {
   .rail-link.is-active .rail-icon {
     background: color-mix(in srgb, var(--fx-pink) 20%, transparent);
     color: var(--fx-pink);
+  }
+
+  .rail-link:hover .rail-glyph,
+  .rail-link:focus-visible .rail-glyph,
+  .rail-link.is-active .rail-glyph {
+    transform: scale(1.08);
+    stroke-width: 2;
   }
 
   .rail-link:hover .rail-label,
@@ -1552,6 +1789,15 @@ html[data-theme="paper"] #sakura-canvas {
 
 .profile-overview > div:last-child {
   margin-top: auto;
+}
+
+/* The three-item profile summary is the homepage's most compact data row.
+   Give every tile a calmer vertical rhythm without changing four-item grids. */
+.profile-metric-card--roomy {
+  display: grid;
+  min-height: 5.75rem;
+  align-content: center;
+  padding-block: 1rem !important;
 }
 
 .lyric-stage {
@@ -2354,21 +2600,21 @@ html[data-theme="paper-dark"] .ncm-profile-card {
   /* Compact dynamic island on phones: a small pill that stays clear of the
      single remaining header action, instead of a near-full-width bar. */
   .music-island {
-    width: min(188px, calc(100vw - 124px)) !important;
+    width: min(250px, calc(100vw - 124px)) !important;
     height: 44px !important;
     border-radius: 22px !important;
   }
 
   .music-island[data-cue-active="true"][data-open="false"] {
-    width: min(232px, calc(100vw - 104px)) !important;
-    height: 50px !important;
-    border-radius: 25px !important;
+    width: min(250px, calc(100vw - 124px)) !important;
+    height: 44px !important;
+    border-radius: 22px !important;
   }
 
   .music-island[data-open="true"] {
     width: calc(100vw - 20px) !important;
-    height: 212px !important;
-    border-radius: 26px !important;
+    height: calc((100vw - 20px) * 0.526) !important;
+    border-radius: calc((100vw - 20px) * 0.107) !important;
   }
 
   .music-island .island-summary {
@@ -2387,7 +2633,6 @@ html[data-theme="paper-dark"] .ncm-profile-card {
   .music-island .island-track-artist { font-size: 0.54rem; }
   .music-island .island-mini-wave { width: 30px; gap: 2px; }
   .music-island .island-mini-wave i { width: 2.5px; }
-  .music-island .island-player-art { width: 56px; height: 56px; border-radius: 13px; }
   .music-island .island-volume-menu { width: 168px; }
 
   #theme-toggle,

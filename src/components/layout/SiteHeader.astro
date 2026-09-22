@@ -3,6 +3,7 @@ import { siteConfig } from '../../config/site';
 import { ROUTES } from '../../config/routes';
 import MobileDrawer from './MobileDrawer.astro';
 import Icon from '../icons/Icon.astro';
+import RailIcon from '../icons/RailIcon.astro';
 import { isActivePath, withBase } from '../../lib/urls';
 
 interface Props { currentPath: string; }
@@ -14,11 +15,11 @@ const islandNavigation = islandHrefs
   .filter((item): item is (typeof siteConfig.navigation)[number] => Boolean(item));
 const player = siteConfig.music;
 const navigationIconByHref = {
-  [ROUTES.HOME]: 'logo',
-  [ROUTES.POSTS]: 'book',
-  [ROUTES.PROJECTS]: 'arrow-up-right',
-  [ROUTES.TOOLS]: 'tool',
-  [ROUTES.ABOUT]: 'info',
+  [ROUTES.HOME]: 'home',
+  [ROUTES.POSTS]: 'posts',
+  [ROUTES.PROJECTS]: 'projects',
+  [ROUTES.TOOLS]: 'tools',
+  [ROUTES.ABOUT]: 'about',
 } as const;
 const playerCover = withBase(player.cover);
 const playerAudio = withBase(player.audio);
@@ -43,7 +44,7 @@ const playerLyrics = withBase(player.lyrics);
         <span class="island-track-artist">{player.artist}</span>
       </span>
       <span class="island-mini-wave" data-audio-visualizer="compact" aria-hidden="true">
-        {Array.from({ length: 8 }).map((_, index) => <i style={`--visualizer-index:${index}`} />)}
+        {Array.from({ length: 6 }).map((_, index) => <i style={`--visualizer-index:${index}`} />)}
       </span>
     </button>
 
@@ -57,51 +58,48 @@ const playerLyrics = withBase(player.lyrics);
 
     <div class="island-panel island-player-panel" id="site-island-panel">
       <div class="island-player-heading">
-        <img class="island-player-art" src={playerCover} alt={`${player.album} 封面`} width="66" height="66" loading="eager" />
+        <img class="island-player-art" src={playerCover} alt={`${player.album} 封面`} width="96" height="96" loading="eager" />
         <div class="island-player-copy">
-          <div class="island-player-kicker-row">
-            <span class="island-player-kicker">网易云音乐 · LOCAL</span>
-            <span class="island-player-status" id="island-player-status" role="status" aria-live="polite"></span>
-          </div>
-          <strong>{player.title}</strong>
-          <span>{player.artist} · {player.album}</span>
-          <p class="island-player-lyric" id="island-player-lyric">前奏里，故事正准备开始。</p>
+          <strong>编曲: {player.artist}</strong>
+          <span>{player.artist}/{player.title}</span>
+          <span class="island-player-status" id="island-player-status" role="status" aria-live="polite"></span>
         </div>
-      </div>
-      <div class="island-audio-visualizer" data-audio-visualizer="full" aria-hidden="true">
-        {Array.from({ length: 24 }).map((_, index) => <i style={`--visualizer-index:${index}`} />)}
+        <span class="island-expanded-wave" data-audio-visualizer="expanded" aria-hidden="true">
+          {Array.from({ length: 6 }).map((_, index) => <i style={`--visualizer-index:${index}`} />)}
+        </span>
       </div>
       <div class="island-player-timeline">
         <input id="island-player-scrubber" type="range" min="0" max={player.durationSeconds} value="0" step="0.1" disabled aria-label="播放进度" />
-        <div><span id="island-player-elapsed">0:00</span><span id="island-player-duration">{player.durationLabel}</span></div>
+        <div><span id="island-player-elapsed">0:00</span><span id="island-player-duration">−{player.durationLabel}</span></div>
       </div>
       <div class="island-player-actions">
-        <div class="island-player-secondary">
-          <a class="island-player-external" href={player.officialUrl} target="_blank" rel="noreferrer" aria-label="在网易云音乐中打开这首歌" title="在网易云音乐中打开">
-            <Icon name="external-link" class="h-4 w-4" />
-          </a>
-          <div class="island-volume-control" id="island-volume-control">
-            <button class="island-volume-button" id="island-volume-button" type="button" aria-label="调整音量" aria-controls="island-volume-menu" aria-expanded="false">
-              <svg class="volume-icon volume-icon--on" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-              <svg class="volume-icon volume-icon--muted" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="m17 9 4 4m0-4-4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-            </button>
-            <div class="island-volume-menu" id="island-volume-menu" role="group" aria-label="音量控制">
-              <button class="island-volume-mute" id="island-volume-mute" type="button" aria-label="静音">
-                <svg class="volume-icon volume-icon--on" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 8.5a5 5 0 0 1 0 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-                <svg class="volume-icon volume-icon--muted" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="m17 9 4 4m0-4-4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-              </button>
-              <input id="island-volume-slider" type="range" min="0" max="1" value="0.72" step="0.01" aria-label="播放器音量" />
-              <output id="island-volume-value" for="island-volume-slider">72%</output>
-            </div>
-          </div>
-        </div>
+        <a class="island-player-favorite" href={player.officialUrl} target="_blank" rel="noreferrer" aria-label="在网易云音乐中打开这首歌" title="在网易云音乐中打开">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2.8 2.75 5.57 6.15.9-4.45 4.34 1.05 6.13L12 16.84l-5.5 2.9 1.05-6.13L3.1 9.27l6.15-.9L12 2.8Z" /></svg>
+        </a>
+        <button class="island-player-skip island-player-skip--previous" id="island-player-restart" type="button" aria-label="从头播放">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6v12l8-6-8-6Zm9.5 0v12l8-6-8-6Z" /></svg>
+        </button>
         <button class="island-player-toggle" id="island-player-toggle" type="button" aria-label={`播放 ${player.title}`}>
           <svg class="player-icon player-icon--play" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7z" /></svg>
-          <svg class="player-icon player-icon--pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5h3v14H8zm5 0h3v14h-3z" /></svg>
+          <svg class="player-icon player-icon--pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3h6v18H4zm10 0h6v18h-6z" /></svg>
         </button>
-        <button class="island-player-close" id="island-player-close" type="button" aria-label="收起播放器">
-          <Icon name="close" class="h-4 w-4" />
+        <button class="island-player-skip island-player-skip--next" id="island-player-forward" type="button" aria-label="快进 10 秒">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6v12l8-6-8-6Zm9.5 0v12l8-6-8-6Z" /></svg>
         </button>
+        <div class="island-volume-control" id="island-volume-control">
+          <button class="island-volume-button" id="island-volume-button" type="button" aria-label="调整音量" aria-controls="island-volume-menu" aria-expanded="false">
+            <svg class="volume-icon volume-icon--on island-output-icon" viewBox="0 0 32 32" aria-hidden="true"><path d="m16 20-6.5 9h13L16 20Z"/><path d="M11.6 19.2a6 6 0 1 1 8.8 0M8.5 22.2a10 10 0 1 1 15 0M5.5 25.2a14 14 0 1 1 21 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            <svg class="volume-icon volume-icon--muted island-output-icon" viewBox="0 0 32 32" aria-hidden="true"><path d="m16 20-6.5 9h13L16 20Z"/><path d="M11.6 19.2a6 6 0 1 1 8.8 0M8.5 22.2a10 10 0 1 1 15 0M5.5 25.2a14 14 0 1 1 21 0M6 6l20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
+          <div class="island-volume-menu" id="island-volume-menu" role="group" aria-label="音量控制">
+            <button class="island-volume-mute" id="island-volume-mute" type="button" aria-label="静音">
+              <svg class="volume-icon volume-icon--on" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 8.5a5 5 0 0 1 0 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              <svg class="volume-icon volume-icon--muted" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="m17 9 4 4m0-4-4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </button>
+            <input id="island-volume-slider" type="range" min="0" max="1" value="0.72" step="0.01" aria-label="播放器音量" />
+            <output id="island-volume-value" for="island-volume-slider">72%</output>
+          </div>
+        </div>
       </div>
     </div>
     <audio id="site-island-audio" src={playerAudio} preload="metadata" data-source-ready="true"></audio>
@@ -123,14 +121,14 @@ const playerLyrics = withBase(player.lyrics);
       const active = isActive(item.href);
       return (
         <a href={withBase(item.href)} class:list={['rail-link', active && 'is-active']} aria-current={active ? 'page' : undefined}>
-          <span class="rail-icon"><Icon name={navigationIconByHref[item.href as keyof typeof navigationIconByHref]} class="h-4 w-4" /></span>
+          <span class="rail-icon"><RailIcon name={navigationIconByHref[item.href as keyof typeof navigationIconByHref]} /></span>
           <span class="rail-label">{item.label}</span>
         </a>
       );
     })}
     <span class="rail-divider" aria-hidden="true"></span>
     <button class="rail-link rail-menu-button" id="rail-menu-btn" type="button" aria-label="打开全部入口" aria-controls="mobile-drawer" aria-expanded="false" data-drawer-trigger>
-      <span class="rail-icon"><Icon name="menu" class="h-4 w-4" /></span>
+      <span class="rail-icon"><RailIcon name="more" /></span>
       <span class="rail-label">全部入口</span>
     </button>
   </nav>
@@ -153,7 +151,8 @@ const playerLyrics = withBase(player.lyrics);
     const songTitle = island.dataset.songTitle || '当前歌曲';
 
     const panelPlay = document.getElementById('island-player-toggle');
-    const close = document.getElementById('island-player-close');
+    const restart = document.getElementById('island-player-restart');
+    const forward = document.getElementById('island-player-forward');
     const scrubber = document.getElementById('island-player-scrubber');
     const elapsed = document.getElementById('island-player-elapsed');
     const duration = document.getElementById('island-player-duration');
@@ -197,7 +196,12 @@ const playerLyrics = withBase(player.lyrics);
     const setVisualizerBaseline = () => {
       visualizerBars.forEach((bar) => {
         if (!(bar instanceof HTMLElement)) return;
-        bar.style.setProperty('--visualizer-height', '4px');
+        const expanded = bar.parentElement?.dataset.audioVisualizer === 'expanded';
+        const position = [...(bar.parentElement?.children || [])].indexOf(bar);
+        const levels = expanded
+          ? ['0.65cqw', '1.2cqw', '2.8cqw', '4.3cqw', '5.7cqw', '7.6cqw']
+          : ['6px', '10px', '15px', '11px', '18px', '8px'];
+        bar.style.setProperty('--visualizer-height', levels[position] || '4px');
         bar.style.setProperty('--visualizer-opacity', '0.56');
       });
     };
@@ -222,7 +226,9 @@ const playerLyrics = withBase(player.lyrics);
           samples += 1;
         }
         const energy = samples ? total / samples : 0;
-        const height = Math.max(4, Math.round(4 + (energy / 255) * 20));
+        const expanded = bar.parentElement?.dataset.audioVisualizer === 'expanded';
+        const maximum = expanded ? Math.max(24, (bar.parentElement?.clientHeight || 44) * 0.82) : 20;
+        const height = Math.max(4, Math.round(4 + (energy / 255) * maximum));
         bar.style.setProperty('--visualizer-height', `${height}px`);
         bar.style.setProperty('--visualizer-opacity', String(Math.min(1, 0.48 + energy / 300)));
       });
@@ -302,7 +308,7 @@ const playerLyrics = withBase(player.lyrics);
         scrubber.style.setProperty('--player-progress', progress);
       }
       if (elapsed) elapsed.textContent = formatTime(current);
-      if (duration) duration.textContent = formatDuration(total);
+      if (duration) duration.textContent = `−${formatDuration(Math.max(0, total - current))}`;
       document.querySelectorAll('[data-live-elapsed]').forEach((node) => { node.textContent = formatTime(current); });
       document.querySelectorAll('[data-live-duration]').forEach((node) => { node.textContent = formatTime(total); });
       document.querySelectorAll('[data-live-progress]').forEach((node) => {
@@ -411,6 +417,20 @@ const playerLyrics = withBase(player.lyrics);
       setOpen(true);
     });
     panelPlay?.addEventListener('click', togglePlayback);
+    restart?.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      audio.currentTime = 0;
+      updateProgress();
+      if (audio.paused) void play();
+    });
+    forward?.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const total = Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : songDuration;
+      audio.currentTime = Math.min(total, (audio.currentTime || 0) + 10);
+      updateProgress();
+    });
     volumeButton?.addEventListener('click', (event) => {
       event.preventDefault();
       event.stopPropagation();
@@ -432,12 +452,6 @@ const playerLyrics = withBase(player.lyrics);
         localStorage.setItem('b0-player-muted', 'false');
       } catch (_) {}
       syncVolumeUI();
-    });
-    close?.addEventListener('click', (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      toggle.focus({ preventScroll: true });
-      setOpen(false);
     });
     scrubber?.addEventListener('input', () => {
       if (!(scrubber instanceof HTMLInputElement) || audio.dataset.sourceReady !== 'true') return;
