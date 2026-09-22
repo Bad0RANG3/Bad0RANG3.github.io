@@ -1364,12 +1364,12 @@ html[data-theme="paper"] #sakura-canvas {
 
 .music-island .island-player-lyric {
   overflow: hidden;
-  margin: 0.4cqw 0 0;
-  color: rgb(255 255 255 / 0.5);
-  font-size: 2.7cqw;
-  font-weight: 500;
-  letter-spacing: -0.01em;
-  line-height: 1.2;
+  margin: 0;
+  color: #fff;
+  font-size: 4.05cqw;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1.1;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
