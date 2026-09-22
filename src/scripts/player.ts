@@ -434,7 +434,7 @@
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', refreshForPage, { once: true });
     else refreshForPage();
 
-    void loadLyrics();
+    void loadLyrics().then(() => updateLyric());
     updateProgress();
     syncVolumeUI();
     setVisualizerBaseline();
