@@ -2626,24 +2626,20 @@ html[data-theme="paper-dark"] .ncm-profile-card {
 
 /* Collapsed music island on phones and small tablets. The summary copy is
    hidden here, so the pill only needs to hold the album art and the
-   visualiser; keep it a narrow, centred capsule instead of the desktop-width
-   250px bar. */
+   visualiser; keep it a narrow capsule with the art on the left and the
+   visualiser on the right, instead of the desktop-width 250px bar. */
 @media (max-width: 900px) {
   .music-island,
   .music-island[data-cue-active="true"][data-open="false"] {
-    width: min(148px, calc(100vw - 104px)) !important;
+    width: min(140px, calc(100vw - 104px)) !important;
     height: 46px !important;
     border-radius: 23px !important;
   }
 
   .music-island .island-summary {
     height: 46px !important;
-    justify-content: center;
-    gap: 0.55rem;
-    padding: 0 0.5rem;
+    padding: 0 0.55rem;
   }
-
-  .music-island .island-mini-wave { margin-left: 0; }
 }
 
 @media (max-width: 640px) {
@@ -2657,15 +2653,15 @@ html[data-theme="paper-dark"] .ncm-profile-card {
 
   /* Compact dynamic island on phones. The summary copy is hidden here, so the
      collapsed pill only needs to hold the album art and the visualiser; keep it
-     narrow and centred instead of a mostly-empty 250px bar. */
+     narrow, with the art on the left and the visualiser pushed to the right. */
   .music-island {
-    width: min(148px, calc(100vw - 104px)) !important;
+    width: min(140px, calc(100vw - 104px)) !important;
     height: 44px !important;
     border-radius: 22px !important;
   }
 
   .music-island[data-cue-active="true"][data-open="false"] {
-    width: min(148px, calc(100vw - 104px)) !important;
+    width: min(140px, calc(100vw - 104px)) !important;
     height: 44px !important;
     border-radius: 22px !important;
   }
@@ -2678,9 +2674,7 @@ html[data-theme="paper-dark"] .ncm-profile-card {
 
   .music-island .island-summary {
     height: 44px !important;
-    justify-content: center;
-    gap: 0.6rem;
-    padding: 0 0.5rem;
+    padding: 0 0.55rem;
   }
 
   .music-island .island-mini-art {
@@ -2691,7 +2685,7 @@ html[data-theme="paper-dark"] .ncm-profile-card {
 
   .music-island .island-track-title { font-size: 0.66rem; }
   .music-island .island-track-artist { font-size: 0.54rem; }
-  .music-island .island-mini-wave { width: 30px; gap: 2px; margin-left: 0; }
+  .music-island .island-mini-wave { width: 30px; gap: 2px; }
   .music-island .island-mini-wave i { width: 2.5px; }
   .music-island .island-volume-menu { width: 168px; }
 
