@@ -2643,7 +2643,7 @@ html[data-theme="paper-dark"] .ncm-profile-card {
 @media (max-width: 900px) {
   .music-island,
   .music-island[data-cue-active="true"][data-open="false"] {
-    width: min(140px, calc(100vw - 104px)) !important;
+    width: min(180px, calc(100vw - 104px)) !important;
     height: 46px !important;
     border-radius: 23px !important;
   }
@@ -2667,13 +2667,13 @@ html[data-theme="paper-dark"] .ncm-profile-card {
      collapsed pill only needs to hold the album art and the visualiser; keep it
      narrow, with the art on the left and the visualiser pushed to the right. */
   .music-island {
-    width: min(140px, calc(100vw - 104px)) !important;
+    width: min(180px, calc(100vw - 104px)) !important;
     height: 44px !important;
     border-radius: 22px !important;
   }
 
   .music-island[data-cue-active="true"][data-open="false"] {
-    width: min(140px, calc(100vw - 104px)) !important;
+    width: min(180px, calc(100vw - 104px)) !important;
     height: 44px !important;
     border-radius: 22px !important;
   }
