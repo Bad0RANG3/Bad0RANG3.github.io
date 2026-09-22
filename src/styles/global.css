@@ -2624,6 +2624,28 @@ html[data-theme="paper-dark"] .ncm-profile-card {
   }
 }
 
+/* Collapsed music island on phones and small tablets. The summary copy is
+   hidden here, so the pill only needs to hold the album art and the
+   visualiser; keep it a narrow, centred capsule instead of the desktop-width
+   250px bar. */
+@media (max-width: 900px) {
+  .music-island,
+  .music-island[data-cue-active="true"][data-open="false"] {
+    width: min(148px, calc(100vw - 104px)) !important;
+    height: 46px !important;
+    border-radius: 23px !important;
+  }
+
+  .music-island .island-summary {
+    height: 46px !important;
+    justify-content: center;
+    gap: 0.55rem;
+    padding: 0 0.5rem;
+  }
+
+  .music-island .island-mini-wave { margin-left: 0; }
+}
+
 @media (max-width: 640px) {
   #main-content {
     padding-top: 4rem;
@@ -2637,13 +2659,13 @@ html[data-theme="paper-dark"] .ncm-profile-card {
      collapsed pill only needs to hold the album art and the visualiser; keep it
      narrow and centred instead of a mostly-empty 250px bar. */
   .music-island {
-    width: min(156px, calc(100vw - 104px)) !important;
+    width: min(148px, calc(100vw - 104px)) !important;
     height: 44px !important;
     border-radius: 22px !important;
   }
 
   .music-island[data-cue-active="true"][data-open="false"] {
-    width: min(156px, calc(100vw - 104px)) !important;
+    width: min(148px, calc(100vw - 104px)) !important;
     height: 44px !important;
     border-radius: 22px !important;
   }
