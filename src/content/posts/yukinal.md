@@ -16,7 +16,7 @@ tags:
 category: 项目
 featured: true
 draft: false
-cover: '/yukinal/yukinal-workspace.png'
+cover: '/yukinal/yukinal-workspace.webp'
 coverAlt: 'Yukinal 首次使用工作区与 Agent 面板'
 difficulty: 进阶
 audience: 想让模型帮忙处理服务器事务，但不想直接把 shell 交出去的开发者
@@ -31,7 +31,7 @@ hasCode: true
 
 截至 2026-09-22，主分支在 `v1.0.0` 基线之上补齐了可持久化的 Agent 任务、证据、变更计划、有限恢复和持续巡检，同时把 MCP 服务接进同一条执行与审计链路。下面的内容按当前仓库状态说明，并区分已经落地和尚未在真实环境验证的部分。
 
-![Yukinal 首次使用工作区与 Agent 面板](/yukinal/yukinal-workspace.png)
+![Yukinal 首次使用工作区与 Agent 面板](/yukinal/yukinal-workspace.webp)
 
 ## 模型只负责提出操作
 
@@ -80,7 +80,7 @@ Agent 现在可以把一次排查保存为任务。只读健康巡检会按健�
 
 每次运行都会记录 trace。被策略拒绝或被驳回的调用也会正常收尾，不会留下永久处于 `running` 的步骤。Agent 回复使用独立 Markdown 解析器渲染，HTML 只按文本显示，远程图片需要用户同意后才会加载。
 
-![Yukinal 终端工作区](/yukinal/yukinal-terminal.png)
+![Yukinal 终端工作区](/yukinal/yukinal-terminal.webp)
 
 ## MCP 服务由宿主托管
 

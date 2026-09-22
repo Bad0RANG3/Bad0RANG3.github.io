@@ -2,12 +2,48 @@
    NIGHT LOG — glassmorphism / pink-noir design system
    The visual language is shared by the home page, content pages and tools.
    ================================================================= */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+
+@plugin '@tailwindcss/typography';
+
+/* daisyUI 5 is only compiled for the component classes actually referenced
+   in the source, which keeps the shipped stylesheet small. */
+/* daisyUI 5 does not tree-shake on its own (its addComponents output is kept
+   whole), so the components this site never uses are excluded explicitly.
+   Audit the rendered HTML before removing a name from this list. */
+@plugin 'daisyui' {
+  themes: light --default;
+  logs: false;
+  exclude: skeleton, mask, status, checkbox, radio, collapse, fieldset, diff,
+    hover3d, textrotate, kbd, avatar, rating, stat, dropdown, filter, megamenu,
+    toggle, swap, link, hovergallery, select, mockup, calendar, divider, steps,
+    list, breadcrumbs, chat, radialprogress, aura, range, stack, fileinput,
+    carousel, alert, drawer, fab, input, toast, menu, tab, navbar, countdown,
+    textarea, card, label, indicator, progress, otp, table, hero, validator,
+    timeline, footer, loading, dock, tooltip;
+}
 
 /* Design tokens (colours, surfaces, motion) live in theme.css,
-   which BaseLayout imports before this file. */
+   which BaseLayout imports before this file.
+
+   Tailwind v4 reads the former tailwind.config.mjs theme extensions from
+   this @theme block. Only utilities with real usages are kept. */
+@theme {
+  --font-sans: 'JetBrains Mono', 'Noto Sans SC', ui-monospace, SFMono-Regular, Consolas, monospace;
+  --font-mono: 'JetBrains Mono', 'Noto Sans SC', ui-monospace, SFMono-Regular, Consolas, monospace;
+  --font-display: 'JetBrains Mono', 'Noto Sans SC', ui-monospace, SFMono-Regular, Consolas, monospace;
+
+  --shadow-punch: 0 22px 60px -20px color-mix(in oklab, var(--color-primary) 40%, transparent);
+  --shadow-hard: 10px 10px 0 0 var(--color-ink);
+}
+
+/* Explicit source root so the utilities are detected regardless of the
+   directory the build is invoked from. */
+@source '../**/*.{astro,ts}';
+/* Post bodies are prose, not templates. Scanning them makes ordinary words
+   like "stack" or "steps" match daisyUI component names and pulls in unused
+   CSS, so they are explicitly excluded. */
+@source not '../content/**';
 
 @layer base {
   :root {
