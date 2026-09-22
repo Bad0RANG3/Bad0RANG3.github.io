@@ -6,62 +6,8 @@
 @tailwind components;
 @tailwind utilities;
 
-:root,
-[data-theme="paper-dark"] {
-  color-scheme: dark;
-  --color-ink: oklch(94% 0.015 350);
-  --color-base-100: oklch(12% 0.022 285);
-  --color-base-200: oklch(16% 0.028 285);
-  --color-base-300: oklch(23% 0.035 285);
-  --color-base-content: oklch(96% 0.012 350);
-  --color-primary: oklch(76% 0.17 350);
-  --color-primary-content: oklch(18% 0.035 345);
-  --color-secondary: oklch(66% 0.13 320);
-  --color-secondary-content: oklch(98% 0.01 350);
-  --color-accent: oklch(77% 0.11 235);
-  --color-accent-content: oklch(17% 0.03 235);
-  --color-neutral: oklch(24% 0.03 285);
-  --color-neutral-content: oklch(94% 0.015 350);
-  --surface: rgba(255, 255, 255, 0.055);
-  --surface-strong: rgba(255, 255, 255, 0.09);
-  --surface-soft: rgba(255, 255, 255, 0.032);
-  --line: rgba(255, 255, 255, 0.12);
-  --line-soft: rgba(255, 255, 255, 0.075);
-  --text-dim: #e6b9cb;
-  --text-faint: #a8788d;
-  --accent-pink: #ff8fb6;
-  --accent-pink-soft: #ffc5d8;
-  --accent-violet: #c6a4ff;
-  --accent-blue: #91caff;
-  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
-  --spring: cubic-bezier(0.34, 1.45, 0.5, 1);
-}
-
-[data-theme="paper"] {
-  color-scheme: light;
-  --color-ink: oklch(24% 0.035 345);
-  --color-base-100: oklch(98% 0.012 350);
-  --color-base-200: oklch(94% 0.025 350);
-  --color-base-300: oklch(88% 0.04 350);
-  --color-base-content: oklch(24% 0.035 345);
-  --color-primary: oklch(64% 0.23 355);
-  --color-primary-content: oklch(99% 0.008 350);
-  --color-secondary: oklch(86% 0.1 350);
-  --color-secondary-content: oklch(28% 0.06 350);
-  --color-accent: oklch(67% 0.16 320);
-  --color-accent-content: oklch(99% 0.008 330);
-  --surface: rgba(255, 255, 255, 0.72);
-  --surface-strong: rgba(255, 255, 255, 0.92);
-  --surface-soft: rgba(255, 255, 255, 0.54);
-  --line: rgba(41, 23, 39, 0.13);
-  --line-soft: rgba(41, 23, 39, 0.08);
-  --text-dim: #8e5e73;
-  --text-faint: #a88394;
-  --accent-pink: #e95786;
-  --accent-pink-soft: #c83968;
-  --accent-violet: #8764c5;
-  --accent-blue: #477dae;
-}
+/* Design tokens (colours, surfaces, motion) live in theme.css,
+   which BaseLayout imports before this file. */
 
 @layer base {
   :root {
@@ -81,13 +27,11 @@
   body {
     min-height: 100vh;
     margin: 0;
-    background: #07070b;
+    background: var(--fx-bg);
     color: var(--color-base-content);
     -webkit-font-smoothing: antialiased;
     -webkit-text-size-adjust: 100%;
   }
-
-  [data-theme="paper"] body { background: #faf7fb; }
 
   ::selection { background: rgba(255, 143, 182, 0.35); color: #fff; }
 
@@ -293,7 +237,7 @@
 [class*="shadow-[6px_6px_0_0]"],
 [class*="shadow-[4px_4px_0_0]"] { box-shadow: 0 24px 64px -38px #000 !important; }
 .panel-slice { border-radius: 1.5rem; }
-.mockup-code { border: 1px solid var(--line) !important; background: rgba(0, 0, 0, 0.28) !important; color: var(--text-dim); }
+.mockup-code { border: 1px solid var(--line) !important; background: var(--code-block-bg) !important; color: var(--code-block-text); }
 .reveal { animation: reveal-up 0.7s var(--ease) both; animation-delay: var(--reveal-delay, 0ms); }
 
 @keyframes reveal-up { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: translateY(0); } }
@@ -304,20 +248,20 @@
    ----------------------------------------------------------------- */
 .prose { color: var(--text-dim); }
 .prose :where(a) { color: var(--accent-pink-soft); text-decoration-color: rgba(255, 143, 182, 0.42); }
-.prose :where(a:hover) { color: #fff; }
-.prose :where(h1, h2, h3, h4, h5, h6) { color: #fff8fb; letter-spacing: -0.025em; }
+.prose :where(a:hover) { color: var(--accent-pink); }
+.prose :where(h1, h2, h3, h4, h5, h6) { color: var(--fx-text); letter-spacing: -0.025em; }
 .prose :where(blockquote) { border-left-color: var(--accent-pink); color: var(--text-dim); }
 .prose :where(code):not(:where(pre *)) { border: 1px solid rgba(255, 143, 182, 0.22); border-radius: 0.4rem; padding: 0.13rem 0.35rem; background: rgba(255, 143, 182, 0.1); color: var(--accent-pink-soft); }
 .prose :where(pre) { border: 1px solid var(--line); border-radius: 1rem; background: rgba(0, 0, 0, 0.36); box-shadow: 0 24px 60px -38px #000; }
 .lyric-block { position: relative; margin: 1.5rem 0; border: 1px solid rgba(255, 143, 182, 0.25); border-radius: 1rem; padding: 1rem 1.15rem; background: rgba(255, 143, 182, 0.07); color: var(--text-dim); }
 .lyric-block p { margin: 0.5rem 0; }
 .lyric-en,
-.lyric-ja { color: #ffe4ee; }
+.lyric-ja { color: var(--accent-pink-soft); }
 .lyric-cn { color: var(--text-faint); }
 .prose .table-wrapper { position: relative; margin: 1.4rem 0; overflow-x: auto; border: 1px solid var(--line); border-radius: 1rem; background: var(--surface-soft); }
 .prose .table-wrapper :where(table) { width: 100%; min-width: 38rem; margin: 0; }
 .prose .table-wrapper :where(th, td) { border-color: var(--line-soft); }
-.prose .table-wrapper :where(th) { color: #fff; }
+.prose .table-wrapper :where(th) { color: var(--fx-text); }
 .link-underline { color: var(--text-dim); transition: color 0.25s var(--ease); }
 .link-underline:hover { color: var(--accent-pink-soft); }
 .reading-progress { position: fixed; inset: 0 auto auto 0; z-index: 90; width: 100%; height: 3px; background: linear-gradient(90deg, var(--accent-pink), var(--accent-violet), var(--accent-blue)); transform: scaleX(0); transform-origin: left; pointer-events: none; }
@@ -328,7 +272,7 @@
 .article-toc a { display: block; border-left: 1px solid var(--line); padding-left: .7rem; color: var(--text-faint); font-size: .78rem; line-height: 1.4; transition: color .25s var(--ease), border-color .25s var(--ease); }
 .article-toc a:hover, .article-toc a.is-active { border-color: var(--accent-pink); color: var(--accent-pink-soft); }
 .article-tools { display: inline-flex; align-items: center; gap: .25rem; }
-.code-copy { position: absolute; top: .65rem; right: .65rem; border: 1px solid var(--line); border-radius: .5rem; padding: .25rem .5rem; background: var(--surface); color: inherit; font-size: .7rem; cursor: pointer; }
+.code-copy { position: absolute; top: .65rem; right: .65rem; border: 1px solid var(--fx-line); border-radius: .5rem; padding: .25rem .5rem; background: var(--fx-surface-strong); color: var(--fx-text); font-size: .7rem; cursor: pointer; }
 .prose pre { position: relative; }
 .image-lightbox { max-width: min(95vw, 1200px); max-height: 95vh; padding: 0; border: 0; background: transparent; }
 .image-lightbox::backdrop { background: rgb(0 0 0 / .8); }
@@ -420,41 +364,7 @@ html:not([data-theme="paper-dark"]) #theme-toggle .theme-icon-moon { display: no
    Keep the original Paper Punch card system and add the interactive
    background, lyric stage and navigation rail above it.
    ================================================================= */
-html[data-theme="paper"] {
-  color-scheme: light;
-  --color-ink: oklch(24% 0.045 345);
-  --color-base-100: oklch(97.5% 0.012 355);
-  --color-base-200: oklch(94.5% 0.024 350);
-  --color-base-300: oklch(89.5% 0.038 350);
-  --color-base-content: oklch(24% 0.045 345);
-  --color-primary: oklch(64% 0.23 355);
-  --color-primary-content: oklch(99% 0.008 350);
-  --color-secondary: oklch(88% 0.11 350);
-  --color-secondary-content: oklch(28% 0.06 350);
-  --color-accent: oklch(70% 0.16 320);
-  --color-accent-content: oklch(99% 0.008 330);
-  --color-neutral: oklch(28% 0.045 340);
-  --color-neutral-content: oklch(97.5% 0.01 350);
-  --paper-grain: url("data:image/svg+xml,%3Csvg viewBox='0 0 220 220' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
-}
-
-html[data-theme="paper-dark"] {
-  color-scheme: dark;
-  --color-ink: oklch(88% 0.02 340);
-  --color-base-100: oklch(18% 0.022 340);
-  --color-base-200: oklch(22% 0.026 340);
-  --color-base-300: oklch(28% 0.03 340);
-  --color-base-content: oklch(84% 0.018 340);
-  --color-primary: oklch(74% 0.2 355);
-  --color-primary-content: oklch(17% 0.035 350);
-  --color-secondary: oklch(82% 0.12 345);
-  --color-secondary-content: oklch(20% 0.05 345);
-  --color-accent: oklch(76% 0.15 315);
-  --color-accent-content: oklch(17% 0.04 315);
-  --color-neutral: oklch(30% 0.025 340);
-  --color-neutral-content: oklch(82% 0.015 340);
-  --paper-grain: url("data:image/svg+xml,%3Csvg viewBox='0 0 220 220' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");
-}
+/* Palette tokens moved to theme.css. */
 
 html[data-theme="paper"] body {
   background-color: var(--color-base-100);
@@ -561,7 +471,7 @@ html[data-theme="paper-dark"] .panel-slice {
 .section-heading h2 { color: var(--color-base-content) !important; }
 .content-card-description,
 .page-header p:not(.eyebrow) { color: color-mix(in oklab, var(--color-base-content) 66%, transparent) !important; }
-.content-card-meta { color: color-mix(in oklab, var(--color-base-content) 46%, transparent) !important; }
+.content-card-meta { color: color-mix(in oklab, var(--color-base-content) 62%, transparent) !important; }
 
 .eyebrow {
   color: color-mix(in oklab, var(--color-primary) 80%, var(--color-base-content));
@@ -683,31 +593,7 @@ html[data-theme="paper-dark"] .contact-panel {
  * It intentionally leaves the site's original card components intact.
  */
 
-:root {
-  --fx-bg: #fff8fa;
-  --fx-surface: rgb(255 255 255 / 0.76);
-  --fx-surface-strong: rgb(255 255 255 / 0.9);
-  --fx-line: rgb(76 47 61 / 0.14);
-  --fx-text: #291c23;
-  --fx-muted: #755c68;
-  --fx-faint: #a18090;
-  --fx-pink: #d94f81;
-  --fx-pink-soft: #f29ab9;
-  --fx-shadow: rgb(105 47 70 / 0.15);
-}
-
-html[data-theme="paper-dark"] {
-  --fx-bg: #0b080d;
-  --fx-surface: rgb(24 17 23 / 0.72);
-  --fx-surface-strong: rgb(30 21 29 / 0.88);
-  --fx-line: rgb(255 236 245 / 0.12);
-  --fx-text: #fff7fb;
-  --fx-muted: #d6b9c6;
-  --fx-faint: #9e788b;
-  --fx-pink: #ff8fb6;
-  --fx-pink-soft: #ffc5d8;
-  --fx-shadow: rgb(0 0 0 / 0.44);
-}
+/* Effect-layer tokens moved to theme.css. */
 
 body.site-body {
   background: var(--fx-bg) !important;
@@ -718,7 +604,8 @@ body.site-body {
   width: min(calc(100% - 2rem), 68rem);
 }
 
-/* Dense animated BGA with a quiet scrim so content remains readable. */
+/* Dense animated BGA with a quiet scrim so content remains readable.
+   The two gradient layers drift with scroll (--b0-scroll) for depth. */
 .site-atmosphere {
   position: fixed;
   inset: 0;
@@ -728,7 +615,12 @@ body.site-body {
     radial-gradient(circle at 18% 8%, rgb(255 143 182 / 0.17), transparent 36%),
     radial-gradient(circle at 88% 82%, rgb(126 104 255 / 0.12), transparent 42%),
     var(--fx-bg) !important;
+  background-position:
+    0 calc(var(--b0-scroll, 0px) * -0.16),
+    0 calc(var(--b0-scroll, 0px) * -0.32),
+    0 0 !important;
   pointer-events: none;
+  will-change: background-position;
 }
 
 .site-atmosphere::after {

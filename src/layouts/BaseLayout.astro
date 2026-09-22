@@ -1,4 +1,5 @@
 ---
+import '../styles/theme.css';
 import '../styles/global.css';
 import { ClientRouter } from 'astro:transitions';
 import SiteHeader from '../components/layout/SiteHeader.astro';
@@ -196,7 +197,13 @@ const jsonLd = {
 
       function syncTheme() { applyTheme(storedTheme(), false); }
 
+      // Always repaint on execution: this script can re-run once during the
+      // first ClientRouter navigation. Painting is idempotent.
       paint(document, storedTheme());
+
+      // Register listeners only once per page session.
+      if (window.__b0ThemeBound) return;
+      window.__b0ThemeBound = true;
 
       // Paint the incoming document before ClientRouter swaps it in, so the
       // SSR light default never flashes over a dark preference.
@@ -204,6 +211,20 @@ const jsonLd = {
         var incoming = event.newDocument;
         if (incoming && incoming.documentElement) paint(incoming, storedTheme());
       });
+
+      // Belt-and-suspenders: re-assert after the swap in case anything else
+      // touched the root attributes.
+      document.addEventListener('astro:after-swap', function () {
+        paint(document, storedTheme());
+      });
+
+      // Last line of defence: if any other script (older cached bundle, an
+      // extension, a transition race) rewrites data-theme, snap it back to the
+      // preference we actually resolved. Idempotent, so it cannot loop.
+      new MutationObserver(function () {
+        var wanted = storedTheme();
+        if (document.documentElement.getAttribute('data-theme') !== wanted) paint(document, wanted);
+      }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
       // Delegated so the control keeps working after the header is replaced.
       document.addEventListener('click', function (event) {
@@ -419,6 +440,28 @@ const jsonLd = {
         else refresh();
       });
       refresh();
+    })();
+  </script>
+
+  <script is:inline>
+    // @ts-nocheck
+    /* Scroll-linked parallax for the fixed atmosphere layer. Kept separate from
+       the canvas renderer and bound once, since ClientRouter de-duplicates this
+       script on later navigations. */
+    (() => {
+      if (window.__b0ParallaxBound) return;
+      window.__b0ParallaxBound = true;
+      const root = document.documentElement;
+      let frame = 0;
+      const update = () => {
+        frame = 0;
+        root.style.setProperty('--b0-scroll', `${window.scrollY || window.pageYOffset || 0}px`);
+      };
+      const schedule = () => { if (!frame) frame = requestAnimationFrame(update); };
+      window.addEventListener('scroll', schedule, { passive: true });
+      window.addEventListener('resize', schedule, { passive: true });
+      document.addEventListener('astro:page-load', update);
+      update();
     })();
   </script>
 

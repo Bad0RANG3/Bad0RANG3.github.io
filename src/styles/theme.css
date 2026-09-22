@@ -1,0 +1,114 @@
+/* =================================================================
+   THEME — single source of truth for every design token.
+
+   Two themes exist: `paper` (light, the SSR default) and `paper-dark`.
+   Components must never hard-code a theme-dependent colour; they consume
+   these tokens so both themes stay readable. Imported before global.css
+   from BaseLayout.astro.
+
+   Token families:
+     --color-*   daisyUI-compatible palette (oklch)
+     --surface*  translucent panel fills
+     --line*     hairline borders
+     --text-*    secondary copy
+     --accent-*  decorative accents
+     --fx-*      layout / effects layer tokens
+   ================================================================= */
+
+:root,
+html[data-theme="paper"] {
+  color-scheme: light;
+
+  --color-ink: oklch(24% 0.045 345);
+  --color-base-100: oklch(97.5% 0.012 355);
+  --color-base-200: oklch(94.5% 0.024 350);
+  --color-base-300: oklch(89.5% 0.038 350);
+  --color-base-content: oklch(24% 0.045 345);
+  --color-primary: oklch(64% 0.23 355);
+  --color-primary-content: oklch(99% 0.008 350);
+  --color-secondary: oklch(88% 0.11 350);
+  --color-secondary-content: oklch(28% 0.06 350);
+  --color-accent: oklch(70% 0.16 320);
+  --color-accent-content: oklch(99% 0.008 330);
+  --color-neutral: oklch(28% 0.045 340);
+  --color-neutral-content: oklch(97.5% 0.01 350);
+
+  --surface: rgba(255, 255, 255, 0.72);
+  --surface-strong: rgba(255, 255, 255, 0.92);
+  --surface-soft: rgba(255, 255, 255, 0.54);
+  --line: rgba(41, 23, 39, 0.13);
+  --line-soft: rgba(41, 23, 39, 0.08);
+
+  --text-dim: #8e5e73;
+  --text-faint: #87667a;
+  --accent-pink: #e95786;
+  --accent-pink-soft: #c83968;
+  --accent-violet: #8764c5;
+  --accent-blue: #477dae;
+
+  --fx-bg: #fff8fa;
+  --fx-surface: rgb(255 255 255 / 0.76);
+  --fx-surface-strong: rgb(255 255 255 / 0.9);
+  --fx-line: rgb(76 47 61 / 0.14);
+  --fx-text: #291c23;
+  --fx-muted: #755c68;
+  --fx-faint: #a18090;
+  --fx-pink: #d94f81;
+  --fx-pink-soft: #f29ab9;
+  --fx-shadow: rgb(105 47 70 / 0.15);
+}
+
+html[data-theme="paper-dark"] {
+  color-scheme: dark;
+
+  --color-ink: oklch(88% 0.02 340);
+  --color-base-100: oklch(18% 0.022 340);
+  --color-base-200: oklch(22% 0.026 340);
+  --color-base-300: oklch(28% 0.03 340);
+  --color-base-content: oklch(84% 0.018 340);
+  --color-primary: oklch(74% 0.2 355);
+  --color-primary-content: oklch(17% 0.035 350);
+  --color-secondary: oklch(82% 0.12 345);
+  --color-secondary-content: oklch(20% 0.05 345);
+  --color-accent: oklch(76% 0.15 315);
+  --color-accent-content: oklch(17% 0.04 315);
+  --color-neutral: oklch(30% 0.025 340);
+  --color-neutral-content: oklch(82% 0.015 340);
+
+  --surface: rgba(255, 255, 255, 0.055);
+  --surface-strong: rgba(255, 255, 255, 0.09);
+  --surface-soft: rgba(255, 255, 255, 0.032);
+  --line: rgba(255, 255, 255, 0.12);
+  --line-soft: rgba(255, 255, 255, 0.075);
+
+  --text-dim: #e6b9cb;
+  --text-faint: #a8788d;
+  --accent-pink: #ff8fb6;
+  --accent-pink-soft: #ffc5d8;
+  --accent-violet: #c6a4ff;
+  --accent-blue: #91caff;
+
+  --fx-bg: #0b080d;
+  --fx-surface: rgb(24 17 23 / 0.72);
+  --fx-surface-strong: rgb(30 21 29 / 0.88);
+  --fx-line: rgb(255 236 245 / 0.12);
+  --fx-text: #fff7fb;
+  --fx-muted: #d6b9c6;
+  --fx-faint: #9e788b;
+  --fx-pink: #ff8fb6;
+  --fx-pink-soft: #ffc5d8;
+  --fx-shadow: rgb(0 0 0 / 0.44);
+}
+
+/* Motion curves and code-block colours are theme-independent. */
+:root {
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --spring: cubic-bezier(0.34, 1.45, 0.5, 1);
+  --code-block-bg: #1c161f;
+  --code-block-text: #e5e7eb;
+}
+
+body {
+  background: var(--fx-bg);
+  color: var(--fx-text);
+}
