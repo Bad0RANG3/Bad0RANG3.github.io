@@ -42,7 +42,7 @@ const profileMetrics = [
           metrics={profileMetrics}
         />
 
-        <section class="lyric-stage reveal hard-card rounded-[2rem] p-6 sm:p-8 lg:p-9" aria-label="歌词展示" style="--reveal-delay:100ms">
+        <section class="profile-card lyric-stage reveal hard-card rounded-[2rem] p-6 sm:p-8 lg:p-9" aria-label="歌词展示" style="--reveal-delay:100ms">
           <div class="lyric-stage-top">
             <span class="lyric-live-dot"></span>
             <span>NOW PLAYING</span>
@@ -75,7 +75,7 @@ const profileMetrics = [
 
       <div class="presence-grid">
         <article
-          class="presence-card ncm-profile-card reveal"
+          class="profile-card presence-card ncm-profile-card reveal"
           data-ncm-profile
           data-api-base={netease.apiBase}
           data-user-id={netease.userId}
@@ -113,7 +113,7 @@ const profileMetrics = [
           </dl>
         </article>
 
-        <article class="presence-card presence-github-card reveal" style="--reveal-delay:100ms" data-github-profile>
+        <article class="profile-card presence-card presence-github-card reveal" style="--reveal-delay:100ms" data-github-profile>
           <header class="presence-card-header">
             <span class="presence-provider"><Icon name="github" class="h-4 w-4" /> GitHub</span>
             <a href={github.profileUrl} target="_blank" rel="noreferrer" aria-label={`前往 ${github.username} 的 GitHub`}><Icon name="arrow-up-right" class="h-4 w-4" /></a>
@@ -176,7 +176,7 @@ const profileMetrics = [
     </section>
 
     <section id="home-contact" class="site-frame home-section home-contact" aria-labelledby="contact-title" data-island-cue="保持联系">
-      <div class="reveal contact-panel">
+      <div class="profile-card reveal contact-panel">
         <div class="grid gap-8 lg:grid-cols-[1.4fr_0.8fr] lg:items-end">
           <div>
             <SectionHeader label="Contact" title="想聊点什么？" titleId="contact-title" />

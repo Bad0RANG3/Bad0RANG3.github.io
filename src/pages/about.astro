@@ -1,16 +1,15 @@
 ---
 import { withBase } from '../lib/urls';
 import BaseLayout from '../layouts/BaseLayout.astro';
-import ProfileOverviewCard from '../components/profile/ProfileOverviewCard.astro';
-import ResourceGrid from '../components/profile/ResourceGrid.astro';
-import SectionHeader from '../components/ui/SectionHeader.astro';
+import Icon from '../components/icons/Icon.astro';
 import { SOCIAL_ICONS, siteConfig } from '../config/site';
 
-const { about, socials } = siteConfig;
+const { about, author, socials } = siteConfig;
 
-const socialCards = socials.map((s) => ({
-  ...s,
-  iconSrc: SOCIAL_ICONS[s.name as keyof typeof SOCIAL_ICONS] ?? null,
+const socialCards = socials.map((social, index) => ({
+  ...social,
+  index: String(index + 1).padStart(2, '0'),
+  iconSrc: SOCIAL_ICONS[social.name as keyof typeof SOCIAL_ICONS] ?? null,
 }));
 
 const skillIconId: Record<string, string> = {
@@ -18,59 +17,709 @@ const skillIconId: Record<string, string> = {
   React: 'react', Vue: 'vue', 'Node.js': 'node', Git: 'git', Docker: 'docker', Linux: 'linux', 'VS Code': 'vscode',
   Figma: 'figma', 'After Effects': 'ae', Photoshop: 'ps', Wireshark: '/Wireshark.ico',
 };
-const getIconUrl = (n: string) => {
-  const id = skillIconId[n]; if (!id) return null;
+
+const getIconUrl = (name: string) => {
+  const id = skillIconId[name];
+  if (!id) return null;
   return withBase(id.startsWith('/') ? id : `/icons/skills/${id}.svg`);
 };
 
 const statusLines = about.currentStatus.split('\n');
 const resourceGroups = [
-  { label: 'Stack', title: '技术栈', tone: 'secondary' as const, items: about.techStack },
-  { label: 'Toolkit', title: '开发工具', tone: 'accent' as const, items: about.devTools },
-].map((group) => ({
+  { label: 'BUILD WITH', title: '技术栈', note: '把想法变成产品', items: about.techStack },
+  { label: 'WORK WITH', title: '开发工具', note: '让过程更顺手', items: about.devTools },
+].map((group, index) => ({
   ...group,
+  index: String(index + 1).padStart(2, '0'),
   items: group.items.map((item) => ({ ...item, iconSrc: getIconUrl(item.name) })),
 }));
+
+const principles = [
+  { number: '01', title: 'Explore', copy: '对陌生事物保持好奇' },
+  { number: '02', title: 'Build', copy: '把灵感做成可用的东西' },
+  { number: '03', title: 'Share', copy: '记录过程，也分享答案' },
+];
 ---
 
-<BaseLayout title="关于" description="了解博主和常用技术栈。">
-  <div class="about-page site-frame min-w-0 space-y-6 py-5 sm:py-8">
-    <ProfileOverviewCard />
+<BaseLayout title="关于" description="认识 Bad0RANG3：一个喜欢软件、开发、游戏与持续折腾的普通人。">
+  <div class="about-page site-frame">
+    <section class="about-hero reveal" aria-labelledby="about-title">
+      <div class="about-hero__grid" aria-hidden="true"></div>
+      <div class="about-hero__ring" aria-hidden="true"></div>
 
-    <div class="grid gap-6 lg:grid-cols-2">
-      <section class="reveal hard-card min-w-0 rounded-[1.75rem] p-6 sm:p-8">
-        <SectionHeader label="Online" title="社交坐标" />
-        <div class="grid gap-3 sm:grid-cols-2">
-          {socialCards.map((s, i) => (
-            <a href={s.url} target="_blank" rel="noopener noreferrer" style={`--reveal-delay:${i * 45}ms`} class="reveal group flex items-center gap-3 rounded-2xl border-2 dark-soft-border bg-base-100/70 p-4 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:bg-primary/10">
-              <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border-2 dark-soft-border bg-base-200 transition-transform duration-300 group-hover:scale-110">
-                {s.iconSrc ? <img src={withBase(s.iconSrc)} alt={s.name} class="h-6 w-6" loading="lazy" /> : <span class="text-xl">?</span>}
-              </span>
-              <div>
-                <p class="font-bold">{s.name}</p>
-                <p class="text-xs text-base-content/45">点击跳转</p>
-              </div>
-            </a>
+      <div class="about-hero__copy">
+        <div class="about-topline">
+          <span>PERSONAL FILE / 001</span>
+          <span class="about-live"><i></i> STILL BUILDING</span>
+        </div>
+
+        <p class="about-overline">HELLO, WORLD —</p>
+        <h1 id="about-title">
+          <span>I'm</span>
+          <strong>{author.name}</strong>
+        </h1>
+        <p class="about-hero__tagline">{about.subtitle}</p>
+        <p class="about-hero__intro">
+          {author.intro} 这里是我的数字工作台，收集软件折腾、开发实验、游戏，以及那些不想被时间冲走的小发现。
+        </p>
+
+        <div class="about-actions">
+          <a href={withBase('/posts/')} class="about-button about-button--primary">
+            去读点东西 <Icon name="arrow-up-right" class="h-4 w-4" />
+          </a>
+          <a href={`mailto:${author.email}`} class="about-button about-button--quiet">
+            和我聊聊 <Icon name="arrow-up-right" class="h-4 w-4" />
+          </a>
+        </div>
+
+        <dl class="about-numbers" aria-label="关于页概览">
+          <div><dt>{String(socials.length).padStart(2, '0')}</dt><dd>连接方式</dd></div>
+          <div><dt>{String(about.techStack.length + about.devTools.length).padStart(2, '0')}</dt><dd>常用工具</dd></div>
+          <div><dt>01</dt><dd>个人空间</dd></div>
+        </dl>
+      </div>
+
+      <aside class="about-portrait" aria-label={`${author.name} 的个人名片`}>
+        <div class="about-portrait__tape" aria-hidden="true"></div>
+        <div class="about-portrait__top">
+          <span>PROFILE / B03</span>
+          <span>ONLINE</span>
+        </div>
+        <div class="about-portrait__image">
+          <span class="about-portrait__monogram" aria-hidden="true">B03</span>
+          <img src={withBase(author.avatar)} alt={author.name} width="248" height="248" loading="eager" />
+          <span class="about-portrait__stamp" aria-hidden="true">NICE<br />TO MEET<br />YOU!</span>
+        </div>
+        <div class="about-portrait__caption">
+          <div><strong>{author.name}</strong><span>maker · player · learner</span></div>
+          <span class="about-portrait__mark">✦</span>
+        </div>
+      </aside>
+    </section>
+
+    <section class="about-story reveal" aria-labelledby="story-title">
+      <article class="about-story__copy">
+        <p class="about-label"><span>002</span> A LITTLE MORE</p>
+        <h2 id="story-title">这里没有标准答案，<br /><em>只有持续更新的我。</em></h2>
+        <p>
+          我喜欢研究一个东西为什么能工作，也喜欢亲手把它拆开、重组，再留下能帮到下一个人的笔记。这个站点就是那段过程的切片。
+        </p>
+
+        <div class="about-principles">
+          {principles.map((item) => (
+            <div class="about-principle">
+              <span>{item.number}</span>
+              <strong>{item.title}</strong>
+              <p>{item.copy}</p>
+            </div>
           ))}
         </div>
-      </section>
+      </article>
 
-      <section class="reveal hard-card hard-card-citrus min-w-0 rounded-[1.75rem] p-6 sm:p-8">
-        <SectionHeader label="Now" title="当前状态" />
-        <div class="mockup-code min-w-0 max-w-full overflow-x-auto border-2 dark-soft-border bg-base-100/80">
-          {statusLines.map((l, i) => <pre data-prefix={i + 1}><code>{l || ' '}</code></pre>)}
+      <aside class="about-status" aria-labelledby="status-title">
+        <div class="about-status__head">
+          <div>
+            <p class="about-label"><span>003</span> CURRENTLY</p>
+            <h2 id="status-title">此刻正在运行</h2>
+          </div>
+          <span class="about-status__pulse"><i></i>LIVE</span>
         </div>
-      </section>
-    </div>
 
-    <div class="grid gap-6 lg:grid-cols-2">
-      {resourceGroups.map((group) => (
-        <section class="reveal panel-slice min-w-0 rounded-[1.75rem] p-6 sm:p-8">
-          <SectionHeader label={group.label} title={group.title} />
-          <ResourceGrid items={group.items} tone={group.tone} />
-        </section>
-      ))}
-    </div>
+        <div class="about-terminal">
+          <div class="about-terminal__bar">
+            <span><i></i><i></i><i></i></span>
+            <span>now.cpp</span>
+          </div>
+          <ol>
+            {statusLines.map((line, index) => (
+              <li><span>{String(index + 1).padStart(2, '0')}</span><code>{line || ' '}</code></li>
+            ))}
+          </ol>
+        </div>
+        <p class="about-status__note">把好奇心编译成一些可以被使用的东西。</p>
+      </aside>
+    </section>
 
+    <section class="about-tools reveal" aria-labelledby="tools-title">
+      <div class="about-section-heading about-section-heading--row">
+        <div>
+          <p class="about-label"><span>004</span> TOOLBOX</p>
+          <h2 id="tools-title">手边的工具</h2>
+        </div>
+        <p>不为填满清单，只保留真正参与过日常创作与实验的工具。</p>
+      </div>
+
+      <div class="about-tool-groups">
+        {resourceGroups.map((group) => (
+          <article class="about-tool-group">
+            <header>
+              <span class="about-tool-group__index">{group.index}</span>
+              <div><p>{group.label}</p><h3>{group.title}</h3></div>
+              <span>{group.note}</span>
+            </header>
+            <div class="about-resource-list">
+              {group.items.map((item) => (
+                <a href={item.url} target="_blank" rel="noopener noreferrer" class="about-resource">
+                  <span class="about-resource__icon">
+                    {item.iconSrc ? <img src={item.iconSrc} alt="" loading="lazy" /> : <span>{item.name.slice(0, 2)}</span>}
+                  </span>
+                  <span>{item.name}</span>
+                  <Icon name="arrow-up-right" class="about-resource__arrow h-4 w-4" />
+                </a>
+              ))}
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section class="about-connect reveal" aria-labelledby="connect-title">
+      <div class="about-connect__intro">
+        <p class="about-label"><span>005</span> FIND ME ONLINE</p>
+        <h2 id="connect-title">在这些地方，<br /><em>继续相遇。</em></h2>
+        <p>分享过程、交换想法，或者只是来打个招呼。</p>
+        <a href={`mailto:${author.email}`}>直接写信给我 <Icon name="arrow-up-right" class="h-4 w-4" /></a>
+      </div>
+
+      <div class="about-social-list">
+        {socialCards.map((social) => (
+          <a href={social.url} target="_blank" rel="noopener noreferrer" class="about-social">
+            <span class="about-social__index">{social.index}</span>
+            <span class="about-social__icon">
+              {social.iconSrc ? <img src={withBase(social.iconSrc)} alt="" loading="lazy" /> : <span>?</span>}
+            </span>
+            <strong>{social.name}</strong>
+            <Icon name="arrow-up-right" class="about-social__arrow h-4 w-4" />
+          </a>
+        ))}
+      </div>
+    </section>
+
+    <footer class="about-signoff reveal">
+      <p>THANKS FOR STOPPING BY</p>
+      <strong>保持好奇，保持浪漫，继续创造。</strong>
+      <span>BAD0RANG3'S STUDIO <i></i> {new Date().getFullYear()}</span>
+    </footer>
   </div>
 </BaseLayout>
+
+<style>
+  .about-page {
+    --about-line: var(--fx-line);
+    --about-text: var(--fx-text);
+    --about-muted: var(--fx-muted);
+    --about-faint: var(--fx-faint);
+    --about-pink: var(--fx-pink);
+    --about-panel: color-mix(in srgb, var(--fx-surface) 92%, transparent);
+    --about-panel-strong: color-mix(in srgb, var(--fx-surface-strong) 94%, transparent);
+    padding-block: 1.25rem 5.5rem;
+  }
+
+  .about-hero {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(18rem, 0.65fr);
+    gap: clamp(2rem, 6vw, 6rem);
+    min-height: min(46rem, calc(100vh - 5.5rem));
+    overflow: hidden;
+    border: 1px solid var(--about-line);
+    border-radius: 2.25rem;
+    padding: clamp(1.5rem, 5vw, 4.5rem);
+    background:
+      radial-gradient(circle at 82% 20%, color-mix(in srgb, var(--about-pink) 20%, transparent), transparent 27rem),
+      linear-gradient(135deg, color-mix(in srgb, var(--about-panel-strong) 95%, transparent), var(--about-panel));
+    box-shadow: 10px 10px 0 color-mix(in srgb, var(--about-pink) 26%, transparent), 0 34px 90px -54px var(--fx-shadow);
+    isolation: isolate;
+  }
+
+  .about-hero__grid {
+    position: absolute;
+    z-index: -2;
+    inset: 0;
+    opacity: 0.28;
+    background-image:
+      linear-gradient(var(--about-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--about-line) 1px, transparent 1px);
+    background-size: 3.25rem 3.25rem;
+    mask-image: linear-gradient(90deg, black, transparent 82%);
+  }
+
+  .about-hero__ring {
+    position: absolute;
+    z-index: -1;
+    top: -11rem;
+    right: -10rem;
+    width: 32rem;
+    height: 32rem;
+    border: 1px solid color-mix(in srgb, var(--about-pink) 38%, transparent);
+    border-radius: 50%;
+    box-shadow: inset 0 0 0 4.5rem color-mix(in srgb, var(--about-pink) 5%, transparent);
+  }
+
+  .about-hero__copy {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+  }
+
+  .about-topline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    color: var(--about-faint);
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+  }
+
+  .about-live {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--about-pink);
+  }
+
+  .about-live i,
+  .about-status__pulse i {
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 50%;
+    background: var(--about-pink);
+    box-shadow: 0 0 0 0.3rem color-mix(in srgb, var(--about-pink) 14%, transparent);
+    animation: about-pulse 2.4s ease-in-out infinite;
+  }
+
+  .about-overline {
+    margin: auto 0 0.65rem;
+    padding-top: clamp(3rem, 8vw, 8rem);
+    color: var(--about-pink);
+    font-size: clamp(0.72rem, 1.2vw, 0.88rem);
+    font-weight: 850;
+    letter-spacing: 0.2em;
+  }
+
+  .about-hero h1 {
+    display: grid;
+    margin: 0;
+    color: var(--about-text);
+    font-size: clamp(4rem, 9.5vw, 9rem);
+    font-weight: 900;
+    letter-spacing: -0.105em;
+    line-height: 0.78;
+  }
+
+  .about-hero h1 span {
+    font-size: 0.42em;
+    font-weight: 760;
+    letter-spacing: -0.055em;
+    line-height: 1;
+  }
+
+  .about-hero h1 strong {
+    margin-left: -0.08em;
+    font-weight: inherit;
+  }
+
+  .about-hero__tagline {
+    margin: 1.5rem 0 0;
+    color: var(--about-pink);
+    font-size: clamp(1rem, 2vw, 1.35rem);
+    font-weight: 820;
+  }
+
+  .about-hero__intro {
+    max-width: 42rem;
+    margin: 1rem 0 0;
+    color: var(--about-muted);
+    font-size: clamp(0.86rem, 1.35vw, 1rem);
+    line-height: 1.95;
+  }
+
+  .about-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.7rem;
+    margin-top: 1.6rem;
+  }
+
+  .about-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    min-height: 2.85rem;
+    border: 1px solid var(--about-line);
+    border-radius: 999px;
+    padding: 0.7rem 1.1rem;
+    font-size: 0.76rem;
+    font-weight: 850;
+    transition: transform 0.25s var(--ease), background 0.25s ease, border-color 0.25s ease;
+  }
+
+  .about-button:hover,
+  .about-button:focus-visible { transform: translateY(-3px); }
+  .about-button--primary { border-color: transparent; background: var(--about-pink); color: #2b101b; box-shadow: 0 13px 26px -17px var(--about-pink); }
+  .about-button--primary:hover,
+  .about-button--primary:focus-visible { background: var(--fx-pink-soft); }
+  .about-button--quiet { background: color-mix(in srgb, var(--about-panel-strong) 72%, transparent); color: var(--about-text); }
+  .about-button--quiet:hover,
+  .about-button--quiet:focus-visible { border-color: color-mix(in srgb, var(--about-pink) 46%, var(--about-line)); }
+
+  .about-numbers {
+    display: flex;
+    gap: clamp(1.2rem, 4vw, 3.5rem);
+    margin: auto 0 0;
+    padding-top: clamp(2.5rem, 7vw, 5.5rem);
+  }
+
+  .about-numbers div { display: grid; gap: 0.2rem; }
+  .about-numbers dt { color: var(--about-text); font-size: 1.45rem; font-weight: 900; letter-spacing: -0.06em; }
+  .about-numbers dd { margin: 0; color: var(--about-faint); font-size: 0.58rem; font-weight: 800; letter-spacing: 0.1em; }
+
+  .about-portrait {
+    position: relative;
+    align-self: center;
+    min-width: 0;
+    border: 1px solid color-mix(in srgb, var(--about-pink) 38%, var(--about-line));
+    border-radius: 1.35rem;
+    padding: 0.8rem;
+    background: color-mix(in srgb, var(--about-panel-strong) 88%, transparent);
+    box-shadow: 0 30px 70px -42px var(--fx-shadow);
+    transform: rotate(2.4deg);
+    transition: transform 0.4s var(--spring);
+  }
+
+  .about-portrait:hover { transform: rotate(0deg) translateY(-0.3rem); }
+
+  .about-portrait__tape {
+    position: absolute;
+    z-index: 3;
+    top: -1.2rem;
+    left: 50%;
+    width: 6.5rem;
+    height: 2.1rem;
+    background: color-mix(in srgb, var(--fx-pink-soft) 50%, transparent);
+    clip-path: polygon(3% 12%, 96% 0, 100% 88%, 0 100%);
+    transform: translateX(-50%) rotate(-2deg);
+    backdrop-filter: blur(4px);
+  }
+
+  .about-portrait__top,
+  .about-portrait__caption {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.25rem 0.2rem 0.75rem;
+    color: var(--about-faint);
+    font-size: 0.58rem;
+    font-weight: 850;
+    letter-spacing: 0.13em;
+  }
+
+  .about-portrait__top span:last-child { color: var(--about-pink); }
+
+  .about-portrait__image {
+    position: relative;
+    display: grid;
+    aspect-ratio: 0.92;
+    overflow: hidden;
+    place-items: end center;
+    border-radius: 0.9rem;
+    background:
+      radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--fx-pink-soft) 45%, transparent), transparent 45%),
+      color-mix(in srgb, var(--about-pink) 12%, var(--fx-bg));
+  }
+
+  .about-portrait__image::after {
+    position: absolute;
+    inset: 0;
+    border: 1px solid color-mix(in srgb, white 16%, transparent);
+    border-radius: inherit;
+    content: '';
+    pointer-events: none;
+  }
+
+  .about-portrait__image img {
+    position: relative;
+    z-index: 1;
+    width: 94%;
+    height: 94%;
+    object-fit: contain;
+    filter: drop-shadow(0 1.2rem 1rem color-mix(in srgb, var(--fx-shadow) 70%, transparent));
+    transform: translateY(2%);
+  }
+
+  .about-portrait__monogram {
+    position: absolute;
+    top: 0.5rem;
+    left: -0.15rem;
+    color: color-mix(in srgb, var(--about-pink) 26%, transparent);
+    font-size: clamp(4rem, 9vw, 8rem);
+    font-weight: 950;
+    letter-spacing: -0.13em;
+    line-height: 0.8;
+  }
+
+  .about-portrait__stamp {
+    position: absolute;
+    z-index: 2;
+    right: 0.7rem;
+    bottom: 0.8rem;
+    display: grid;
+    width: 4.8rem;
+    height: 4.8rem;
+    place-items: center;
+    border: 1px solid color-mix(in srgb, var(--about-pink) 75%, transparent);
+    border-radius: 50%;
+    color: var(--about-pink);
+    font-size: 0.57rem;
+    font-weight: 900;
+    letter-spacing: 0.11em;
+    line-height: 1.25;
+    text-align: center;
+    transform: rotate(-11deg);
+  }
+
+  .about-portrait__caption { padding: 0.9rem 0.25rem 0.2rem; letter-spacing: 0; }
+  .about-portrait__caption div { display: grid; gap: 0.15rem; }
+  .about-portrait__caption strong { color: var(--about-text); font-size: 0.8rem; letter-spacing: -0.02em; }
+  .about-portrait__caption span { color: var(--about-faint); font-size: 0.56rem; letter-spacing: 0.08em; }
+  .about-portrait__caption .about-portrait__mark { color: var(--about-pink); font-size: 1.25rem; }
+
+  .about-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+    margin: 0;
+    color: var(--about-faint);
+    font-size: 0.62rem;
+    font-weight: 850;
+    letter-spacing: 0.17em;
+  }
+
+  .about-label span { color: var(--about-pink); }
+
+  .about-story {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(20rem, 0.85fr);
+    gap: 0.85rem;
+    margin-top: clamp(4rem, 9vw, 7rem);
+  }
+
+  .about-story__copy,
+  .about-status,
+  .about-tool-group {
+    border: 1px solid var(--about-line);
+    background: var(--about-panel);
+    backdrop-filter: blur(16px) saturate(125%);
+  }
+
+  .about-story__copy,
+  .about-status { border-radius: 1.5rem; padding: clamp(1.4rem, 4vw, 3rem); }
+
+  .about-story__copy h2,
+  .about-connect__intro h2 {
+    margin: 1.2rem 0 0;
+    color: var(--about-text);
+    font-size: clamp(2rem, 5vw, 4rem);
+    font-weight: 880;
+    letter-spacing: -0.075em;
+    line-height: 1.1;
+  }
+
+  .about-story__copy h2 em,
+  .about-connect__intro h2 em { color: var(--about-pink); font-style: normal; }
+
+  .about-story__copy > p:last-of-type {
+    max-width: 42rem;
+    margin: 1.5rem 0 0;
+    color: var(--about-muted);
+    font-size: 0.88rem;
+    line-height: 1.95;
+  }
+
+  .about-principles {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.65rem;
+    margin-top: clamp(2.5rem, 5vw, 4rem);
+  }
+
+  .about-principle {
+    min-width: 0;
+    border-top: 1px solid var(--about-line);
+    padding-top: 0.8rem;
+  }
+
+  .about-principle > span { color: var(--about-pink); font-size: 0.58rem; font-weight: 850; }
+  .about-principle strong { display: block; margin-top: 0.65rem; color: var(--about-text); font-size: 0.85rem; }
+  .about-principle p { margin: 0.35rem 0 0; color: var(--about-faint); font-size: 0.62rem; line-height: 1.55; }
+
+  .about-status {
+    background: linear-gradient(155deg, color-mix(in srgb, var(--about-pink) 9%, var(--about-panel)), var(--about-panel));
+  }
+
+  .about-status__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+  .about-status h2 { margin: 0.85rem 0 0; color: var(--about-text); font-size: 1.35rem; font-weight: 850; letter-spacing: -0.045em; }
+  .about-status__pulse { display: inline-flex; align-items: center; gap: 0.45rem; color: var(--about-pink); font-size: 0.58rem; font-weight: 850; letter-spacing: 0.12em; }
+
+  .about-terminal {
+    margin-top: 2rem;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, white 12%, transparent);
+    border-radius: 1rem;
+    background: #100d12;
+    box-shadow: 0 24px 50px -34px #000;
+  }
+
+  .about-terminal__bar {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    border-bottom: 1px solid rgb(255 255 255 / 0.08);
+    padding: 0.7rem 0.85rem;
+    color: #8e7a85;
+    font-size: 0.58rem;
+    font-weight: 750;
+  }
+
+  .about-terminal__bar > span:first-child { display: flex; gap: 0.3rem; }
+  .about-terminal__bar i { width: 0.42rem; height: 0.42rem; border-radius: 50%; background: #ff769e; }
+  .about-terminal__bar i:nth-child(2) { background: #ffd47d; }
+  .about-terminal__bar i:nth-child(3) { background: #84dfaa; }
+  .about-terminal ol { display: grid; gap: 0.3rem; margin: 0; padding: 1rem 0.8rem 1.15rem; list-style: none; }
+  .about-terminal li { display: grid; grid-template-columns: 1.5rem minmax(0, 1fr); gap: 0.7rem; color: var(--code-block-text); font-family: var(--font-mono); font-size: clamp(0.6rem, 1vw, 0.72rem); line-height: 1.5; }
+  .about-terminal li > span { color: #675d65; text-align: right; user-select: none; }
+  .about-terminal code { min-width: 0; overflow-wrap: anywhere; white-space: pre-wrap; }
+  .about-status__note { margin: 1.2rem 0 0; color: var(--about-faint); font-size: 0.66rem; line-height: 1.65; }
+
+  .about-tools { margin-top: clamp(4.5rem, 9vw, 7.5rem); }
+
+  .about-section-heading h2 {
+    margin: 0.75rem 0 0;
+    color: var(--about-text);
+    font-size: clamp(2rem, 5vw, 3.4rem);
+    font-weight: 880;
+    letter-spacing: -0.075em;
+  }
+
+  .about-section-heading > p:last-child {
+    margin: 0.65rem 0 0;
+    color: var(--about-muted);
+    font-size: 0.76rem;
+    line-height: 1.8;
+  }
+
+  .about-section-heading--row { display: flex; align-items: end; justify-content: space-between; gap: 2rem; }
+  .about-section-heading--row > p:last-child { max-width: 30rem; text-align: right; }
+
+  .about-tool-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.8rem; margin-top: 1.75rem; }
+  .about-tool-group { min-width: 0; border-radius: 1.5rem; padding: 1.15rem; }
+  .about-tool-group header { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 0.85rem; padding: 0.15rem; }
+  .about-tool-group__index { display: grid; width: 2.7rem; height: 2.7rem; place-items: center; border: 1px solid color-mix(in srgb, var(--about-pink) 42%, var(--about-line)); border-radius: 50%; color: var(--about-pink); font-size: 0.68rem; font-weight: 850; }
+  .about-tool-group header p { margin: 0; color: var(--about-faint); font-size: 0.56rem; font-weight: 850; letter-spacing: 0.15em; }
+  .about-tool-group header h3 { margin: 0.25rem 0 0; color: var(--about-text); font-size: 1.15rem; font-weight: 850; letter-spacing: -0.04em; }
+  .about-tool-group header > span:last-child { color: var(--about-faint); font-size: 0.6rem; }
+
+  .about-resource-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem; margin-top: 1.2rem; }
+  .about-resource { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 0.65rem; min-width: 0; min-height: 3.25rem; border: 1px solid var(--about-line); border-radius: 0.9rem; padding: 0.55rem 0.65rem; background: color-mix(in srgb, var(--about-panel-strong) 52%, transparent); color: var(--about-muted); font-size: 0.68rem; font-weight: 800; transition: transform 0.25s var(--ease), border-color 0.25s ease, background 0.25s ease, color 0.25s ease; }
+  .about-resource:hover,
+  .about-resource:focus-visible { border-color: color-mix(in srgb, var(--about-pink) 45%, var(--about-line)); background: color-mix(in srgb, var(--about-pink) 9%, var(--about-panel-strong)); color: var(--about-text); transform: translateY(-2px); }
+  .about-resource__icon { display: grid; width: 2rem; height: 2rem; place-items: center; border-radius: 0.6rem; background: color-mix(in srgb, var(--fx-bg) 65%, transparent); }
+  .about-resource__icon img { width: 1.1rem; height: 1.1rem; object-fit: contain; }
+  .about-resource__icon > span { color: var(--about-pink); font-size: 0.55rem; }
+  .about-resource > span:nth-child(2) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .about-resource__arrow { color: var(--about-faint); transition: transform 0.25s ease, color 0.25s ease; }
+  .about-resource:hover .about-resource__arrow,
+  .about-resource:focus-visible .about-resource__arrow { color: var(--about-pink); transform: translate(2px, -2px); }
+
+  .about-connect {
+    display: grid;
+    grid-template-columns: minmax(17rem, 0.75fr) minmax(0, 1.25fr);
+    gap: clamp(2rem, 7vw, 6rem);
+    margin-top: clamp(4.5rem, 9vw, 7.5rem);
+    border-block: 1px solid var(--about-line);
+    padding-block: clamp(2rem, 6vw, 4.5rem);
+  }
+
+  .about-connect__intro > p:last-of-type { margin: 1.2rem 0 0; color: var(--about-muted); font-size: 0.76rem; line-height: 1.8; }
+  .about-connect__intro > a { display: inline-flex; align-items: center; gap: 0.5rem; margin-top: 1.5rem; color: var(--about-pink); font-size: 0.7rem; font-weight: 850; }
+
+  .about-social-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; gap: 0; border-top: 1px solid var(--about-line); }
+  .about-social { display: grid; grid-template-columns: 1.5rem auto minmax(0, 1fr) auto; align-items: center; gap: 0.75rem; min-width: 0; border-bottom: 1px solid var(--about-line); padding: 0.9rem 0.75rem; color: var(--about-muted); transition: padding 0.25s var(--ease), background 0.25s ease, color 0.25s ease; }
+  .about-social:nth-child(odd) { border-right: 1px solid var(--about-line); }
+  .about-social:hover,
+  .about-social:focus-visible { padding-inline: 1rem 0.5rem; background: color-mix(in srgb, var(--about-pink) 8%, transparent); color: var(--about-text); }
+  .about-social__index { color: var(--about-faint); font-size: 0.55rem; font-weight: 800; }
+  .about-social__icon { display: grid; width: 2rem; height: 2rem; place-items: center; border-radius: 0.62rem; background: color-mix(in srgb, var(--about-panel-strong) 72%, transparent); }
+  .about-social__icon img { width: 1rem; height: 1rem; object-fit: contain; }
+  .about-social__icon > span { color: var(--about-pink); }
+  .about-social strong { overflow: hidden; font-size: 0.7rem; text-overflow: ellipsis; white-space: nowrap; }
+  .about-social__arrow { color: var(--about-faint); }
+  .about-social:hover .about-social__arrow,
+  .about-social:focus-visible .about-social__arrow { color: var(--about-pink); }
+
+  .about-signoff { display: grid; justify-items: center; gap: 0.75rem; padding: clamp(4rem, 10vw, 8rem) 1rem 1.5rem; text-align: center; }
+  .about-signoff > p { margin: 0; color: var(--about-pink); font-size: 0.62rem; font-weight: 850; letter-spacing: 0.2em; }
+  .about-signoff > strong { color: var(--about-text); font-size: clamp(1.5rem, 4vw, 3rem); font-weight: 880; letter-spacing: -0.06em; }
+  .about-signoff > span { display: flex; align-items: center; gap: 0.65rem; margin-top: 1.2rem; color: var(--about-faint); font-size: 0.58rem; font-weight: 800; letter-spacing: 0.12em; }
+  .about-signoff i { width: 2.5rem; height: 1px; background: var(--about-line); }
+
+  @keyframes about-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.55; transform: scale(0.78); }
+  }
+
+  @media (max-width: 980px) {
+    .about-hero { grid-template-columns: minmax(0, 1fr) minmax(16rem, 0.55fr); gap: 2rem; min-height: auto; }
+    .about-hero h1 { font-size: clamp(3.6rem, 9vw, 6rem); }
+    .about-overline { padding-top: 5rem; }
+    .about-story { grid-template-columns: 1fr; }
+    .about-tool-groups { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 720px) {
+    .about-page { padding-block: 0.75rem 4rem; }
+    .about-hero { grid-template-columns: 1fr; border-radius: 1.5rem; padding: 1.25rem; box-shadow: 6px 6px 0 color-mix(in srgb, var(--about-pink) 22%, transparent), 0 28px 64px -48px var(--fx-shadow); }
+    .about-topline { align-items: flex-start; }
+    .about-overline { padding-top: 4.5rem; }
+    .about-hero h1 { font-size: clamp(3.3rem, 16vw, 5.3rem); line-height: 0.82; }
+    .about-numbers { padding-top: 3rem; }
+    .about-portrait { width: min(100%, 22rem); margin: 1rem auto 0; transform: rotate(1.2deg); }
+    .about-story { margin-top: 4.5rem; }
+    .about-story__copy,
+    .about-status { border-radius: 1.25rem; padding: 1.25rem; }
+    .about-principles { grid-template-columns: 1fr; gap: 1rem; }
+    .about-principle { display: grid; grid-template-columns: 1.5rem 4rem minmax(0, 1fr); align-items: center; gap: 0.5rem; }
+    .about-principle strong,
+    .about-principle p { margin: 0; }
+    .about-section-heading--row { align-items: flex-start; flex-direction: column; gap: 0.5rem; }
+    .about-section-heading--row > p:last-child { text-align: left; }
+    .about-resource-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .about-connect { grid-template-columns: 1fr; gap: 2.5rem; }
+  }
+
+  @media (max-width: 460px) {
+    .about-live { max-width: 6rem; justify-content: flex-end; text-align: right; }
+    .about-hero__intro { line-height: 1.8; }
+    .about-actions .about-button { width: 100%; }
+    .about-numbers { justify-content: space-between; gap: 0.75rem; }
+    .about-resource-list,
+    .about-social-list { grid-template-columns: 1fr; }
+    .about-tool-group header { grid-template-columns: auto 1fr; }
+    .about-tool-group header > span:last-child { grid-column: 2; }
+    .about-social:nth-child(odd) { border-right: 0; }
+    .about-terminal li { font-size: 0.59rem; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .about-live i,
+    .about-status__pulse i { animation: none; }
+    .about-button,
+    .about-portrait,
+    .about-resource,
+    .about-social { transition: none; }
+  }
+</style>

@@ -1459,8 +1459,9 @@ html[data-theme="paper"] #sakura-canvas {
 .music-island .island-volume-button,
 .music-island .island-player-toggle {
   display: grid;
-  width: 9.1cqw;
-  height: 9.1cqw;
+  /* Match the largest action icon so focus/hover backgrounds stay centered. */
+  width: 12.8cqw;
+  height: 12.8cqw;
   place-items: center;
   border: 0;
   border-radius: 50%;
@@ -1479,8 +1480,6 @@ html[data-theme="paper"] #sakura-canvas {
 .music-island .island-player-favorite svg { width: 8.9cqw; height: 8.9cqw; color: rgb(255 255 255 / 0.58); }
 .music-island .island-player-skip--previous svg { transform: scaleX(-1); }
 .music-island .island-player-toggle {
-  width: 9.1cqw;
-  height: 9.1cqw;
   background: transparent;
   color: #fff;
 }
@@ -2778,4 +2777,39 @@ html[data-theme="paper-dark"] .ncm-profile-card {
 
   .site-atmosphere::before,
   #sakura-canvas { transform: none !important; }
+}
+
+/* ---------------------------------------------------------------
+   Unified profile card language
+   The profile card is the visual anchor of the site. Main card shells
+   should share its surface, offset shadow, radius and interaction.
+   --------------------------------------------------------------- */
+.profile-card,
+.hard-card,
+.profile-overview,
+.presence-card,
+.content-card article,
+.panel-slice,
+.contact-panel,
+.about-hero {
+  border: 1px solid var(--fx-line) !important;
+  border-radius: 2rem !important;
+  background: var(--fx-surface) !important;
+  box-shadow: 7px 7px 0 color-mix(in srgb, var(--fx-pink) 28%, transparent), 0 26px 60px -38px var(--fx-shadow) !important;
+  backdrop-filter: blur(18px) saturate(130%) !important;
+  transition: transform 0.28s var(--ease), box-shadow 0.28s var(--ease), border-color 0.28s ease, background 0.28s ease !important;
+}
+
+.profile-card:hover,
+.hard-card:hover,
+.profile-overview:hover,
+.presence-card:hover,
+.content-card:hover article,
+.panel-slice:hover,
+.contact-panel:hover,
+.about-hero:hover {
+  border-color: color-mix(in srgb, var(--fx-pink) 34%, var(--fx-line)) !important;
+  background: var(--fx-surface-strong) !important;
+  box-shadow: 9px 9px 0 color-mix(in srgb, var(--fx-pink) 34%, transparent), 0 30px 66px -38px var(--fx-shadow) !important;
+  transform: translate(-2px, -2px) !important;
 }
