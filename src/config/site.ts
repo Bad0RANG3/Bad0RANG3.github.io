@@ -120,7 +120,6 @@ int main() {
       { name: 'After Effects', url: 'https://www.adobe.com/products/aftereffects.html' },
       { name: 'Photoshop', url: 'https://www.adobe.com/products/photoshop.html' },
     ],
-    interests: ['Minecraft', 'CS2', '视频特效', '折腾硬件与软件'],
   },
 } as const;
 

@@ -6,7 +6,6 @@ import TagList from '../../components/blog/TagList.astro';
 import ArticleTools from '../../components/blog/ArticleTools.astro';
 import ArticleEnhancements from '../../components/blog/ArticleEnhancements.astro';
 import Comments from '../../components/blog/Comments.astro';
-import Icon from '../../components/icons/Icon.astro';
 import { STAGGER } from '../../config/ui';
 import { postPath } from '../../config/routes';
 import { getPublishedPosts, getPostReadingMinutes, getPostWordCount } from '../../lib/content';
@@ -58,11 +57,7 @@ const seriesNext = seriesIndex >= 0 ? seriesPosts[seriesIndex + 1] : undefined;
   <ArticleEnhancements />
   <article data-article data-slug={post.slug} class:list={['site-frame py-5 sm:py-8', headings.length > 0 ? 'max-w-6xl' : 'max-w-3xl']}>
     <header class="mb-10 max-w-3xl">
-      <div class="reveal mb-5 flex flex-wrap items-center gap-2">
-        {post.data.featured && <span class="chip-signal gap-1"><Icon name="star" class="h-3 w-3" />精选</span>}
-        {post.data.category && <span class="chip-lime">{post.data.category}</span>}
-        {post.data.series && <span class="chip-teal">系列：{post.data.series}</span>}
-      </div>
+      {post.data.series && <div class="reveal mb-5 flex flex-wrap items-center gap-2"><span class="chip-teal">系列：{post.data.series}</span></div>}
       <h1 class="reveal display-title mb-5 text-3xl sm:text-4xl md:text-5xl lg:text-6xl" style={`--reveal-delay:${STAGGER.POST_HEADING}ms`}>{post.data.title}</h1>
       <div class="space-y-4">
         <div class="reveal" style={`--reveal-delay:${STAGGER.POST_META}ms`}><PostMeta date={post.data.date} updatedDate={post.data.updatedDate} long /></div>
