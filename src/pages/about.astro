@@ -38,7 +38,7 @@ const resourceGroups = [
     <ProfileOverviewCard />
 
     <div class="grid gap-6 lg:grid-cols-2">
-      <section class="reveal hard-card rounded-[1.75rem] p-6 sm:p-8">
+      <section class="reveal hard-card min-w-0 rounded-[1.75rem] p-6 sm:p-8">
         <SectionHeader label="Online" title="社交坐标" />
         <div class="grid gap-3 sm:grid-cols-2">
           {socialCards.map((s, i) => (
@@ -55,9 +55,9 @@ const resourceGroups = [
         </div>
       </section>
 
-      <section class="reveal hard-card hard-card-citrus rounded-[1.75rem] p-6 sm:p-8">
+      <section class="reveal hard-card hard-card-citrus min-w-0 rounded-[1.75rem] p-6 sm:p-8">
         <SectionHeader label="Now" title="当前状态" />
-        <div class="mockup-code overflow-x-auto border-2 dark-soft-border bg-base-100/80">
+        <div class="mockup-code min-w-0 max-w-full overflow-x-auto border-2 dark-soft-border bg-base-100/80">
           {statusLines.map((l, i) => <pre data-prefix={i + 1}><code>{l || ' '}</code></pre>)}
         </div>
       </section>
@@ -65,7 +65,7 @@ const resourceGroups = [
 
     <div class="grid gap-6 lg:grid-cols-2">
       {resourceGroups.map((group) => (
-        <section class="reveal panel-slice rounded-[1.75rem] p-6 sm:p-8">
+        <section class="reveal panel-slice min-w-0 rounded-[1.75rem] p-6 sm:p-8">
           <SectionHeader label={group.label} title={group.title} />
           <ResourceGrid items={group.items} tone={group.tone} />
         </section>

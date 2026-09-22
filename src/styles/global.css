@@ -237,6 +237,12 @@
 [class*="shadow-[6px_6px_0_0]"],
 [class*="shadow-[4px_4px_0_0]"] { box-shadow: 0 24px 64px -38px #000 !important; }
 .panel-slice { border-radius: 1.5rem; }
+
+/* Mobile guard: let grid children shrink and let wide content scroll in its own
+   box instead of pushing cards past the viewport. */
+@media (max-width: 1023px) {
+  .grid > * { min-width: 0; }
+}
 .mockup-code { border: 1px solid var(--line) !important; background: var(--code-block-bg) !important; color: var(--code-block-text); }
 .reveal { animation: reveal-up 0.7s var(--ease) both; animation-delay: var(--reveal-delay, 0ms); }
 
@@ -246,12 +252,12 @@
 /* -----------------------------------------------------------------
    Content and article typography
    ----------------------------------------------------------------- */
-.prose { color: var(--text-dim); }
+.prose { color: var(--text-dim); overflow-wrap: break-word; }
 .prose :where(a) { color: var(--accent-pink-soft); text-decoration-color: rgba(255, 143, 182, 0.42); }
 .prose :where(a:hover) { color: var(--accent-pink); }
 .prose :where(h1, h2, h3, h4, h5, h6) { color: var(--fx-text); letter-spacing: -0.025em; }
 .prose :where(blockquote) { border-left-color: var(--accent-pink); color: var(--text-dim); }
-.prose :where(code):not(:where(pre *)) { border: 1px solid rgba(255, 143, 182, 0.22); border-radius: 0.4rem; padding: 0.13rem 0.35rem; background: rgba(255, 143, 182, 0.1); color: var(--accent-pink-soft); }
+.prose :where(code):not(:where(pre *)) { border: 1px solid rgba(255, 143, 182, 0.22); border-radius: 0.4rem; padding: 0.13rem 0.35rem; background: rgba(255, 143, 182, 0.1); color: var(--accent-pink-soft); overflow-wrap: anywhere; }
 .prose :where(pre) { border: 1px solid var(--line); border-radius: 1rem; background: rgba(0, 0, 0, 0.36); box-shadow: 0 24px 60px -38px #000; }
 .lyric-block { position: relative; margin: 1.5rem 0; border: 1px solid rgba(255, 143, 182, 0.25); border-radius: 1rem; padding: 1rem 1.15rem; background: rgba(255, 143, 182, 0.07); color: var(--text-dim); }
 .lyric-block p { margin: 0.5rem 0; }
