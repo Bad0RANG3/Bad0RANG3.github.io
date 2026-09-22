@@ -1,5 +1,12 @@
 import { ROUTES } from './routes';
 
+const musicApiBase = (import.meta.env.PUBLIC_NCM_API_BASE ?? '').replace(/\/+$/, '');
+const ncmUserId = import.meta.env.PUBLIC_NCM_USER_ID ?? '1864136351';
+const formatMusicDuration = (seconds: number) => {
+  const roundedSeconds = Math.max(0, Math.round(seconds));
+  return `${Math.floor(roundedSeconds / 60)}:${String(roundedSeconds % 60).padStart(2, '0')}`;
+};
+
 export const siteConfig = {
   title: "Bad0RANG3's Studio",
   description: 'Bad0RANG3 的个人博客，记录软件推荐、CS2、Minecraft、开发工具、项目实践与日常思考。',
@@ -21,9 +28,16 @@ export const siteConfig = {
     { href: ROUTES.HOME, label: '首页' },
     { href: ROUTES.POSTS, label: '文章' },
     { href: ROUTES.THOUGHTS, label: '碎碎念' },
+    { href: ROUTES.PROJECTS, label: '项目' },
     { href: ROUTES.TOOLS, label: '工具' },
     { href: ROUTES.ARCHIVE, label: '归档' },
     { href: ROUTES.ABOUT, label: '关于' },
+  ],
+  secondaryNavigation: [
+    { href: ROUTES.TAGS, label: '标签' },
+    { href: ROUTES.SERIES, label: '系列' },
+    { href: ROUTES.EXPLORE, label: '探索' },
+    { href: ROUTES.PRIVACY, label: '隐私' },
   ],
   socials: [
     { name: 'GitHub', url: 'https://github.com/Bad0RANG3' },
@@ -37,7 +51,45 @@ export const siteConfig = {
   ],
   hero: {
     lyric: '当我的故事开篇之时，就是我书写人生之时',
-    lyricSource: 'Synthion · Main heroine',
+  },
+  netease: {
+    userId: ncmUserId,
+    profileUrl: `https://music.163.com/#/user/home?id=${ncmUserId}`,
+    // Public profile snapshots keep the card useful when the optional API is offline.
+    // Set PUBLIC_NCM_API_BASE to refresh this data from your own API deployment.
+    apiBase: musicApiBase,
+    fallback: {
+      nickname: 'Bad0RANG3',
+      signature: '#错过了落日余晖还可以期待满天繁星#',
+      avatarUrl: 'https://p1.music.126.net/aRpgZx-i37_k7v8pvXoAUw==/109951172597148609.jpg',
+      follows: 67,
+      followeds: 467,
+      level: 10,
+      listenSongs: 188324,
+      medalNum: 101,
+      vipLabel: '黑胶VIP',
+      fanLabel: 'Synthion 乐迷',
+      identityLabel: '网易音乐人',
+    },
+  },
+  music: {
+    id: 3315349142,
+    title: 'main heroine',
+    artist: 'Synthion',
+    album: 'Lone Wolf',
+    durationSeconds: 266.67,
+    durationLabel: formatMusicDuration(266.67),
+    audio: '/media/main-heroine.mp3',
+    lyrics: '/media/main-heroine.lrc',
+    cover: '/media/main-heroine-cover.jpg',
+    officialUrl: 'https://music.163.com/song?id=3315349142',
+    // Set PUBLIC_NCM_API_BASE to your authorised NeteaseCloudMusicApiEnhanced deployment.
+    apiBase: musicApiBase,
+  },
+  github: {
+    username: 'Bad0RANG3',
+    profileUrl: 'https://github.com/Bad0RANG3',
+    apiUrl: 'https://api.github.com/users/Bad0RANG3',
   },
   about: {
     greeting: 'Hi, there!',

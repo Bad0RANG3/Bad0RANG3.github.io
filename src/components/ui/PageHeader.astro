@@ -7,7 +7,7 @@ interface Props {
 const { label, title, description } = Astro.props;
 ---
 
-<div class="reveal mb-7 sm:mb-10">
+<div class="page-header reveal mb-7 sm:mb-10">
   <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
     <div class="max-w-3xl">
       <p class="eyebrow">{label}</p>
@@ -20,5 +20,5 @@ const { label, title, description } = Astro.props;
     </div>
 
   </div>
-  <div class="mt-6 h-1.5 w-full bg-gradient-to-r from-primary via-secondary to-accent"></div>
+  <div class="page-header-line mt-6 h-1.5 w-full"></div>
 </div>

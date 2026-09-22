@@ -1,40 +1,37 @@
 ---
 import { SOCIAL_ICONS, siteConfig } from '../../config/site';
+import { ROUTES } from '../../config/routes';
 import { withBase } from '../../lib/urls';
 
 const { author, socials, navigation } = siteConfig;
-const footerNav = [...navigation, { href: '/privacy/', label: '隐私说明' }].filter((item, index, items) => items.findIndex((candidate) => candidate.href === item.href) === index).map((item) => ({ href: item.href, text: item.label }));
+const footerNav = [...navigation, ...siteConfig.secondaryNavigation]
+  .filter((item, index, items) => items.findIndex((candidate) => candidate.href === item.href) === index)
+  .map((item) => ({ href: item.href, text: item.label }));
 ---
 
-<footer class="relative mt-auto overflow-hidden border-t-2 border-base-content/10 bg-base-200/80">
-  <div class="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-primary via-secondary to-accent"></div>
-  <div class="pointer-events-none absolute -right-20 bottom-0 h-56 w-56 rounded-full bg-primary/15 blur-3xl"></div>
-  <div class="pointer-events-none absolute -left-16 top-10 h-40 w-40 rounded-full bg-secondary/30 blur-3xl"></div>
-
-  <div class="site-frame relative py-12 md:py-14">
-    <div class="grid gap-10 grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1.25fr)_minmax(0,0.75fr)]">
+<footer class="site-footer">
+  <div class="site-frame relative py-12 md:py-16">
+    <div class="grid gap-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
       <div>
         <div class="flex items-start gap-4">
-          <figure class="h-16 w-16 shrink-0 overflow-hidden rounded-2xl border-2 border-base-content shadow-[5px_5px_0_0] shadow-primary">
+          <figure class="footer-avatar">
             <img src={withBase(author.avatar)} alt={author.name} class="h-full w-full object-cover" width="64" height="64" loading="lazy" />
           </figure>
           <div>
-            <a href={withBase('/')} class="text-xl font-black tracking-tight">
-              <span class="bg-gradient-to-r from-primary via-[#ff2d87] to-accent bg-clip-text text-transparent">{siteConfig.title}</span>
-            </a>
-            <p class="mt-2 max-w-md text-sm leading-7 text-base-content/60">关注塔菲谢谢喵</p>
+            <a href={withBase(ROUTES.HOME)} class="footer-brand">{siteConfig.title}</a>
+            <p class="mt-2 max-w-md text-sm leading-7 text-base-content/55">{siteConfig.description}</p>
           </div>
         </div>
-
+        <p class="footer-caption">A small personal log for software, experiments and everyday thoughts.</p>
       </div>
 
       <div class="grid gap-8 sm:grid-cols-2">
         <div>
-          <p class="text-xs font-black uppercase tracking-[0.22em] text-base-content/40">导航</p>
-          <ul class="mt-4 space-y-2">
+          <p class="footer-label">导航</p>
+          <ul class="mt-4 grid grid-cols-2 gap-x-5 gap-y-2">
             {footerNav.map((item) => (
               <li>
-                <a href={withBase(item.href)} class="link-underline text-sm font-bold text-base-content/70 hover:text-primary">
+                <a href={withBase(item.href)} class="footer-link">
                   {item.text}
                 </a>
               </li>
@@ -43,14 +40,14 @@ const footerNav = [...navigation, { href: '/privacy/', label: '隐私说明' }].
         </div>
 
         <div>
-          <p class="text-xs font-black uppercase tracking-[0.22em] text-base-content/40">联系</p>
+          <p class="footer-label">联系</p>
           <div class="mt-4 flex flex-wrap gap-2">
             {socials.map((social) => (
               <a
                 href={social.url}
                 target={social.url.startsWith('mailto:') ? undefined : '_blank'}
                 rel={social.url.startsWith('mailto:') ? undefined : 'noopener noreferrer'}
-                class="inline-flex items-center gap-2 rounded-full border-2 border-base-content/10 bg-base-100 px-3 py-1.5 text-xs font-bold text-base-content/70 transition hover:-translate-y-0.5 hover:border-primary/40 hover:text-primary"
+                class="footer-social"
                 aria-label={social.name}
               >
                 {SOCIAL_ICONS[social.name as keyof typeof SOCIAL_ICONS] ? (
@@ -64,9 +61,9 @@ const footerNav = [...navigation, { href: '/privacy/', label: '隐私说明' }].
       </div>
     </div>
 
-    <div class="mt-10 flex flex-col gap-3 border-t-2 border-base-content/10 pt-6 text-xs font-bold uppercase tracking-[0.18em] text-base-content/40 sm:flex-row sm:items-center sm:justify-between">
+    <div class="footer-bottom mt-10 flex flex-col gap-3 border-t border-base-content/10 pt-6 text-xs font-bold uppercase tracking-[0.18em] text-base-content/40 sm:flex-row sm:items-center sm:justify-between">
       <p>© {new Date().getFullYear()} {author.name}</p>
-      <p class="text-base-content/35"><a class="hover:text-primary" href={withBase('/rss.xml')}>RSS</a> · <a class="hover:text-primary" href={withBase('/atom.xml')}>Atom</a> · <a class="hover:text-primary" href={withBase('/feed.json')}>JSON Feed</a></p>
+      <p class="text-base-content/35"><a class="hover:text-primary" href={withBase(ROUTES.RSS)}>RSS</a> · <a class="hover:text-primary" href={withBase(ROUTES.ATOM)}>Atom</a> · <a class="hover:text-primary" href={withBase(ROUTES.JSON_FEED)}>JSON Feed</a></p>
     </div>
   </div>
 </footer>

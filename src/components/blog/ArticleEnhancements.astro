@@ -3,8 +3,15 @@
 
 <div class="reading-progress" data-reading-progress aria-hidden="true"></div>
 
-<script is:inline>
+<script is:inline data-astro-rerun>
   (() => {
+    window.__b0ArticleEnhancementsCleanup?.();
+    let cleanup = () => {};
+    window.__b0ArticleEnhancementsCleanup = () => {
+      cleanup();
+      cleanup = () => {};
+    };
+
     const init = () => {
       const progress = document.querySelector('[data-reading-progress]');
       const article = document.querySelector('article[data-article]');
@@ -56,17 +63,21 @@
 
       const links = [...article.querySelectorAll('[data-toc-link]')];
       const headings = links.map((link) => document.getElementById(link.getAttribute('data-toc-link') || '')).filter(Boolean);
+      let observer;
       if (links.length && headings.length && 'IntersectionObserver' in window) {
-        const observer = new IntersectionObserver((entries) => {
+        observer = new IntersectionObserver((entries) => {
           const visible = entries.filter((entry) => entry.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
           if (!visible) return;
           links.forEach((link) => link.classList.toggle('is-active', link.getAttribute('data-toc-link') === visible.target.id));
         }, { rootMargin: '-18% 0px -68% 0px', threshold: [0, 1] });
         headings.forEach((heading) => observer.observe(heading));
       }
+      cleanup = () => {
+        window.removeEventListener('scroll', update);
+        observer?.disconnect();
+      };
     };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once: true });
     else init();
-    document.addEventListener('astro:page-load', init);
   })();
 </script>

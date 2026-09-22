@@ -14,7 +14,7 @@ import { withBase } from '../lib/urls';
 
 const posts = await getPublishedPosts();
 const recentPosts = posts.slice(0, LAYOUT.RECENT_POSTS_COUNT);
-const { author, hero } = siteConfig;
+const { author, hero, netease, github } = siteConfig;
 
 const profileMetrics = [
   { label: '文章', value: String(posts.length).padStart(2, '0') },
@@ -24,87 +24,293 @@ const profileMetrics = [
 ---
 
 <BaseLayout title={siteConfig.title} description={siteConfig.description}>
-  <section class="site-frame py-5 sm:py-8">
-    <div class="hero-grid">
-      <ProfileOverviewCard
-        layout="stack"
-        eyebrow="个人档案"
-        heading={author.name}
-        headingTag="h2"
-        subtitle=""
-        metrics={profileMetrics}
-      />
+  <div class="home-page">
+    <section class="site-frame home-overview" aria-labelledby="home-title" data-island-cue="首页概览">
+      <header class="home-welcome reveal">
+        <p class="home-greeting">こんにちは、I'm</p>
+        <h1 id="home-title" class="home-name">{author.name}</h1>
+        <p class="home-intro">{author.intro} 这里记录软件折腾、开发实验、游戏和那些值得留下来的小发现。</p>
+      </header>
 
-      <section class="reveal relative overflow-hidden rounded-[2rem] border-2 dark-soft-border-strong bg-base-100/80 p-6 shadow-hard sm:p-8 lg:p-9" aria-labelledby="home-title">
-        <div class="flex h-full flex-col">
-          <div class="flex flex-1 flex-col justify-center py-4 sm:py-6">
-            <p class="eyebrow">欢迎</p>
-            <h1 id="home-title" class="display-title mt-3 max-w-3xl text-4xl leading-[1.14] sm:text-5xl lg:text-6xl">
-              {hero.lyric}
-            </h1>
-            <p class="mt-5 text-xs font-bold text-base-content/60">{hero.lyricSource}</p>
+      <div class="hero-grid home-main-cards">
+        <ProfileOverviewCard
+          layout="stack"
+          eyebrow="个人档案"
+          heading={author.name}
+          headingTag="h2"
+          subtitle=""
+          metrics={profileMetrics}
+        />
+
+        <section class="lyric-stage reveal hard-card rounded-[2rem] p-6 sm:p-8 lg:p-9" aria-label="歌词展示" style="--reveal-delay:100ms">
+          <div class="lyric-stage-top">
+            <span class="lyric-live-dot"></span>
+            <span>NOW PLAYING</span>
           </div>
 
-          <div class="grid gap-3 border-t-2 border-dashed border-base-content/10 pt-5 sm:grid-cols-[1.1fr_0.9fr]">
-            <a href={withBase(ROUTES.POSTS)} class="btn-brutal w-full">
-              <Icon name="book" class="h-4 w-4" />
-              我的博文
-            </a>
-            <div class="grid grid-cols-2 gap-3">
-              <a href={withBase(ROUTES.TOOLS)} class="btn-brutal-outline w-full px-3 text-sm">工具页</a>
-              <a href={withBase(ROUTES.ABOUT)} class="btn-brutal-outline w-full px-3 text-sm">关于我</a>
+          <div class="lyric-stage-window">
+            <blockquote class="lyric-stage-line">{hero.lyric}</blockquote>
+            <p class="lyric-stage-note">当这一行亮起，故事也继续向前。</p>
+          </div>
+
+          <div class="lyric-stage-footer">
+            <span data-live-elapsed>0:00</span>
+            <span class="lyric-progress" data-live-progress><i></i></span>
+            <span data-live-duration>{siteConfig.music.durationLabel}</span>
+          </div>
+
+          <div class="lyric-actions">
+            <a href={withBase(ROUTES.POSTS)} class="btn-brutal"><Icon name="book" class="h-4 w-4" />阅读文章</a>
+            <a href={withBase(ROUTES.TOOLS)} class="btn-brutal-outline">工具</a>
+            <a href={withBase(ROUTES.ABOUT)} class="btn-brutal-outline">关于</a>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <section id="home-presence" class="site-frame home-section presence-section" aria-labelledby="presence-title" data-island-cue="音乐与开发">
+      <div class="section-heading-row">
+        <SectionHeader label="Presence" title="音乐与开发" titleId="presence-title" />
+      </div>
+
+      <div class="presence-grid">
+        <article
+          class="presence-card ncm-profile-card reveal"
+          data-ncm-profile
+          data-api-base={netease.apiBase}
+          data-user-id={netease.userId}
+        >
+          <header class="presence-card-header">
+            <span class="presence-provider"><Icon name="music" class="h-4 w-4" /> 网易云音乐</span>
+            <a href={netease.profileUrl} target="_blank" rel="noreferrer" aria-label={`前往 ${netease.fallback.nickname} 的网易云主页`}><Icon name="arrow-up-right" class="h-4 w-4" /></a>
+          </header>
+
+          <div class="ncm-profile-layout">
+            <div class="ncm-avatar-shell">
+              <img src={netease.fallback.avatarUrl} alt={`${netease.fallback.nickname} 的网易云头像`} width="116" height="116" loading="lazy" data-ncm-avatar />
+            </div>
+
+            <div class="ncm-profile-copy">
+              <div class="ncm-name-line">
+                <h3 data-ncm-name>{netease.fallback.nickname}</h3>
+                <span class="ncm-vip-badge" data-ncm-vip>{netease.fallback.vipLabel}</span>
+              </div>
+              <span class="ncm-auth-badge" data-ncm-auth>{netease.fallback.identityLabel}</span>
+              <p class="ncm-profile-signature" data-ncm-signature>{netease.fallback.signature}</p>
+            </div>
+
+            <div class="ncm-profile-meta" aria-label="网易云身份信息">
+              <span><Icon name="star" class="h-3.5 w-3.5" /><b data-ncm-medals>{netease.fallback.medalNum}</b> 枚徽章</span>
+              <span><Icon name="music" class="h-3.5 w-3.5" /><b data-ncm-fan>{netease.fallback.fanLabel}</b></span>
             </div>
           </div>
-        </div>
-      </section>
-    </div>
-  </section>
 
-  <section class="site-frame pb-12 sm:pb-16" aria-labelledby="projects-title">
-    <SectionHeader label="Projects" title="项目" titleId="projects-title" />
-    <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-      {projects.map((project, index) => (
-        <div class="min-w-0" style={`--reveal-delay:${STAGGER.CARD_START + index * STAGGER.CARD_STEP}ms`}>
-          <ProjectCard project={project} />
-        </div>
-      ))}
-    </div>
-  </section>
+          <dl class="ncm-profile-metrics">
+            <div><dt>关注</dt><dd data-ncm-follows>{netease.fallback.follows}</dd></div>
+            <div><dt>粉丝</dt><dd data-ncm-followeds>{netease.fallback.followeds}</dd></div>
+            <div><dt>等级</dt><dd>Lv.<span data-ncm-level>{netease.fallback.level}</span></dd></div>
+            <div><dt>播放</dt><dd data-ncm-listens>{netease.fallback.listenSongs.toLocaleString('zh-CN')}</dd></div>
+          </dl>
+        </article>
 
-  <section class="site-frame pb-12 sm:pb-16" aria-labelledby="recent-posts-title">
-    <SectionHeader label="Latest" title="最近更新" titleId="recent-posts-title" />
-    <div class="grid gap-6 md:grid-cols-2">
-      {recentPosts.map((post, index) => (
-        <div class="min-w-0" style={`--reveal-delay:${STAGGER.LIST_START + index * STAGGER.LIST_STEP}ms`}>
-          <PostCard post={post} />
-        </div>
-      ))}
-    </div>
+        <article class="presence-card presence-github-card reveal" style="--reveal-delay:100ms" data-github-profile>
+          <header class="presence-card-header">
+            <span class="presence-provider"><Icon name="github" class="h-4 w-4" /> GitHub</span>
+            <a href={github.profileUrl} target="_blank" rel="noreferrer" aria-label={`前往 ${github.username} 的 GitHub`}><Icon name="arrow-up-right" class="h-4 w-4" /></a>
+          </header>
 
-    {posts.length > LAYOUT.RECENT_POSTS_COUNT && (
-      <div class="mt-10 text-center reveal" style="--reveal-delay:500ms">
-        <a href={withBase(ROUTES.POSTS)} class="btn-brutal-outline">
-          查看全部文章
-          <Icon name="chevron-right" class="h-4 w-4" />
-        </a>
+          <div class="github-profile-row">
+            <img src={withBase(author.avatar)} alt={`${github.username} 的头像`} width="88" height="88" loading="lazy" />
+            <div>
+              <p>PUBLIC PROFILE</p>
+              <h3>{author.name}</h3>
+              <a href={github.profileUrl} target="_blank" rel="noreferrer">@{github.username}</a>
+            </div>
+          </div>
+
+          <p class="github-profile-bio" data-github-bio>代码、博客与持续进行中的小实验。</p>
+          <dl class="github-metrics">
+            <div><dt>仓库</dt><dd data-github-repos>—</dd></div>
+            <div><dt>关注者</dt><dd data-github-followers>—</dd></div>
+            <div><dt>正在关注</dt><dd data-github-following>—</dd></div>
+          </dl>
+          <footer class="presence-card-footer github-stack">
+            <span>TypeScript</span><span>Astro</span><span>Python</span><span>C++</span>
+          </footer>
+        </article>
       </div>
-    )}
-  </section>
+    </section>
 
-  <section class="site-frame pb-12 sm:pb-16" aria-labelledby="contact-title">
-    <div class="reveal rounded-[2rem] border-2 dark-soft-border-strong bg-base-100/80 p-6 shadow-hard sm:p-8 lg:p-10">
-      <div class="grid gap-8 lg:grid-cols-[1.4fr_0.8fr] lg:items-end">
-        <div>
-          <SectionHeader label="Contact" title="想聊点什么？" titleId="contact-title" />
-          <p class="max-w-xl text-sm leading-7 text-base-content/65 sm:text-base">
-            工具、配置、特效实验都欢迎交流。
-          </p>
+    <section id="home-projects" class="site-frame home-section" aria-labelledby="projects-title" data-island-cue="项目与实验">
+      <div class="section-heading-row">
+        <SectionHeader label="Selected" title="项目与实验" titleId="projects-title" />
+        <a href={withBase(ROUTES.PROJECTS)} class="section-link">查看全部 <Icon name="arrow-up-right" class="h-4 w-4" /></a>
+      </div>
+      <div class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+        {projects.map((project, index) => (
+          <div class="min-w-0" style={`--reveal-delay:${STAGGER.CARD_START + index * STAGGER.CARD_STEP}ms`}>
+            <ProjectCard project={project} />
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <section id="home-journal" class="site-frame home-section" aria-labelledby="recent-posts-title" data-island-cue="最近更新">
+      <div class="section-heading-row">
+        <SectionHeader label="Journal" title="最近更新" titleId="recent-posts-title" />
+        <a href={withBase(ROUTES.POSTS)} class="section-link">全部文章 <Icon name="arrow-up-right" class="h-4 w-4" /></a>
+      </div>
+      <div class="grid gap-5 md:grid-cols-2">
+        {recentPosts.map((post, index) => (
+          <div class="min-w-0" style={`--reveal-delay:${STAGGER.LIST_START + index * STAGGER.LIST_STEP}ms`}>
+            <PostCard post={post} />
+          </div>
+        ))}
+      </div>
+
+      {posts.length > LAYOUT.RECENT_POSTS_COUNT && (
+        <div class="mt-8 text-center reveal" style="--reveal-delay:500ms">
+          <a href={withBase(ROUTES.POSTS)} class="btn-brutal-outline">查看全部文章 <Icon name="arrow-up-right" class="h-4 w-4" /></a>
         </div>
-        <div class="flex flex-col gap-3 sm:flex-row lg:flex-col">
-          <a href={withBase(ROUTES.ABOUT)} class="btn-brutal-outline w-full">关于我</a>
-          <a href={`mailto:${author.email}`} class="btn-brutal w-full">发送邮件</a>
+      )}
+    </section>
+
+    <section id="home-contact" class="site-frame home-section home-contact" aria-labelledby="contact-title" data-island-cue="保持联系">
+      <div class="reveal contact-panel">
+        <div class="grid gap-8 lg:grid-cols-[1.4fr_0.8fr] lg:items-end">
+          <div>
+            <SectionHeader label="Contact" title="想聊点什么？" titleId="contact-title" />
+            <p class="max-w-xl text-sm leading-7 text-base-content/65 sm:text-base">工具、配置、特效实验都欢迎交流，也可以从社交链接找到我。</p>
+          </div>
+          <div class="flex flex-col gap-3 sm:flex-row lg:flex-col">
+            <a href={withBase(ROUTES.ABOUT)} class="btn-brutal-outline w-full">关于我 <Icon name="arrow-up-right" class="h-4 w-4" /></a>
+            <a href={`mailto:${author.email}`} class="btn-brutal w-full">发送邮件 <Icon name="arrow-up-right" class="h-4 w-4" /></a>
+          </div>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
+  </div>
+
+  <script is:inline data-astro-rerun define:vars={{ githubApiUrl: github.apiUrl }}>
+    (() => {
+      const root = document.querySelector('[data-github-profile]');
+      if (!(root instanceof HTMLElement)) return;
+      const cacheKey = 'b0-github-profile-v1';
+      const render = (profile) => {
+        const bio = root.querySelector('[data-github-bio]');
+        const repos = root.querySelector('[data-github-repos]');
+        const followers = root.querySelector('[data-github-followers]');
+        const following = root.querySelector('[data-github-following]');
+        if (bio && profile.bio) bio.textContent = profile.bio;
+        if (repos) repos.textContent = String(profile.public_repos ?? '—');
+        if (followers) followers.textContent = String(profile.followers ?? '—');
+        if (following) following.textContent = String(profile.following ?? '—');
+      };
+      try {
+        const cached = JSON.parse(sessionStorage.getItem(cacheKey) || 'null');
+        if (cached) render(cached);
+      } catch (_) {}
+      fetch(githubApiUrl, { headers: { Accept: 'application/vnd.github+json' } })
+        .then((response) => response.ok ? response.json() : Promise.reject(new Error('github-profile')))
+        .then((profile) => {
+          render(profile);
+          try { sessionStorage.setItem(cacheKey, JSON.stringify(profile)); } catch (_) {}
+        })
+        .catch(() => {});
+    })();
+  </script>
+
+  <script is:inline data-astro-rerun>
+    (() => {
+      const root = document.querySelector('[data-ncm-profile]');
+      if (!(root instanceof HTMLElement)) return;
+
+      const apiBase = root.dataset.apiBase?.replace(/\/+$/, '') || '';
+      const userId = root.dataset.userId || '';
+      const cacheKey = `b0-ncm-profile-v1-${userId}`;
+      const number = new Intl.NumberFormat('zh-CN');
+      const text = (selector, value) => {
+        const node = root.querySelector(selector);
+        if (node && value !== undefined && value !== null && String(value).trim()) node.textContent = String(value);
+      };
+      const count = (selector, value) => {
+        const parsed = Number(value);
+        if (Number.isFinite(parsed)) text(selector, number.format(parsed));
+      };
+      const safeImageUrl = (value) => {
+        if (typeof value !== 'string') return '';
+        try {
+          const url = new URL(value, window.location.href);
+          return url.protocol === 'https:' || url.protocol === 'http:' ? url.href : '';
+        } catch (_) {
+          return '';
+        }
+      };
+      const updateAvatar = (value) => {
+        const url = safeImageUrl(value);
+        const image = root.querySelector('[data-ncm-avatar]');
+        if (url && image instanceof HTMLImageElement) image.src = url;
+      };
+      const renderDetail = (payload) => {
+        const profile = payload?.profile;
+        if (!profile || typeof profile !== 'object') return;
+        text('[data-ncm-name]', profile.nickname);
+        text('[data-ncm-signature]', profile.signature);
+        count('[data-ncm-follows]', profile.follows);
+        count('[data-ncm-followeds]', profile.followeds);
+        count('[data-ncm-level]', payload.level);
+        count('[data-ncm-listens]', payload.listenSongs);
+        text('[data-ncm-auth]', profile.mainAuthType?.desc);
+        updateAvatar(profile.avatarUrl);
+
+        const vip = root.querySelector('[data-ncm-vip]');
+        if (vip instanceof HTMLElement) {
+          const hasVip = Number(profile.vipType) > 0;
+          vip.hidden = !hasVip;
+          if (hasVip) vip.textContent = '黑胶VIP';
+        }
+      };
+      const renderMedals = (payload) => {
+        const data = payload?.data;
+        if (!data || typeof data !== 'object') return;
+        count('[data-ncm-medals]', data.medalNum);
+        const medals = Array.isArray(data.obtainMedals) ? data.obtainMedals : [];
+        const fanMedal = medals.find((item) => item?.artistName === 'Synthion')
+          || medals.find((item) => item?.specialMedalType === 'fansgroup' && item?.artistName);
+        if (fanMedal?.artistName) text('[data-ncm-fan]', `${fanMedal.artistName} 乐迷`);
+      };
+      const render = (snapshot) => {
+        renderDetail(snapshot?.detail);
+        renderMedals(snapshot?.medals);
+      };
+      const compactMedals = (payload) => {
+        const data = payload?.data;
+        if (!data || typeof data !== 'object') return null;
+        const medals = Array.isArray(data.obtainMedals) ? data.obtainMedals : [];
+        const fanMedal = medals.find((item) => item?.artistName === 'Synthion')
+          || medals.find((item) => item?.specialMedalType === 'fansgroup' && item?.artistName);
+        return { data: { medalNum: data.medalNum, obtainMedals: fanMedal ? [fanMedal] : [] } };
+      };
+      const request = (path) => fetch(`${apiBase}${path}`, { credentials: 'omit' })
+        .then((response) => response.ok ? response.json() : Promise.reject(new Error('ncm-profile')));
+
+      try {
+        const cached = JSON.parse(sessionStorage.getItem(cacheKey) || 'null');
+        if (cached) render(cached);
+      } catch (_) {}
+
+      if (!apiBase || !userId) return;
+      Promise.allSettled([
+        request(`/user/detail?uid=${encodeURIComponent(userId)}`),
+        request(`/user/medal?uid=${encodeURIComponent(userId)}`),
+      ]).then(([detail, medals]) => {
+        const snapshot = {
+          detail: detail.status === 'fulfilled' ? detail.value : null,
+          medals: medals.status === 'fulfilled' ? compactMedals(medals.value) : null,
+        };
+        render(snapshot);
+        try { sessionStorage.setItem(cacheKey, JSON.stringify(snapshot)); } catch (_) {}
+      });
+    })();
+  </script>
 </BaseLayout>

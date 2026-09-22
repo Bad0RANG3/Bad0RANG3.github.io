@@ -20,7 +20,7 @@ import { withBase } from '../../lib/urls';
   <form method="dialog" class="modal-backdrop"><button>关闭</button></form>
 </dialog>
 
-<script is:inline define:vars={{ indexUrl: withBase(ROUTES.SEARCH_INDEX), postsUrl: withBase(ROUTES.POSTS), defaultCount: LAYOUT.SEARCH_DEFAULT_COUNT, focusDelay: LAYOUT.SEARCH_FOCUS_DELAY }}>
+<script is:inline data-astro-rerun define:vars={{ indexUrl: withBase(ROUTES.SEARCH_INDEX), postsUrl: withBase(ROUTES.POSTS), defaultCount: LAYOUT.SEARCH_DEFAULT_COUNT, focusDelay: LAYOUT.SEARCH_FOCUS_DELAY }}>
   // @ts-nocheck
   (() => {
     const modal = document.getElementById('search-modal');
@@ -112,8 +112,14 @@ import { withBase } from '../../lib/urls';
     };
     openButton.addEventListener('click', open);
     input.addEventListener('input', render);
-    document.addEventListener('keydown', (event) => {
-      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); open(); }
-    });
+    if (!window.__b0SearchShortcutBound) {
+      window.__b0SearchShortcutBound = true;
+      document.addEventListener('keydown', (event) => {
+        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+          event.preventDefault();
+          document.getElementById('search-btn')?.click();
+        }
+      });
+    }
   })();
 </script>
