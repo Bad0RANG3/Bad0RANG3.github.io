@@ -4,7 +4,7 @@ import { SITE } from '../config/site';
 
 const themeStorageKey = SITE.THEME_STORAGE_KEY;
 const themeLight = SITE.THEME;
-const themeDark = 'paper-dark';
+const themeDark = SITE.THEME_DARK;
 const themeColorLight = SITE.THEME_COLOR;
 const themeColorDark = SITE.THEME_COLOR_DARK;
     /* Theme controller.

@@ -1,6 +1,7 @@
 ---
-import { siteConfig } from '../../config/site';
+import { siteConfig, SITE } from '../../config/site';
 const { repo, repoId, categoryId, category } = siteConfig.giscus;
+const themeDark = SITE.THEME_DARK;
 ---
 
 <section class="mx-auto mt-12 border-t border-base-content/10 pt-8 sm:mt-16 sm:pt-10" data-comments>
@@ -8,7 +9,7 @@ const { repo, repoId, categoryId, category } = siteConfig.giscus;
   <div class="giscus mt-6" data-giscus-container></div>
 </section>
 
-<script is:inline data-astro-rerun define:vars={{ repo, repoId, category, categoryId }}>
+<script is:inline data-astro-rerun define:vars={{ repo, repoId, category, categoryId, themeDark }}>
   (() => {
     const root = document.querySelector('[data-comments]');
     if (!(root instanceof HTMLElement) || root.dataset.bound === '1') return;
@@ -19,12 +20,12 @@ const { repo, repoId, categoryId, category } = siteConfig.giscus;
     script.src = 'https://giscus.app/client.js';
     script.async = true;
     script.crossOrigin = 'anonymous';
-    [['data-repo', repo], ['data-repo-id', repoId], ['data-category', category], ['data-category-id', categoryId], ['data-mapping', 'pathname'], ['data-strict', '0'], ['data-reactions-enabled', '1'], ['data-emit-metadata', '0'], ['data-input-position', 'bottom'], ['data-theme', document.documentElement.getAttribute('data-theme') === 'paper-dark' ? 'dark' : 'light'], ['data-lang', 'zh-CN']].forEach(([key, value]) => script.setAttribute(key, value));
+    [['data-repo', repo], ['data-repo-id', repoId], ['data-category', category], ['data-category-id', categoryId], ['data-mapping', 'pathname'], ['data-strict', '0'], ['data-reactions-enabled', '1'], ['data-emit-metadata', '0'], ['data-input-position', 'bottom'], ['data-theme', document.documentElement.getAttribute('data-theme') === themeDark ? 'dark' : 'light'], ['data-lang', 'zh-CN']].forEach(([key, value]) => script.setAttribute(key, value));
     container.append(script);
     if (!window.__b0GiscusThemeBound) {
       window.__b0GiscusThemeBound = true;
       window.addEventListener('b0-theme-change', (event) => {
-        const theme = event.detail?.theme === 'paper-dark' ? 'dark' : 'light';
+        const theme = event.detail?.theme === themeDark ? 'dark' : 'light';
         const iframe = document.querySelector('iframe.giscus-frame');
         iframe?.contentWindow?.postMessage({ giscus: { setConfig: { theme } } }, 'https://giscus.app');
       });
