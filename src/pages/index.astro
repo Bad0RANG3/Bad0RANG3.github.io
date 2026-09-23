@@ -91,17 +91,15 @@ const profileMetrics = [
             </div>
 
             <div class="ncm-profile-copy">
-              <div class="ncm-name-line">
+              <div class="presence-name-line ncm-name-line">
                 <h3 data-ncm-name>{netease.fallback.nickname}</h3>
                 <span class="ncm-vip-badge" data-ncm-vip>{netease.fallback.vipLabel}</span>
               </div>
-              <span class="ncm-auth-badge" data-ncm-auth>{netease.fallback.identityLabel}</span>
               <p class="ncm-profile-signature" data-ncm-signature>{netease.fallback.signature}</p>
-            </div>
-
-            <div class="ncm-profile-meta" aria-label="网易云身份信息">
-              <span><Icon name="star" class="h-3.5 w-3.5" /><b data-ncm-medals>{netease.fallback.medalNum}</b> 枚徽章</span>
-              <span><Icon name="music" class="h-3.5 w-3.5" /><b data-ncm-fan>{netease.fallback.fanLabel}</b></span>
+              <div class="ncm-profile-meta" aria-label="网易云身份信息">
+                <span><Icon name="star" class="h-3.5 w-3.5" /><b data-ncm-medals>{netease.fallback.medalNum}</b> 枚徽章</span>
+                <span><Icon name="music" class="h-3.5 w-3.5" /><b data-ncm-fan>{netease.fallback.fanLabel}</b></span>
+              </div>
             </div>
           </div>
 
@@ -120,23 +118,24 @@ const profileMetrics = [
           </header>
 
           <div class="github-profile-row">
-            <img src={withBase(author.avatar)} alt={`${github.username} 的头像`} width="88" height="88" loading="lazy" />
-            <div>
-              <p>PUBLIC PROFILE</p>
-              <h3>{author.name}</h3>
+            <div class="github-avatar-shell">
+              <img src={withBase(author.avatar)} alt={`${github.username} 的头像`} width="116" height="116" loading="lazy" />
+            </div>
+            <div class="github-profile-copy">
+              <div class="presence-name-line github-name-line">
+                <h3>{author.name}</h3>
+                <span class="github-profile-badge">PUBLIC</span>
+              </div>
               <a href={github.profileUrl} target="_blank" rel="noreferrer">@{github.username}</a>
+              <p class="github-profile-bio" data-github-bio>代码、博客与持续进行中的小实验。</p>
             </div>
           </div>
 
-          <p class="github-profile-bio" data-github-bio>代码、博客与持续进行中的小实验。</p>
           <dl class="github-metrics">
             <div><dt>仓库</dt><dd data-github-repos>—</dd></div>
             <div><dt>关注者</dt><dd data-github-followers>—</dd></div>
             <div><dt>正在关注</dt><dd data-github-following>—</dd></div>
           </dl>
-          <footer class="presence-card-footer github-stack">
-            <span>TypeScript</span><span>Astro</span><span>Python</span><span>C++</span>
-          </footer>
         </article>
       </div>
     </section>
@@ -260,7 +259,6 @@ const profileMetrics = [
         count('[data-ncm-followeds]', profile.followeds);
         count('[data-ncm-level]', payload.level);
         count('[data-ncm-listens]', payload.listenSongs);
-        text('[data-ncm-auth]', profile.mainAuthType?.desc);
         updateAvatar(profile.avatarUrl);
 
         const vip = root.querySelector('[data-ncm-vip]');
