@@ -128,6 +128,7 @@ export const SITE = {
   LANG: 'zh-CN',
   LOCALE: 'zh-CN',
   THEME: 'paper',
+  THEME_DARK: 'paper-dark',
   THEME_COLOR: '#fdf2f6',
   THEME_COLOR_DARK: '#21131c',
   THEME_STORAGE_KEY: 'b0-theme',

@@ -7,7 +7,6 @@ import SiteFooter from '../components/layout/SiteFooter.astro';
 import SearchModal from '../components/search/SearchModal.astro';
 import { ROUTES } from '../config/routes';
 import { SITE, siteConfig } from '../config/site';
-import { LAYOUT } from '../config/ui';
 import { siteUrl, withBase } from '../lib/urls';
 
 interface Breadcrumb {
@@ -53,12 +52,10 @@ const siteRootUrl = siteUrl('/');
 const canonicalUrl = canonical ? siteUrl(canonical) : siteUrl(currentPath);
 const socialImageUrl = siteUrl(ogImage);
 const authorImageUrl = siteUrl(siteConfig.author.avatar);
-const backToTopThreshold = LAYOUT.BACK_TO_TOP_THRESHOLD;
-const themeLight = 'paper';
-const themeDark = 'paper-dark';
+const themeLight = SITE.THEME;
+const themeDark = SITE.THEME_DARK;
 const themeColorLight = SITE.THEME_COLOR;
 const themeColorDark = SITE.THEME_COLOR_DARK;
-const isProduction = import.meta.env.PROD;
 const latinRange = 'U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD';
 const latinExtRange = 'U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF';
 const japaneseFontFaces = [
@@ -154,7 +151,7 @@ const jsonLd = {
   <meta name="color-scheme" content="light dark">
   <ClientRouter />
   <style is:inline set:html={fontFaces}></style>
-  <script is:inline define:vars={{ themeStorageKey: SITE.THEME_STORAGE_KEY, themeLight: SITE.THEME, themeDark: 'paper-dark', themeColorLight: SITE.THEME_COLOR, themeColorDark: SITE.THEME_COLOR_DARK }}>
+  <script is:inline define:vars={{ themeStorageKey: SITE.THEME_STORAGE_KEY, themeLight, themeDark, themeColorLight, themeColorDark }}>
     // Paint the resolved theme before first paint so the SSR light default
     // never flashes over a dark preference. The rest of the controller lives
     // in src/scripts/theme.ts, which is bundled and cached.
