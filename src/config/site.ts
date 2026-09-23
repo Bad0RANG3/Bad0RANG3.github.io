@@ -69,7 +69,6 @@ export const siteConfig = {
       medalNum: 101,
       vipLabel: '黑胶VIP',
       fanLabel: 'Synthion 乐迷',
-      identityLabel: '网易音乐人',
     },
   },
   music: {

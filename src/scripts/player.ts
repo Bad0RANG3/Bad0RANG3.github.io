@@ -38,7 +38,18 @@
     let audioSourceNode = null;
     let visualizerData = null;
     let visualizerFrame = 0;
-    const visualizerBars = [...document.querySelectorAll('[data-audio-visualizer] i')];
+    let visualizerAutoGain = 1;
+    const visualizerBandEdges = [55, 180, 400, 900, 2200, 6000, 16000];
+    const visualizerBandGains = [0.9, 0.96, 1.04, 1.14, 1.3, 1.48];
+    const visualizerGroups = [...document.querySelectorAll('[data-audio-visualizer]')]
+      .map((element) => ({
+        element,
+        expanded: element instanceof HTMLElement && element.dataset.audioVisualizer === 'expanded',
+        bars: [...element.querySelectorAll('i')],
+        levels: Array.from({ length: element.querySelectorAll('i').length }, () => 4),
+      }))
+      .filter((group) => group.bars.length > 0);
+    const visualizerBars = visualizerGroups.flatMap((group) => group.bars);
 
     const setVolumeMenuOpen = (open) => {
       island.dataset.volumeOpen = open ? 'true' : 'false';
@@ -57,15 +68,14 @@
     };
 
     const setVisualizerBaseline = () => {
-      visualizerBars.forEach((bar) => {
-        if (!(bar instanceof HTMLElement)) return;
-        const expanded = bar.parentElement?.dataset.audioVisualizer === 'expanded';
-        const position = [...(bar.parentElement?.children || [])].indexOf(bar);
-        const levels = expanded
-          ? ['0.65cqw', '1.2cqw', '2.8cqw', '4.3cqw', '5.7cqw', '7.6cqw']
-          : ['6px', '10px', '15px', '11px', '18px', '8px'];
-        bar.style.setProperty('--visualizer-height', levels[position] || '4px');
-        bar.style.setProperty('--visualizer-opacity', '0.56');
+      visualizerAutoGain = 1;
+      visualizerGroups.forEach((group) => {
+        group.levels.fill(4);
+        group.bars.forEach((bar) => {
+          if (!(bar instanceof HTMLElement)) return;
+          bar.style.setProperty('--visualizer-height', '4px');
+          bar.style.setProperty('--visualizer-opacity', '0.44');
+        });
       });
     };
 
@@ -77,23 +87,44 @@
       }
 
       analyser.getByteFrequencyData(visualizerData);
-      const bucketSize = visualizerData.length / visualizerBars.length;
-      visualizerBars.forEach((bar, index) => {
-        if (!(bar instanceof HTMLElement)) return;
-        const start = Math.floor(index * bucketSize);
-        const end = Math.max(start + 1, Math.floor((index + 1) * bucketSize));
-        let total = 0;
+      const binWidth = (audioContext?.sampleRate || 48000) / analyser.fftSize;
+      const bandEnergies = visualizerBandGains.map((gain, index) => {
+        const start = Math.max(1, Math.floor(visualizerBandEdges[index] / binWidth));
+        const end = Math.min(
+          visualizerData.length,
+          Math.max(start + 1, Math.ceil(visualizerBandEdges[index + 1] / binWidth)),
+        );
+        let squareTotal = 0;
         let samples = 0;
-        for (let cursor = start; cursor < end && cursor < visualizerData.length; cursor += 1) {
-          total += visualizerData[cursor];
+        for (let cursor = start; cursor < end; cursor += 1) {
+          const amplitude = visualizerData[cursor] / 255;
+          squareTotal += amplitude * amplitude;
           samples += 1;
         }
-        const energy = samples ? total / samples : 0;
-        const expanded = bar.parentElement?.dataset.audioVisualizer === 'expanded';
-        const maximum = expanded ? Math.max(24, (bar.parentElement?.clientHeight || 44) * 0.82) : 20;
-        const height = Math.max(4, Math.round(4 + (energy / 255) * maximum));
-        bar.style.setProperty('--visualizer-height', `${height}px`);
-        bar.style.setProperty('--visualizer-opacity', String(Math.min(1, 0.48 + energy / 300)));
+        return (samples ? Math.sqrt(squareTotal / samples) : 0) * gain;
+      });
+
+      // Keep quiet masters lively without flattening the difference between bands.
+      const loudestBand = Math.max(0.01, ...bandEnergies);
+      const targetGain = Math.min(2.35, Math.max(0.82, 0.72 / loudestBand));
+      visualizerAutoGain += (targetGain - visualizerAutoGain) * (targetGain < visualizerAutoGain ? 0.09 : 0.025);
+
+      visualizerGroups.forEach((group) => {
+        group.bars.forEach((bar, index) => {
+          if (!(bar instanceof HTMLElement)) return;
+          const energy = Math.max(0, (bandEnergies[index] || 0) * visualizerAutoGain - 0.035);
+          const intensity = Math.min(1, Math.pow(energy / 0.72, 0.7));
+          const maximum = group.expanded
+            ? Math.max(24, (group.element instanceof HTMLElement ? group.element.clientHeight : 44) * 0.82)
+            : 20;
+          const targetHeight = 4 + intensity * (maximum - 4);
+          const previousHeight = group.levels[index] || 4;
+          const response = targetHeight > previousHeight ? 0.48 : 0.2;
+          const height = previousHeight + (targetHeight - previousHeight) * response;
+          group.levels[index] = height;
+          bar.style.setProperty('--visualizer-height', `${height.toFixed(2)}px`);
+          bar.style.setProperty('--visualizer-opacity', String(0.42 + intensity * 0.58));
+        });
       });
       visualizerFrame = window.requestAnimationFrame(renderAudioVisualizer);
     };
@@ -111,8 +142,10 @@
         try {
           audioContext = new AudioContextConstructor();
           analyser = audioContext.createAnalyser();
-          analyser.fftSize = 128;
-          analyser.smoothingTimeConstant = 0.72;
+          analyser.fftSize = 512;
+          analyser.minDecibels = -78;
+          analyser.maxDecibels = -18;
+          analyser.smoothingTimeConstant = 0.68;
           visualizerData = new Uint8Array(analyser.frequencyBinCount);
           audioSourceNode = audioContext.createMediaElementSource(audio);
           audioSourceNode.connect(analyser);
