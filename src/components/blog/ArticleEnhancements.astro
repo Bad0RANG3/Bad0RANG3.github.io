@@ -38,15 +38,23 @@
       update();
 
       article.querySelectorAll('pre').forEach((pre) => {
-        if (pre.querySelector('[data-copy-code]')) return;
+        if (pre.closest('[data-code-block]')) return;
+        // A <pre> is its own horizontal scroll container (Typography sets
+        // overflow-x: auto), so an absolutely positioned child would scroll
+        // away with the code. Wrap it and anchor the button to the wrapper.
+        const block = document.createElement('div');
+        block.className = 'code-block'; block.dataset.codeBlock = '1';
+        pre.replaceWith(block);
+        block.append(pre);
         const button = document.createElement('button');
         button.type = 'button'; button.dataset.copyCode = '1'; button.className = 'code-copy'; button.textContent = '复制';
+        button.setAttribute('aria-label', '复制代码');
         button.addEventListener('click', async () => {
-          try { await navigator.clipboard.writeText(pre.innerText); button.textContent = '已复制'; }
+          try { await navigator.clipboard.writeText(pre.textContent ?? ''); button.textContent = '已复制'; }
           catch { button.textContent = '复制失败'; }
           window.setTimeout(() => { button.textContent = '复制'; }, 1600);
         });
-        pre.append(button);
+        block.append(button);
       });
 
       article.querySelectorAll('img').forEach((img) => {
