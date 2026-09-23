@@ -12,6 +12,7 @@
         "new:project": "node scripts/new-project.mjs",
         "validate:content": "node scripts/validate-content.mjs",
         "smoke": "node scripts/smoke.mjs",
+        "perf:audit": "node scripts/perf-audit.mjs",
         "dist:fingerprint": "node scripts/dist-fingerprint.mjs"
     },
     "dependencies": {

@@ -72,7 +72,7 @@ Astro 5 静态站点（`output: 'static'`），Tailwind CSS 4（通过 `@tailwin
         └── tools/*.css           各工具页私有样式
 ```
 
-字体自托管在 `public/fonts/`：`jetbrains-mono-*`（拉丁，UI/等宽）与 `yuruka-*`（日文正文），不依赖任何外部 CDN。
+字体自托管在 `public/fonts/`：`jetbrains-mono-*`（拉丁，UI/等宽，由 `BaseLayout` 全局声明）与 `yuruka-*`（仅由 `tools/pjsk-stamp` 以 `YurukaStd` 家族声明），不依赖任何外部 CDN。
 
 ### 放置规则
 

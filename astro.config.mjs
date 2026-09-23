@@ -13,7 +13,7 @@ export default defineConfig({
   markdown: {
     remarkPlugins: [[remarkWithBase, { base }]],
   },
-  integrations: [sitemap()],
+  integrations: [sitemap({ filter: (page) => !page.includes('/about-alt') })],
   // With ClientRouter, prefetch same-origin links on hover/tap so navigation
   // feels instant without eagerly downloading the whole site.
   prefetch: true,

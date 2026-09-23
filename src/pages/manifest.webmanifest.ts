@@ -28,12 +28,6 @@ const manifest = {
       type: 'image/webp',
       purpose: 'any',
     },
-    {
-      src: withBase('/ico.ico'),
-      sizes: 'any',
-      type: 'image/x-icon',
-      purpose: 'any',
-    },
   ],
   shortcuts: [
     {

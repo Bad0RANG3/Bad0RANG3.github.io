@@ -3,19 +3,18 @@ import { withBase } from '../lib/urls';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Icon from '../components/icons/Icon.astro';
 import { SOCIAL_ICONS, siteConfig } from '../config/site';
+import { projects } from '../config/projects';
+import { getPublishedPosts } from '../lib/content';
 
 const { about, author, socials } = siteConfig;
-
-const socialCards = socials.map((social, index) => ({
-  ...social,
-  index: String(index + 1).padStart(2, '0'),
-  iconSrc: SOCIAL_ICONS[social.name as keyof typeof SOCIAL_ICONS] ?? null,
-}));
+const posts = await getPublishedPosts();
+const year = new Date().getFullYear();
 
 const skillIconId: Record<string, string> = {
   TypeScript: 'typescript', Python: 'py', 'C++': 'cpp', Kotlin: 'kotlin',
-  React: 'react', Vue: 'vue', 'Node.js': 'node', Git: 'git', Docker: 'docker', Linux: 'linux', 'VS Code': 'vscode',
-  Figma: 'figma', 'After Effects': 'ae', Photoshop: 'ps', Wireshark: '/Wireshark.ico',
+  React: 'react', Vue: 'vue', 'Node.js': 'node', Git: 'git', Docker: 'docker', Linux: 'linux',
+  'VS Code': 'vscode', Figma: 'figma', 'After Effects': 'ae', Photoshop: 'ps',
+  Wireshark: '/icons/skills/wireshark.png',
 };
 
 const getIconUrl = (name: string) => {
@@ -24,702 +23,334 @@ const getIconUrl = (name: string) => {
   return withBase(id.startsWith('/') ? id : `/icons/skills/${id}.svg`);
 };
 
-const statusLines = about.currentStatus.split('\n');
-const resourceGroups = [
-  { label: 'BUILD WITH', title: '技术栈', note: '把想法变成产品', items: about.techStack },
-  { label: 'WORK WITH', title: '开发工具', note: '让过程更顺手', items: about.devTools },
-].map((group, index) => ({
-  ...group,
-  index: String(index + 1).padStart(2, '0'),
-  items: group.items.map((item) => ({ ...item, iconSrc: getIconUrl(item.name) })),
+const tools = [...about.techStack, ...about.devTools].map((item, index) => ({
+  ...item,
+  iconSrc: getIconUrl(item.name),
+  number: String(index + 1).padStart(2, '0'),
 }));
 
-const principles = [
-  { number: '01', title: 'Explore', copy: '对陌生事物保持好奇' },
-  { number: '02', title: 'Build', copy: '把灵感做成可用的东西' },
-  { number: '03', title: 'Share', copy: '记录过程，也分享答案' },
+const socialCards = socials.map((social, index) => ({
+  ...social,
+  number: String(index + 1).padStart(2, '0'),
+  iconSrc: SOCIAL_ICONS[social.name as keyof typeof SOCIAL_ICONS] ?? null,
+}));
+
+const stats = [
+  { value: String(posts.length).padStart(2, '0'), label: '篇文章', note: 'WRITTEN' },
+  { value: String(projects.length).padStart(2, '0'), label: '个项目', note: 'MADE' },
+  { value: String(tools.length).padStart(2, '0'), label: '件工具', note: 'IN USE' },
 ];
+
+const statusLines = about.currentStatus.split('\n');
 ---
 
-<BaseLayout title="关于" description="认识 Bad0RANG3：一个喜欢软件、开发、游戏与持续折腾的普通人。">
-  <div class="about-page site-frame">
-    <section class="about-hero reveal" aria-labelledby="about-title">
-      <div class="about-hero__grid" aria-hidden="true"></div>
-      <div class="about-hero__ring" aria-hidden="true"></div>
-
-      <div class="about-hero__copy">
-        <div class="about-topline">
-          <span>PERSONAL FILE / 001</span>
-          <span class="about-live"><i></i> STILL BUILDING</span>
-        </div>
-
-        <p class="about-overline">HELLO, WORLD —</p>
-        <h1 id="about-title">
-          <span>I'm</span>
-          <strong>{author.name}</strong>
-        </h1>
-        <p class="about-hero__tagline">{about.subtitle}</p>
-        <p class="about-hero__intro">
-          {author.intro} 这里是我的数字工作台，收集软件折腾、开发实验、游戏，以及那些不想被时间冲走的小发现。
-        </p>
-
-        <div class="about-actions">
-          <a href={withBase('/posts/')} class="about-button about-button--primary">
-            去读点东西 <Icon name="arrow-up-right" class="h-4 w-4" />
-          </a>
-          <a href={`mailto:${author.email}`} class="about-button about-button--quiet">
-            和我聊聊 <Icon name="arrow-up-right" class="h-4 w-4" />
-          </a>
-        </div>
-
-        <dl class="about-numbers" aria-label="关于页概览">
-          <div><dt>{String(socials.length).padStart(2, '0')}</dt><dd>连接方式</dd></div>
-          <div><dt>{String(about.techStack.length + about.devTools.length).padStart(2, '0')}</dt><dd>常用工具</dd></div>
-          <div><dt>01</dt><dd>个人空间</dd></div>
-        </dl>
+<BaseLayout title="关于" description="认识 Bad0RANG3：开发、游戏、折腾软件，也认真收藏生活里的小发现。">
+  <div class="profile-page site-frame">
+    <header class="profile-hero reveal" aria-labelledby="profile-title">
+      <div class="profile-hero__ruler" aria-hidden="true">
+        <span>PERSONAL ARCHIVE</span><span>FILE / B03</span><span>{year}</span>
       </div>
 
-      <aside class="about-portrait" aria-label={`${author.name} 的个人名片`}>
-        <div class="about-portrait__tape" aria-hidden="true"></div>
-        <div class="about-portrait__top">
-          <span>PROFILE / B03</span>
-          <span>ONLINE</span>
-        </div>
-        <div class="about-portrait__image">
-          <span class="about-portrait__monogram" aria-hidden="true">B03</span>
-          <img src={withBase(author.avatar)} alt={author.name} width="248" height="248" loading="eager" />
-          <span class="about-portrait__stamp" aria-hidden="true">NICE<br />TO MEET<br />YOU!</span>
-        </div>
-        <div class="about-portrait__caption">
-          <div><strong>{author.name}</strong><span>maker · player · learner</span></div>
-          <span class="about-portrait__mark">✦</span>
-        </div>
-      </aside>
-    </section>
-
-    <section class="about-story reveal" aria-labelledby="story-title">
-      <article class="about-story__copy">
-        <p class="about-label"><span>002</span> A LITTLE MORE</p>
-        <h2 id="story-title">这里没有标准答案，<br /><em>只有持续更新的我。</em></h2>
-        <p>
-          我喜欢研究一个东西为什么能工作，也喜欢亲手把它拆开、重组，再留下能帮到下一个人的笔记。这个站点就是那段过程的切片。
+      <div class="profile-hero__copy">
+        <p class="profile-eyebrow"><i></i> 很高兴在这里遇见你</p>
+        <h1 id="profile-title">
+          <span>你好，我是</span>
+          <strong>Bad0RANG3<em>.</em></strong>
+        </h1>
+        <p class="profile-intro">
+          一个喜欢在计算机上折腾的普通菜鸟。这里收着我拆过的软件、写过的代码、玩过的游戏，
+          也收着一些不想被时间冲走的小发现。
         </p>
-
-        <div class="about-principles">
-          {principles.map((item) => (
-            <div class="about-principle">
-              <span>{item.number}</span>
-              <strong>{item.title}</strong>
-              <p>{item.copy}</p>
-            </div>
-          ))}
+        <div class="profile-actions">
+          <a class="profile-action profile-action--primary" href={withBase('/posts/')}>
+            翻翻我的文章 <Icon name="arrow-up-right" class="h-4 w-4" />
+          </a>
+          <a class="profile-action" href={`mailto:${author.email}`}>
+            和我打个招呼 <Icon name="arrow-up-right" class="h-4 w-4" />
+          </a>
         </div>
-      </article>
+      </div>
 
-      <aside class="about-status" aria-labelledby="status-title">
-        <div class="about-status__head">
-          <div>
-            <p class="about-label"><span>003</span> CURRENTLY</p>
-            <h2 id="status-title">此刻正在运行</h2>
-          </div>
-          <span class="about-status__pulse"><i></i>LIVE</span>
+      <aside class="profile-photo" aria-label={`${author.name} 的个人照片卡`}>
+        <span class="profile-photo__tape" aria-hidden="true"></span>
+        <div class="profile-photo__image">
+          <span class="profile-photo__ghost" aria-hidden="true">B03</span>
+          <img src={withBase(author.avatar)} width="248" height="248" alt={author.name} loading="eager" />
         </div>
+        <div class="profile-photo__caption">
+          <div><strong>{author.name}</strong><span>maker · player · learner</span></div>
+          <span class="profile-photo__status"><i></i>ONLINE</span>
+        </div>
+        <span class="profile-photo__scribble" aria-hidden="true">nice to meet you!</span>
+      </aside>
 
-        <div class="about-terminal">
-          <div class="about-terminal__bar">
-            <span><i></i><i></i><i></i></span>
-            <span>now.cpp</span>
+      <dl class="profile-stats" aria-label="站点概览">
+        {stats.map((stat) => (
+          <div><dt>{stat.value}</dt><dd>{stat.label}<span>{stat.note}</span></dd></div>
+        ))}
+        <div class="profile-stats__note"><dt>∞</dt><dd>还在折腾<span>STILL CURIOUS</span></dd></div>
+      </dl>
+    </header>
+
+    <main class="profile-notes">
+      <section class="profile-card profile-story reveal" aria-labelledby="story-title">
+        <header class="profile-card__head"><span>01</span><p>A LITTLE MORE</p></header>
+        <div class="profile-story__layout">
+          <div><h2 id="story-title">我想把「弄懂了」<br />变成「<em>留下来</em>」。</h2></div>
+          <div class="profile-story__copy">
+            <p>比起把工具用完就丢，我更喜欢追着那个「为什么」往下走。拆开、试错、重组，直到它真的在我手里跑起来。</p>
+            <p>这个站点就是那段过程的切片。踩过的坑、跑通的配置、没做完的实验和偶尔冒出来的念头，都值得拥有一个位置。</p>
+            <blockquote>如果其中某一行恰好帮到了你，它就没白写。</blockquote>
           </div>
+        </div>
+        <div class="profile-values" aria-label="我的做事方式">
+          <div><span>01</span><strong>Explore</strong><p>对陌生事物保持好奇</p></div>
+          <div><span>02</span><strong>Build</strong><p>把灵感做成可用的东西</p></div>
+          <div><span>03</span><strong>Share</strong><p>记录过程，也分享答案</p></div>
+        </div>
+      </section>
+
+      <section class="profile-card profile-now reveal" style="--reveal-delay:70ms" aria-labelledby="now-title">
+        <header class="profile-card__head"><span>02</span><p>NOW RUNNING</p><i class="profile-live" aria-label="在线"></i></header>
+        <h2 id="now-title">此刻正在运行</h2>
+        <div class="profile-terminal">
+          <div class="profile-terminal__bar"><span><i></i><i></i><i></i></span><span>now.cpp</span></div>
           <ol>
             {statusLines.map((line, index) => (
               <li><span>{String(index + 1).padStart(2, '0')}</span><code>{line || ' '}</code></li>
             ))}
           </ol>
         </div>
-        <p class="about-status__note">把好奇心编译成一些可以被使用的东西。</p>
-      </aside>
-    </section>
+        <p class="profile-now__note">把好奇心编译成一些可以被使用的东西。</p>
+      </section>
 
-    <section class="about-tools reveal" aria-labelledby="tools-title">
-      <div class="about-section-heading about-section-heading--row">
-        <div>
-          <p class="about-label"><span>004</span> TOOLBOX</p>
-          <h2 id="tools-title">手边的工具</h2>
+      <section class="profile-card profile-toolbox reveal" aria-labelledby="toolbox-title">
+        <header class="profile-card__head"><span>03</span><p>TOOLBOX</p><strong>{String(tools.length).padStart(2, '0')} ITEMS</strong></header>
+        <div class="profile-section-title">
+          <h2 id="toolbox-title">常在手边的工具</h2>
+          <p>它们不是履历关键词，而是真正参与过日常创作和实验的伙伴。</p>
         </div>
-        <p>不为填满清单，只保留真正参与过日常创作与实验的工具。</p>
-      </div>
+        <div class="profile-tools">
+          {tools.map((tool) => (
+            <a href={tool.url} target="_blank" rel="noopener noreferrer" class="profile-tool">
+              <span class="profile-tool__number">{tool.number}</span>
+              <span class="profile-tool__icon">{tool.iconSrc ? <img src={tool.iconSrc} alt="" loading="lazy" /> : tool.name.slice(0, 2)}</span>
+              <strong>{tool.name}</strong><Icon name="arrow-up-right" class="profile-tool__arrow h-3.5 w-3.5" />
+            </a>
+          ))}
+        </div>
+      </section>
 
-      <div class="about-tool-groups">
-        {resourceGroups.map((group) => (
-          <article class="about-tool-group">
-            <header>
-              <span class="about-tool-group__index">{group.index}</span>
-              <div><p>{group.label}</p><h3>{group.title}</h3></div>
-              <span>{group.note}</span>
-            </header>
-            <div class="about-resource-list">
-              {group.items.map((item) => (
-                <a href={item.url} target="_blank" rel="noopener noreferrer" class="about-resource">
-                  <span class="about-resource__icon">
-                    {item.iconSrc ? <img src={item.iconSrc} alt="" loading="lazy" /> : <span>{item.name.slice(0, 2)}</span>}
-                  </span>
-                  <span>{item.name}</span>
-                  <Icon name="arrow-up-right" class="about-resource__arrow h-4 w-4" />
-                </a>
-              ))}
-            </div>
-          </article>
-        ))}
-      </div>
-    </section>
+      <section class="profile-card profile-connect reveal" style="--reveal-delay:70ms" aria-labelledby="connect-title">
+        <header class="profile-card__head"><span>04</span><p>FIND ME ONLINE</p></header>
+        <div class="profile-connect__intro">
+          <h2 id="connect-title">在这些地方，<br /><em>继续相遇。</em></h2>
+          <p>分享过程、交换想法，或者只是来打个招呼。邮件我一直看。</p>
+        </div>
+        <div class="profile-socials">
+          {socialCards.map((social) => (
+            <a href={social.url} target="_blank" rel="noopener noreferrer" class="profile-social">
+              <span>{social.number}</span>
+              <span class="profile-social__icon">{social.iconSrc ? <img src={withBase(social.iconSrc)} alt="" loading="lazy" /> : '?'}</span>
+              <strong>{social.name}</strong><Icon name="arrow-up-right" class="h-3.5 w-3.5" />
+            </a>
+          ))}
+        </div>
+      </section>
+    </main>
 
-    <section class="about-connect reveal" aria-labelledby="connect-title">
-      <div class="about-connect__intro">
-        <p class="about-label"><span>005</span> FIND ME ONLINE</p>
-        <h2 id="connect-title">在这些地方，<br /><em>继续相遇。</em></h2>
-        <p>分享过程、交换想法，或者只是来打个招呼。</p>
-        <a href={`mailto:${author.email}`}>直接写信给我 <Icon name="arrow-up-right" class="h-4 w-4" /></a>
-      </div>
-
-      <div class="about-social-list">
-        {socialCards.map((social) => (
-          <a href={social.url} target="_blank" rel="noopener noreferrer" class="about-social">
-            <span class="about-social__index">{social.index}</span>
-            <span class="about-social__icon">
-              {social.iconSrc ? <img src={withBase(social.iconSrc)} alt="" loading="lazy" /> : <span>?</span>}
-            </span>
-            <strong>{social.name}</strong>
-            <Icon name="arrow-up-right" class="about-social__arrow h-4 w-4" />
-          </a>
-        ))}
-      </div>
-    </section>
-
-    <footer class="about-signoff reveal">
-      <p>THANKS FOR STOPPING BY</p>
+    <footer class="profile-signoff reveal">
+      <span>THANKS FOR STOPPING BY</span>
       <strong>保持好奇，保持浪漫，继续创造。</strong>
-      <span>BAD0RANG3'S STUDIO <i></i> {new Date().getFullYear()}</span>
+      <span>BAD0RANG3'S STUDIO · {year}</span>
     </footer>
   </div>
 </BaseLayout>
 
 <style>
-  .about-page {
-    --about-line: var(--fx-line);
-    --about-text: var(--fx-text);
-    --about-muted: var(--fx-muted);
-    --about-faint: var(--fx-faint);
-    --about-pink: var(--fx-pink);
-    --about-panel: color-mix(in srgb, var(--fx-surface) 92%, transparent);
-    --about-panel-strong: color-mix(in srgb, var(--fx-surface-strong) 94%, transparent);
-    padding-block: 1.25rem 5.5rem;
+  .profile-page {
+    --paper: color-mix(in srgb, var(--fx-surface-strong) 94%, transparent);
+    --paper-soft: color-mix(in srgb, var(--fx-surface) 88%, transparent);
+    --ink: var(--fx-text); --muted: var(--fx-muted); --faint: var(--fx-faint);
+    --line: var(--fx-line); --pink: var(--fx-pink);
+    padding-block: 1.5rem 6rem;
   }
 
-  .about-hero {
-    position: relative;
-    display: grid;
-    grid-template-columns: minmax(0, 1.35fr) minmax(18rem, 0.65fr);
-    gap: clamp(2rem, 6vw, 6rem);
-    min-height: min(46rem, calc(100vh - 5.5rem));
-    overflow: hidden;
-    border: 1px solid var(--about-line);
-    border-radius: 2.25rem;
-    padding: clamp(1.5rem, 5vw, 4.5rem);
+  .profile-hero {
+    position: relative; display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(16rem, .65fr);
+    gap: clamp(2rem, 6vw, 5rem); overflow: hidden;
+    border: 1px solid var(--line); border-radius: 1.7rem;
+    padding: clamp(5.25rem, 8vw, 7rem) clamp(1.35rem, 5vw, 4.5rem) clamp(1.35rem, 3vw, 2.25rem);
     background:
-      radial-gradient(circle at 82% 20%, color-mix(in srgb, var(--about-pink) 20%, transparent), transparent 27rem),
-      linear-gradient(135deg, color-mix(in srgb, var(--about-panel-strong) 95%, transparent), var(--about-panel));
-    box-shadow: 10px 10px 0 color-mix(in srgb, var(--about-pink) 26%, transparent), 0 34px 90px -54px var(--fx-shadow);
-    isolation: isolate;
+      linear-gradient(90deg, transparent 49.8%, color-mix(in srgb, var(--line) 65%, transparent) 50%, transparent 50.2%),
+      radial-gradient(circle at 79% 38%, color-mix(in srgb, var(--pink) 13%, transparent), transparent 26%), var(--paper);
+    box-shadow: 10px 10px 0 color-mix(in srgb, var(--pink) 16%, transparent), 0 35px 80px -52px var(--fx-shadow);
   }
 
-  .about-hero__grid {
-    position: absolute;
-    z-index: -2;
-    inset: 0;
-    opacity: 0.28;
-    background-image:
-      linear-gradient(var(--about-line) 1px, transparent 1px),
-      linear-gradient(90deg, var(--about-line) 1px, transparent 1px);
-    background-size: 3.25rem 3.25rem;
-    mask-image: linear-gradient(90deg, black, transparent 82%);
+  .profile-hero::after {
+    position: absolute; right: -2.5rem; bottom: -5rem;
+    color: color-mix(in srgb, var(--pink) 8%, transparent); content: 'ABOUT';
+    font-size: clamp(7rem, 18vw, 14rem); font-weight: 950; letter-spacing: -.1em; line-height: 1; pointer-events: none;
   }
 
-  .about-hero__ring {
-    position: absolute;
-    z-index: -1;
-    top: -11rem;
-    right: -10rem;
-    width: 32rem;
-    height: 32rem;
-    border: 1px solid color-mix(in srgb, var(--about-pink) 38%, transparent);
-    border-radius: 50%;
-    box-shadow: inset 0 0 0 4.5rem color-mix(in srgb, var(--about-pink) 5%, transparent);
+  .profile-hero__ruler {
+    position: absolute; inset: 0 0 auto; z-index: 1; display: flex; justify-content: space-between;
+    border-bottom: 1px dashed var(--line); padding: .95rem clamp(1.35rem, 3vw, 2.25rem);
+    color: var(--faint); font-size: .58rem; font-weight: 800; letter-spacing: .15em;
   }
 
-  .about-hero__copy {
-    display: flex;
-    min-width: 0;
-    flex-direction: column;
+  .profile-hero__copy { position: relative; z-index: 1; align-self: center; min-width: 0; }
+  .profile-eyebrow { display: flex; align-items: center; gap: .65rem; margin: 0; color: var(--pink); font-size: .68rem; font-weight: 850; letter-spacing: .12em; }
+  .profile-eyebrow i { width: 2rem; height: 1px; background: currentColor; }
+  .profile-hero h1 { margin: 1.1rem 0 0; line-height: .87; }
+  .profile-hero h1 span { display: block; color: var(--muted); font-size: clamp(1rem, 2vw, 1.35rem); font-weight: 750; letter-spacing: .02em; }
+  .profile-hero h1 strong { display: block; margin-top: .5rem; color: var(--ink); font-size: clamp(3.25rem, 8vw, 6.7rem); font-weight: 950; letter-spacing: -.09em; }
+  .profile-hero h1 em { color: var(--pink); font-style: normal; }
+  .profile-intro { max-width: 42rem; margin: 1.6rem 0 0; color: var(--muted); font-size: clamp(.86rem, 1.4vw, 1rem); line-height: 2; }
+
+  .profile-actions { display: flex; flex-wrap: wrap; gap: .65rem; margin-top: 1.65rem; }
+  .profile-action {
+    display: inline-flex; align-items: center; justify-content: center; gap: .5rem; min-height: 2.85rem;
+    border: 1px solid var(--line); border-radius: 999px; padding: .7rem 1.15rem;
+    background: color-mix(in srgb, var(--paper) 72%, transparent); color: var(--ink); font-size: .75rem; font-weight: 850;
+    transition: transform .25s var(--ease), border-color .25s ease;
   }
+  .profile-action:hover, .profile-action:focus-visible { border-color: var(--pink); transform: translateY(-3px); }
+  .profile-action--primary { border-color: transparent; background: var(--pink); color: #251018; box-shadow: 0 14px 28px -18px var(--pink); }
 
-  .about-topline {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    color: var(--about-faint);
-    font-size: 0.62rem;
-    font-weight: 800;
-    letter-spacing: 0.16em;
+  .profile-photo {
+    position: relative; z-index: 1; align-self: center; rotate: 2.2deg;
+    border: 1px solid color-mix(in srgb, var(--pink) 40%, var(--line)); padding: .75rem .75rem 1rem; background: var(--paper);
+    box-shadow: .8rem 1rem 0 color-mix(in srgb, var(--pink) 12%, transparent), 0 28px 50px -35px var(--fx-shadow);
   }
-
-  .about-live {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: var(--about-pink);
+  .profile-photo__tape {
+    position: absolute; z-index: 3; top: -1rem; left: 50%; width: 5.4rem; height: 1.8rem;
+    translate: -50%; rotate: -3deg; background: color-mix(in srgb, var(--fx-pink-soft) 45%, transparent); opacity: .72;
+    clip-path: polygon(4% 4%, 96% 0, 100% 92%, 2% 100%);
   }
+  .profile-photo__image { position: relative; display: grid; aspect-ratio: 1; overflow: hidden; place-items: center; background: color-mix(in srgb, var(--pink) 9%, var(--fx-bg)); }
+  .profile-photo__image::after { position: absolute; inset: 0; border: 1px solid color-mix(in srgb, white 12%, transparent); content: ''; }
+  .profile-photo__image img { position: relative; z-index: 1; width: 92%; height: 92%; object-fit: contain; filter: drop-shadow(0 1rem 1rem color-mix(in srgb, var(--fx-shadow) 80%, transparent)); }
+  .profile-photo__ghost { position: absolute; top: .2rem; left: -.25rem; color: color-mix(in srgb, var(--pink) 22%, transparent); font-size: clamp(4rem, 8vw, 6.2rem); font-weight: 950; letter-spacing: -.12em; line-height: .85; }
+  .profile-photo__caption { display: flex; align-items: end; justify-content: space-between; gap: .75rem; padding: .8rem .15rem 0; }
+  .profile-photo__caption div { display: grid; gap: .15rem; }
+  .profile-photo__caption strong { color: var(--ink); font-size: .78rem; }
+  .profile-photo__caption span { color: var(--faint); font-size: .52rem; letter-spacing: .04em; }
+  .profile-photo__status { display: flex; align-items: center; gap: .35rem; }
+  .profile-photo__status i, .profile-live { width: .42rem; height: .42rem; border-radius: 50%; background: var(--pink); box-shadow: 0 0 0 .2rem color-mix(in srgb, var(--pink) 14%, transparent); animation: profile-pulse 2.5s ease-in-out infinite; }
+  .profile-photo__scribble { position: absolute; right: -.4rem; bottom: -1.65rem; color: var(--pink); font-family: cursive; font-size: .78rem; rotate: -5deg; }
 
-  .about-live i,
-  .about-status__pulse i {
-    width: 0.45rem;
-    height: 0.45rem;
-    border-radius: 50%;
-    background: var(--about-pink);
-    box-shadow: 0 0 0 0.3rem color-mix(in srgb, var(--about-pink) 14%, transparent);
-    animation: about-pulse 2.4s ease-in-out infinite;
+  .profile-stats { position: relative; z-index: 1; grid-column: 1 / -1; display: grid; grid-template-columns: repeat(4, 1fr); margin: 2.2rem 0 0; border-top: 1px dashed var(--line); }
+  .profile-stats > div { display: flex; align-items: end; gap: .65rem; border-left: 1px dashed var(--line); padding: 1.35rem 1rem .1rem; }
+  .profile-stats > div:first-child { border-left: 0; padding-left: 0; }
+  .profile-stats dt { color: var(--ink); font-size: clamp(1.55rem, 3vw, 2.2rem); font-weight: 950; letter-spacing: -.08em; line-height: 1; }
+  .profile-stats dd { display: grid; gap: .15rem; margin: 0; color: var(--muted); font-size: .64rem; font-weight: 800; }
+  .profile-stats dd span { color: var(--faint); font-size: .48rem; letter-spacing: .12em; }
+  .profile-stats__note dt { color: var(--pink); }
+
+  .profile-notes { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 1rem; margin-top: clamp(2.5rem, 6vw, 4.5rem); }
+  .profile-card { position: relative; overflow: hidden; border: 1px solid var(--line); border-radius: 1.45rem; padding: clamp(1.25rem, 3vw, 2rem); background: var(--paper-soft); box-shadow: 0 26px 64px -48px var(--fx-shadow); }
+  .profile-card__head { display: flex; align-items: center; gap: .75rem; border-bottom: 1px dashed var(--line); padding-bottom: .8rem; }
+  .profile-card__head > span { display: grid; width: 1.75rem; height: 1.75rem; place-items: center; border-radius: 50%; background: color-mix(in srgb, var(--pink) 14%, transparent); color: var(--pink); font-size: .57rem; font-weight: 900; }
+  .profile-card__head p { margin: 0; color: var(--faint); font-size: .58rem; font-weight: 850; letter-spacing: .16em; }
+  .profile-card__head > strong { margin-left: auto; color: var(--faint); font-size: .55rem; letter-spacing: .1em; }
+  .profile-live { margin-left: auto; }
+
+  .profile-story { grid-column: span 8; }
+  .profile-story__layout { display: grid; grid-template-columns: minmax(15rem, .9fr) minmax(0, 1.1fr); gap: clamp(1.5rem, 4vw, 3.5rem); padding: clamp(1.5rem, 4vw, 3rem) 0; }
+  .profile-story h2, .profile-connect h2 { margin: 0; color: var(--ink); font-size: clamp(1.8rem, 4vw, 3.35rem); font-weight: 900; letter-spacing: -.07em; line-height: 1.15; }
+  .profile-story h2 em, .profile-connect h2 em { color: var(--pink); font-style: normal; }
+  .profile-story__copy { color: var(--muted); font-size: .82rem; line-height: 1.95; }
+  .profile-story__copy p { margin: 0 0 1rem; }
+  .profile-story__copy blockquote { margin: 1.35rem 0 0; border-left: 2px solid var(--pink); padding: .2rem 0 .2rem 1rem; color: var(--ink); font-weight: 800; }
+  .profile-values { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px dashed var(--line); }
+  .profile-values > div { display: grid; gap: .15rem; border-left: 1px dashed var(--line); padding: 1.2rem 1rem 0; }
+  .profile-values > div:first-child { border-left: 0; padding-left: 0; }
+  .profile-values span { color: var(--pink); font-size: .56rem; font-weight: 850; }
+  .profile-values strong { color: var(--ink); font-size: .9rem; }
+  .profile-values p { margin: 0; color: var(--faint); font-size: .6rem; line-height: 1.5; }
+
+  .profile-now { grid-column: span 4; }
+  .profile-now h2 { margin: 1.4rem 0 1rem; color: var(--ink); font-size: 1.2rem; font-weight: 900; letter-spacing: -.04em; }
+  .profile-terminal { overflow: hidden; border: 1px solid color-mix(in srgb, var(--pink) 25%, var(--line)); border-radius: .85rem; background: #151017; color: #f7e9f0; }
+  .profile-terminal__bar { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgb(255 255 255 / 9%); padding: .55rem .7rem; color: #a98c9a; font-size: .52rem; }
+  .profile-terminal__bar > span:first-child { display: flex; gap: .25rem; }
+  .profile-terminal__bar i { width: .38rem; height: .38rem; border-radius: 50%; background: #6e5662; }
+  .profile-terminal__bar i:first-child { background: #ff8fb6; }
+  .profile-terminal ol { margin: 0; padding: .75rem 0; list-style: none; }
+  .profile-terminal li { display: grid; grid-template-columns: 1.8rem minmax(0, 1fr); min-height: 1.25rem; padding: 0 .65rem; font-size: clamp(.52rem, .9vw, .66rem); line-height: 1.65; }
+  .profile-terminal li > span { color: #735d68; user-select: none; }
+  .profile-terminal code { overflow-wrap: anywhere; color: #eadce3; white-space: pre-wrap; }
+  .profile-now__note { margin: 1rem 0 0; color: var(--faint); font-size: .66rem; line-height: 1.7; }
+
+  .profile-toolbox { grid-column: span 7; }
+  .profile-section-title { display: flex; align-items: end; justify-content: space-between; gap: 1rem; padding: 1.4rem 0; }
+  .profile-section-title h2 { margin: 0; color: var(--ink); font-size: clamp(1.45rem, 3vw, 2.1rem); font-weight: 900; letter-spacing: -.05em; }
+  .profile-section-title p { max-width: 19rem; margin: 0; color: var(--faint); font-size: .63rem; line-height: 1.65; }
+  .profile-tools { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; }
+  .profile-tool { display: grid; grid-template-columns: auto 2rem minmax(0, 1fr) auto; align-items: center; gap: .55rem; min-width: 0; border: 1px solid var(--line); border-radius: .8rem; padding: .62rem .65rem; background: color-mix(in srgb, var(--paper) 65%, transparent); color: var(--ink); transition: transform .22s var(--ease), border-color .22s ease, background .22s ease; }
+  .profile-tool:hover, .profile-tool:focus-visible { z-index: 1; border-color: color-mix(in srgb, var(--pink) 55%, var(--line)); background: var(--paper); transform: translateY(-3px); }
+  .profile-tool__number { color: var(--faint); font-size: .48rem; }
+  .profile-tool__icon { display: grid; width: 2rem; height: 2rem; place-items: center; border-radius: .6rem; background: color-mix(in srgb, var(--pink) 10%, transparent); color: var(--pink); font-size: .55rem; font-weight: 900; }
+  .profile-tool__icon img { width: 1.15rem; height: 1.15rem; object-fit: contain; }
+  .profile-tool strong { min-width: 0; overflow: hidden; font-size: .65rem; text-overflow: ellipsis; white-space: nowrap; }
+  .profile-tool__arrow { color: var(--faint); }
+
+  .profile-connect { grid-column: span 5; }
+  .profile-connect__intro { padding: 1.4rem 0 1.25rem; }
+  .profile-connect__intro p { max-width: 24rem; margin: 1rem 0 0; color: var(--muted); font-size: .7rem; line-height: 1.8; }
+  .profile-socials { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: 1px dashed var(--line); }
+  .profile-social { display: grid; grid-template-columns: auto 1.65rem minmax(0, 1fr) auto; align-items: center; gap: .55rem; min-width: 0; border-bottom: 1px dashed var(--line); padding: .68rem .45rem; color: var(--ink); transition: color .2s ease, padding .2s var(--ease); }
+  .profile-social:nth-child(odd) { border-right: 1px dashed var(--line); padding-left: 0; padding-right: .75rem; }
+  .profile-social:nth-child(even) { padding-left: .75rem; }
+  .profile-social:hover, .profile-social:focus-visible { color: var(--pink); padding-inline-start: .45rem; }
+  .profile-social > span:first-child { color: var(--faint); font-size: .48rem; }
+  .profile-social__icon { display: grid; width: 1.65rem; height: 1.65rem; place-items: center; border-radius: .5rem; background: color-mix(in srgb, var(--pink) 10%, transparent); }
+  .profile-social__icon img { width: .95rem; height: .95rem; object-fit: contain; opacity: .82; }
+  .profile-social strong { min-width: 0; overflow: hidden; font-size: .62rem; text-overflow: ellipsis; white-space: nowrap; }
+
+  .profile-signoff { display: grid; justify-items: center; gap: .85rem; margin-top: clamp(4rem, 8vw, 7rem); text-align: center; }
+  .profile-signoff::before { width: 1px; height: 3rem; background: linear-gradient(transparent, var(--pink)); content: ''; }
+  .profile-signoff span { color: var(--faint); font-size: .55rem; font-weight: 800; letter-spacing: .16em; }
+  .profile-signoff strong { color: var(--ink); font-size: clamp(1.25rem, 3.4vw, 2rem); font-weight: 900; letter-spacing: -.04em; }
+  @keyframes profile-pulse { 50% { opacity: .45; box-shadow: 0 0 0 .42rem color-mix(in srgb, var(--pink) 5%, transparent); } }
+
+  @media (max-width: 900px) {
+    .profile-hero { grid-template-columns: minmax(0, 1fr) minmax(13rem, .55fr); gap: 1.75rem; }
+    .profile-hero h1 strong { font-size: clamp(3rem, 9vw, 5rem); }
+    .profile-story, .profile-now, .profile-toolbox, .profile-connect { grid-column: 1 / -1; }
+    .profile-story__layout { grid-template-columns: 1fr 1.1fr; }
   }
-
-  .about-overline {
-    margin: auto 0 0.65rem;
-    padding-top: clamp(3rem, 8vw, 8rem);
-    color: var(--about-pink);
-    font-size: clamp(0.72rem, 1.2vw, 0.88rem);
-    font-weight: 850;
-    letter-spacing: 0.2em;
+  @media (max-width: 680px) {
+    .profile-page { padding-top: .75rem; }
+    .profile-hero { grid-template-columns: 1fr; padding-top: 4.75rem; background: radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--pink) 12%, transparent), transparent 34%), var(--paper); }
+    .profile-hero::after { display: none; }
+    .profile-hero__ruler span:nth-child(2) { display: none; }
+    .profile-hero h1 strong { font-size: clamp(2.7rem, 15vw, 4.4rem); }
+    .profile-photo { justify-self: center; width: min(100%, 17rem); margin: .5rem 0 1rem; rotate: 1deg; }
+    .profile-stats { grid-template-columns: repeat(2, 1fr); margin-top: .75rem; }
+    .profile-stats > div { border-top: 1px dashed var(--line); padding: 1rem .75rem; }
+    .profile-stats > div:nth-child(odd) { border-left: 0; }
+    .profile-stats > div:first-child { padding-left: .75rem; }
+    .profile-story__layout { grid-template-columns: 1fr; padding: 1.5rem 0; }
+    .profile-values { grid-template-columns: 1fr; }
+    .profile-values > div, .profile-values > div:first-child { border-top: 1px dashed var(--line); border-left: 0; padding: .85rem 0; }
+    .profile-values > div:first-child { border-top: 0; }
+    .profile-section-title { display: grid; }
+    .profile-tools { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
-
-  .about-hero h1 {
-    display: grid;
-    margin: 0;
-    color: var(--about-text);
-    font-size: clamp(4rem, 9.5vw, 9rem);
-    font-weight: 900;
-    letter-spacing: -0.105em;
-    line-height: 0.78;
+  @media (max-width: 430px) {
+    .profile-hero, .profile-card { border-radius: 1.15rem; }
+    .profile-hero { padding-inline: 1rem; }
+    .profile-hero__ruler { padding-inline: 1rem; }
+    .profile-actions { display: grid; grid-template-columns: 1fr; }
+    .profile-tools { grid-template-columns: 1fr; }
+    .profile-socials { grid-template-columns: 1fr; }
+    .profile-social:nth-child(odd), .profile-social:nth-child(even) { border-right: 0; padding-inline: 0; }
   }
-
-  .about-hero h1 span {
-    font-size: 0.42em;
-    font-weight: 760;
-    letter-spacing: -0.055em;
-    line-height: 1;
-  }
-
-  .about-hero h1 strong {
-    margin-left: -0.08em;
-    font-weight: inherit;
-  }
-
-  .about-hero__tagline {
-    margin: 1.5rem 0 0;
-    color: var(--about-pink);
-    font-size: clamp(1rem, 2vw, 1.35rem);
-    font-weight: 820;
-  }
-
-  .about-hero__intro {
-    max-width: 42rem;
-    margin: 1rem 0 0;
-    color: var(--about-muted);
-    font-size: clamp(0.86rem, 1.35vw, 1rem);
-    line-height: 1.95;
-  }
-
-  .about-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.7rem;
-    margin-top: 1.6rem;
-  }
-
-  .about-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.55rem;
-    min-height: 2.85rem;
-    border: 1px solid var(--about-line);
-    border-radius: 999px;
-    padding: 0.7rem 1.1rem;
-    font-size: 0.76rem;
-    font-weight: 850;
-    transition: transform 0.25s var(--ease), background 0.25s ease, border-color 0.25s ease;
-  }
-
-  .about-button:hover,
-  .about-button:focus-visible { transform: translateY(-3px); }
-  .about-button--primary { border-color: transparent; background: var(--about-pink); color: #2b101b; box-shadow: 0 13px 26px -17px var(--about-pink); }
-  .about-button--primary:hover,
-  .about-button--primary:focus-visible { background: var(--fx-pink-soft); }
-  .about-button--quiet { background: color-mix(in srgb, var(--about-panel-strong) 72%, transparent); color: var(--about-text); }
-  .about-button--quiet:hover,
-  .about-button--quiet:focus-visible { border-color: color-mix(in srgb, var(--about-pink) 46%, var(--about-line)); }
-
-  .about-numbers {
-    display: flex;
-    gap: clamp(1.2rem, 4vw, 3.5rem);
-    margin: auto 0 0;
-    padding-top: clamp(2.5rem, 7vw, 5.5rem);
-  }
-
-  .about-numbers div { display: grid; gap: 0.2rem; }
-  .about-numbers dt { color: var(--about-text); font-size: 1.45rem; font-weight: 900; letter-spacing: -0.06em; }
-  .about-numbers dd { margin: 0; color: var(--about-faint); font-size: 0.58rem; font-weight: 800; letter-spacing: 0.1em; }
-
-  .about-portrait {
-    position: relative;
-    align-self: center;
-    min-width: 0;
-    border: 1px solid color-mix(in srgb, var(--about-pink) 38%, var(--about-line));
-    border-radius: 1.35rem;
-    padding: 0.8rem;
-    background: color-mix(in srgb, var(--about-panel-strong) 88%, transparent);
-    box-shadow: 0 30px 70px -42px var(--fx-shadow);
-    transform: rotate(2.4deg);
-    transition: transform 0.4s var(--spring);
-  }
-
-  .about-portrait:hover { transform: rotate(0deg) translateY(-0.3rem); }
-
-  .about-portrait__tape {
-    position: absolute;
-    z-index: 3;
-    top: -1.2rem;
-    left: 50%;
-    width: 6.5rem;
-    height: 2.1rem;
-    background: color-mix(in srgb, var(--fx-pink-soft) 50%, transparent);
-    clip-path: polygon(3% 12%, 96% 0, 100% 88%, 0 100%);
-    transform: translateX(-50%) rotate(-2deg);
-    backdrop-filter: blur(4px);
-  }
-
-  .about-portrait__top,
-  .about-portrait__caption {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: 0.25rem 0.2rem 0.75rem;
-    color: var(--about-faint);
-    font-size: 0.58rem;
-    font-weight: 850;
-    letter-spacing: 0.13em;
-  }
-
-  .about-portrait__top span:last-child { color: var(--about-pink); }
-
-  .about-portrait__image {
-    position: relative;
-    display: grid;
-    aspect-ratio: 0.92;
-    overflow: hidden;
-    place-items: end center;
-    border-radius: 0.9rem;
-    background:
-      radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--fx-pink-soft) 45%, transparent), transparent 45%),
-      color-mix(in srgb, var(--about-pink) 12%, var(--fx-bg));
-  }
-
-  .about-portrait__image::after {
-    position: absolute;
-    inset: 0;
-    border: 1px solid color-mix(in srgb, white 16%, transparent);
-    border-radius: inherit;
-    content: '';
-    pointer-events: none;
-  }
-
-  .about-portrait__image img {
-    position: relative;
-    z-index: 1;
-    width: 94%;
-    height: 94%;
-    object-fit: contain;
-    filter: drop-shadow(0 1.2rem 1rem color-mix(in srgb, var(--fx-shadow) 70%, transparent));
-    transform: translateY(2%);
-  }
-
-  .about-portrait__monogram {
-    position: absolute;
-    top: 0.5rem;
-    left: -0.15rem;
-    color: color-mix(in srgb, var(--about-pink) 26%, transparent);
-    font-size: clamp(4rem, 9vw, 8rem);
-    font-weight: 950;
-    letter-spacing: -0.13em;
-    line-height: 0.8;
-  }
-
-  .about-portrait__stamp {
-    position: absolute;
-    z-index: 2;
-    right: 0.7rem;
-    bottom: 0.8rem;
-    display: grid;
-    width: 4.8rem;
-    height: 4.8rem;
-    place-items: center;
-    border: 1px solid color-mix(in srgb, var(--about-pink) 75%, transparent);
-    border-radius: 50%;
-    color: var(--about-pink);
-    font-size: 0.57rem;
-    font-weight: 900;
-    letter-spacing: 0.11em;
-    line-height: 1.25;
-    text-align: center;
-    transform: rotate(-11deg);
-  }
-
-  .about-portrait__caption { padding: 0.9rem 0.25rem 0.2rem; letter-spacing: 0; }
-  .about-portrait__caption div { display: grid; gap: 0.15rem; }
-  .about-portrait__caption strong { color: var(--about-text); font-size: 0.8rem; letter-spacing: -0.02em; }
-  .about-portrait__caption span { color: var(--about-faint); font-size: 0.56rem; letter-spacing: 0.08em; }
-  .about-portrait__caption .about-portrait__mark { color: var(--about-pink); font-size: 1.25rem; }
-
-  .about-label {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.65rem;
-    margin: 0;
-    color: var(--about-faint);
-    font-size: 0.62rem;
-    font-weight: 850;
-    letter-spacing: 0.17em;
-  }
-
-  .about-label span { color: var(--about-pink); }
-
-  .about-story {
-    display: grid;
-    grid-template-columns: minmax(0, 1.15fr) minmax(20rem, 0.85fr);
-    gap: 0.85rem;
-    margin-top: clamp(4rem, 9vw, 7rem);
-  }
-
-  .about-story__copy,
-  .about-status,
-  .about-tool-group {
-    border: 1px solid var(--about-line);
-    background: var(--about-panel);
-    backdrop-filter: blur(16px) saturate(125%);
-  }
-
-  .about-story__copy,
-  .about-status { border-radius: 1.5rem; padding: clamp(1.4rem, 4vw, 3rem); }
-
-  .about-story__copy h2,
-  .about-connect__intro h2 {
-    margin: 1.2rem 0 0;
-    color: var(--about-text);
-    font-size: clamp(2rem, 5vw, 4rem);
-    font-weight: 880;
-    letter-spacing: -0.075em;
-    line-height: 1.1;
-  }
-
-  .about-story__copy h2 em,
-  .about-connect__intro h2 em { color: var(--about-pink); font-style: normal; }
-
-  .about-story__copy > p:last-of-type {
-    max-width: 42rem;
-    margin: 1.5rem 0 0;
-    color: var(--about-muted);
-    font-size: 0.88rem;
-    line-height: 1.95;
-  }
-
-  .about-principles {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.65rem;
-    margin-top: clamp(2.5rem, 5vw, 4rem);
-  }
-
-  .about-principle {
-    min-width: 0;
-    border-top: 1px solid var(--about-line);
-    padding-top: 0.8rem;
-  }
-
-  .about-principle > span { color: var(--about-pink); font-size: 0.58rem; font-weight: 850; }
-  .about-principle strong { display: block; margin-top: 0.65rem; color: var(--about-text); font-size: 0.85rem; }
-  .about-principle p { margin: 0.35rem 0 0; color: var(--about-faint); font-size: 0.62rem; line-height: 1.55; }
-
-  .about-status {
-    background: linear-gradient(155deg, color-mix(in srgb, var(--about-pink) 9%, var(--about-panel)), var(--about-panel));
-  }
-
-  .about-status__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
-  .about-status h2 { margin: 0.85rem 0 0; color: var(--about-text); font-size: 1.35rem; font-weight: 850; letter-spacing: -0.045em; }
-  .about-status__pulse { display: inline-flex; align-items: center; gap: 0.45rem; color: var(--about-pink); font-size: 0.58rem; font-weight: 850; letter-spacing: 0.12em; }
-
-  .about-terminal {
-    margin-top: 2rem;
-    overflow: hidden;
-    border: 1px solid color-mix(in srgb, white 12%, transparent);
-    border-radius: 1rem;
-    background: #100d12;
-    box-shadow: 0 24px 50px -34px #000;
-  }
-
-  .about-terminal__bar {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    align-items: center;
-    border-bottom: 1px solid rgb(255 255 255 / 0.08);
-    padding: 0.7rem 0.85rem;
-    color: #8e7a85;
-    font-size: 0.58rem;
-    font-weight: 750;
-  }
-
-  .about-terminal__bar > span:first-child { display: flex; gap: 0.3rem; }
-  .about-terminal__bar i { width: 0.42rem; height: 0.42rem; border-radius: 50%; background: #ff769e; }
-  .about-terminal__bar i:nth-child(2) { background: #ffd47d; }
-  .about-terminal__bar i:nth-child(3) { background: #84dfaa; }
-  .about-terminal ol { display: grid; gap: 0.3rem; margin: 0; padding: 1rem 0.8rem 1.15rem; list-style: none; }
-  .about-terminal li { display: grid; grid-template-columns: 1.5rem minmax(0, 1fr); gap: 0.7rem; color: var(--code-block-text); font-family: var(--font-mono); font-size: clamp(0.6rem, 1vw, 0.72rem); line-height: 1.5; }
-  .about-terminal li > span { color: #675d65; text-align: right; user-select: none; }
-  .about-terminal code { min-width: 0; overflow-wrap: anywhere; white-space: pre-wrap; }
-  .about-status__note { margin: 1.2rem 0 0; color: var(--about-faint); font-size: 0.66rem; line-height: 1.65; }
-
-  .about-tools { margin-top: clamp(4.5rem, 9vw, 7.5rem); }
-
-  .about-section-heading h2 {
-    margin: 0.75rem 0 0;
-    color: var(--about-text);
-    font-size: clamp(2rem, 5vw, 3.4rem);
-    font-weight: 880;
-    letter-spacing: -0.075em;
-  }
-
-  .about-section-heading > p:last-child {
-    margin: 0.65rem 0 0;
-    color: var(--about-muted);
-    font-size: 0.76rem;
-    line-height: 1.8;
-  }
-
-  .about-section-heading--row { display: flex; align-items: end; justify-content: space-between; gap: 2rem; }
-  .about-section-heading--row > p:last-child { max-width: 30rem; text-align: right; }
-
-  .about-tool-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.8rem; margin-top: 1.75rem; }
-  .about-tool-group { min-width: 0; border-radius: 1.5rem; padding: 1.15rem; }
-  .about-tool-group header { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 0.85rem; padding: 0.15rem; }
-  .about-tool-group__index { display: grid; width: 2.7rem; height: 2.7rem; place-items: center; border: 1px solid color-mix(in srgb, var(--about-pink) 42%, var(--about-line)); border-radius: 50%; color: var(--about-pink); font-size: 0.68rem; font-weight: 850; }
-  .about-tool-group header p { margin: 0; color: var(--about-faint); font-size: 0.56rem; font-weight: 850; letter-spacing: 0.15em; }
-  .about-tool-group header h3 { margin: 0.25rem 0 0; color: var(--about-text); font-size: 1.15rem; font-weight: 850; letter-spacing: -0.04em; }
-  .about-tool-group header > span:last-child { color: var(--about-faint); font-size: 0.6rem; }
-
-  .about-resource-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem; margin-top: 1.2rem; }
-  .about-resource { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 0.65rem; min-width: 0; min-height: 3.25rem; border: 1px solid var(--about-line); border-radius: 0.9rem; padding: 0.55rem 0.65rem; background: color-mix(in srgb, var(--about-panel-strong) 52%, transparent); color: var(--about-muted); font-size: 0.68rem; font-weight: 800; transition: transform 0.25s var(--ease), border-color 0.25s ease, background 0.25s ease, color 0.25s ease; }
-  .about-resource:hover,
-  .about-resource:focus-visible { border-color: color-mix(in srgb, var(--about-pink) 45%, var(--about-line)); background: color-mix(in srgb, var(--about-pink) 9%, var(--about-panel-strong)); color: var(--about-text); transform: translateY(-2px); }
-  .about-resource__icon { display: grid; width: 2rem; height: 2rem; place-items: center; border-radius: 0.6rem; background: color-mix(in srgb, var(--fx-bg) 65%, transparent); }
-  .about-resource__icon img { width: 1.1rem; height: 1.1rem; object-fit: contain; }
-  .about-resource__icon > span { color: var(--about-pink); font-size: 0.55rem; }
-  .about-resource > span:nth-child(2) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .about-resource__arrow { color: var(--about-faint); transition: transform 0.25s ease, color 0.25s ease; }
-  .about-resource:hover .about-resource__arrow,
-  .about-resource:focus-visible .about-resource__arrow { color: var(--about-pink); transform: translate(2px, -2px); }
-
-  .about-connect {
-    display: grid;
-    grid-template-columns: minmax(17rem, 0.75fr) minmax(0, 1.25fr);
-    gap: clamp(2rem, 7vw, 6rem);
-    margin-top: clamp(4.5rem, 9vw, 7.5rem);
-    border-block: 1px solid var(--about-line);
-    padding-block: clamp(2rem, 6vw, 4.5rem);
-  }
-
-  .about-connect__intro > p:last-of-type { margin: 1.2rem 0 0; color: var(--about-muted); font-size: 0.76rem; line-height: 1.8; }
-  .about-connect__intro > a { display: inline-flex; align-items: center; gap: 0.5rem; margin-top: 1.5rem; color: var(--about-pink); font-size: 0.7rem; font-weight: 850; }
-
-  .about-social-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; gap: 0; border-top: 1px solid var(--about-line); }
-  .about-social { display: grid; grid-template-columns: 1.5rem auto minmax(0, 1fr) auto; align-items: center; gap: 0.75rem; min-width: 0; border-bottom: 1px solid var(--about-line); padding: 0.9rem 0.75rem; color: var(--about-muted); transition: padding 0.25s var(--ease), background 0.25s ease, color 0.25s ease; }
-  .about-social:nth-child(odd) { border-right: 1px solid var(--about-line); }
-  .about-social:hover,
-  .about-social:focus-visible { padding-inline: 1rem 0.5rem; background: color-mix(in srgb, var(--about-pink) 8%, transparent); color: var(--about-text); }
-  .about-social__index { color: var(--about-faint); font-size: 0.55rem; font-weight: 800; }
-  .about-social__icon { display: grid; width: 2rem; height: 2rem; place-items: center; border-radius: 0.62rem; background: color-mix(in srgb, var(--about-panel-strong) 72%, transparent); }
-  .about-social__icon img { width: 1rem; height: 1rem; object-fit: contain; }
-  .about-social__icon > span { color: var(--about-pink); }
-  .about-social strong { overflow: hidden; font-size: 0.7rem; text-overflow: ellipsis; white-space: nowrap; }
-  .about-social__arrow { color: var(--about-faint); }
-  .about-social:hover .about-social__arrow,
-  .about-social:focus-visible .about-social__arrow { color: var(--about-pink); }
-
-  .about-signoff { display: grid; justify-items: center; gap: 0.75rem; padding: clamp(4rem, 10vw, 8rem) 1rem 1.5rem; text-align: center; }
-  .about-signoff > p { margin: 0; color: var(--about-pink); font-size: 0.62rem; font-weight: 850; letter-spacing: 0.2em; }
-  .about-signoff > strong { color: var(--about-text); font-size: clamp(1.5rem, 4vw, 3rem); font-weight: 880; letter-spacing: -0.06em; }
-  .about-signoff > span { display: flex; align-items: center; gap: 0.65rem; margin-top: 1.2rem; color: var(--about-faint); font-size: 0.58rem; font-weight: 800; letter-spacing: 0.12em; }
-  .about-signoff i { width: 2.5rem; height: 1px; background: var(--about-line); }
-
-  @keyframes about-pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.55; transform: scale(0.78); }
-  }
-
-  @media (max-width: 980px) {
-    .about-hero { grid-template-columns: minmax(0, 1fr) minmax(16rem, 0.55fr); gap: 2rem; min-height: auto; }
-    .about-hero h1 { font-size: clamp(3.6rem, 9vw, 6rem); }
-    .about-overline { padding-top: 5rem; }
-    .about-story { grid-template-columns: 1fr; }
-    .about-tool-groups { grid-template-columns: 1fr; }
-  }
-
-  @media (max-width: 720px) {
-    .about-page { padding-block: 0.75rem 4rem; }
-    .about-hero { grid-template-columns: 1fr; border-radius: 1.5rem; padding: 1.25rem; box-shadow: 6px 6px 0 color-mix(in srgb, var(--about-pink) 22%, transparent), 0 28px 64px -48px var(--fx-shadow); }
-    .about-topline { align-items: flex-start; }
-    .about-overline { padding-top: 4.5rem; }
-    .about-hero h1 { font-size: clamp(3.3rem, 16vw, 5.3rem); line-height: 0.82; }
-    .about-numbers { padding-top: 3rem; }
-    .about-portrait { width: min(100%, 22rem); margin: 1rem auto 0; transform: rotate(1.2deg); }
-    .about-story { margin-top: 4.5rem; }
-    .about-story__copy,
-    .about-status { border-radius: 1.25rem; padding: 1.25rem; }
-    .about-principles { grid-template-columns: 1fr; gap: 1rem; }
-    .about-principle { display: grid; grid-template-columns: 1.5rem 4rem minmax(0, 1fr); align-items: center; gap: 0.5rem; }
-    .about-principle strong,
-    .about-principle p { margin: 0; }
-    .about-section-heading--row { align-items: flex-start; flex-direction: column; gap: 0.5rem; }
-    .about-section-heading--row > p:last-child { text-align: left; }
-    .about-resource-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .about-connect { grid-template-columns: 1fr; gap: 2.5rem; }
-  }
-
-  @media (max-width: 460px) {
-    .about-live { max-width: 6rem; justify-content: flex-end; text-align: right; }
-    .about-hero__intro { line-height: 1.8; }
-    .about-actions .about-button { width: 100%; }
-    .about-numbers { justify-content: space-between; gap: 0.75rem; }
-    .about-resource-list,
-    .about-social-list { grid-template-columns: 1fr; }
-    .about-tool-group header { grid-template-columns: auto 1fr; }
-    .about-tool-group header > span:last-child { grid-column: 2; }
-    .about-social:nth-child(odd) { border-right: 0; }
-    .about-terminal li { font-size: 0.59rem; }
-  }
-
   @media (prefers-reduced-motion: reduce) {
-    .about-live i,
-    .about-status__pulse i { animation: none; }
-    .about-button,
-    .about-portrait,
-    .about-resource,
-    .about-social { transition: none; }
+    .profile-photo__status i, .profile-live { animation: none; }
+    .profile-photo { rotate: 0deg; }
   }
 </style>

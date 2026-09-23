@@ -326,6 +326,13 @@
 .image-lightbox { max-width: min(95vw, 1200px); max-height: 95vh; padding: 0; border: 0; background: transparent; }
 .image-lightbox::backdrop { background: rgb(0 0 0 / .8); }
 .image-lightbox img { max-width: 95vw; max-height: 90vh; object-fit: contain; border-radius: 1rem; }
+
+/* Expensive below-the-fold embeds do not need layout or paint work until the
+   reader approaches them. The intrinsic size prevents a large scroll jump. */
+.deferred-section {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 28rem;
+}
 .image-lightbox-close { position: absolute; top: -.75rem; right: -.75rem; z-index: 1; width: 2rem; height: 2rem; border-radius: 999px; border: 1px solid white; background: black; color: white; font-size: 1.25rem; line-height: 1; cursor: pointer; }
 
 /* -----------------------------------------------------------------
