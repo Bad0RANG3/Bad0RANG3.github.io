@@ -237,7 +237,6 @@
    Shared cards, buttons and page headers
    ----------------------------------------------------------------- */
 .hard-card,
-.panel-slice,
 .content-card article,
 .profile-overview { border: 1px solid var(--line) !important; background: var(--surface) !important; box-shadow: 0 24px 64px -38px #000 !important; backdrop-filter: blur(18px); }
 .hard-card:hover,
@@ -272,14 +271,12 @@
 .shadow-hard,
 [class*="shadow-[6px_6px_0_0]"],
 [class*="shadow-[4px_4px_0_0]"] { box-shadow: 0 24px 64px -38px #000 !important; }
-.panel-slice { border-radius: 1.5rem; }
 
 /* Mobile guard: let grid children shrink and let wide content scroll in its own
    box instead of pushing cards past the viewport. */
 @media (max-width: 1023px) {
   .grid > * { min-width: 0; }
 }
-.mockup-code { border: 1px solid var(--line) !important; background: var(--code-block-bg) !important; color: var(--code-block-text); }
 .reveal { animation: reveal-up 0.7s var(--ease) both; animation-delay: var(--reveal-delay, 0ms); }
 
 @keyframes reveal-up { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: translateY(0); } }
@@ -468,8 +465,7 @@ html[data-theme="paper-dark"] #sakura-canvas {
 }
 
 html[data-theme="paper-dark"] .hard-card,
-html[data-theme="paper-dark"] .profile-overview,
-html[data-theme="paper-dark"] .panel-slice {
+html[data-theme="paper-dark"] .profile-overview {
   background:
     linear-gradient(140deg, color-mix(in oklab, var(--color-primary) 10%, transparent), transparent 46%),
     color-mix(in oklab, var(--color-base-200) 88%, black) !important;
@@ -478,15 +474,6 @@ html[data-theme="paper-dark"] .panel-slice {
 
 .hard-card-citrus { --hard-card-shadow: color-mix(in oklab, var(--color-secondary) 90%, transparent); --hard-card-hover-shadow: color-mix(in oklab, var(--color-primary) 85%, transparent); }
 .hard-card-teal { --hard-card-shadow: color-mix(in oklab, var(--color-accent) 85%, transparent); --hard-card-hover-shadow: color-mix(in oklab, var(--color-secondary) 90%, transparent); }
-
-.panel-slice {
-  border: 2px solid color-mix(in oklab, var(--color-base-content) 12%, transparent) !important;
-  background:
-    linear-gradient(140deg, color-mix(in oklab, var(--color-primary) 10%, transparent), transparent 46%),
-    linear-gradient(320deg, color-mix(in oklab, var(--color-secondary) 16%, transparent), transparent 40%),
-    color-mix(in oklab, var(--color-base-100) 94%, white) !important;
-  backdrop-filter: none !important;
-}
 
 .btn-brutal,
 .btn-brutal-outline {
@@ -927,8 +914,6 @@ html[data-theme="paper"] #sakura-canvas {
 }
 
 .music-island .island-player-toggle,
-.music-island .island-player-close,
-.music-island .island-player-external,
 .music-island .island-volume-button,
 .music-island .island-volume-mute {
   display: grid;
@@ -1046,31 +1031,6 @@ html[data-theme="paper"] #sakura-canvas {
   gap: 0.7rem;
 }
 
-.music-island .island-audio-visualizer {
-  display: flex;
-  height: 24px;
-  align-items: center;
-  gap: 3px;
-  margin: 0.62rem 0 0.1rem;
-  padding: 0 0.1rem;
-}
-
-.music-island .island-audio-visualizer i {
-  display: block;
-  min-width: 0;
-  height: var(--visualizer-height, 4px);
-  flex: 1 1 0;
-  border-radius: 999px;
-  background: linear-gradient(180deg, var(--fx-pink-soft), var(--fx-pink));
-  box-shadow: 0 0 12px rgb(255 143 182 / 0.24);
-  opacity: var(--visualizer-opacity, 0.84);
-  transition: height 0.08s linear, opacity 0.12s ease;
-}
-
-.music-island[data-player-state="playing"] .island-audio-visualizer i {
-  opacity: 1;
-}
-
 .music-island .island-player-art {
   width: 62px;
   height: 62px;
@@ -1085,33 +1045,10 @@ html[data-theme="paper"] #sakura-canvas {
   gap: 0.13rem;
 }
 
-.music-island .island-player-copy strong,
 .music-island .island-player-copy span {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.music-island .island-player-kicker {
-  color: var(--fx-pink-soft);
-  font-size: 0.55rem;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
-.music-island .island-player-kicker-row {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.65rem;
-}
-
-.music-island .island-player-copy strong {
-  color: #fff8fb;
-  font-size: 0.95rem;
-  line-height: 1.12;
 }
 
 .music-island .island-player-copy > span:last-child {
@@ -1185,19 +1122,10 @@ html[data-theme="paper"] #sakura-canvas {
   margin-top: 0.25rem;
 }
 
-.music-island .island-player-secondary {
-  display: flex;
-  align-items: center;
-  justify-self: start;
-  gap: 0.22rem;
-}
-
 .music-island .island-volume-control {
   position: relative;
 }
 
-.music-island .island-player-external,
-.music-island .island-player-close,
 .music-island .island-volume-button {
   width: 28px;
   height: 28px;
@@ -1205,13 +1133,6 @@ html[data-theme="paper"] #sakura-canvas {
   color: rgb(255 236 245 / 0.68);
 }
 
-.music-island .island-player-close { justify-self: end; }
-.music-island .island-player-external { justify-self: start; }
-
-.music-island .island-player-external:hover,
-.music-island .island-player-external:focus-visible,
-.music-island .island-player-close:hover,
-.music-island .island-player-close:focus-visible,
 .music-island .island-volume-button:hover,
 .music-island .island-volume-button:focus-visible,
 .music-island[data-volume-open="true"] .island-volume-button {
@@ -1354,14 +1275,6 @@ html[data-theme="paper"] #sakura-canvas {
   gap: 0.35cqw;
   font-family: Inter, "SF Pro Display", "Noto Sans SC", system-ui, sans-serif;
   transform: translateY(-1cqw);
-}
-
-.music-island .island-player-copy strong {
-  color: #fff;
-  font-size: 4.05cqw;
-  font-weight: 800;
-  letter-spacing: -0.035em;
-  line-height: 1.1;
 }
 
 .music-island .island-player-copy > span:not(.island-player-status) {
@@ -2464,7 +2377,6 @@ html[data-theme="paper-dark"] .ncm-profile-card {
 }
 
 .content-card article,
-.panel-slice,
 .contact-panel {
   border: 1px solid var(--fx-line) !important;
   background: var(--fx-surface) !important;
@@ -2801,7 +2713,6 @@ html[data-theme="paper-dark"] .ncm-profile-card {
 .profile-overview,
 .presence-card,
 .content-card article,
-.panel-slice,
 .contact-panel,
 .about-hero {
   border: 1px solid var(--fx-line) !important;
@@ -2817,7 +2728,6 @@ html[data-theme="paper-dark"] .ncm-profile-card {
 .profile-overview:hover,
 .presence-card:hover,
 .content-card:hover article,
-.panel-slice:hover,
 .contact-panel:hover,
 .about-hero:hover {
   border-color: color-mix(in srgb, var(--fx-pink) 34%, var(--fx-line)) !important;
