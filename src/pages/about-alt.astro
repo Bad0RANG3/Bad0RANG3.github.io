@@ -1,0 +1,496 @@
+---
+import { withBase } from '../lib/urls';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Icon from '../components/icons/Icon.astro';
+import { SOCIAL_ICONS, siteConfig } from '../config/site';
+import { projects } from '../config/projects';
+import { getPublishedPosts } from '../lib/content';
+
+const { about, author, socials } = siteConfig;
+const posts = await getPublishedPosts();
+const year = new Date().getFullYear();
+
+const socialCards = socials.map((social, index) => ({
+  ...social,
+  index: String(index + 1).padStart(2, '0'),
+  iconSrc: SOCIAL_ICONS[social.name as keyof typeof SOCIAL_ICONS] ?? null,
+}));
+
+const skillIconId: Record<string, string> = {
+  TypeScript: 'typescript', Python: 'py', 'C++': 'cpp', Kotlin: 'kotlin',
+  React: 'react', Vue: 'vue', 'Node.js': 'node', Git: 'git', Docker: 'docker', Linux: 'linux', 'VS Code': 'vscode',
+  Figma: 'figma', 'After Effects': 'ae', Photoshop: 'ps', Wireshark: '/icons/skills/wireshark.png',
+};
+
+const getIconUrl = (name: string) => {
+  const id = skillIconId[name];
+  if (!id) return null;
+  return withBase(id.startsWith('/') ? id : `/icons/skills/${id}.svg`);
+};
+
+const statusLines = about.currentStatus.split('\n');
+
+const stats = [
+  { value: String(posts.length).padStart(2, '0'), label: '文章', note: 'Notes' },
+  { value: String(projects.length).padStart(2, '0'), label: '项目', note: 'Projects' },
+  { value: String(about.techStack.length + about.devTools.length).padStart(2, '0'), label: '工具', note: 'Tools' },
+  { value: String(socials.length).padStart(2, '0'), label: '连接', note: 'Links' },
+];
+
+const facts = [
+  { key: 'Handle', value: author.name },
+  { key: 'Role', value: '开发者 · 玩家 · 学习者' },
+  { key: 'Status', value: '持续折腾中' },
+  { key: 'Location', value: '互联网 / 一台还在运行的电脑' },
+  { key: 'Mail', value: author.email, href: `mailto:${author.email}` },
+];
+
+const toolGroups = [
+  { code: 'T03', label: 'BUILD WITH', title: '技术栈', items: about.techStack, span: 7 },
+  { code: 'T04', label: 'WORK WITH', title: '开发工具', items: about.devTools, span: 5 },
+].map((group) => ({
+  ...group,
+  items: group.items.map((item) => ({ ...item, iconSrc: getIconUrl(item.name) })),
+}));
+
+const principles = [
+  { number: '01', title: 'Explore', copy: '对陌生事物保持好奇' },
+  { number: '02', title: 'Build', copy: '把灵感做成可用的东西' },
+  { number: '03', title: 'Share', copy: '记录过程，也分享答案' },
+];
+---
+
+<BaseLayout
+  title="关于 · 方案 B"
+  description="认识 Bad0RANG3：一个喜欢软件、开发、游戏与持续折腾的普通人。"
+  noindex
+>
+  <div class="ao-page site-frame">
+    <!-- ── HERO / console header ─────────────────────────── -->
+    <header class="ao-hero reveal">
+      <div class="ao-hero__bar">
+        <span class="ao-brand"><i aria-hidden="true"></i>PROFILE.OS</span>
+        <span class="ao-bar__mid">BUILD {year}.1 · {about.greeting}</span>
+        <span class="ao-clock"><span data-about-clock>--:--</span> LOCAL</span>
+      </div>
+
+      <div class="ao-hero__copy">
+        <p class="ao-kicker">HELLO, WORLD —</p>
+        <h1 class="ao-name">
+          <span class="ao-name__a">Bad0</span><em class="ao-name__b">RANG3</em>
+        </h1>
+        <p class="ao-lede">
+          {author.intro} 这是我的一台「数字工作台」：软件折腾、开发实验、游戏，和那些不想被时间冲走的小发现。
+        </p>
+        <div class="ao-actions">
+          <a href={withBase('/posts/')} class="ao-btn ao-btn--primary">阅读文章 <Icon name="arrow-up-right" class="h-4 w-4" /></a>
+          <a href={`mailto:${author.email}`} class="ao-btn">写信给我 <Icon name="arrow-up-right" class="h-4 w-4" /></a>
+        </div>
+      </div>
+
+      <aside class="ao-medallion" aria-label={`${author.name} 的头像`}>
+        <div class="ao-medallion__frame">
+          <img src={withBase(author.avatar)} alt={author.name} width="248" height="248" loading="eager" />
+          <span class="ao-medallion__status"><i aria-hidden="true"></i>ONLINE</span>
+        </div>
+        <p class="ao-medallion__caption">{author.name} · maker / player / learner</p>
+      </aside>
+
+      <dl class="ao-hero__stats">
+        {stats.map((stat) => (
+          <div>
+            <dt>{stat.value}</dt>
+            <dd>{stat.label}<span>{stat.note}</span></dd>
+          </div>
+        ))}
+      </dl>
+    </header>
+
+    <!-- ── BENTO ─────────────────────────────────────────── -->
+    <section class="ao-grid" aria-label="关于 Bad0RANG3 的速览">
+      <!-- T01 ABOUT -->
+      <article class="ao-tile ao-tile--wide reveal" style="--span:6">
+        <header class="ao-tile__head">
+          <span class="ao-tile__id">T01</span>
+          <h2 class="ao-tile__title">关于</h2>
+          <span class="ao-tile__label">ABOUT</span>
+        </header>
+        <div class="ao-prose">
+          <p>我是 {author.name}，一个喜欢在计算机上折腾的普通菜鸟。比起用完就丢，我更想弄明白一个东西为什么能工作，再把它拆开、重组，留下能帮到下一位的笔记。</p>
+          <p>这个站点就是那段过程的切片：踩过的坑、跑通的配置、做了一半的实验。若其中某一行恰好帮到了你，它就没白写。</p>
+        </div>
+      </article>
+
+      <!-- T02 NOW -->
+      <article class="ao-tile ao-tile--wide reveal" style="--span:6; --reveal-delay:60ms">
+        <header class="ao-tile__head">
+          <span class="ao-tile__id">T02</span>
+          <h2 class="ao-tile__title">此刻</h2>
+          <span class="ao-tile__label">NOW</span>
+        </header>
+        <div class="ao-terminal">
+          <div class="ao-terminal__bar"><span><i></i><i></i><i></i></span><span>now.cpp</span></div>
+          <ol>
+            {statusLines.map((line, index) => (
+              <li><span>{String(index + 1).padStart(2, '0')}</span><code>{line || ' '}</code></li>
+            ))}
+          </ol>
+        </div>
+      </article>
+
+      <!-- T03 STACK -->
+      <article class="ao-tile reveal" style="--span:7">
+        <header class="ao-tile__head">
+          <span class="ao-tile__id">T03</span>
+          <h2 class="ao-tile__title">{toolGroups[0].title}</h2>
+          <span class="ao-tile__label">{toolGroups[0].label}</span>
+        </header>
+        <div class="ao-chips">
+          {toolGroups[0].items.map((item) => (
+            <a href={item.url} target="_blank" rel="noopener noreferrer" class="ao-chip">
+              <span class="ao-chip__icon">
+                {item.iconSrc ? <img src={item.iconSrc} alt="" loading="lazy" /> : <span>{item.name.slice(0, 2)}</span>}
+              </span>
+              <span class="ao-chip__name">{item.name}</span>
+              <Icon name="arrow-up-right" class="ao-chip__arrow h-3.5 w-3.5" />
+            </a>
+          ))}
+        </div>
+      </article>
+
+      <!-- T04 TOOLS -->
+      <article class="ao-tile reveal" style="--span:5; --reveal-delay:60ms">
+        <header class="ao-tile__head">
+          <span class="ao-tile__id">T04</span>
+          <h2 class="ao-tile__title">{toolGroups[1].title}</h2>
+          <span class="ao-tile__label">{toolGroups[1].label}</span>
+        </header>
+        <div class="ao-chips ao-chips--dense">
+          {toolGroups[1].items.map((item) => (
+            <a href={item.url} target="_blank" rel="noopener noreferrer" class="ao-chip">
+              <span class="ao-chip__icon">
+                {item.iconSrc ? <img src={item.iconSrc} alt="" loading="lazy" /> : <span>{item.name.slice(0, 2)}</span>}
+              </span>
+              <span class="ao-chip__name">{item.name}</span>
+              <Icon name="arrow-up-right" class="ao-chip__arrow h-3.5 w-3.5" />
+            </a>
+          ))}
+        </div>
+      </article>
+
+      <!-- T05 FACTS -->
+      <article class="ao-tile reveal" style="--span:5">
+        <header class="ao-tile__head">
+          <span class="ao-tile__id">T05</span>
+          <h2 class="ao-tile__title">档案</h2>
+          <span class="ao-tile__label">FACTS</span>
+        </header>
+        <dl class="ao-facts">
+          {facts.map((fact) => (
+            <div class="ao-fact">
+              <dt>{fact.key}</dt>
+              <dd>{fact.href ? <a href={fact.href}>{fact.value}</a> : fact.value}</dd>
+            </div>
+          ))}
+        </dl>
+      </article>
+
+      <!-- T06 CONNECT -->
+      <article class="ao-tile reveal" style="--span:7; --reveal-delay:60ms">
+        <header class="ao-tile__head">
+          <span class="ao-tile__id">T06</span>
+          <h2 class="ao-tile__title">连接</h2>
+          <span class="ao-tile__label">CONNECT</span>
+        </header>
+        <div class="ao-socials">
+          {socialCards.map((social) => (
+            <a href={social.url} target="_blank" rel="noopener noreferrer" class="ao-social">
+              <span class="ao-social__index">{social.index}</span>
+              <span class="ao-social__icon">
+                {social.iconSrc ? <img src={withBase(social.iconSrc)} alt="" loading="lazy" /> : <span>?</span>}
+              </span>
+              <strong>{social.name}</strong>
+              <Icon name="arrow-up-right" class="ao-social__arrow h-3.5 w-3.5" />
+            </a>
+          ))}
+        </div>
+      </article>
+
+      <!-- T07 PRINCIPLES -->
+      <article class="ao-tile ao-tile--wide ao-tile--principles reveal" style="--span:12">
+        <header class="ao-tile__head">
+          <span class="ao-tile__id">T07</span>
+          <h2 class="ao-tile__title">做事方式</h2>
+          <span class="ao-tile__label">HOW I WORK</span>
+        </header>
+        <div class="ao-principles">
+          {principles.map((item) => (
+            <div class="ao-principle">
+              <span>{item.number}</span>
+              <strong>{item.title}</strong>
+              <p>{item.copy}</p>
+            </div>
+          ))}
+        </div>
+      </article>
+    </section>
+
+    <footer class="ao-signoff reveal">
+      <strong>保持好奇，保持浪漫，继续创造。</strong>
+      <span>BAD0RANG3'S STUDIO <i></i> {year}</span>
+    </footer>
+  </div>
+
+  <script is:inline data-astro-rerun>
+    (() => {
+      const render = () => {
+        const now = new Date();
+        const text = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        document.querySelectorAll('[data-about-clock]').forEach((node) => { node.textContent = text; });
+      };
+      render();
+      if (!window.__b0AboutClock) window.__b0AboutClock = setInterval(render, 30_000);
+    })();
+  </script>
+</BaseLayout>
+
+<style>
+  .ao-page {
+    --ao-line: var(--fx-line);
+    --ao-text: var(--fx-text);
+    --ao-muted: var(--fx-muted);
+    --ao-faint: var(--text-dim);
+    --ao-pink: var(--fx-pink);
+    --ao-accent: var(--accent-pink-soft);
+    --ao-panel: color-mix(in srgb, var(--fx-surface) 92%, transparent);
+    --ao-panel-strong: color-mix(in srgb, var(--fx-surface-strong) 94%, transparent);
+    padding-block: 1.5rem 6rem;
+  }
+
+  /* ── Hero console ──────────────────────────────────────── */
+  .ao-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(15rem, 0.6fr);
+    gap: clamp(1.5rem, 4vw, 3rem);
+    overflow: hidden;
+    border: 1px solid var(--ao-line);
+    border-radius: 1.8rem;
+    background:
+      radial-gradient(circle at 86% 12%, color-mix(in srgb, var(--ao-pink) 18%, transparent), transparent 24rem),
+      linear-gradient(150deg, color-mix(in srgb, var(--ao-panel-strong) 96%, transparent), var(--ao-panel));
+    box-shadow: 8px 8px 0 color-mix(in srgb, var(--ao-pink) 20%, transparent), 0 32px 84px -52px var(--fx-shadow);
+  }
+
+  .ao-hero__bar {
+    display: flex;
+    grid-column: 1 / -1;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    border-bottom: 1px dashed var(--ao-line);
+    padding: 0.8rem clamp(1.1rem, 3vw, 2.2rem);
+    color: var(--ao-faint);
+    font-family: var(--font-mono);
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+  }
+
+  .ao-brand { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--ao-text); }
+  .ao-brand i { width: 0.5rem; height: 0.5rem; border-radius: 0.15rem; background: var(--ao-pink); }
+  .ao-clock { color: var(--ao-accent); }
+  .ao-clock span { color: var(--ao-text); }
+
+  .ao-hero__copy { min-width: 0; padding: clamp(0.4rem, 1vw, 0.6rem) 0 clamp(0.4rem, 1vw, 0.6rem) clamp(1.1rem, 3vw, 2.2rem); }
+
+  .ao-kicker { margin: 0; color: var(--ao-accent); font-family: var(--font-mono); font-size: 0.66rem; font-weight: 800; letter-spacing: 0.2em; }
+  .ao-name { margin: 0.7rem 0 0; color: var(--ao-text); font-size: clamp(2.9rem, 8.5vw, 6.2rem); font-weight: 900; letter-spacing: -0.07em; line-height: 0.85; }
+  .ao-name__a { display: block; }
+  .ao-name__b { display: block; color: var(--ao-pink); font-style: normal; }
+
+  @supports (-webkit-text-stroke: 1px var(--ao-pink)) {
+    .ao-name__b { color: transparent; -webkit-text-stroke: 1.6px var(--ao-pink); }
+  }
+
+  .ao-lede { max-width: 38rem; margin: 1.2rem 0 0; color: var(--ao-muted); font-size: clamp(0.84rem, 1.3vw, 0.96rem); line-height: 1.95; }
+  .ao-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 1.5rem; }
+
+  .ao-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+    min-height: 2.75rem; border: 1px solid var(--ao-line); border-radius: 999px; padding: 0.68rem 1.05rem;
+    background: color-mix(in srgb, var(--ao-panel-strong) 70%, transparent);
+    color: var(--ao-text); font-size: 0.75rem; font-weight: 800;
+    transition: transform 0.25s var(--ease), border-color 0.25s ease, background 0.25s ease;
+  }
+  .ao-btn:hover, .ao-btn:focus-visible { border-color: color-mix(in srgb, var(--ao-pink) 48%, var(--ao-line)); transform: translateY(-3px); }
+  .ao-btn--primary { border-color: transparent; background: var(--ao-pink); color: #1f0c15; box-shadow: 0 14px 28px -18px var(--ao-pink); }
+  .ao-btn--primary:hover, .ao-btn--primary:focus-visible { background: var(--fx-pink-soft); }
+
+  .ao-medallion { display: grid; align-self: center; justify-items: center; gap: 0.9rem; min-width: 0; padding: 0 clamp(1.1rem, 3vw, 2.2rem) clamp(1.5rem, 3vw, 2.4rem); }
+  .ao-medallion__frame {
+    position: relative; display: grid; width: min(13rem, 62vw); aspect-ratio: 1; place-items: center;
+    border: 1px solid color-mix(in srgb, var(--ao-pink) 42%, var(--ao-line)); border-radius: 50%;
+    background: radial-gradient(circle at 50% 32%, color-mix(in srgb, var(--ao-pink) 24%, transparent), transparent 62%), color-mix(in srgb, var(--ao-pink) 8%, var(--fx-bg));
+    box-shadow: 0 28px 60px -42px var(--fx-shadow);
+  }
+  .ao-medallion__frame::before {
+    position: absolute; inset: -0.72rem; border: 1px dashed color-mix(in srgb, var(--ao-pink) 46%, transparent);
+    border-radius: 50%; content: ''; animation: ao-spin 26s linear infinite;
+  }
+  .ao-medallion__frame img { width: 82%; height: 82%; object-fit: contain; filter: drop-shadow(0 1rem 0.9rem color-mix(in srgb, var(--fx-shadow) 76%, transparent)); }
+  .ao-medallion__status {
+    position: absolute; right: 0.2rem; bottom: 0.6rem;
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    border: 1px solid color-mix(in srgb, var(--ao-pink) 40%, var(--ao-line)); border-radius: 999px;
+    padding: 0.3rem 0.6rem; background: color-mix(in srgb, var(--ao-panel-strong) 92%, transparent);
+    color: var(--ao-accent); font-family: var(--font-mono); font-size: 0.54rem; font-weight: 800; letter-spacing: 0.12em;
+  }
+  .ao-medallion__status i { width: 0.4rem; height: 0.4rem; border-radius: 50%; background: var(--ao-pink); animation: ao-pulse 2.4s ease-in-out infinite; }
+  .ao-medallion__caption { margin: 0; color: var(--ao-faint); font-family: var(--font-mono); font-size: 0.56rem; letter-spacing: 0.08em; text-align: center; }
+
+  .ao-hero__stats {
+    display: grid; grid-column: 1 / -1; grid-template-columns: repeat(4, minmax(0, 1fr));
+    border-top: 1px dashed var(--ao-line);
+  }
+  .ao-hero__stats > div { min-width: 0; border-left: 1px dashed var(--ao-line); padding: clamp(0.9rem, 2vw, 1.25rem) clamp(1.1rem, 3vw, 2.2rem); }
+  .ao-hero__stats > div:first-child { border-left: 0; }
+  .ao-hero__stats dt { color: var(--ao-text); font-size: clamp(1.5rem, 3vw, 2.1rem); font-weight: 900; letter-spacing: -0.06em; line-height: 1; }
+  .ao-hero__stats dd { display: grid; gap: 0.15rem; margin: 0.4rem 0 0; color: var(--ao-muted); font-size: 0.7rem; font-weight: 800; }
+  .ao-hero__stats dd span { color: var(--ao-faint); font-family: var(--font-mono); font-size: 0.52rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
+
+  /* ── Bento grid ────────────────────────────────────────── */
+  .ao-grid {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 0.85rem;
+    margin-top: 1rem;
+  }
+
+  .ao-tile {
+    position: relative;
+    display: flex;
+    grid-column: span var(--span, 12);
+    min-width: 0;
+    flex-direction: column;
+    border: 1px solid var(--ao-line);
+    border-radius: 1.4rem;
+    padding: clamp(1.1rem, 2.4vw, 1.6rem);
+    background: var(--ao-panel);
+    box-shadow: 0 22px 54px -44px var(--fx-shadow);
+    transition: transform 0.28s var(--ease), box-shadow 0.28s var(--ease), border-color 0.28s ease, background 0.28s ease;
+  }
+
+  .ao-tile:hover {
+    border-color: color-mix(in srgb, var(--ao-pink) 34%, var(--ao-line));
+    background: color-mix(in srgb, var(--ao-panel-strong) 96%, transparent);
+    box-shadow: 6px 6px 0 color-mix(in srgb, var(--ao-pink) 22%, transparent), 0 28px 60px -44px var(--fx-shadow);
+    transform: translateY(-3px);
+  }
+
+  .ao-tile__head { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 1rem; }
+  .ao-tile__id { display: grid; height: 1.7rem; place-items: center; border: 1px solid color-mix(in srgb, var(--ao-pink) 40%, var(--ao-line)); border-radius: 0.5rem; padding: 0 0.4rem; color: var(--ao-accent); font-family: var(--font-mono); font-size: 0.56rem; font-weight: 800; }
+  .ao-tile__title { margin: 0; color: var(--ao-text); font-size: 1rem; font-weight: 850; letter-spacing: -0.03em; }
+  .ao-tile__label { margin-left: auto; color: var(--ao-faint); font-family: var(--font-mono); font-size: 0.54rem; font-weight: 700; letter-spacing: 0.16em; }
+
+  .ao-prose { display: grid; gap: 0.9rem; }
+  .ao-prose p { margin: 0; color: var(--ao-muted); font-size: 0.85rem; line-height: 1.95; }
+
+  /* Terminal */
+  .ao-terminal { overflow: hidden; border: 1px solid color-mix(in srgb, white 12%, transparent); border-radius: 0.9rem; background: #100d12; box-shadow: 0 22px 46px -34px #000; }
+  .ao-terminal__bar { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; border-bottom: 1px solid rgb(255 255 255 / 0.08); padding: 0.62rem 0.8rem; color: #8e7a85; font-family: var(--font-mono); font-size: 0.56rem; font-weight: 700; }
+  .ao-terminal__bar > span:first-child { display: flex; gap: 0.3rem; }
+  .ao-terminal__bar i { width: 0.4rem; height: 0.4rem; border-radius: 50%; background: #ff769e; }
+  .ao-terminal__bar i:nth-child(2) { background: #ffd47d; }
+  .ao-terminal__bar i:nth-child(3) { background: #84dfaa; }
+  .ao-terminal ol { display: grid; gap: 0.28rem; margin: 0; padding: 0.95rem 0.85rem 1.05rem; list-style: none; }
+  .ao-terminal li { display: grid; grid-template-columns: 1.4rem minmax(0, 1fr); gap: 0.65rem; color: var(--code-block-text); font-family: var(--font-mono); font-size: clamp(0.6rem, 0.95vw, 0.7rem); line-height: 1.5; }
+  .ao-terminal li > span { color: #8f8089; text-align: right; user-select: none; }
+  .ao-terminal code { min-width: 0; overflow-wrap: anywhere; white-space: pre-wrap; }
+
+  /* Chips */
+  .ao-chips { display: grid; grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); gap: 0.5rem; }
+  .ao-chips--dense { grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr)); }
+  .ao-chip { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 0.55rem; min-width: 0; min-height: 2.85rem; border: 1px solid var(--ao-line); border-radius: 0.75rem; padding: 0.45rem 0.6rem; background: color-mix(in srgb, var(--ao-panel-strong) 55%, transparent); color: var(--ao-muted); font-size: 0.7rem; font-weight: 780; transition: transform 0.25s var(--ease), border-color 0.25s ease, background 0.25s ease, color 0.25s ease; }
+  .ao-chip:hover, .ao-chip:focus-visible { border-color: color-mix(in srgb, var(--ao-pink) 46%, var(--ao-line)); background: color-mix(in srgb, var(--ao-pink) 9%, var(--ao-panel-strong)); color: var(--ao-text); transform: translateY(-2px); }
+  .ao-chip__icon { display: grid; width: 1.8rem; height: 1.8rem; place-items: center; border-radius: 0.5rem; background: color-mix(in srgb, var(--fx-bg) 70%, transparent); }
+  .ao-chip__icon img { width: 1rem; height: 1rem; object-fit: contain; }
+  .ao-chip__icon > span { color: var(--ao-accent); font-size: 0.54rem; }
+  .ao-chip__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ao-chip__arrow { color: var(--ao-faint); transition: transform 0.25s ease, color 0.25s ease; }
+  .ao-chip:hover .ao-chip__arrow, .ao-chip:focus-visible .ao-chip__arrow { color: var(--ao-accent); transform: translate(2px, -2px); }
+
+  /* Facts */
+  .ao-facts { display: grid; margin: 0; }
+  .ao-fact { display: grid; grid-template-columns: 4.6rem minmax(0, 1fr); gap: 0.7rem; border-top: 1px dashed var(--ao-line); padding: 0.62rem 0; font-size: 0.73rem; }
+  .ao-fact:first-child { border-top: 0; padding-top: 0; }
+  .ao-fact dt { align-self: center; color: var(--ao-faint); font-family: var(--font-mono); font-size: 0.54rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+  .ao-fact dd { margin: 0; overflow-wrap: anywhere; color: var(--ao-text); }
+  .ao-fact a { color: var(--ao-accent); }
+  .ao-fact a:hover { text-decoration: underline; }
+
+  /* Socials */
+  .ao-socials { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ao-social { display: grid; grid-template-columns: 1.3rem auto minmax(0, 1fr) auto; align-items: center; gap: 0.6rem; min-width: 0; border-top: 1px solid var(--ao-line); padding: 0.7rem 0.4rem; color: var(--ao-muted); transition: padding 0.25s var(--ease), background 0.25s ease, color 0.25s ease; }
+  .ao-social:nth-child(odd) { border-right: 1px solid var(--ao-line); padding-right: 0.8rem; }
+  .ao-social:nth-child(even) { padding-left: 0.8rem; }
+  .ao-social:hover, .ao-social:focus-visible { background: color-mix(in srgb, var(--ao-pink) 8%, transparent); color: var(--ao-text); }
+  .ao-social__index { color: var(--ao-faint); font-family: var(--font-mono); font-size: 0.54rem; font-weight: 700; }
+  .ao-social__icon { display: grid; width: 1.9rem; height: 1.9rem; place-items: center; border-radius: 0.55rem; background: color-mix(in srgb, var(--ao-panel-strong) 75%, transparent); }
+  .ao-social__icon img { width: 0.95rem; height: 0.95rem; object-fit: contain; }
+  .ao-social__icon > span { color: var(--ao-accent); }
+  .ao-social strong { overflow: hidden; font-size: 0.72rem; text-overflow: ellipsis; white-space: nowrap; }
+  .ao-social__arrow { color: var(--ao-faint); }
+  .ao-social:hover .ao-social__arrow, .ao-social:focus-visible .ao-social__arrow { color: var(--ao-accent); }
+
+  /* Principles */
+  .ao-principles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(1rem, 3vw, 2.5rem); }
+  .ao-principle { min-width: 0; border-top: 1px solid var(--ao-line); padding-top: 0.8rem; }
+  .ao-principle span { color: var(--ao-accent); font-family: var(--font-mono); font-size: 0.58rem; font-weight: 800; }
+  .ao-principle strong { display: block; margin-top: 0.5rem; color: var(--ao-text); font-size: 0.95rem; font-weight: 850; }
+  .ao-principle p { margin: 0.3rem 0 0; color: var(--ao-faint); font-size: 0.65rem; line-height: 1.55; }
+
+  /* Sign-off */
+  .ao-signoff { display: grid; justify-items: center; gap: 0.7rem; margin-top: clamp(3rem, 7vw, 5.5rem); border-top: 1px dashed var(--ao-line); padding-top: clamp(2.5rem, 6vw, 3.5rem); text-align: center; }
+  .ao-signoff strong { color: var(--ao-text); font-size: clamp(1.35rem, 3.6vw, 2.6rem); font-weight: 880; letter-spacing: -0.055em; }
+  .ao-signoff span { display: flex; align-items: center; gap: 0.65rem; color: var(--ao-faint); font-family: var(--font-mono); font-size: 0.56rem; font-weight: 700; letter-spacing: 0.12em; }
+  .ao-signoff i { width: 2.5rem; height: 1px; background: var(--ao-line); }
+
+  @keyframes ao-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.55; transform: scale(0.78); } }
+  @keyframes ao-spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 900px) {
+    .ao-hero { grid-template-columns: 1fr; }
+    .ao-medallion { order: -1; padding-top: clamp(1.4rem, 4vw, 2rem); }
+    .ao-hero__copy { padding: 0 clamp(1.1rem, 4vw, 1.6rem) clamp(0.4rem, 1vw, 0.6rem); }
+    .ao-hero__stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .ao-hero__stats > div:nth-child(3) { border-left: 0; }
+    .ao-hero__stats > div:nth-child(n + 3) { border-top: 1px dashed var(--ao-line); }
+  }
+
+  @media (max-width: 1023px) {
+    .ao-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .ao-tile { grid-column: span 1; }
+    .ao-tile--wide { grid-column: span 2; }
+  }
+
+  @media (max-width: 640px) {
+    .ao-page { padding-block: 0.85rem 4rem; }
+    .ao-hero { border-radius: 1.35rem; box-shadow: 5px 5px 0 color-mix(in srgb, var(--ao-pink) 18%, transparent), 0 26px 60px -46px var(--fx-shadow); }
+    .ao-bar__mid { display: none; }
+    .ao-name { font-size: clamp(2.7rem, 16vw, 4.2rem); }
+    .ao-grid { grid-template-columns: minmax(0, 1fr); }
+    .ao-tile, .ao-tile--wide { grid-column: span 1; }
+    .ao-principles { grid-template-columns: 1fr; gap: 0.9rem; }
+    .ao-principle { display: grid; grid-template-columns: 1.4rem 3.6rem minmax(0, 1fr); align-items: center; gap: 0.5rem; }
+    .ao-principle strong, .ao-principle p { margin: 0; }
+    .ao-socials { grid-template-columns: 1fr; }
+    .ao-social:nth-child(odd) { border-right: 0; padding-right: 0.4rem; }
+    .ao-social:nth-child(even) { padding-left: 0.4rem; }
+    .ao-actions .ao-btn { width: 100%; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ao-medallion__frame::before, .ao-medallion__status i { animation: none; }
+    .ao-btn, .ao-chip, .ao-tile, .ao-social { transition: none; }
+  }
+</style>

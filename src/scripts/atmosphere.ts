@@ -1,10 +1,12 @@
 // @ts-nocheck
+export {};
+
 /* Sakura atmosphere.
    The flowers were originally redrawn as five stroked ellipses every frame.
    Each tone is now rasterised once into an offscreen sprite and blitted with
    drawImage, which keeps the same look for a fraction of the per-frame path
    work. Particle counts and DPR are capped, and the loop steps at ~30fps. */
-(() => {
+export const startAtmosphere = () => {
   const canvas = document.getElementById('sakura-canvas');
   if (!(canvas instanceof HTMLCanvasElement) || canvas.dataset.bound === '1') return;
   canvas.dataset.bound = '1';
@@ -115,6 +117,9 @@
 
   const render = (now = performance.now()) => {
     frame = 0;
+    // ClientRouter may replace the atmosphere when moving between normal and
+    // reading pages. Stop the old detached canvas instead of burning frames.
+    if (!canvas.isConnected) return;
     if (now - lastFrame < FRAME_INTERVAL) {
       if (!reduceMotion.matches) frame = requestAnimationFrame(render);
       return;
@@ -149,6 +154,7 @@
   const refresh = () => {
     cancelAnimationFrame(frame);
     frame = 0;
+    if (!canvas.isConnected) return;
     lastFrame = 0;
     resize();
     render();
@@ -160,5 +166,21 @@
     if (document.hidden) cancelAnimationFrame(frame);
     else refresh();
   });
-  refresh();
-})();
+
+  // The canvas is a decorative overlay, so there is no reason to spend frames
+  // on it while the initial render is still settling. Start the ambient loop
+  // once the page has loaded and the browser is idle. Users who asked for
+  // reduced motion get their single static frame immediately.
+  const start = () => refresh();
+  if (reduceMotion.matches) {
+    start();
+  } else if (document.readyState === 'complete') {
+    if ('requestIdleCallback' in window) window.requestIdleCallback(start, { timeout: 1500 });
+    else window.setTimeout(start, 200);
+  } else {
+    window.addEventListener('load', () => {
+      if ('requestIdleCallback' in window) window.requestIdleCallback(start, { timeout: 1500 });
+      else window.setTimeout(start, 200);
+    }, { once: true });
+  }
+};
