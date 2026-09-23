@@ -31,7 +31,7 @@ const posts = await getPostsByTag(tag);
     ) : (
       <div class="grid gap-5 sm:gap-6 md:grid-cols-2 xl:grid-cols-3">
         {posts.map((p, i) => (
-          <div style={`--reveal-delay:${i * 70}ms`}><PostCard post={p} /></div>
+          <div style={`--reveal-delay:${i * 70}ms`}><PostCard post={p} headingTag="h2" /></div>
         ))}
       </div>
     )}

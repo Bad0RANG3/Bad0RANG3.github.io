@@ -22,7 +22,7 @@ const posts = await getPublishedPosts();
       <div class="grid gap-4 sm:gap-5 md:grid-cols-2 xl:grid-cols-3">
         {posts.map((post, i) => (
           <div style={`--reveal-delay:${STAGGER.LIST_START + i * STAGGER.LIST_STEP}ms`}>
-            <PostCard post={post} />
+            <PostCard post={post} headingTag="h2" />
           </div>
         ))}
       </div>

@@ -4,9 +4,10 @@ import ContentCard from '../ui/ContentCard.astro';
 
 interface Props {
   project: Project;
+  headingTag?: 'h2' | 'h3';
 }
 
-const { project } = Astro.props;
+const { project, headingTag = 'h3' } = Astro.props;
 ---
 
 <ContentCard
@@ -14,4 +15,5 @@ const { project } = Astro.props;
   title={project.name}
   description={project.summary}
   tone={project.tone}
+  headingTag={headingTag}
 />

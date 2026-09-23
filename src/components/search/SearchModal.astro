@@ -40,13 +40,22 @@ import { withBase } from '../../lib/urls';
     const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
     const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const tokens = (query) => query.toLowerCase().trim().split(/\s+/).filter(Boolean).slice(0, 8);
+    // Highlight in ONE pass over the raw text. Replacing token-by-token on
+    // already-rendered HTML lets a later token match the <mark> markup (a query
+    // like "class" or "primary" corrupts the result), so only the gaps and the
+    // matches are escaped and the markup is never re-scanned.
     const highlight = (value, query) => {
-      let html = escapeHtml(value);
-      for (const token of tokens(query).sort((a, b) => b.length - a.length)) {
-        const escaped = escapeRegExp(escapeHtml(token));
-        html = html.replace(new RegExp(`(${escaped})`, 'gi'), '<mark class="rounded bg-primary/20 px-0.5 text-inherit">$1</mark>');
+      const text = String(value ?? '');
+      const patterns = tokens(query).map(escapeRegExp).sort((a, b) => b.length - a.length);
+      if (!patterns.length) return escapeHtml(text);
+      const matcher = new RegExp(patterns.join('|'), 'gi');
+      let html = '';
+      let cursor = 0;
+      for (const match of text.matchAll(matcher)) {
+        html += escapeHtml(text.slice(cursor, match.index)) + '<mark class="rounded bg-primary/20 px-0.5 text-inherit">' + escapeHtml(match[0]) + '</mark>';
+        cursor = match.index + match[0].length;
       }
-      return html;
+      return html + escapeHtml(text.slice(cursor));
     };
     const searchable = (item) => [item.title, item.description, item.body, ...(item.tags || []), item.category, item.series].filter(Boolean).join(' ').toLowerCase();
     const score = (item, query) => tokens(query).reduce((total, token) => {
