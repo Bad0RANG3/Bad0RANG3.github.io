@@ -16,7 +16,7 @@ import { projects } from '../config/projects';
     <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
       {projects.map((project, index) => (
         <div class="min-w-0" style={`--reveal-delay:${index * 60}ms`}>
-          <ProjectCard project={project} />
+          <ProjectCard project={project} headingTag="h2" />
         </div>
       ))}
     </div>

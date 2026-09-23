@@ -7,9 +7,10 @@ import ContentCard from '../ui/ContentCard.astro';
 
 interface Props {
   post: Post;
+  headingTag?: 'h2' | 'h3';
 }
 
-const { post } = Astro.props;
+const { post, headingTag = 'h3' } = Astro.props;
 const readingMinutes = getPostReadingMinutes(post);
 const latestDate = post.data.updatedDate ?? post.data.date;
 const meta = `${formatDate(latestDate)} · ${readingMinutes} 分钟阅读`;
@@ -22,4 +23,5 @@ const meta = `${formatDate(latestDate)} · ${readingMinutes} 分钟阅读`;
   label={post.data.category}
   meta={meta}
   tone="teal"
+  headingTag={headingTag}
 />
