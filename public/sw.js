@@ -3,18 +3,18 @@
    network-first with revalidation, so a swap never pulls stale HTML that points
    at a previous CSS build. Subresources use stale-while-revalidate, and Range
    requests (the player's audio seeks) bypass the cache entirely. */
-const CACHE_VERSION = 'b0-static-v6';
+const CACHE_VERSION = 'b0-static-v7';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 
 const scopeUrl = new URL(self.registration.scope);
 const scopedPath = (path = '') => new URL(path.replace(/^\/+/, ''), scopeUrl).pathname;
 const OFFLINE_URL = scopedPath('offline/');
+// Only the offline shell is fetched ahead of time. Everything else is stored
+// on first visit (runtime cache), so a cold load never spends bandwidth on
+// pages the visitor has not asked for yet.
 const PRECACHE_URLS = [
   OFFLINE_URL,
-  scopedPath(),
-  scopedPath('posts/'),
-  scopedPath('projects/'),
   scopedPath('manifest.webmanifest'),
 ];
 

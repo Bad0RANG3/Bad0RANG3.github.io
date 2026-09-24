@@ -55,7 +55,7 @@ Astro 5 静态站点（`output: 'static'`），Tailwind CSS 4（通过 `@tailwin
     ├── layouts/BaseLayout.astro
     ├── scripts/                浏览器端入口，由 Astro 打包为可缓存模块
     │   ├── theme.ts              主题控制器（首屏由 BaseLayout 内联小脚本兜底）
-    │   ├── atmosphere.ts         樱花背景（精灵缓存 + 约 30fps）
+    │   ├── atmosphere.ts         樱花背景（精灵缓存 + 约 30fps + 滚动暂停）
     │   ├── player.ts             动态岛音乐播放器
     │   ├── site.ts               页面进入动画 / 表格包裹 / 回到顶部
     │   └── service-worker.ts     注册 Service Worker

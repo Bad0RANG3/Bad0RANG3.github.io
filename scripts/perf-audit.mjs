@@ -45,7 +45,20 @@ if (worst.inlineScriptBytes > MAX_ARTICLE_INLINE_SCRIPT) {
   process.exitCode = 1;
 }
 if (results.some((result) => result.assetUrls.some((asset) => /atmosphere\.[\w-]+\.js/.test(asset)))) {
-  console.error('Performance invariant failed: reading pages load the decorative atmosphere bundle.');
+  console.error('Performance invariant failed: the decorative atmosphere must stay a deferred import, not a blocking <script>.');
+  process.exitCode = 1;
+}
+
+// The BGA is allowed on reading pages, but only as a loop that yields to scroll.
+const atmosphere = await readFile(new URL('../src/scripts/atmosphere.ts', import.meta.url), 'utf8');
+if (!/addEventListener\('scroll', pauseForScroll/.test(atmosphere)) {
+  console.error('Performance invariant failed: the atmosphere loop must pause while the reader scrolls.');
+  process.exitCode = 1;
+}
+
+// The player controller is chrome; it must stay an idle/interaction import.
+if (results.some((result) => result.assetUrls.some((asset) => /player\.[\w-]+\.js/.test(asset)))) {
+  console.error('Performance invariant failed: the music player controller must not be loaded from the document.');
   process.exitCode = 1;
 }
 
