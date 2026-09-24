@@ -48,7 +48,6 @@ const seriesNext = seriesIndex >= 0 ? seriesPosts[seriesIndex + 1] : undefined;
   articleSection={post.data.category}
   keywords={post.data.tags}
   ogImageAlt={post.data.coverAlt}
-  ambientMotion={false}
   breadcrumbs={[
     { name: '首页', path: '/' },
     { name: '文章', path: '/posts/' },
@@ -80,7 +79,7 @@ const seriesNext = seriesIndex >= 0 ? seriesPosts[seriesIndex + 1] : undefined;
       <div class="mt-8 h-1.5 w-full bg-gradient-to-r from-primary via-secondary to-accent"></div>
     </header>
 
-    {post.data.cover && <img src={withBase(post.data.cover)} alt={post.data.coverAlt ?? post.data.title} class="reveal mb-10 w-full rounded-[1.5rem] object-cover shadow-punch" style={`--reveal-delay:${STAGGER.POST_COVER}ms`} loading="lazy" />}
+    {post.data.cover && <img src={withBase(post.data.cover)} alt={post.data.coverAlt ?? post.data.title} class="reveal mb-10 w-full rounded-[1.5rem] object-cover shadow-punch" style={`--reveal-delay:${STAGGER.POST_COVER}ms`} fetchpriority="high" decoding="async" />}
 
     <div class:list={['article-layout', headings.length > 0 && 'has-toc']}>
       {headings.length > 0 && (
