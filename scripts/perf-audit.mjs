@@ -49,10 +49,15 @@ if (results.some((result) => result.assetUrls.some((asset) => /atmosphere\.[\w-]
   process.exitCode = 1;
 }
 
-// The BGA is allowed on reading pages, but only as a loop that yields to scroll.
+// The BGA runs continuously on reading pages; it must stay cheap (throttled,
+// sprite-cached) instead of freezing while the reader scrolls.
 const atmosphere = await readFile(new URL('../src/scripts/atmosphere.ts', import.meta.url), 'utf8');
-if (!/addEventListener\('scroll', pauseForScroll/.test(atmosphere)) {
-  console.error('Performance invariant failed: the atmosphere loop must pause while the reader scrolls.');
+if (!/FRAME_INTERVAL/.test(atmosphere) || !/requestAnimationFrame\(render\)/.test(atmosphere)) {
+  console.error('Performance invariant failed: the atmosphere loop must stay throttled with requestAnimationFrame.');
+  process.exitCode = 1;
+}
+if (/pauseForScroll/.test(atmosphere)) {
+  console.error('Performance invariant failed: the atmosphere must keep animating while the reader scrolls.');
   process.exitCode = 1;
 }
 

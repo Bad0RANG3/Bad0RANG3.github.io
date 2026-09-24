@@ -20,8 +20,6 @@ export const startAtmosphere = () => {
   let motes = [];
   let frame = 0;
   let lastFrame = 0;
-  let running = false;
-  let scrollTimer = 0;
   let width = 0;
   let height = 0;
 
@@ -123,7 +121,7 @@ export const startAtmosphere = () => {
     // whole atmosphere was replaced, so stop instead of burning frames.
     if (!canvas.isConnected) return;
     if (now - lastFrame < FRAME_INTERVAL) {
-      if (!reduceMotion.matches && running) frame = requestAnimationFrame(render);
+      if (!reduceMotion.matches) frame = requestAnimationFrame(render);
       return;
     }
     lastFrame = now;
@@ -150,42 +148,25 @@ export const startAtmosphere = () => {
       }
     });
 
-    if (!reduceMotion.matches && running) frame = requestAnimationFrame(render);
+    if (!reduceMotion.matches) frame = requestAnimationFrame(render);
   };
 
   const refresh = () => {
     cancelAnimationFrame(frame);
     frame = 0;
-    if (!canvas.isConnected) { running = false; return; }
+    if (!canvas.isConnected) return;
     lastFrame = 0;
-    running = true;
     resize();
     render();
   };
 
-  // Articles are long, so the reader spends a lot of time scrolling. Freeze the
-  // decorative loop while scroll frames are being produced and resume once the
-  // motion settles. The BGA stays on screen while reading, but it never competes
-  // with scroll work on the critical path.
-  const pauseForScroll = () => {
-    if (reduceMotion.matches) return;
-    running = false;
-    cancelAnimationFrame(frame);
-    frame = 0;
-    window.clearTimeout(scrollTimer);
-    scrollTimer = window.setTimeout(() => {
-      if (document.hidden || !canvas.isConnected) return;
-      running = true;
-      lastFrame = 0;
-      render();
-    }, 160);
-  };
-
+  // The BGA keeps animating while the reader scrolls: it is a fixed overlay and
+  // should feel alive on long pages. Cost stays bounded by the ~30fps step, the
+  // capped DPR and the sprite cache, so scroll frames are not starved.
   window.addEventListener('resize', refresh, { passive: true });
-  window.addEventListener('scroll', pauseForScroll, { passive: true });
   reduceMotion.addEventListener?.('change', refresh);
   document.addEventListener('visibilitychange', () => {
-    if (document.hidden) { running = false; cancelAnimationFrame(frame); frame = 0; }
+    if (document.hidden) cancelAnimationFrame(frame);
     else refresh();
   });
 
