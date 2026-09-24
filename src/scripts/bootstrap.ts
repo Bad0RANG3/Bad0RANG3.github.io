@@ -3,8 +3,8 @@ import './site';
 import './service-worker';
 
 // Decorative animation stays a deferred import so it never blocks first paint.
-// Reading pages keep the BGA too, but the loop pauses while the reader scrolls
-// (see atmosphere.ts), so it does not compete with scroll frames.
+// Reading pages keep the BGA too; the throttled loop runs continuously over the
+// fixed overlay, so it stays alive while the reader scrolls.
 // Re-check after ClientRouter navigation because this module itself is cached.
 const syncAtmosphere = () => {
   if (document.documentElement.dataset.ambientMotion === 'true') {
