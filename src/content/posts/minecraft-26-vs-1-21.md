@@ -262,7 +262,7 @@ execute if dimension minecraft:the_nether unless predicate safe_zone run damage 
 
 1.21 里，`/data` 是查看和修改实体 NBT 的主要入口。
 
-```
+```text
 /data get entity @p              ## 读 NBT
 /data merge entity @p {...}      ## 写 NBT
 /data remove entity @p SomeTag   ## 删 NBT
@@ -317,6 +317,7 @@ summon minecraft:item_display ~ ~ ~ {
 ### 为什么 Display Entity 是革命性的
 
 1.21 想在世界上显示浮动文字或者物品，常见办法有下面这些。
+
 - 盔甲架 + 命名牌（粗糙，有物理碰撞）
 - 资源包修改 GUI 贴图（学习成本高）
 - 大量粒子模拟（性能灾难）
@@ -392,49 +393,49 @@ function give_enchant_set {
 
 ### 物品命名
 
-```
+```text
 旧: {display:{Name:'{"text":"xxx","color":"red"}'}}
 新: [minecraft:custom_name={text:"xxx",color:"red"}]
 ```
 
 ### Lore
 
-```
+```text
 旧: {display:{Lore:['{"text":"xxx"}']}}
 新: [minecraft:lore=[{text:"xxx"}]]
 ```
 
 ### 附魔
 
-```
+```text
 旧: {Enchantments:[{id:"minecraft:sharpness",lvl:10}]}
 新: [minecraft:enchantments={"minecraft:sharpness":10}]
 ```
 
 ### 不可破坏
 
-```
+```text
 旧: {Unbreakable:1b}
 新: [minecraft:unbreakable={}]
 ```
 
 ### /data merge → 组件命令
 
-```
+```text
 旧: /data merge entity @s {Health:20f,Invulnerable:1b}
 新: /attribute @s minecraft:generic.max_health base set 20
 ```
 
 ### execute 粒子
 
-```
+```text
 旧: execute at @a positioned ~ ~1 ~ run summon area_effect_cloud ~ ~ ~ {Particle:"end_rod",Duration:1}
 新: execute at @a particle minecraft:end_rod ~ ~1 ~ 0 0 0 0 1 force
 ```
 
 ### Macro 传参
 
-```
+```text
 旧: function equip {tool:"minecraft:netherite_sword"}
 新: function equip {weapon:"netherite_sword", enchants:{"minecraft:sharpness":255}}
 ```
