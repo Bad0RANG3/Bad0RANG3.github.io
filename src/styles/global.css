@@ -289,7 +289,7 @@
 .prose :where(a) { color: var(--accent-pink-soft); text-decoration-color: rgba(255, 143, 182, 0.42); }
 .prose :where(a:hover) { color: var(--accent-pink); }
 .prose :where(h1, h2, h3, h4, h5, h6) { color: var(--fx-text); letter-spacing: -0.025em; }
-.prose :where(blockquote) { border-left-color: var(--accent-pink); color: var(--text-dim); }
+.prose :where(blockquote) { border-left-color: var(--accent-pink); color: var(--text-dim); font-style: normal; }
 .prose :where(code):not(:where(pre *)) { display: inline-block; max-width: 100%; border: 1px solid rgba(255, 143, 182, 0.22); border-radius: 0.4rem; padding: 0.13rem 0.35rem; background: rgba(255, 143, 182, 0.1); color: var(--accent-pink-soft); overflow-wrap: anywhere; vertical-align: text-bottom; }
 .prose :where(pre) { border: 1px solid var(--line); border-radius: 1rem; background: rgba(0, 0, 0, 0.36); box-shadow: 0 24px 60px -38px #000; }
 .lyric-block { position: relative; margin: 1.5rem 0; border: 1px solid rgba(255, 143, 182, 0.25); border-radius: 1rem; padding: 1rem 1.15rem; background: rgba(255, 143, 182, 0.07); color: var(--text-dim); }
@@ -297,6 +297,68 @@
 .lyric-en,
 .lyric-ja { color: var(--accent-pink-soft); }
 .lyric-cn { color: var(--text-faint); }
+
+/* Disclosure blocks used by long reference posts (Minecraft gear lists, etc.).
+   Without this the browser's default triangle sits inside otherwise on-brand
+   prose, which is the one markdown element the design system never styled. */
+.prose details {
+  margin: 1.5rem 0;
+  overflow: hidden;
+  border: 1px solid var(--fx-line);
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--fx-surface) 78%, transparent);
+}
+.prose details > summary {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.78rem 1rem;
+  color: var(--fx-text);
+  font-size: 0.86rem;
+  font-weight: 700;
+  line-height: 1.4;
+  cursor: pointer;
+  list-style: none;
+  transition: background 0.2s var(--ease), color 0.2s var(--ease);
+}
+.prose details > summary::-webkit-details-marker { display: none; }
+.prose details > summary::after {
+  margin-left: auto;
+  color: var(--fx-pink);
+  font-size: 1.05rem;
+  font-weight: 800;
+  line-height: 1;
+  content: '+';
+  transition: transform 0.22s var(--ease);
+}
+.prose details[open] > summary::after { transform: rotate(45deg); }
+.prose details > summary:hover { background: color-mix(in srgb, var(--fx-pink) 8%, transparent); }
+.prose details > summary:focus-visible { outline: 2px solid var(--fx-pink); outline-offset: -2px; }
+.prose details[open] > summary { border-bottom: 1px solid var(--fx-line); }
+.prose details > :not(summary) { margin-inline: 1rem; }
+.prose details > :not(summary):first-of-type { margin-top: 0.9rem; }
+.prose details > :not(summary):last-child { margin-bottom: 0.95rem; }
+.prose details .code-block { margin-block: 0.9rem; }
+.prose details .code-block pre { margin-block: 0; }
+.prose details > pre { margin-block: 0.9rem; }
+
+/* Article images should share the card radius used everywhere else. */
+.prose :where(img) { border: 1px solid var(--fx-line); border-radius: 1rem; }
+.prose figure.album-cover { margin: 1.75rem 0; text-align: center; }
+.prose figure.album-cover img {
+  display: block;
+  width: 100%;
+  max-width: 30rem;
+  margin-inline: auto;
+  border-radius: 1.25rem;
+  box-shadow: 0 24px 64px -42px var(--fx-shadow);
+}
+.prose figure.album-cover figcaption {
+  margin-top: 0.7rem;
+  color: var(--fx-faint);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+}
 .prose .table-wrapper { position: relative; margin: 1.4rem 0; overflow-x: auto; border: 1px solid var(--line); border-radius: 1rem; background: var(--surface-soft); }
 .prose .table-wrapper :where(table) { width: 100%; min-width: 38rem; margin: 0; }
 .prose .table-wrapper :where(th, td) { border-color: var(--line-soft); }
