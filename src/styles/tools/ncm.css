@@ -61,6 +61,14 @@
   box-shadow: 0 0 0 .25rem oklch(from var(--color-success) l c h / .14);
 }
 .ncm-card { overflow: hidden; }
+.ncm-result-actions { display: flex; align-items: center; gap: 0.85rem; }
+.ncm-download-all {
+  border: 1px solid oklch(from var(--color-primary) l c h / .4);
+  border-radius: 999px;
+  padding: .34rem .72rem;
+}
+.ncm-download-all:hover:not(:disabled) { background: oklch(from var(--color-primary) l c h / .12); text-decoration: none; }
+.ncm-download-all:disabled { cursor: progress; opacity: .7; text-decoration: none; }
 .ncm-section-head,
 .ncm-list-head {
   display: flex;
@@ -208,6 +216,7 @@
 @media (max-width: 720px) {
   .ncm-section-head,
   .ncm-options { align-items: flex-start; flex-direction: column; }
+  .ncm-result-actions { flex-wrap: wrap; }
   .ncm-option-hint { text-align: left; }
   .ncm-result-item { grid-template-columns: 1fr; }
   .ncm-download-button { width: 100%; }

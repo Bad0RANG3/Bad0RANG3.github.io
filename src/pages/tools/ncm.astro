@@ -76,7 +76,10 @@ import '../../styles/tools/ncm.css';
             <p class="ncm-eyebrow">第 2 步</p>
             <h2 id="ncm-results-title" class="ncm-section-title">转换结果</h2>
           </div>
-          <button type="button" class="ncm-link-button" id="ncm-clear-results" hidden>清空结果</button>
+          <div class="ncm-result-actions">
+            <button type="button" class="ncm-link-button ncm-download-all" id="ncm-download-all" hidden>下载全部</button>
+            <button type="button" class="ncm-link-button" id="ncm-clear-results" hidden>清空结果</button>
+          </div>
         </div>
         <div id="ncm-results" class="ncm-results" aria-live="polite">
           <div class="ncm-empty" id="ncm-empty-results">
@@ -105,10 +108,11 @@ import '../../styles/tools/ncm.css';
   const results = document.querySelector<HTMLElement>('#ncm-results');
   const emptyResults = document.querySelector<HTMLElement>('#ncm-empty-results');
   const clearResultsButton = document.querySelector<HTMLButtonElement>('#ncm-clear-results');
+  const downloadAllButton = document.querySelector<HTMLButtonElement>('#ncm-download-all');
   const files: File[] = [];
   const resultUrls: string[] = [];
 
-  if (!fileInput || !dropzone || !pending || !pendingList || !clearButton || !convertButton || !fixMetadata || !status || !results || !emptyResults || !clearResultsButton) {
+  if (!fileInput || !dropzone || !pending || !pendingList || !clearButton || !convertButton || !fixMetadata || !status || !results || !emptyResults || !clearResultsButton || !downloadAllButton) {
     throw new Error('NCM tool UI failed to initialize.');
   }
 
@@ -166,16 +170,29 @@ import '../../styles/tools/ncm.css';
     renderPending();
   };
 
+  let downloadAllTimer = 0;
+  const stopDownloadAll = () => {
+    if (downloadAllTimer) {
+      window.clearTimeout(downloadAllTimer);
+      downloadAllTimer = 0;
+    }
+    downloadAllButton.disabled = false;
+    downloadAllButton.textContent = '下载全部';
+  };
+
   const clearResults = () => {
+    stopDownloadAll();
     resultUrls.splice(0).forEach((url) => URL.revokeObjectURL(url));
     results.replaceChildren(emptyResults);
     emptyResults.hidden = false;
     clearResultsButton.hidden = true;
+    downloadAllButton.hidden = true;
   };
 
   const addResult = ({ file, output, url }: { file: File; output: Awaited<ReturnType<typeof dump>>; url: string }) => {
     emptyResults.hidden = true;
     clearResultsButton.hidden = false;
+    downloadAllButton.hidden = false;
 
     const item = document.createElement('article');
     item.className = 'ncm-result-item';
@@ -278,5 +295,28 @@ import '../../styles/tools/ncm.css';
     renderPending();
   });
   clearResultsButton.addEventListener('click', clearResults);
+  downloadAllButton.addEventListener('click', () => {
+    if (downloadAllTimer) return;
+    const links = Array.from(results.querySelectorAll<HTMLAnchorElement>('.ncm-result-item .ncm-download-button'));
+    if (links.length === 0) return;
+    let index = 0;
+    downloadAllButton.disabled = true;
+    // Browsers throttle or block a burst of downloads, so space them 0.5s apart.
+    const tick = () => {
+      const link = links[index];
+      index += 1;
+      if (!link) {
+        downloadAllTimer = 0;
+        downloadAllButton.disabled = false;
+        downloadAllButton.textContent = '下载全部';
+        setStatus(`已开始下载 ${links.length} 个文件`, 'success');
+        return;
+      }
+      downloadAllButton.textContent = `下载中 ${index}/${links.length}`;
+      link.click();
+      downloadAllTimer = window.setTimeout(tick, 500);
+    };
+    tick();
+  });
   convertButton.addEventListener('click', convert);
 </script>
