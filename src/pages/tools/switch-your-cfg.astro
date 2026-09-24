@@ -14,7 +14,7 @@ import '../../styles/tools/switch-your-cfg.css';
     <div class="pointer-events-none absolute left-[-6rem] top-[-5rem] h-52 w-52 rounded-full bg-primary/6 blur-3xl"></div>
     <div class="pointer-events-none absolute bottom-[-6rem] right-[-4rem] h-56 w-56 rounded-full bg-secondary/6 blur-3xl"></div>
 
-    <div class="relative mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
+    <div class="site-frame relative py-8 sm:py-12">
       <nav class="mb-6 text-sm text-base-content/40 reveal">
         <a href={withBase('/')} class="transition-colors hover:text-primary">首页</a>
         <span class="mx-2">/</span>
@@ -115,6 +115,7 @@ import '../../styles/tools/switch-your-cfg.css';
                           <div class="scfg-kbd-wrap" id="kbdWrap">
                             <div class="scfg-kbd-main" id="kbdMain"></div>
                             <div class="scfg-kbd-side" id="kbdSide"></div>
+                            <div class="scfg-kbd-extra" id="kbdExtra"></div>
                           </div>
                         </div>
                       </div>
@@ -341,9 +342,10 @@ var _buyCatsBuilt=false;
 function renderKeyboard(){
   if(!_kbdBuilt){
     $('#kbdMain').innerHTML=rRows(MAIN_ROWS);
-    var s='';
-    for(var i=0;i<SIDE.length;i++){var p=SIDE[i];s+='<div class="scfg-kbd-label">'+p.l+'</div>'+rRows(p.r,true);}
+    var s='';var extra='';
+    for(var i=0;i<SIDE.length;i++){var p=SIDE[i];var html='<div class="scfg-kbd-label">'+p.l+'</div>'+rRows(p.r,true);if(i===0)s+=html;else extra+=html;}
     $('#kbdSide').innerHTML=s;
+    var extraEl=$('#kbdExtra');if(extraEl)extraEl.innerHTML=extra;
     var ms='';
     for(var j=0;j<MOUSE_ROWS.length;j++){ms+='<div class="scfg-kbd-row">';for(var k=0;k<MOUSE_ROWS[j].length;k++){var r=MOUSE_ROWS[j][k];ms+=rKey(r[0],r[1],r[2]||'w2',0,false);}ms+='</div>';}
     var mouse=$('#kbdMouse');if(mouse)mouse.innerHTML=ms;
@@ -473,13 +475,18 @@ function generateCFG(){
 
 /* ── Keyboard scale (throttled via rAF) ──────────────────── */
 function updateKeyboardScale(){
-  var viewport=$('#kbdViewport'),scaleEl=$('#kbdScale');
-  if(!viewport||!scaleEl)return;
-  var baseWidth=1120;
-  var currentWidth=viewport.clientWidth||baseWidth;
-  var scale=Math.min(currentWidth/baseWidth,1);
+  var viewport=$('#kbdViewport'),scaleEl=$('#kbdScale'),wrap=$('#kbdWrap');
+  if(!viewport||!scaleEl||!wrap)return;
+  var naturalWidth=wrap.scrollWidth||1120;
+  var naturalHeight=wrap.scrollHeight||390;
+  var currentWidth=viewport.clientWidth||naturalWidth;
+  /* Fit the whole board (main + numpad + extra keys) into the available width.
+     Below a legibility floor, stop shrinking and let the shell scroll sideways. */
+  var scale=Math.min(currentWidth/naturalWidth,1);
+  if(scale<0.6)scale=0.6;
   scaleEl.style.setProperty('--keyboard-scale',String(scale));
-  scaleEl.style.height=(390*scale)+'px';
+  scaleEl.style.width=Math.round(naturalWidth*scale)+'px';
+  scaleEl.style.height=Math.round(naturalHeight*scale)+'px';
 }
 
 var _rsTicking=false;
