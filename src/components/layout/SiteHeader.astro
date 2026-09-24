@@ -135,9 +135,3 @@ const playerLyrics = withBase(player.lyrics);
 </aside>
 
 <MobileDrawer currentPath={currentPath} />
-
-<script>
-  // The music island persists across ClientRouter navigations, so this module
-  // initialises it once and reacts to astro:page-load for per-page work.
-  import '../../scripts/player';
-</script>

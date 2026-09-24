@@ -1,4 +1,5 @@
 // @ts-nocheck
+export {};
 // Extracted from SiteHeader.astro. Bundled and cached by Astro/Vite.
 (() => {
     const island = document.getElementById('site-island');
