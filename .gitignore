@@ -18,6 +18,12 @@ Thumbs.db
 *.log
 npm-debug.log*
 
+# tooling scratch
+.pnpm-store/
+tmp/
+__pycache__/
+*.py[cod]
+
 # IDE
 .vscode/
 .idea/
