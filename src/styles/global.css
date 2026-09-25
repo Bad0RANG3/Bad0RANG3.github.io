@@ -2720,6 +2720,36 @@ html[data-theme="paper-dark"] .ncm-profile-card {
   transform: translateY(-2px) !important;
 }
 
+/* Small pill labels (series badge, archive counts, search filters). The tint
+   comes from theme tokens so both themes keep their contrast. */
+.chip-signal,
+.chip-teal,
+.chip-lime {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid var(--fx-line);
+  border-radius: 999px;
+  padding: 0.28rem 0.72rem;
+  background: color-mix(in srgb, var(--fx-pink) 14%, var(--fx-surface-strong));
+  color: var(--fx-text);
+  font-size: 0.72rem;
+  font-weight: 750;
+  line-height: 1.25;
+}
+.chip-teal { background: color-mix(in srgb, var(--accent-violet) 16%, var(--fx-surface-strong)); }
+.chip-lime { background: color-mix(in srgb, var(--accent-blue) 16%, var(--fx-surface-strong)); }
+button.chip-signal {
+  cursor: pointer;
+  transition: border-color 0.2s var(--ease), background 0.2s var(--ease);
+}
+button.chip-signal:hover { border-color: color-mix(in srgb, var(--fx-pink) 55%, transparent); }
+button.chip-signal[aria-pressed="true"] {
+  border-color: var(--fx-pink);
+  background: color-mix(in srgb, var(--fx-pink) 30%, var(--fx-surface-strong));
+}
+
 .site-footer {
   border-top: 1px solid var(--fx-line);
   background: color-mix(in srgb, var(--fx-bg) 58%, transparent);

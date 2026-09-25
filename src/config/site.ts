@@ -131,6 +131,8 @@ export const SITE = {
   THEME_COLOR: '#fdf2f6',
   THEME_COLOR_DARK: '#21131c',
   THEME_STORAGE_KEY: 'b0-theme',
+  /** Written by article pages, read by series pages. */
+  READING_HISTORY_STORAGE_KEY: 'b0-reading-history',
 } as const;
 
 /**

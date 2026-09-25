@@ -51,7 +51,7 @@ export async function getArchiveGroups(): Promise<{ year: string; posts: Post[] 
   const groups = new Map<string, Post[]>();
 
   for (const post of posts) {
-    const year = String(post.data.date.getFullYear());
+    const year = String(post.data.date.getUTCFullYear());
     const existing = groups.get(year) ?? [];
     existing.push(post);
     groups.set(year, existing);
