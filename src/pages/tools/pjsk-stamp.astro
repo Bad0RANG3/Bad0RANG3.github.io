@@ -6,7 +6,10 @@ import { withBase } from '../../lib/urls';
 import '../../styles/tools/pjsk-stamp.css';
 
 // 素材路径需支持 BASE_PATH（项目 Pages 部署）
-const pjskData = pjskRaw.map((s) => ({ ...s, img: withBase(s.img) }));
+const pjskData = pjskRaw.map((s) => ({
+  ...s,
+  img: withBase(s.img.replace('/pjsk-stamp/stamps/', '/pjsk-stamp/stamps-clean/')),
+}));
 
 const UNIT_ORDER = ['虚拟歌手', 'Leo/need', 'MORE MORE JUMP!', 'Vivid BAD SQUAD', 'Wonderlands×Showtime', '25时，Nightcord'];
 const charMeta = new Map();
