@@ -100,6 +100,7 @@ const initArticleEnhancements = () => {
     const open = () => {
       const dialog = document.createElement('dialog');
       dialog.className = 'image-lightbox';
+      dialog.setAttribute('aria-label', img.alt ? `查看大图：${img.alt}` : '查看大图');
       const close = document.createElement('button');
       close.type = 'button';
       close.className = 'image-lightbox-close';

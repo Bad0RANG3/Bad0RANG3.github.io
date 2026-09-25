@@ -38,3 +38,7 @@ export const seriesPath = (series: string) =>
 
 export const toolPath = (tool: string) =>
   `${ROUTES.TOOLS}/${encodeURIComponent(tool)}/`;
+
+/** Fragment id of a single thought on the /thoughts/ page. */
+export const thoughtAnchor = (slug: string) =>
+  `thought-${encodeURIComponent(slug)}`;

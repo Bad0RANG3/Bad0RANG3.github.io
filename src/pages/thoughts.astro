@@ -2,6 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PageHeader from '../components/ui/PageHeader.astro';
 import EmptyState from '../components/ui/EmptyState.astro';
+import { thoughtAnchor } from '../config/routes';
 import { getThoughts } from '../lib/content';
 import { formatDate } from '../lib/date';
 
@@ -24,8 +25,9 @@ const rendered = await Promise.all(
       <div class="mx-auto grid max-w-3xl gap-4">
         {rendered.map((t, i) => (
           <article
+            id={thoughtAnchor(t.slug)}
             class:list={[
-              'reveal rounded-[1.5rem] border-2 border-base-content/10 bg-base-100/80 p-5 transition-all hover:-translate-y-0.5',
+              'reveal scroll-mt-24 rounded-[1.5rem] border-2 border-base-content/10 bg-base-100/80 p-5 transition-all hover:-translate-y-0.5',
               i % 2 === 0 ? 'shadow-[6px_6px_0_0] shadow-primary/35' : 'shadow-[6px_6px_0_0] shadow-accent/35',
             ]}
             style={`--reveal-delay:${i * 100}ms`}
