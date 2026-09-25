@@ -285,13 +285,158 @@
 /* -----------------------------------------------------------------
    Content and article typography
    ----------------------------------------------------------------- */
-.prose { color: var(--text-dim); overflow-wrap: break-word; }
-.prose :where(a) { color: var(--accent-pink-soft); text-decoration-color: rgba(255, 143, 182, 0.42); }
-.prose :where(a:hover) { color: var(--accent-pink); }
-.prose :where(h1, h2, h3, h4, h5, h6) { color: var(--fx-text); letter-spacing: -0.025em; }
-.prose :where(blockquote) { border-left-color: var(--accent-pink); color: var(--text-dim); font-style: normal; }
-.prose :where(code):not(:where(pre *)) { display: inline-block; max-width: 100%; border: 1px solid rgba(255, 143, 182, 0.22); border-radius: 0.4rem; padding: 0.13rem 0.35rem; background: rgba(255, 143, 182, 0.1); color: var(--accent-pink-soft); overflow-wrap: anywhere; vertical-align: text-bottom; }
-.prose :where(pre) { border: 1px solid var(--line); border-radius: 1rem; background: rgba(0, 0, 0, 0.36); box-shadow: 0 24px 60px -38px #000; }
+/* Reading font: proportional sans for body copy, the site's monospace face for
+   code and headings. Mixing a monospace Latin face with the CJK fallback made
+   long Chinese paragraphs look uneven on phones, so the article body opts out. */
+.prose {
+  --md-font: ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', 'Helvetica Neue', Arial, sans-serif;
+  --md-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-family: var(--md-font);
+  font-size: 1rem;
+  line-height: 1.8;
+  color: var(--text-dim);
+  overflow-wrap: break-word;
+  text-wrap: pretty;
+}
+
+.prose :where(p) { margin: 1.1em 0; }
+.prose :where(p:first-child) { margin-top: 0; }
+.prose :where(p:last-child) { margin-bottom: 0; }
+
+/* Headings keep the monospace face so the article still reads as part of the
+   "Night Log" system, but with a calmer scale than the plugin defaults. */
+.prose :where(h1, h2, h3, h4, h5, h6) {
+  font-family: var(--md-mono);
+  color: var(--fx-text);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.32;
+  text-wrap: balance;
+  scroll-margin-top: 6rem;
+}
+.prose :where(h1) { margin: 2.1em 0 0.7em; font-size: 1.75rem; }
+.prose :where(h2) { margin: 2.1em 0 0.8em; padding-bottom: 0.42em; border-bottom: 1px solid var(--line-soft); font-size: 1.4rem; }
+.prose :where(h3) { margin: 1.85em 0 0.55em; font-size: 1.15rem; }
+.prose :where(h4) { margin: 1.6em 0 0.5em; font-size: 1rem; }
+.prose :where(h5, h6) { margin: 1.4em 0 0.45em; color: var(--fx-muted); font-size: 0.92rem; }
+.prose :where(h1, h2, h3, h4, h5, h6):first-child { margin-top: 0; }
+
+.prose :where(a) {
+  color: var(--accent-pink-soft);
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--accent-pink) 48%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.22em;
+  overflow-wrap: anywhere;
+  transition: color 0.2s ease, text-decoration-color 0.2s ease;
+}
+.prose :where(a:hover) { color: var(--accent-pink); text-decoration-color: currentColor; }
+
+.prose :where(strong) { color: var(--fx-text); font-weight: 700; }
+.prose :where(em) { color: var(--fx-text); }
+.prose :where(mark) { border-radius: 0.28rem; padding: 0.06em 0.28em; background: color-mix(in srgb, var(--accent-pink) 30%, transparent); color: var(--fx-text); }
+.prose :where(del) { color: var(--fx-faint); text-decoration-thickness: 1px; }
+.prose :where(kbd) {
+  font-family: var(--md-mono);
+  font-size: 0.8em;
+  border: 1px solid var(--line);
+  border-bottom-width: 2px;
+  border-radius: 0.35rem;
+  padding: 0.1em 0.35em;
+  background: var(--surface-soft);
+  color: var(--fx-text);
+}
+
+/* Inline code must flow with the paragraph. `inline-block` used to drop the
+   chip onto its own line and break the line rhythm on narrow screens. */
+.prose :where(code):not(:where(pre *)) {
+  font-family: var(--md-mono);
+  font-size: 0.88em;
+  font-weight: 500;
+  padding: 0.12em 0.4em;
+  border: 1px solid color-mix(in srgb, var(--accent-pink) 24%, transparent);
+  border-radius: 0.4rem;
+  background: color-mix(in srgb, var(--accent-pink) 12%, transparent);
+  color: var(--accent-pink-soft);
+  overflow-wrap: anywhere;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.prose :where(ul, ol) { margin: 1.1em 0; padding-left: 1.45em; }
+.prose :where(ul) { list-style: disc; }
+.prose :where(ol) { list-style: decimal; }
+.prose :where(li) { margin: 0.5em 0; padding-left: 0.2em; }
+.prose :where(li)::marker { color: var(--accent-pink); font-weight: 700; }
+.prose :where(li > ul, li > ol) { margin: 0.4em 0; }
+.prose :where(ul ul) { list-style: circle; }
+.prose :where(ul ul ul) { list-style: square; }
+.prose :where(li > p) { margin: 0.4em 0; }
+
+.prose :where(blockquote) {
+  margin: 1.5em 0;
+  border-left: 3px solid var(--accent-pink);
+  border-radius: 0 0.8rem 0.8rem 0;
+  padding: 0.85em 1.1em;
+  background: color-mix(in srgb, var(--accent-pink) 7%, transparent);
+  color: var(--fx-muted);
+  font-style: normal;
+}
+.prose :where(blockquote p) { margin: 0; }
+.prose :where(blockquote p + p) { margin-top: 0.7em; }
+.prose :where(blockquote strong) { color: var(--fx-text); }
+
+.prose :where(hr) { margin: 2.4em 0; border: 0; border-top: 1px solid var(--line); }
+
+/* Fenced code scrolls inside its own rounded frame instead of stretching the
+   page; the scrollbar is restyled so it reads as part of the block. Shiki
+   writes the theme's `background-color`/`color` inline on <pre>, so the panel
+   colour needs !important to stay in the site palette. */
+.prose :where(pre) {
+  margin: 1.5em 0;
+  border: 1px solid var(--line);
+  border-radius: 0.9rem;
+  padding: 1rem 1.1rem;
+  background: var(--code-block-bg) !important;
+  color: var(--code-block-text);
+  box-shadow: 0 22px 60px -42px #000;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  tab-size: 2;
+}
+.prose :where(pre code) {
+  display: block;
+  min-width: max-content;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-family: var(--md-mono);
+  font-size: 0.85rem;
+  font-weight: 400;
+  line-height: 1.65;
+  white-space: pre;
+  overflow-wrap: normal;
+  box-decoration-break: slice;
+  -webkit-box-decoration-break: slice;
+}
+.prose :where(pre)::-webkit-scrollbar { height: 8px; }
+.prose :where(pre)::-webkit-scrollbar-track { background: transparent; }
+.prose :where(pre)::-webkit-scrollbar-thumb { border-radius: 999px; background: color-mix(in srgb, var(--fx-text) 16%, transparent); }
+
+.prose :where(img) {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 1.5em auto;
+  border: 1px solid var(--fx-line);
+  border-radius: 0.9rem;
+}
+.prose :where(p > img:only-child) { margin-block: 1.5em; }
+.prose :where(figure) { margin: 1.6em 0; }
+.prose :where(figcaption) { margin-top: 0.6rem; color: var(--fx-faint); font-size: 0.78rem; text-align: center; }
 .lyric-block { position: relative; margin: 1.5rem 0; border: 1px solid rgba(255, 143, 182, 0.25); border-radius: 1rem; padding: 1rem 1.15rem; background: rgba(255, 143, 182, 0.07); color: var(--text-dim); }
 .lyric-block p { margin: 0.5rem 0; }
 .lyric-en,
@@ -359,19 +504,52 @@
   font-size: 0.72rem;
   letter-spacing: 0.04em;
 }
-.prose .table-wrapper { position: relative; margin: 1.4rem 0; overflow-x: auto; border: 1px solid var(--line); border-radius: 1rem; background: var(--surface-soft); }
-.prose .table-wrapper :where(table) { width: 100%; min-width: 38rem; margin: 0; }
-.prose .table-wrapper :where(th, td) { border-color: var(--line-soft); }
-.prose .table-wrapper :where(th, td):first-child { padding-left: 0.75rem; }
-.prose .table-wrapper :where(th, td):last-child { padding-right: 0.75rem; }
-.prose .table-wrapper :where(th) { padding-top: 0.75rem; color: var(--fx-text); }
-/* On narrow screens the 38rem floor pushed the table past the rounded scroll
-   wrapper and cut the last column off at the corner. Let tables fit the
-   column and wrap long tokens (URLs, IDs) instead of hiding them. */
+.prose .table-wrapper {
+  position: relative;
+  margin: 1.5em 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--line);
+  border-radius: 0.9rem;
+  background: var(--surface-soft);
+}
+.prose .table-wrapper :where(table) {
+  width: 100%;
+  min-width: 32rem;
+  margin: 0;
+  border-collapse: collapse;
+  font-size: 0.9em;
+  line-height: 1.6;
+}
+.prose .table-wrapper :where(th, td) {
+  padding: 0.7em 0.85em;
+  border-bottom: 1px solid var(--line-soft);
+  vertical-align: top;
+  text-align: left;
+}
+.prose .table-wrapper :where(thead th) {
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--accent-pink) 9%, transparent);
+  color: var(--fx-text);
+  font-weight: 700;
+  white-space: nowrap;
+}
+.prose .table-wrapper :where(tbody tr:last-child td) { border-bottom: 0; }
+.prose .table-wrapper :where(tbody tr:nth-child(even)) { background: color-mix(in srgb, var(--fx-text) 3%, transparent); }
+.prose .table-wrapper :where(th, td):first-child { padding-left: 1rem; }
+.prose .table-wrapper :where(th, td):last-child { padding-right: 1rem; }
+.prose .table-wrapper::-webkit-scrollbar { height: 8px; }
+.prose .table-wrapper::-webkit-scrollbar-track { background: transparent; }
+.prose .table-wrapper::-webkit-scrollbar-thumb { border-radius: 999px; background: color-mix(in srgb, var(--fx-text) 16%, transparent); }
+/* Phones: tables shrink to the column and wrap long values instead of hiding
+   the right edge of a horizontally scrolling card. */
 @media (max-width: 720px) {
-  .prose .table-wrapper :where(table) { min-width: 0; }
-  .prose .table-wrapper :where(th, td) { overflow-wrap: anywhere; }
-  .prose .table-wrapper :where(th, td):first-child { min-width: 6rem; }
+  .prose .table-wrapper :where(table) { min-width: 0; font-size: 0.84em; }
+  .prose .table-wrapper :where(th, td) { padding: 0.6em 0.65em; overflow-wrap: anywhere; }
+  .prose .table-wrapper :where(thead th) { white-space: normal; }
+  .prose .table-wrapper :where(th, td):first-child { min-width: 5.5rem; padding-left: 0.75rem; }
+  .prose .table-wrapper :where(th, td):last-child { padding-right: 0.75rem; }
 }
 .link-underline { color: var(--text-dim); transition: color 0.25s var(--ease); }
 .link-underline:hover { color: var(--accent-pink-soft); }
@@ -382,9 +560,55 @@
 @media (min-width: 1100px) { .article-toc { display: block; position: sticky; top: 6rem; align-self: start; } }
 .article-toc a { display: block; border-left: 1px solid var(--line); padding-left: .7rem; color: var(--text-faint); font-size: .78rem; line-height: 1.4; transition: color .25s var(--ease), border-color .25s var(--ease); }
 .article-toc a:hover, .article-toc a.is-active { border-color: var(--accent-pink); color: var(--accent-pink-soft); }
+
+/* Phones: give the article a little more side breathing room than the global
+   frame, and tighten the mono headings/code for the narrow column. */
+@media (max-width: 720px) {
+  article[data-article] { width: min(calc(100% - 2rem), 68rem); }
+  .prose { line-height: 1.78; }
+  .prose :where(h1) { font-size: 1.6rem; }
+  .prose :where(h2) { margin-top: 1.9em; font-size: 1.3rem; }
+  .prose :where(h3) { margin-top: 1.7em; font-size: 1.1rem; }
+  .prose :where(pre) { margin-inline: -0.1rem; padding: 0.9rem 1rem; }
+  .prose :where(pre code) { font-size: 0.82rem; }
+}
 .article-tools { display: inline-flex; align-items: center; gap: .25rem; }
+.polish-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  margin: 0 0 1.6rem;
+  border-left: 3px solid var(--accent-pink);
+  border-radius: 0 0.6rem 0.6rem 0;
+  padding: 0.55rem 0.9rem;
+  background: color-mix(in srgb, var(--accent-pink) 8%, transparent);
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  line-height: 1.6;
+}
+.polish-note__mark { color: var(--accent-pink); line-height: 1.6; }
 .code-block { position: relative; }
-.code-copy { position: absolute; z-index: 1; top: .65rem; right: .65rem; border: 1px solid var(--fx-line); border-radius: .5rem; padding: .25rem .5rem; background: var(--fx-surface-strong); color: var(--fx-text); font-size: .7rem; cursor: pointer; }
+.code-copy {
+  position: absolute;
+  z-index: 2;
+  top: 0.6rem;
+  right: 0.6rem;
+  border: 1px solid var(--fx-line);
+  border-radius: 0.5rem;
+  padding: 0.22rem 0.5rem;
+  background: color-mix(in srgb, var(--fx-surface-strong) 86%, transparent);
+  color: var(--fx-text);
+  font-family: var(--md-mono, monospace);
+  font-size: 0.68rem;
+  font-weight: 700;
+  opacity: 0.5;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  transition: opacity 0.2s ease, background 0.2s ease, transform 0.2s ease;
+}
+.code-block:hover .code-copy { opacity: 1; }
+.code-copy:hover { background: var(--fx-surface-strong); transform: translateY(-1px); }
+@media (hover: none) { .code-copy { opacity: 1; } }
 .image-lightbox { max-width: min(95vw, 1200px); max-height: 95vh; padding: 0; border: 0; background: transparent; }
 .image-lightbox::backdrop { background: rgb(0 0 0 / .8); }
 .image-lightbox img { max-width: 95vw; max-height: 90vh; object-fit: contain; border-radius: 1rem; }
@@ -2773,8 +2997,7 @@ html[data-theme="paper-dark"] .ncm-profile-card {
 .profile-overview,
 .presence-card,
 .content-card article,
-.contact-panel,
-.about-hero {
+.contact-panel {
   border: 1px solid var(--fx-line) !important;
   border-radius: 2rem !important;
   background: var(--fx-surface) !important;
@@ -2788,8 +3011,7 @@ html[data-theme="paper-dark"] .ncm-profile-card {
 .profile-overview:hover,
 .presence-card:hover,
 .content-card:hover article,
-.contact-panel:hover,
-.about-hero:hover {
+.contact-panel:hover {
   border-color: color-mix(in srgb, var(--fx-pink) 34%, var(--fx-line)) !important;
   background: var(--fx-surface-strong) !important;
   box-shadow: 9px 9px 0 color-mix(in srgb, var(--fx-pink) 34%, transparent), 0 30px 66px -38px var(--fx-shadow) !important;

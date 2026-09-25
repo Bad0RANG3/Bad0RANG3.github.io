@@ -15,11 +15,12 @@ draft: false
 verifiedDate: 2026-08-05
 difficulty: 入门
 audience: 正在整理 Windows 工作环境的用户
+polished: true
 ---
 
-> 文章经由Deepseek V4.1 flash润色，很抱歉我的文笔并不好。
+这份清单按使用场景整理 Windows 软件。新电脑第一次装机，可以照着它从零配一套环境；旧电脑也可以拿它查缺补漏，看看有没有更适合自己的替代品。
 
-这份清单按使用场景整理 Windows 软件。新电脑第一次装机可以照着装，旧电脑也可以拿来查缺补漏。
+它不是“装机必备”那种一次性清单，更像我这些年反复重装、反复折腾之后沉淀下来的一个索引：每个分类都给出最稳妥的默认选择，同时把更轻、更专、更折腾的选项一并列出，方便按自己的习惯挑。
 
 挑选时主要看四点。
 
@@ -28,18 +29,22 @@ audience: 正在整理 Windows 工作环境的用户
 - 每个分类把最稳妥的选择放在前面。
 - 软件从官网或官方商店下载，不去第三方捆绑站。
 
+表中的“可替代方案”不是竞品罗列，而是当你对某一项不满意时，可以直接换过去的方向。
+
 ## 快速入口
 
-- **新电脑先装**，浏览器、压缩、搜索、卸载、截图、下载器、播放器、输入法、剪贴板
-- **学生 / 轻办公**，Office、PDF、笔记、思维导图、云同步、邮件、在线协作
-- **日常沟通**，微信、QQ、Telegram、Discord、钉钉、飞书、腾讯会议
-- **开发者**，VS Code、Cursor、Git、WSL、Docker、DBeaver、Postman、Apifox、Wireshark
-- **设计师**，Figma、Pixso、即时设计、Affinity、Blender、Krita、Inkscape
-- **视频创作者**，剪映、DaVinci Resolve、OBS Studio、HandBrake、必剪
-- **游戏玩家**，Steam、Epic、WeGame、GOG、哔哩哔哩、PotPlayer
-- **系统维护**，Rufus、Ventoy、CrystalDiskInfo、DiskGenius、VirtualBox、Hasleo
-- **远程协作**，ToDesk、向日葵、UU远程、RustDesk、坚果云、LocalSend
-- **AI 尝鲜**，Claude、ChatGPT、DeepSeek、Gemini、Kimi
+如果不想从头看到尾，可以先按“我是谁”来跳。
+
+- **新电脑先装**：浏览器、压缩、搜索、卸载、截图、下载器、播放器、输入法、剪贴板
+- **学生 / 轻办公**：Office、PDF、笔记、思维导图、云同步、邮件、在线协作
+- **日常沟通**：微信、QQ、Telegram、Discord、钉钉、飞书、腾讯会议
+- **开发者**：VS Code、Cursor、Git、WSL、Docker、DBeaver、Postman、Apifox、Wireshark
+- **设计师**：Figma、Pixso、即时设计、Affinity、Blender、Krita、Inkscape
+- **视频创作者**：剪映、DaVinci Resolve、OBS Studio、HandBrake、必剪
+- **游戏玩家**：Steam、Epic、WeGame、GOG、哔哩哔哩、PotPlayer
+- **系统维护**：Rufus、Ventoy、CrystalDiskInfo、DiskGenius、VirtualBox、Hasleo
+- **远程协作**：ToDesk、向日葵、UU远程、RustDesk、坚果云、LocalSend
+- **AI 尝鲜**：Claude、ChatGPT、DeepSeek、Gemini、Kimi
 
 ---
 
@@ -445,14 +450,16 @@ audience: 正在整理 Windows 工作环境的用户
 
 ## 怎么选
 
-- **只想省心装机**，Edge / 7-Zip / Everything / Snipaste / 微信输入法 / Ditto / VLC / PowerToys 基本闭眼装。
-- **学生 / 轻办公**，WPS Office / PDFgear / 腾讯文档 / 石墨文档 / 坚果云 / 网易邮箱大师 / XMind。
-- **开发者常用**，VS Code（或 Cursor）+ Git + Windows Terminal + WSL + Docker + DBeaver + Postman / Apifox。
-- **设计师常用**，Figma / Pixso + Affinity（或 Adobe CC）+ Krita + Inkscape + Blender。
-- **视频创作者**，剪映专业版（入门）/ DaVinci Resolve（进阶）+ OBS Studio + HandBrake + 必剪。
-- **游戏玩家**，Steam / Epic / WeGame + PotPlayer + 哔哩哔哩 + Discord / QQ。
-- **系统维护**，Rufus / Ventoy + CrystalDiskInfo + CrystalDiskMark + DiskGenius + Hasleo / Macrium Reflect + VirtualBox。
-- **AI 尝鲜**，DeepSeek / Kimi（免费中文首选），Claude / ChatGPT / Gemini 按需订阅。
+清单本身不给唯一答案，下面只是几条按人群速查的默认组合。
+
+- **只想省心装机**：Edge / 7-Zip / Everything / Snipaste / 微信输入法 / Ditto / VLC / PowerToys 基本闭眼装。
+- **学生 / 轻办公**：WPS Office / PDFgear / 腾讯文档 / 石墨文档 / 坚果云 / 网易邮箱大师 / XMind。
+- **开发者常用**：VS Code（或 Cursor）+ Git + Windows Terminal + WSL + Docker + DBeaver + Postman / Apifox。
+- **设计师常用**：Figma / Pixso + Affinity（或 Adobe CC）+ Krita + Inkscape + Blender。
+- **视频创作者**：剪映专业版（入门）/ DaVinci Resolve（进阶）+ OBS Studio + HandBrake + 必剪。
+- **游戏玩家**：Steam / Epic / WeGame + PotPlayer + 哔哩哔哩 + Discord / QQ。
+- **系统维护**：Rufus / Ventoy + CrystalDiskInfo + CrystalDiskMark + DiskGenius + Hasleo / Macrium Reflect + VirtualBox。
+- **AI 尝鲜**：DeepSeek / Kimi（免费中文首选），Claude / ChatGPT / Gemini 按需订阅。
 
 ## 最后提醒
 

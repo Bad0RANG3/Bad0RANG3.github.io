@@ -36,9 +36,9 @@ Astro 5 静态站点（`output: 'static'`），Tailwind CSS 4（通过 `@tailwin
 └── src/
     ├── components/            全部按域分目录，不往 components/ 根目录放文件
     │   ├── blog/                PostCard、PostMeta、TagList、ArticleTools、ArticleEnhancements、Comments
-    │   ├── icons/               Icon.astro（唯一图标入口）
+    │   ├── icons/               Icon.astro / RailIcon.astro（图标入口）
     │   ├── layout/              SiteHeader、SiteFooter、MobileDrawer
-    │   ├── profile/             ProfileOverviewCard、ProjectCard、ResourceGrid
+    │   ├── profile/             ProfileOverviewCard、ProjectCard
     │   ├── search/              SearchModal（自带索引加载与筛选逻辑）
     │   └── ui/                  ContentCard、EmptyState、PageHeader、SectionHeader
     ├── config/                 站点静态数据，一个模块一个关注点
@@ -50,14 +50,12 @@ Astro 5 静态站点（`output: 'static'`），Tailwind CSS 4（通过 `@tailwin
     │   ├── config.ts             posts / thoughts 的 frontmatter schema
     │   ├── posts/*.md
     │   └── thoughts/*.md
-    ├── data/                   运行时数据载荷，按所属功能分目录
-    │   └── tools/pjsk-stamp.json
     ├── layouts/BaseLayout.astro
     ├── scripts/                浏览器端入口，由 Astro 打包为可缓存模块
     │   ├── theme.ts              主题控制器（首屏由 BaseLayout 内联小脚本兜底）
     │   ├── atmosphere.ts         樱花背景（精灵缓存 + 约 30fps，滚动时持续播放）
     │   ├── player.ts             动态岛音乐播放器
-    │   ├── site.ts               页面进入动画 / 表格包裹 / 回到顶部
+    │   ├── site.ts               表格包裹 / 回到顶部
     │   └── service-worker.ts     注册 Service Worker
     ├── lib/                    运行时工具，只放这一层
     │   ├── content.ts            集合读取（posts / thoughts）+ 单篇统计
@@ -72,7 +70,7 @@ Astro 5 静态站点（`output: 'static'`），Tailwind CSS 4（通过 `@tailwin
         └── tools/*.css           各工具页私有样式
 ```
 
-字体自托管在 `public/fonts/`：`jetbrains-mono-*`（拉丁，UI/等宽，由 `BaseLayout` 全局声明）与 `yuruka-*`（仅由 `tools/pjsk-stamp` 以 `YurukaStd` 家族声明），不依赖任何外部 CDN。
+字体自托管在 `public/fonts/`：`jetbrains-mono-*`（拉丁，UI/等宽，由 `BaseLayout` 全局声明），不依赖任何外部 CDN。
 
 ### 放置规则
 
@@ -80,11 +78,10 @@ Astro 5 静态站点（`output: 'static'`），Tailwind CSS 4（通过 `@tailwin
 |---|---|
 | 内部 URL 字面量 | `src/config/routes.ts`，渲染时套 `withBase()` |
 | 站点元信息 / 作者 / 社交链接 / 关于页数据 | `src/config/site.ts` |
-| 动效时长、布局阈值、级联延迟 | `src/config/ui.ts` |
+| 布局阈值、级联延迟 | `src/config/ui.ts` |
 | 读取 content collection | `src/lib/content.ts` |
 | 由 frontmatter 派生的分组视图 | `src/lib/taxonomy.ts` |
 | 只在构建期跑、不被页面 import 的代码 | `plugins/` |
-| 只被某个工具页使用的大块数据 | `src/data/tools/<tool>.json` |
 | 可被多个脚本复用的逻辑 | `scripts/lib/` |
 
 `src/lib/` **不放**构建期插件；`src/` **不放**脚本；组件**不裸放**在 `components/` 根目录。
@@ -92,7 +89,8 @@ Astro 5 静态站点（`output: 'static'`），Tailwind CSS 4（通过 `@tailwin
 ### 主题与颜色
 
 - **`src/styles/theme.css` 是颜色的唯一来源**：`paper`（亮色，SSR 默认）与 `paper-dark`（暗色）两套 token 都在这里定义，`BaseLayout.astro` 在 `global.css` 之前引入。
-- 组件**不允许**写死与主题相关的颜色（如 `#fff`、`text-white`）。文字用 `--fx-text` / `--color-base-content`，次要文字用 `--text-dim` / `--text-faint`，面板用 `--surface*` / `--fx-surface*`，边框用 `--line*` / `--fx-line`。代码块在两种主题下都是深底浅字，统一用 `--code-block-bg` / `--code-block-text`。
+- 组件**不允许**写死与主题相关的颜色（如 `#fff`、`text-white`）。文字用 `--fx-text` / `--color-base-content`，次要文字用 `--text-dim` / `--text-faint`，面板用 `--surface*` / `--fx-surface*`，边框用 `--line*` / `--fx-line`。代码块在两种主题下都是深底浅字，统一用 `--code-block-bg` / `--code-block-text`（Shiki 会把底色内联写在 `<pre>` 上，所以 `global.css` 用 `!important` 拉回主题色）。
+- **正文与界面分字体**：`.prose` 用系统无衬线字体（`--md-font`）排长文，标题、代码块与站点其它界面仍用 JetBrains Mono。中英混排的长文在手机上比等宽字体更好读。
 - 主题切换由两段代码负责：`BaseLayout.astro` `<head>` 里的内联小脚本（首屏前解析 `localStorage` / `prefers-color-scheme` 并上色，避免闪烁），以及打包在 `src/scripts/theme.ts` 的控制器（切换、监听 `astro:before-swap` / `astro:after-swap`、`MutationObserver` 兜底）。改动后请用两种主题分别过一遍所有页面（`pnpm smoke` 不覆盖对比度）。
 
 ---

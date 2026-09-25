@@ -59,6 +59,12 @@ const seriesNext = seriesIndex >= 0 ? seriesPosts[seriesIndex + 1] : undefined;
     <header class="mb-10 max-w-3xl">
       {post.data.series && <div class="reveal mb-5 flex flex-wrap items-center gap-2"><span class="chip-teal">系列：{post.data.series}</span></div>}
       <h1 class="reveal display-title mb-5 text-3xl sm:text-4xl md:text-5xl lg:text-6xl" style={`--reveal-delay:${STAGGER.POST_HEADING}ms`}>{post.data.title}</h1>
+      {post.data.polished && (
+        <p class="polish-note reveal" style={`--reveal-delay:${STAGGER.POST_HEADING + 60}ms`}>
+          <span class="polish-note__mark" aria-hidden="true">✦</span>
+          本文由 DeepSeek 润色，很抱歉我的文笔并不好。
+        </p>
+      )}
       <div class="space-y-4">
         <div class="reveal" style={`--reveal-delay:${STAGGER.POST_META}ms`}><PostMeta date={post.data.date} updatedDate={post.data.updatedDate} long /></div>
         <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-bold text-base-content/55">

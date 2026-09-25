@@ -21,27 +21,28 @@ coverAlt: 'Yukinal 首次使用工作区与 Agent 面板'
 difficulty: 进阶
 audience: 想让模型帮忙处理服务器事务，但不想直接把 shell 交出去的开发者
 hasCode: true
+polished: true
 ---
 
-> 文章经由Deepseek V4.1 flash润色，很抱歉我的文笔并不好。
-
-把服务器 shell 交给模型很容易，麻烦集中在限制它能碰什么，以及出错后怎样追溯。Yukinal 把远程开发、SSH 运维和 AI Agent 放进同一个桌面工作区，模型只能提出操作，授权和执行仍然走现有流程。
+把服务器 shell 直接交给模型很容易，真正麻烦的地方在于两件事：限制它能碰什么，以及出错以后怎么追溯。Yukinal 的做法，是把远程开发、SSH 运维和 AI Agent 放进同一个桌面工作区里，但模型始终只能“提出”操作，授权和执行仍然走现有流程。
 
 项目地址在 [Bad0RANG3/Yukinal](https://github.com/Bad0RANG3/Yukinal)。当前以 `1.0.0` 作为首个稳定接口基线，使用 MIT 许可。
 
-截至 2026-09-22，主分支在 `v1.0.0` 基线之上补齐了可持久化的 Agent 任务、证据、变更计划、有限恢复和持续巡检，同时把 MCP 服务接进同一条执行与审计链路。下面的内容按当前仓库状态说明，并区分已经落地和尚未在真实环境验证的部分。
+截至 2026-09-22，主分支在 `v1.0.0` 基线之上补齐了可持久化的 Agent 任务、证据、变更计划、有限恢复和持续巡检，同时把 MCP 服务接进同一条执行与审计链路。下面的内容按当前仓库状态说明，并尽量区分“已经落地”和“尚未在真实环境验证”的部分。
 
 ![Yukinal 首次使用工作区与 Agent 面板](/yukinal/yukinal-workspace.webp)
 
 ## 模型只负责提出操作
 
-直接让模型拥有 shell，会导致权限边界很难解释。它看到什么、能修改什么、执行记录在哪里，往往都依赖提示词。Yukinal 把模型放到提议者的位置，模型提出工具调用，Permission Engine 决定能不能执行，Rust 宿主在已经解析过的目标上完成操作，整个过程再写入可回放的活动记录。
+直接让模型拥有 shell，会带来一个很难解释的问题：权限边界到底在哪里？它看到了什么、能修改什么、执行记录留在哪，往往全依赖提示词写得好不好。一旦提示词有缝，边界就跟着漏。
 
-这条边界落在代码结构里。`ToolRegistry` 是唯一执行入口，Permission Engine 是唯一授权入口，Node.js sidecar 本身不能直接连接 SSH、读取 SQLite 或访问凭据。
+Yukinal 把模型放到“提议者”的位置上。模型提出工具调用，Permission Engine 决定能不能执行，Rust 宿主在已经解析过的目标上完成操作，整个过程再写入可回放的活动记录。这样一来，模型的能力不取决于它“愿不愿意守规矩”，而取决于宿主放不放行。
+
+这条边界是落在代码结构里的，而不是靠约定：`ToolRegistry` 是唯一的执行入口，Permission Engine 是唯一的授权入口，Node.js sidecar 本身不能直接连接 SSH、读取 SQLite 或访问凭据。
 
 ## 权限由两层选择合成
 
-Agent 面板提供两个独立方向。
+Agent 面板提供两个互相独立的方向，组合起来才决定一次运行的实际权限。
 
 | 方向 | 取值 | 决定什么 |
 | --- | --- | --- |
@@ -50,25 +51,25 @@ Agent 面板提供两个独立方向。
 
 每次工具调用还会带上风险事实，最后生成一张可执行的 ticket。等待批准超过 2 分钟会自动拒绝，不会一直挂起。停止运行会取消正在进行的 HTTP 流、工具执行和审批，并把取消状态写回。
 
-高风险操作始终需要逐项批准，也不能记成“以后都允许”。`docker.restart` 标记为 `high`，即使运行在 `auto` 模式，也会回落为单独审批。外部 MCP 工具全部按 `critical` 处理，服务器自己声明的风险等级不会直接采信。
+高风险操作始终需要逐项批准，也不能记成“以后都允许”。`docker.restart` 被标记为 `high`，即使运行在 `auto` 模式，也会回落为单独审批。外部 MCP 工具一律按 `critical` 处理，服务器自己声明的风险等级不会直接采信——毕竟那是别人给的声明。
 
-MCP 工具和内置工具共用同一套 registry、执行路径与取消令牌。宿主负责启动或连接 MCP server、读取工具目录并校验名称，sidecar 只能看到被放行的工具。任何会产生副作用的内置工具和 MCP 调用，都要绑定具体任务、变更计划和计划步骤，普通聊天拿不到这条执行路径。
+MCP 工具和内置工具共用同一套 registry、执行路径与取消令牌。宿主负责启动或连接 MCP server、读取工具目录并校验名称，sidecar 只能看到被放行的工具。任何会产生副作用的内置工具和 MCP 调用，都必须绑定具体任务、变更计划和计划步骤，普通聊天拿不到这条执行路径。
 
 ## 桌面工作区
 
-服务器条目存在本地 SQLite 里，SSH 密码、私钥和口令进入操作系统凭据库。概览页会采集 OS、CPU、内存、运行时长、磁盘、网络和 Docker 信息，每个命令有 5 秒超时，采集结果可以回看。
+服务器条目存在本地 SQLite 里，SSH 密码、私钥和口令进入操作系统凭据库。概览页会采集 OS、CPU、内存、运行时长、磁盘、网络和 Docker 信息，每个命令有 5 秒超时，采集结果可以回看，而不是看过就没了。
 
 终端基于 russh，支持多会话、输入、改尺寸和关闭，使用 `xterm-256color`。远程文件提供 SFTP 目录列表和最多 1 MiB 的文本读取，内容附带 SHA-256 摘要。界面没有直接写文件的入口，写入只作为 Agent 工具存在。
 
-服务和日志都是只读探测。服务会先试 `systemctl`，再退到 `docker ps`。日志会先试 `journalctl`，再退到 `/var/log/syslog` 和 `/var/log/messages`，最多读取 120 行并做级别分类。读不到时返回 `unavailable`。
+服务和日志都是只读探测。服务会先试 `systemctl`，再退到 `docker ps`。日志会先试 `journalctl`，再退到 `/var/log/syslog` 和 `/var/log/messages`，最多读取 120 行并做级别分类。读不到时返回 `unavailable`，不会假装成功。
 
 连接、配置变更和 Agent 工具执行都会写入活动表。Agent 对话记录也保存在 SQLite 中，可以按时间分组、搜索标题与正文、筛选状态、分页、重命名、归档和删除。
 
 ## Agent 从对话变成任务
 
-Node.js sidecar 负责一轮完整 agent loop，包含组装上下文、调用模型、解析工具、请求授权、执行和回填结果。单次运行默认最多 25 步，墙钟上限为 15 分钟。
+Node.js sidecar 负责一轮完整的 agent loop，包含组装上下文、调用模型、解析工具、请求授权、执行和回填结果。单次运行默认最多 25 步，墙钟上限为 15 分钟，避免一次对话无限展开。
 
-Agent 现在可以把一次排查保存为任务。只读健康巡检会按健康快照、日志、服务和 Docker 清单收集证据，模型再据此整理 finding、决策摘要或变更计划。证据带有宿主计算的新鲜度，旧样本仍能回看，但变更前必须重新采集。
+Agent 现在可以把一次排查保存为任务。只读健康巡检会按健康快照、日志、服务和 Docker 清单收集证据，模型再据此整理 finding、决策摘要或变更计划。证据带有宿主计算的新鲜度，旧样本仍能回看，但变更前必须重新采集——用过期证据做变更，是运维里非常常见的事故来源。
 
 写入、编辑、备份与恢复、重启、包安装和 MCP 调用不能从对话直接跳到远端。它们必须落在已批准的 ChangePlan 步骤上，宿主会复核任务、目标、输入指纹和审批 ticket。换了文件路径、服务名或包版本，就会重新进入授权流程。
 
@@ -88,13 +89,13 @@ Agent 现在可以把一次排查保存为任务。只读健康巡检会按健�
 
 HTTP 会处理 `Mcp-Session-Id`、协议版本、JSON 与 SSE 回包、可选 GET 事件流、取消通知和会话删除。远程 endpoint 必须使用 HTTPS，明文 HTTP 只允许回环地址，URL 里的凭据、查询参数和 fragment 会被拒绝，重定向也不会跟随。
 
-每个 endpoint 最多可以配置 16 条有序静态认证头。secret 只进入系统凭据库，配置文件里保留引用。OAuth 支持 authorization code 与 PKCE S256，也支持 RFC 8628 设备码流程，以及 `client_secret_post` 和 `client_secret_basic`。
+每个 endpoint 最多可以配置 16 条有序静态认证头。secret 只进入系统凭据库，配置文件里只保留引用。OAuth 支持 authorization code 与 PKCE S256，也支持 RFC 8628 设备码流程，以及 `client_secret_post` 和 `client_secret_basic`。
 
-DPoP 可以按需开启。开启后每台服务器使用一把 Ed25519 密钥，请求 proof 绑定方法、URL 和 access token，密钥仍然只进入系统凭据库。
+DPoP 可以按需开启。开启后每台服务器使用一把 Ed25519 密钥，请求 proof 绑定方法、URL 和 access token，密钥仍然只进入系统凭据库，不落配置文件。
 
-MCP server 崩溃后会进行有界退避重建，恢复时只重建进程和工具目录，不会重放中断的调用。工具需要先在设置页审核，只有 `allowedTools` 中的条目会交给 Agent。审核决定模型能否看见工具，不能降低风险等级，每次调用仍然需要逐项批准和计划步骤。
+MCP server 崩溃后会进行有界退避重建，恢复时只重建进程和工具目录，不会重放中断的调用。工具需要先在设置页审核，只有 `allowedTools` 中的条目会交给 Agent。审核决定的是“模型能否看见工具”，不能降低风险等级，每次调用仍然需要逐项批准和计划步骤。
 
-2026-09-15 的互操作测试覆盖了官方 `@modelcontextprotocol/server-everything` 的 Streamable HTTP、官方 TypeScript SDK 的 JSON 回包，以及两个独立 stdio server。这些结果说明主路径可用，不能代表所有第三方实现都兼容。
+2026-09-15 的互操作测试覆盖了官方 `@modelcontextprotocol/server-everything` 的 Streamable HTTP、官方 TypeScript SDK 的 JSON 回包，以及两个独立 stdio server。这些结果说明主路径可用，但不能代表所有第三方实现都兼容。
 
 ## 架构
 
@@ -114,7 +115,7 @@ Rust 宿主
                               OpenAI-compatible / Anthropic / Gemini
 ```
 
-Rust 持有 SSH、PTY、SQLite、凭据库、sidecar 和 MCP 生命周期，逻辑主要放在 `crates/*`，不打开窗口也能测试。`packages/shared` 保存类型、Zod schema、IPC 映射、事件名和 JSON-RPC 契约，Rust 与 TypeScript 会同时解析同一份 fixture。
+Rust 持有 SSH、PTY、SQLite、凭据库、sidecar 和 MCP 生命周期，逻辑主要放在 `crates/*`，不打开窗口也能测试。`packages/shared` 保存类型、Zod schema、IPC 映射、事件名和 JSON-RPC 契约，Rust 与 TypeScript 会同时解析同一份 fixture，防止两端各说各话。
 
 sidecar 的 stdout 只承载协议帧，双方使用 NDJSON 编码的 JSON-RPC 2.0。`initialize` 必须是第一条请求，握手后宿主会调用 `system.describe`。协议版本不一致或者工具名冲突时，sidecar 不会被发布。
 
@@ -134,7 +135,7 @@ SQLite 只保存凭据引用，密钥进入操作系统凭据库。Provider key 
 
 三种适配器都支持 SSE 文本增量、工具调用增量、取消、超时和安全错误摘要。协议类型由 `provider_configs.kind` 选择，`buildProvider()` 是唯一按 Provider 身份分支的位置，agent loop 只处理统一的 `StreamEvent`。
 
-仓库提供显式 opt-in 的真实 Provider 验证脚本，覆盖文本流、工具结果回填、取消、图片和 PDF。默认门禁不访问网络，也不会为了测试错误路径制造付费请求。目前两套原生 Provider 适配器还没有对真实 API 调用过，主要依赖离线假响应和契约测试。
+仓库提供显式 opt-in 的真实 Provider 验证脚本，覆盖文本流、工具结果回填、取消、图片和 PDF。默认门禁不访问网络，也不会为了测试错误路径制造付费请求。需要坦白的是，目前两套原生 Provider 适配器还没有对真实 API 调用过，主要依赖离线假响应和契约测试。
 
 ## 本地运行
 
@@ -160,7 +161,7 @@ Windows 的 NSIS 安装包和 WiX `.msi` 已经在本机构建成功，但没有
 
 安装包不包含 Node.js。启动前会执行最长 5 秒的 `node --version` 预检，版本低于 24 或输出无法解析时会直接报错。
 
-真实 Provider API、图片、PDF 和音频映射还没有经过真实端点确认。Anthropic Messages 不支持音频块，带音频时会明确失败。多模态预算也有上限，图片单张最多 4 MiB、最多 4 张，PDF 单文件最多 3 MiB、最多 2 个，音频单段最多 4 MiB、最多 2 段，三者共用 5 MiB 原始字节预算。
+真实 Provider API、图片、PDF 和音频映射还没有经过真实端点确认。Anthropic Messages 不支持音频块，带音频时会明确失败。多模态预算也有上限：图片单张最多 4 MiB、最多 4 张，PDF 单文件最多 3 MiB、最多 2 个，音频单段最多 4 MiB、最多 2 段，三者共用 5 MiB 原始字节预算。
 
 MCP 互操作只完成了抽样验证，不构成兼容保证。取消是标准通知，不是回滚，server 可以忽略通知。`filesystem.edit` 有并发守卫，但不能做到完整的 compare-and-swap，同秒同大小的远端改写仍可能无法区分。
 
@@ -170,6 +171,6 @@ MCP 互操作只完成了抽样验证，不构成兼容保证。取消是标准�
 
 ## 项目地址
 
-- GitHub，[Bad0RANG3/Yukinal](https://github.com/Bad0RANG3/Yukinal)
-- 技术栈，React 19、Vite、Tauri 2、Rust、Node.js sidecar
-- License，MIT
+- GitHub：[Bad0RANG3/Yukinal](https://github.com/Bad0RANG3/Yukinal)
+- 技术栈：React 19、Vite、Tauri 2、Rust、Node.js sidecar
+- License：MIT
