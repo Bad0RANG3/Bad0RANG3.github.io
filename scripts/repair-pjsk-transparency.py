@@ -1,10 +1,12 @@
 """Remove edge-connected white mattes from the generated PJSK assets.
 
 ``process-pjsk-assets.py`` creates the high-resolution assets and removes the
-embedded captions.  Some source stickers still contain a baked white sticker
-canvas, however.  This pass works on the generated assets in-place (or into a
+embedded captions. Some source stickers still contain a baked white sticker
+canvas, however. This pass works on the generated assets in-place (or into a
 separate output directory) and removes only large near-white components that
-touch the image edge.  White artwork enclosed by dark outlines is kept.
+touch the image edge. White artwork enclosed by dark outlines is kept. The
+final WebP keeps alpha lossless while using the same compact RGB encoding as
+the generation pass.
 
 Dependencies: Pillow, numpy, and opencv-python.
 """
@@ -25,6 +27,9 @@ WHITE_MIN_CHANNEL = 238
 WHITE_MAX_CHANNEL_SPREAD = 25
 MIN_MATTE_FRACTION = 0.012
 LARGE_MATTE_FRACTION = 0.03
+WEBP_QUALITY = 25
+WEBP_ALPHA_QUALITY = 100
+WEBP_METHOD = 6
 
 # Rin_03 contains a white bow whose upper edge is open/cropped in the source
 # raster, so its fill is connected to the white canvas.  Restore the two bow
@@ -199,9 +204,11 @@ def main() -> None:
         Image.fromarray(repaired, mode="RGBA").save(
             destination,
             format="WEBP",
-            lossless=True,
+            lossless=False,
+            quality=WEBP_QUALITY,
+            alpha_quality=WEBP_ALPHA_QUALITY,
             exact=True,
-            method=6,
+            method=WEBP_METHOD,
         )
 
         if removed:

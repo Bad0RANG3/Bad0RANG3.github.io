@@ -1,9 +1,11 @@
 """Create high-resolution PJSK sticker bases without embedded captions.
 
 The repository keeps the original 296px-ish WebP files under
-``public/pjsk-stamp/stamps``. This script writes a non-destructive, generated
-set under ``public/pjsk-stamp/stamps-clean`` and is intentionally deterministic
-so the asset pass can be regenerated later.
+``scripts/pjsk-source``. This script writes a generated set under
+``public/pjsk-stamp/stamps-clean`` and is intentionally deterministic so the
+asset pass can be regenerated later. The generated files use lossy RGB WebP
+compression while preserving the alpha channel losslessly; this keeps the
+published static output within the site's size budget.
 
 Dependencies: Pillow and opencv-python.
 """
@@ -21,6 +23,9 @@ from PIL import Image, ImageFilter
 
 
 GENERIC_NAME = re.compile(r"^[A-Za-z0-9×]+ \d+$")
+WEBP_QUALITY = 25
+WEBP_ALPHA_QUALITY = 100
+WEBP_METHOD = 6
 
 
 def has_embedded_text(name: str) -> bool:
@@ -133,13 +138,19 @@ def process_image(source: Path, destination: Path, remove_text: bool, scale: flo
     # baked caption/background from hidden color data.
     enlarged[enlarged[:, :, 3] == 0, :3] = 0
     Image.fromarray(enlarged, mode="RGBA").save(
-        destination, format="WEBP", lossless=True, exact=True, method=6
+        destination,
+        format="WEBP",
+        lossless=False,
+        quality=WEBP_QUALITY,
+        alpha_quality=WEBP_ALPHA_QUALITY,
+        exact=True,
+        method=WEBP_METHOD,
     )
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--source-dir", type=Path, default=Path("public/pjsk-stamp/stamps"))
+    parser.add_argument("--source-dir", type=Path, default=Path("scripts/pjsk-source"))
     parser.add_argument("--output-dir", type=Path, default=Path("public/pjsk-stamp/stamps-clean"))
     parser.add_argument("--data", type=Path, default=Path("src/data/tools/pjsk-stamp.json"))
     parser.add_argument("--scale", type=float, default=3.0)
