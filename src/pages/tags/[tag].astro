@@ -7,16 +7,12 @@ import { getAllTags, getPostsByTag } from '../../lib/taxonomy';
 
 export async function getStaticPaths() {
   const tags = await getAllTags();
-  return tags.map(t => ({ params: { tag: t } }));
+  // Hand the raw tag over as a prop: re-decoding the route param would throw
+  // (or silently change the tag) for names containing `%`.
+  return tags.map((tag) => ({ params: { tag }, props: { tag } }));
 }
 
-let tag: string;
-try {
-  tag = decodeURIComponent(Astro.params.tag ?? '');
-} catch {
-  return Astro.redirect('/404');
-}
-
+const { tag } = Astro.props;
 const posts = await getPostsByTag(tag);
 ---
 

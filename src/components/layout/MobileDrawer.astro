@@ -63,7 +63,7 @@ const navigationGroups = [
   </div>
 </dialog>
 
-<style is:inline>
+<style is:global>
   @keyframes slideInDrawer {
     from { transform: translateX(-100%); }
     to   { transform: translateX(0); }
@@ -78,15 +78,4 @@ const navigationGroups = [
   .mobile-nav-dialog::backdrop { background: color-mix(in oklab, var(--color-ink) 42%, transparent); }
 </style>
 
-<script is:inline data-astro-rerun>
-  (function(){
-    const d=document.getElementById('mobile-drawer'),triggers=[...document.querySelectorAll('[data-drawer-trigger]')];
-    if(!d||!triggers.length)return;
-    const setExpanded=function(value){triggers.forEach(function(trigger){trigger.setAttribute('aria-expanded',value?'true':'false')})};
-    triggers.forEach(function(trigger){trigger.addEventListener('click',function(){if(d instanceof HTMLDialogElement&&!d.open){d.showModal();setExpanded(true)}})});
-    const p=d.querySelector('.drawer-panel');
-    const close=function(){if(!(d instanceof HTMLDialogElement)||!d.open)return;if(!p){d.close();return}p.classList.add('animate-out');const h=function(){p.classList.remove('animate-out');p.removeEventListener('animationend',h);if(d instanceof HTMLDialogElement&&d.open)d.close()};p.addEventListener('animationend',h,{once:!0})};
-    d.querySelectorAll('[data-close-drawer]').forEach(function(e){e.addEventListener('click',function(e){e.preventDefault();close()})});
-    d.addEventListener('cancel',function(e){e.preventDefault();close()});d.addEventListener('close',function(){if(p)p.classList.remove('animate-out');setExpanded(false)});
-  })();
-</script>
+<!-- Open/close behaviour is delegated from src/scripts/site.ts. -->

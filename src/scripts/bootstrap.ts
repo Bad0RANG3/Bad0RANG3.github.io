@@ -43,6 +43,22 @@ const schedulePlayer = () => {
   else window.addEventListener('load', runWhenIdle, { once: true });
 };
 
+// Search is fetched on first use (button or Ctrl/⌘+K) rather than inlined into
+// every page. Both listeners are delegated because the header is replaced on
+// each navigation while this module runs once per visit.
+const openSearch = () => {
+  void import('./search').then(({ openSearch: open }) => open());
+};
+document.addEventListener('click', (event) => {
+  if (event.target instanceof Element && event.target.closest('#search-btn')) openSearch();
+});
+document.addEventListener('keydown', (event) => {
+  if ((event.ctrlKey || event.metaKey) && event.key?.toLowerCase() === 'k') {
+    event.preventDefault();
+    openSearch();
+  }
+});
+
 document.addEventListener('astro:page-load', () => {
   syncAtmosphere();
   schedulePlayer();

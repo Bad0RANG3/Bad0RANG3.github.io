@@ -1,7 +1,7 @@
 // Article-only progressive enhancements. Keep scroll work inside one animation
 // frame and persist reading history sparingly: localStorage is synchronous and
 // writing it for every scroll event causes visible jank on long posts.
-export {};
+import { SITE } from '../config/site';
 
 declare global {
   interface Window {
@@ -11,15 +11,21 @@ declare global {
 
 type PendingHistory = { progress: number; completed: boolean };
 
+const cleanupArticleEnhancements = () => {
+  const cleanup = window.__b0ArticleEnhancementsCleanup;
+  window.__b0ArticleEnhancementsCleanup = undefined;
+  cleanup?.();
+};
+
 const initArticleEnhancements = () => {
-  window.__b0ArticleEnhancementsCleanup?.();
+  cleanupArticleEnhancements();
 
   const progress = document.querySelector('[data-reading-progress]');
   const article = document.querySelector('article[data-article]');
   if (!(progress instanceof HTMLElement) || !(article instanceof HTMLElement) || article.dataset.enhanced === '1') return;
   article.dataset.enhanced = '1';
 
-  const historyKey = 'b0-reading-history';
+  const historyKey = SITE.READING_HISTORY_STORAGE_KEY;
   const slug = article.dataset.slug || '';
   let frame = 0;
   let historyTimer = 0;
@@ -151,5 +157,8 @@ const initArticleEnhancements = () => {
 };
 
 document.addEventListener('astro:page-load', initArticleEnhancements);
+// Tear down before ANY navigation, not only before the next article: otherwise
+// scrolling a non-article page keeps recording progress for the post just left.
+document.addEventListener('astro:before-swap', cleanupArticleEnhancements);
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initArticleEnhancements, { once: true });
 else initArticleEnhancements();

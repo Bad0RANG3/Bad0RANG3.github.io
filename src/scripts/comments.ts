@@ -39,6 +39,9 @@ const initComments = () => {
         load();
       }, { rootMargin: '800px 0px' });
       observer.observe(root);
+      // Leaving the article before reaching the comments must not keep the
+      // observer (and the detached page it points at) alive.
+      document.addEventListener('astro:before-swap', () => observer.disconnect(), { once: true });
     } else {
       globalThis.setTimeout(load, 1500);
     }

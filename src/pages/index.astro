@@ -111,7 +111,7 @@ const profileMetrics = [
           </dl>
         </article>
 
-        <article class="profile-card presence-card presence-github-card reveal" style="--reveal-delay:100ms" data-github-profile>
+        <article class="profile-card presence-card presence-github-card reveal" style="--reveal-delay:100ms" data-github-profile data-api-url={github.apiUrl}>
           <header class="presence-card-header">
             <span class="presence-provider"><Icon name="github" class="h-4 w-4" /> GitHub</span>
             <a href={github.profileUrl} target="_blank" rel="noreferrer" aria-label={`前往 ${github.username} 的 GitHub`}><Icon name="arrow-up-right" class="h-4 w-4" /></a>
@@ -190,125 +190,7 @@ const profileMetrics = [
     </section>
   </div>
 
-  <script is:inline data-astro-rerun define:vars={{ githubApiUrl: github.apiUrl }}>
-    (() => {
-      const root = document.querySelector('[data-github-profile]');
-      if (!(root instanceof HTMLElement)) return;
-      const cacheKey = 'b0-github-profile-v1';
-      const render = (profile) => {
-        const bio = root.querySelector('[data-github-bio]');
-        const repos = root.querySelector('[data-github-repos]');
-        const followers = root.querySelector('[data-github-followers]');
-        const following = root.querySelector('[data-github-following]');
-        if (bio && profile.bio) bio.textContent = profile.bio;
-        if (repos) repos.textContent = String(profile.public_repos ?? '—');
-        if (followers) followers.textContent = String(profile.followers ?? '—');
-        if (following) following.textContent = String(profile.following ?? '—');
-      };
-      try {
-        const cached = JSON.parse(sessionStorage.getItem(cacheKey) || 'null');
-        if (cached) render(cached);
-      } catch (_) {}
-      fetch(githubApiUrl, { headers: { Accept: 'application/vnd.github+json' } })
-        .then((response) => response.ok ? response.json() : Promise.reject(new Error('github-profile')))
-        .then((profile) => {
-          render(profile);
-          try { sessionStorage.setItem(cacheKey, JSON.stringify(profile)); } catch (_) {}
-        })
-        .catch(() => {});
-    })();
-  </script>
-
-  <script is:inline data-astro-rerun>
-    (() => {
-      const root = document.querySelector('[data-ncm-profile]');
-      if (!(root instanceof HTMLElement)) return;
-
-      const apiBase = root.dataset.apiBase?.replace(/\/+$/, '') || '';
-      const userId = root.dataset.userId || '';
-      const cacheKey = `b0-ncm-profile-v1-${userId}`;
-      const number = new Intl.NumberFormat('zh-CN');
-      const text = (selector, value) => {
-        const node = root.querySelector(selector);
-        if (node && value !== undefined && value !== null && String(value).trim()) node.textContent = String(value);
-      };
-      const count = (selector, value) => {
-        const parsed = Number(value);
-        if (Number.isFinite(parsed)) text(selector, number.format(parsed));
-      };
-      const safeImageUrl = (value) => {
-        if (typeof value !== 'string') return '';
-        try {
-          const url = new URL(value, window.location.href);
-          return url.protocol === 'https:' || url.protocol === 'http:' ? url.href : '';
-        } catch (_) {
-          return '';
-        }
-      };
-      const updateAvatar = (value) => {
-        const url = safeImageUrl(value);
-        const image = root.querySelector('[data-ncm-avatar]');
-        if (url && image instanceof HTMLImageElement) image.src = url;
-      };
-      const renderDetail = (payload) => {
-        const profile = payload?.profile;
-        if (!profile || typeof profile !== 'object') return;
-        text('[data-ncm-name]', profile.nickname);
-        text('[data-ncm-signature]', profile.signature);
-        count('[data-ncm-follows]', profile.follows);
-        count('[data-ncm-followeds]', profile.followeds);
-        count('[data-ncm-level]', payload.level);
-        count('[data-ncm-listens]', payload.listenSongs);
-        updateAvatar(profile.avatarUrl);
-
-        const vip = root.querySelector('[data-ncm-vip]');
-        if (vip instanceof HTMLElement) {
-          const hasVip = Number(profile.vipType) > 0;
-          vip.hidden = !hasVip;
-          if (hasVip) vip.textContent = '黑胶VIP';
-        }
-      };
-      const renderMedals = (payload) => {
-        const data = payload?.data;
-        if (!data || typeof data !== 'object') return;
-        count('[data-ncm-medals]', data.medalNum);
-        const medals = Array.isArray(data.obtainMedals) ? data.obtainMedals : [];
-        const fanMedal = medals.find((item) => item?.artistName === 'Synthion')
-          || medals.find((item) => item?.specialMedalType === 'fansgroup' && item?.artistName);
-        if (fanMedal?.artistName) text('[data-ncm-fan]', `${fanMedal.artistName} 乐迷`);
-      };
-      const render = (snapshot) => {
-        renderDetail(snapshot?.detail);
-        renderMedals(snapshot?.medals);
-      };
-      const compactMedals = (payload) => {
-        const data = payload?.data;
-        if (!data || typeof data !== 'object') return null;
-        const medals = Array.isArray(data.obtainMedals) ? data.obtainMedals : [];
-        const fanMedal = medals.find((item) => item?.artistName === 'Synthion')
-          || medals.find((item) => item?.specialMedalType === 'fansgroup' && item?.artistName);
-        return { data: { medalNum: data.medalNum, obtainMedals: fanMedal ? [fanMedal] : [] } };
-      };
-      const request = (path) => fetch(`${apiBase}${path}`, { credentials: 'omit' })
-        .then((response) => response.ok ? response.json() : Promise.reject(new Error('ncm-profile')));
-
-      try {
-        const cached = JSON.parse(sessionStorage.getItem(cacheKey) || 'null');
-        if (cached) render(cached);
-      } catch (_) {}
-
-      if (!apiBase || !userId) return;
-      Promise.allSettled([
-        request(`/user/detail?uid=${encodeURIComponent(userId)}`),
-        request(`/user/medal?uid=${encodeURIComponent(userId)}`),
-      ]).then(([detail, medals]) => {
-        const snapshot = {
-          detail: detail.status === 'fulfilled' ? detail.value : null,
-          medals: medals.status === 'fulfilled' ? compactMedals(medals.value) : null,
-        };
-        render(snapshot);
-        try { sessionStorage.setItem(cacheKey, JSON.stringify(snapshot)); } catch (_) {}
-      });
-    })();
+  <script>
+    import '../scripts/home';
   </script>
 </BaseLayout>

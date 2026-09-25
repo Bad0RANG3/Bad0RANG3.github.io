@@ -29,16 +29,16 @@ const difficultyLevels = [...new Set(group.posts.map((post) => post.data.difficu
             <div>
               <h2 class="mt-2 text-2xl font-black">按顺序读这个系列</h2>
             </div>
-            <a href={withBase(postPath(firstPost.slug))} class="brutal-button brutal-button-primary">从第一篇开始 →</a>
+            <a href={withBase(postPath(firstPost.slug))} class="btn-brutal">从第一篇开始 →</a>
           </div>
           <div class="mt-6 grid gap-3 sm:grid-cols-3">
             <div class="rounded-2xl border-2 border-base-content/10 bg-base-100/70 p-4"><span class="eyebrow">篇数</span><strong class="mt-1 block text-2xl font-black">{group.posts.length}</strong></div>
             <div class="rounded-2xl border-2 border-base-content/10 bg-base-100/70 p-4"><span class="eyebrow">阅读时间</span><strong class="mt-1 block text-2xl font-black">约 {totalMinutes} 分钟</strong></div>
             <div class="rounded-2xl border-2 border-base-content/10 bg-base-100/70 p-4"><span class="eyebrow">难度</span><strong class="mt-1 block text-lg font-black">{difficultyLevels.length > 0 ? difficultyLevels.join(' / ') : '自由阅读'}</strong></div>
           </div>
-          <div class="mt-6" aria-label={`系列进度，共 ${group.posts.length} 篇`}>
-            <div class="mb-2 flex items-center justify-between text-xs font-black uppercase tracking-[0.14em] text-base-content/45"><span>系列进度</span><span>0 / {group.posts.length}</span></div>
-            <div class="h-3 overflow-hidden rounded-full border-2 border-base-content/15 bg-base-100/70"><div class="h-full w-0 rounded-full bg-primary"></div></div>
+          <div class="mt-6" data-series-progress data-series-slugs={JSON.stringify(group.posts.map((post) => post.slug))}>
+            <div class="mb-2 flex items-center justify-between text-xs font-black uppercase tracking-[0.14em] text-base-content/45"><span>已读进度（仅本浏览器）</span><span data-series-count>0 / {group.posts.length}</span></div>
+            <div class="h-3 overflow-hidden rounded-full border-2 border-base-content/15 bg-base-100/70" role="progressbar" aria-label="系列已读进度" aria-valuemin="0" aria-valuemax={group.posts.length} aria-valuenow="0" data-series-bar><div class="h-full w-0 rounded-full bg-primary transition-[width] duration-500" data-series-fill></div></div>
           </div>
         </section>
 
@@ -51,6 +51,7 @@ const difficultyLevels = [...new Set(group.posts.map((post) => post.data.difficu
                   <span class="flex flex-wrap items-center gap-2">
                     <span class="text-lg font-black transition group-hover:text-primary">{post.data.title}</span>
                     {index === 0 && <span class="chip-signal">起点</span>}
+                    <span class="chip-lime" data-series-read={post.slug} hidden>已读</span>
                   </span>
                   <span class="mt-2 block text-sm leading-6 text-base-content/55">{post.data.description}</span>
                   <span class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-bold text-base-content/40">
@@ -69,3 +70,35 @@ const difficultyLevels = [...new Set(group.posts.map((post) => post.data.difficu
     )}
   </div>
 </BaseLayout>
+
+<script>
+  import { SITE } from '../../config/site';
+
+  // Reading history is written by article pages into this browser only, so the
+  // series progress is filled in client-side; the static HTML shows 0 / N.
+  const syncSeriesProgress = () => {
+    const root = document.querySelector<HTMLElement>('[data-series-progress]');
+    if (!root) return;
+    let slugs: string[] = [];
+    let completed = new Set<string>();
+    try {
+      slugs = JSON.parse(root.dataset.seriesSlugs || '[]');
+      const history = JSON.parse(localStorage.getItem(SITE.READING_HISTORY_STORAGE_KEY) || '[]');
+      if (Array.isArray(history)) completed = new Set(history.filter((item) => item?.completed).map((item) => String(item.slug)));
+    } catch {
+      return;
+    }
+    const read = slugs.filter((slug) => completed.has(slug));
+    const count = root.querySelector('[data-series-count]');
+    if (count) count.textContent = `${read.length} / ${slugs.length}`;
+    root.querySelector('[data-series-bar]')?.setAttribute('aria-valuenow', String(read.length));
+    const fill = root.querySelector<HTMLElement>('[data-series-fill]');
+    if (fill && slugs.length) fill.style.width = `${(read.length / slugs.length) * 100}%`;
+    document.querySelectorAll<HTMLElement>('[data-series-read]').forEach((badge) => {
+      badge.hidden = !completed.has(badge.dataset.seriesRead || '');
+    });
+  };
+
+  document.addEventListener('astro:page-load', syncSeriesProgress);
+  syncSeriesProgress();
+</script>
