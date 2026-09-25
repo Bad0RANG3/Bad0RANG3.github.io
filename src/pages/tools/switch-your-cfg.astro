@@ -94,10 +94,10 @@ import '../../styles/tools/switch-your-cfg.css';
           <div class="profile-card hidden reveal overflow-hidden rounded-[1.75rem] border border-base-content/8 bg-base-100/88 shadow-sm" id="buyCard" style="--reveal-delay:140ms">
             <div class="scfg-card-head">
               <div>
-                <p class="scfg-step-label">第 2 步</p>
-                <h2 class="scfg-step-title">键盘绑定预览</h2>
+                <p class="scfg-step-label">第 2 步 · 输入设备</p>
+                <h2 class="scfg-step-title">键鼠绑定工作台</h2>
               </div>
-              <span class="scfg-card-hint">核心交互区</span>
+              <span class="scfg-card-hint">点击键帽，或直接按实体键</span>
             </div>
             <div class="scfg-card-body">
               <div class="scfg-input-stage">
@@ -105,8 +105,8 @@ import '../../styles/tools/switch-your-cfg.css';
                   <div class="scfg-input-panel">
                     <div class="scfg-input-panel-head">
                       <div>
-                        <h3>键盘主区</h3>
-                        <p>优先自动缩放到容器内；空间不足时可横向滚动查看完整布局。</p>
+                        <h3>键盘</h3>
+                        <p>按真实键位排列。点击键帽选择绑定，也可以直接按下键盘上的实体键。</p>
                       </div>
                     </div>
                     <div class="scfg-keyboard-shell">
@@ -125,8 +125,8 @@ import '../../styles/tools/switch-your-cfg.css';
                   <div class="scfg-input-panel scfg-pointer-panel">
                     <div class="scfg-input-panel-head">
                       <div>
-                        <h3>鼠标区</h3>
-                        <p>鼠标按键与滚轮单独分离，便于快速选中常用开火 / 滚轮绑定。</p>
+                        <h3>鼠标</h3>
+                        <p>左键、右键、滚轮与侧键都可直接点击选择。</p>
                       </div>
                     </div>
                     <div class="scfg-mouse-shell">
@@ -332,7 +332,7 @@ var CATS=[{id:'rifles',l:'步枪',i:[['ak47','AK-47','2700'],['m4a1','M4A1-S','2
 var _bk='',_bi=new Set(),_bc='rifles';
 
 function hasSavedBind(key){return !!S.buyBinds.find(function(b){return b.key===key;});}
-function rKey(l,k,w,d,sm){var c='scfg-kbd-key '+w;if(d)c+=' disabled';if(k===_bk)c+=' on';else if(k&&hasSavedBind(k))c+=' bound';if(sm)c+=' small';else if(k.length>2)c+=' small';return'<div class="'+c+'" data-key="'+k+'">'+l+'</div>';}
+function rKey(l,k,w,d,sm){var c='scfg-kbd-key '+w;if(d)c+=' disabled';if(k===_bk)c+=' on';else if(k&&hasSavedBind(k))c+=' bound';if(sm)c+=' small';else if(k.length>2)c+=' small';return'<button type="button" class="'+c+'" data-key="'+esc(k)+'" aria-label="'+esc(k||l)+'">'+l+'</button>';}
 function rRows(rows,sm){var h='';for(var i=0;i<rows.length;i++){h+='<div class="scfg-kbd-row">';for(var j=0;j<rows[i].length;j++){var r=rows[i][j],w=r[2]||'w1';if(sm&&r[3])w=r[3]===2?'w2':'w1';h+=rKey(r[0],r[1],w,r[3],sm);}h+='</div>';}return h;}
 
 /* State trackers for incremental rendering */
@@ -534,18 +534,34 @@ if(dz&&fin){
     var ps=[];for(var i=0;i<items.length;i++)ps.push(tr(items[i]));Promise.all(ps).then(function(){if(files.length>0){loadFiles(files);dz.classList.add('ready');}});});
 }
 
+function chooseKey(k){if(!k)return;_bk=k;renderKeyboard();updateBuyPreview();}
+
 var kw=$('#kbdWrap');
 if(kw){
-  kw.addEventListener('click',function(e){var ke=e.target.closest('.scfg-kbd-key');if(!ke||ke.classList.contains('disabled'))return;var k=ke.dataset.key;if(!k)return;_bk=k;renderKeyboard();updateBuyPreview();});
+  kw.addEventListener('click',function(e){var ke=e.target.closest('.scfg-kbd-key');if(!ke||ke.classList.contains('disabled'))return;chooseKey(ke.dataset.key);});
   kw.addEventListener('pointermove',function(e){var ke=e.target.closest('.scfg-kbd-key');if(!ke||ke.classList.contains('disabled')){hideKeyTip();return;}showKeyTip(tooltipText(ke.dataset.key),e.clientX,e.clientY);});
   kw.addEventListener('pointerleave',hideKeyTip);
 }
 var km=$('#kbdMouse');
 if(km){
-  km.addEventListener('click',function(e){var ke=e.target.closest('.scfg-kbd-key');if(!ke||ke.classList.contains('disabled'))return;var k=ke.dataset.key;if(!k)return;_bk=k;renderKeyboard();updateBuyPreview();});
+  km.addEventListener('click',function(e){var ke=e.target.closest('.scfg-kbd-key');if(!ke||ke.classList.contains('disabled'))return;chooseKey(ke.dataset.key);});
   km.addEventListener('pointermove',function(e){var ke=e.target.closest('.scfg-kbd-key');if(!ke||ke.classList.contains('disabled')){hideKeyTip();return;}showKeyTip(tooltipText(ke.dataset.key),e.clientX,e.clientY);});
   km.addEventListener('pointerleave',hideKeyTip);
 }
+
+/* Physical keyboard input mirrors the on-screen keyboard when the user is not typing in a form field. */
+var KEY_CODE_MAP={Escape:'ESCAPE',Backquote:'`',Minus:'-',Equal:'=',BracketLeft:'[',BracketRight:']',Backslash:'\\',Semicolon:';',Quote:"'",Comma:',',Period:'.',Slash:'/',Tab:'TAB',CapsLock:'CAPSLOCK',Backspace:'BACKSPACE',Enter:'ENTER',Space:'SPACE',ShiftLeft:'SHIFT',ShiftRight:'RSHIFT',ControlLeft:'CTRL',ControlRight:'RCTRL',AltLeft:'ALT',AltRight:'RALT',MetaLeft:'',MetaRight:'',ArrowUp:'UPARROW',ArrowDown:'DOWNARROW',ArrowLeft:'LEFTARROW',ArrowRight:'RIGHTARROW',Insert:'INS',Delete:'DEL',Home:'HOME',End:'END',PageUp:'PGUP',PageDown:'PGDN',Numpad0:'kp_ins',Numpad1:'kp_end',Numpad2:'kp_downarrow',Numpad3:'kp_pgdn',Numpad4:'kp_leftarrow',Numpad5:'kp_5',Numpad6:'kp_rightarrow',Numpad7:'kp_home',Numpad8:'kp_uparrow',Numpad9:'kp_pgup',NumpadDecimal:'kp_del',NumpadAdd:'kp_plus',NumpadSubtract:'kp_minus',NumpadMultiply:'kp_multiply',NumpadDivide:'kp_slash',NumpadEnter:'kp_enter'};
+for(var kc=65;kc<=90;kc++)KEY_CODE_MAP['Key'+String.fromCharCode(kc)]=String.fromCharCode(kc+32);
+for(var kd=0;kd<=9;kd++)KEY_CODE_MAP['Digit'+kd]=String(kd);
+for(var kf=1;kf<=12;kf++)KEY_CODE_MAP['F'+kf]='F'+kf;
+window.addEventListener('keydown',function(e){
+  if(e.defaultPrevented||e.isComposing||!e.code||['INPUT','TEXTAREA','SELECT'].indexOf(e.target&&e.target.tagName)!==-1)return;
+  var k=KEY_CODE_MAP[e.code];if(!k)return;
+  var target=null,all=document.querySelectorAll('#kbdWrap .scfg-kbd-key,#kbdMouse .scfg-kbd-key');
+  for(var i=0;i<all.length;i++){if(all[i].dataset.key===k){target=all[i];break;}}
+  if(!target||target.classList.contains('disabled'))return;
+  chooseKey(k);target.classList.add('physical-press');setTimeout(function(){target.classList.remove('physical-press');},140);
+});
 var bc=$('#buyCats');
 if(bc){bc.addEventListener('click',function(e){var c=e.target.closest('.scfg-buy-cat');if(!c)return;_bc=c.dataset.cat;renderBuyItems();});}
 var bg=$('#buyGrid');
