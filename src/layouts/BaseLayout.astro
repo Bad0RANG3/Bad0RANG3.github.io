@@ -63,9 +63,6 @@ const latinExtRange = 'U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02
 // JetBrains Mono is self-hosted so the site never blocks on a third-party CDN
 // (and the smoke test's no-external-font policy stays green). Google serves it
 // as a variable font, so one file per subset and style covers every weight.
-// The Yuruka CJK faces are intentionally not declared here: they are only used
-// by the pjsk-stamp tool, which declares its own `YurukaStd` faces. Declaring
-// them globally added ~600 bytes of dead @font-face to every page.
 const monoFontFaces = [
   ['jetbrains-mono-latin.woff2', 'normal', latinRange],
   ['jetbrains-mono-latin-ext.woff2', 'normal', latinExtRange],
@@ -226,7 +223,7 @@ const jsonLd = {
     transition:persist="site-mascot"
   />
   <SiteHeader currentPath={currentPath} />
-  <main id="main-content" class="page-enter w-full flex-1">
+  <main id="main-content" class="w-full flex-1">
     <slot />
   </main>
   <SiteFooter />

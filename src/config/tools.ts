@@ -11,16 +11,6 @@ export interface Tool {
 
 export const tools: Tool[] = [
   {
-    slug: 'pjsk-stamp',
-    name: 'PJSK 表情包生成器',
-    icon: '🎨',
-    description: '使用角色底图和游戏同款字体生成表情包，可导出透明背景 PNG 或 WEBP。',
-    search: {
-      body: 'Project Sekai PJSK 表情包 贴纸 角色 字体 图片生成器',
-      tags: ['Project Sekai', 'PJSK', '表情包'],
-    },
-  },
-  {
     slug: 'switch-your-cfg',
     name: 'SwitchYourCFG',
     icon: '⌨️',

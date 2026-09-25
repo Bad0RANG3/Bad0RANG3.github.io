@@ -7,8 +7,7 @@ import { fromRoot, normalizeBase, rootDir } from './lib/paths.mjs';
 
 const postsDir = fromRoot('src', 'content', 'posts');
 const sourceDir = fromRoot('src');
-// Keep the complete static output within a conservative GitHub Pages budget;
-// the PJSK sticker tool and subsetted CJK fonts account for most of it.
+// Keep the complete static output within a conservative GitHub Pages budget.
 const MAX_DIST_BYTES = 40 * 1024 * 1024;
 // The homepage player ships one deliberately compressed, browser-ready song.
 // Keep the cap tight enough to catch accidental FLAC/video commits.
