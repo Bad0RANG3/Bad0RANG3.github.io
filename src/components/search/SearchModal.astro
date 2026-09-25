@@ -34,8 +34,8 @@ import { withBase } from '../../lib/urls';
     modal.dataset.bound = '1';
 
     let documents = [];
-    let loading = false;
     let activeType = 'all';
+    const typeLabels = { all: '全部', post: '文章', thought: '碎碎念', project: '项目', tool: '工具' };
 
     const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
     const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -57,13 +57,20 @@ import { withBase } from '../../lib/urls';
       }
       return html + escapeHtml(text.slice(cursor));
     };
-    const searchable = (item) => [item.title, item.description, item.body, ...(item.tags || []), item.category, item.series].filter(Boolean).join(' ').toLowerCase();
-    const score = (item, query) => tokens(query).reduce((total, token) => {
-      const title = item.title.toLowerCase();
-      const tags = (item.tags || []).join(' ').toLowerCase();
-      const text = searchable(item);
-      return total + (title.includes(token) ? 20 : 0) + (tags.includes(token) ? 12 : 0) + (item.description.toLowerCase().includes(token) ? 8 : 0) + (text.includes(token) ? 2 : 0);
-    }, item.featured ? 3 : 0);
+    // Lower-cased haystacks are built once when the index loads, not per
+    // keystroke × token × document.
+    const prepare = (item) => ({
+      ...item,
+      searchText: [item.title, item.description, item.body, ...(item.tags || []), item.category, item.series].filter(Boolean).join(' ').toLowerCase(),
+      titleText: String(item.title || '').toLowerCase(),
+      tagText: (item.tags || []).join(' ').toLowerCase(),
+      descriptionText: String(item.description || '').toLowerCase(),
+    });
+    const score = (item, queryTokens) => queryTokens.reduce((total, token) => total
+      + (item.titleText.includes(token) ? 20 : 0)
+      + (item.tagText.includes(token) ? 12 : 0)
+      + (item.descriptionText.includes(token) ? 8 : 0)
+      + (item.searchText.includes(token) ? 2 : 0), item.featured ? 3 : 0);
     const excerpt = (item, query) => {
       const body = item.body || item.description || '';
       const token = tokens(query)[0];
@@ -77,13 +84,14 @@ import { withBase } from '../../lib/urls';
       const types = [...new Set(documents.map((item) => item.type).filter(Boolean))];
       if (types.length < 2) { filters.hidden = true; return; }
       filters.hidden = false;
-      filters.innerHTML = ['all', ...types].map((type) => `<button type="button" data-search-type="${escapeHtml(type)}" class="chip-signal ${activeType === type ? 'bg-primary/20' : ''}">${type === 'all' ? '全部' : escapeHtml(type)}</button>`).join('');
-      filters.querySelectorAll('[data-search-type]').forEach((button) => button.addEventListener('click', () => { activeType = button.dataset.searchType || 'all'; render(); }));
+      filters.innerHTML = ['all', ...types].map((type) => `<button type="button" data-search-type="${escapeHtml(type)}" aria-pressed="${activeType === type}" class="chip-signal ${activeType === type ? 'bg-primary/20' : ''}">${escapeHtml(typeLabels[type] ?? type)}</button>`).join('');
+      filters.querySelectorAll('[data-search-type]').forEach((button) => button.addEventListener('click', () => { activeType = button.dataset.searchType || 'all'; renderFilters(); render(); }));
     };
     const render = () => {
       const query = input.value;
+      const queryTokens = tokens(query);
       let items = documents.filter((item) => activeType === 'all' || item.type === activeType);
-      if (query.trim()) items = items.filter((item) => tokens(query).every((token) => searchable(item).includes(token))).sort((a, b) => score(b, query) - score(a, query) || b.date.localeCompare(a.date));
+      if (queryTokens.length) items = items.filter((item) => queryTokens.every((token) => item.searchText.includes(token))).sort((a, b) => score(b, queryTokens) - score(a, queryTokens) || b.date.localeCompare(a.date));
       else items = items.slice(0, Number(defaultCount));
       if (!items.length) {
         results.innerHTML = '<div class="px-4 py-8 text-center text-sm text-base-content/50">没有找到匹配内容。试试标题、标签或正文里的其他关键词。</div>';
@@ -91,36 +99,47 @@ import { withBase } from '../../lib/urls';
         return;
       }
       results.innerHTML = items.map((item) => `<a href="${escapeHtml(item.url)}" class="block border-b border-base-content/5 px-4 py-3 transition-colors last:border-0 hover:bg-base-200 focus:bg-base-200 focus:outline-none">
-        <div class="flex items-start justify-between gap-3"><span class="text-sm font-bold text-base-content">${highlight(item.title, query)}</span><time class="shrink-0 text-xs text-base-content/40">${escapeHtml(item.date)}</time></div>
+        <div class="flex items-start justify-between gap-3"><span class="text-sm font-bold text-base-content">${highlight(item.title, query)}</span>${item.date ? `<time class="shrink-0 text-xs text-base-content/40" datetime="${escapeHtml(item.date)}">${escapeHtml(item.date)}</time>` : `<span class="shrink-0 text-xs text-base-content/40">${escapeHtml(typeLabels[item.type] ?? '')}</span>`}</div>
         <p class="mt-1 line-clamp-2 text-xs leading-5 text-base-content/55">${highlight(excerpt(item, query), query)}</p>
         <div class="mt-2 flex flex-wrap gap-1.5">${(item.tags || []).slice(0, 4).map((tag) => `<span class="badge badge-ghost badge-xs">#${escapeHtml(tag)}</span>`).join('')}</div>
       </a>`).join('');
       footer.classList.remove('hidden');
       footer.textContent = `${items.length} 个结果${query.trim() ? '' : ' · 输入关键词搜索全文'}`;
     };
-    const load = async () => {
-      if (documents.length || loading) return;
-      loading = true;
+    // One in-flight request shared by every open(); a failed load clears it so
+    // the next open retries.
+    let loadPromise = null;
+    const load = () => {
+      if (documents.length) return Promise.resolve();
+      if (loadPromise) return loadPromise;
       results.innerHTML = '<div class="px-4 py-8 text-center text-sm text-base-content/50">正在加载搜索索引...</div>';
-      try {
-        const response = await fetch(indexUrl, { headers: { Accept: 'application/json' } });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        documents = await response.json();
-        renderFilters();
-        render();
-      } catch {
-        results.innerHTML = `<div class="px-4 py-8 text-center text-sm text-base-content/50">搜索索引加载失败，请直接浏览<a class="ml-1 font-bold text-primary underline" href="${postsUrl}">文章列表</a>。</div>`;
-      } finally { loading = false; }
+      loadPromise = (async () => {
+        try {
+          const response = await fetch(indexUrl, { headers: { Accept: 'application/json' } });
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const payload = await response.json();
+          documents = Array.isArray(payload) ? payload.map(prepare) : [];
+        } catch {
+          results.innerHTML = `<div class="px-4 py-8 text-center text-sm text-base-content/50">搜索索引加载失败，请直接浏览<a class="ml-1 font-bold text-primary underline" href="${postsUrl}">文章列表</a>。</div>`;
+        } finally { loadPromise = null; }
+      })();
+      return loadPromise;
     };
     const open = () => {
       if (modal instanceof HTMLDialogElement && !modal.open) modal.showModal();
       input.value = '';
       activeType = 'all';
-      load().then(render);
+      // Only re-render once the index is in memory; otherwise load() owns the
+      // results pane and its failure message must not be replaced by "no match".
+      load().then(() => {
+        if (!documents.length) return;
+        renderFilters();
+        render();
+      });
       window.setTimeout(() => input.focus(), Number(focusDelay));
     };
     openButton.addEventListener('click', open);
-    input.addEventListener('input', render);
+    input.addEventListener('input', () => { if (documents.length) render(); });
     if (!window.__b0SearchShortcutBound) {
       window.__b0SearchShortcutBound = true;
       document.addEventListener('keydown', (event) => {

@@ -32,7 +32,12 @@ const initArticleTools = () => {
           await navigator.clipboard.writeText(window.location.href);
           if (copyLabel) copyLabel.textContent = '已复制链接';
         }
-      } catch { if (copyLabel) copyLabel.textContent = '请手动复制'; }
+      } catch (error) {
+        // Dismissing the native share sheet rejects with AbortError; that is
+        // the reader changing their mind, not a failure worth reporting.
+        if (error instanceof DOMException && error.name === 'AbortError') return;
+        if (copyLabel) copyLabel.textContent = '请手动复制';
+      }
       window.setTimeout(() => { if (copyLabel) copyLabel.textContent = '分享'; }, 1800);
     });
     sync();

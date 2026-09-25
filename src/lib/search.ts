@@ -1,7 +1,7 @@
 import { getPublishedPosts, getThoughts } from './content';
 import { projects } from '../config/projects';
 import { tools } from '../config/tools';
-import { postPath, toolPath } from '../config/routes';
+import { postPath, ROUTES, thoughtAnchor, toolPath } from '../config/routes';
 import { withBase } from './urls';
 
 export type SearchDocumentType = 'post' | 'thought' | 'project' | 'tool';
@@ -14,6 +14,7 @@ export interface SearchDocument {
   tags: string[];
   category?: string;
   series?: string;
+  /** ISO day (`YYYY-MM-DD`); empty for undated entries such as projects and tools. */
   date: string;
   featured: boolean;
   type: SearchDocumentType;
@@ -56,7 +57,7 @@ export async function getSearchDocuments(): Promise<SearchDocument[]> {
     date: thought.data.date.toISOString().slice(0, 10),
     featured: false,
     type: 'thought',
-    url: withBase('/thoughts/'),
+    url: `${withBase(ROUTES.THOUGHTS)}/#${thoughtAnchor(thought.slug)}`,
   }));
   const projectDocuments: SearchDocument[] = projects.map((project) => ({
     slug: project.name,
@@ -64,7 +65,7 @@ export async function getSearchDocuments(): Promise<SearchDocument[]> {
     description: project.summary,
     body: project.summary,
     tags: [],
-    date: '2099-12-31',
+    date: '',
     featured: false,
     type: 'project',
     url: withBase(project.href),
@@ -76,7 +77,7 @@ export async function getSearchDocuments(): Promise<SearchDocument[]> {
     body: tool.search.body,
     tags: tool.search.tags,
     category: '在线工具',
-    date: '2099-12-31',
+    date: '',
     featured: true,
     type: 'tool',
     url: withBase(toolPath(tool.slug)),

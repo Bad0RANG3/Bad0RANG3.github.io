@@ -25,8 +25,10 @@ init();
    listener is bound once here rather than on every page load. */
 const backToTop = document.getElementById('back-to-top');
 if (backToTop) {
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const toggle = () => backToTop.classList.toggle('visible', window.scrollY > LAYOUT.BACK_TO_TOP_THRESHOLD);
   window.addEventListener('scroll', toggle, { passive: true });
-  backToTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+  // The CSS reduced-motion rule cannot reach a scripted smooth scroll.
+  backToTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: reduceMotion.matches ? 'auto' : 'smooth' }));
   toggle();
 }

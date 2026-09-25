@@ -80,6 +80,7 @@ export const startAtmosphere = () => {
 
   const resize = () => {
     const ratio = Math.min(window.devicePixelRatio || 1, 1.25);
+    const previousWidth = width;
     width = window.innerWidth;
     height = window.innerHeight;
     canvas.width = Math.round(width * ratio);
@@ -87,7 +88,10 @@ export const startAtmosphere = () => {
     canvas.style.width = `${width}px`;
     canvas.style.height = `${height}px`;
     context.setTransform(ratio, 0, 0, ratio, 0, 0);
-    seed();
+    // Mobile browsers fire resize whenever the address bar slides in or out,
+    // which only changes the height. Reseeding then would teleport every
+    // blossom mid-scroll, so keep the field unless the width actually changed.
+    if (!blossoms.length || width !== previousWidth) seed();
   };
 
   const drawBlossom = (flower, time) => {
@@ -160,14 +164,25 @@ export const startAtmosphere = () => {
     render();
   };
 
+  // Coalesce resize bursts (rotation, address bar animation) into one frame.
+  let resizeFrame = 0;
+  const scheduleRefresh = () => {
+    if (!resizeFrame) resizeFrame = requestAnimationFrame(() => { resizeFrame = 0; refresh(); });
+  };
+
   // The BGA keeps animating while the reader scrolls: it is a fixed overlay and
   // should feel alive on long pages. Cost stays bounded by the ~30fps step, the
   // capped DPR and the sprite cache, so scroll frames are not starved.
-  window.addEventListener('resize', refresh, { passive: true });
+  window.addEventListener('resize', scheduleRefresh, { passive: true });
   reduceMotion.addEventListener?.('change', refresh);
   document.addEventListener('visibilitychange', () => {
-    if (document.hidden) cancelAnimationFrame(frame);
-    else refresh();
+    cancelAnimationFrame(frame);
+    frame = 0;
+    // Resume where the petals were instead of reseeding the whole field.
+    if (!document.hidden && canvas.isConnected && width > 0) {
+      lastFrame = 0;
+      render();
+    }
   });
 
   // The canvas is a decorative overlay, so there is no reason to spend frames
