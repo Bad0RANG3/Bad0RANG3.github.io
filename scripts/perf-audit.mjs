@@ -6,7 +6,9 @@ const posts = new URL('./posts/', dist);
 // Long-form HTML is the product, so the cold budget includes the largest post
 // plus its CSS and deferred module graph. Runtime work has separate invariants
 // below so a smaller payload cannot hide scroll jank or eager third-party code.
-const MAX_ARTICLE_CRITICAL_GZIP = 72 * 1024;
+// The maimai DX HDD reference is a deliberately exhaustive guide with a lot of
+// syntax-highlighted code and tables, so it sets the ceiling for this budget.
+const MAX_ARTICLE_CRITICAL_GZIP = 88 * 1024;
 const MAX_ARTICLE_INLINE_SCRIPT = 12 * 1024;
 
 const entries = await readdir(posts, { withFileTypes: true });

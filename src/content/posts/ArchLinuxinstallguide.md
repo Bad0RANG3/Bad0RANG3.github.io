@@ -10,21 +10,20 @@ draft: false
 verifiedDate: 2026-07-02
 difficulty: 中等
 audience: 想从 Windows 开始尝试 Linux 的用户
+polished: true
 ---
 
-> 文章经由Deepseek V4.1 flash润色，很抱歉我的文笔并不好。
+这套流程的目标很直接：保留原来的 Windows 11，给 Linux 分出一块空间，安装 CachyOS，最后装上 DMS 和 Niri。安装阶段可以在 Live 环境里用 OpenCode 协助处理分区、引导和驱动；出问题时，也能从 TTY 或 Live USB 回去修，而不是推倒重来。
 
-这套流程的目标很直接。保留原来的 Windows 11，再给 Linux 分出一块空间，安装 CachyOS，最后装上 DMS 和 Niri。安装阶段可以在 Live 环境里用 OpenCode 协助处理分区、引导和驱动，出问题时也能从 TTY 或 Live USB 回去修。
-
-下面按实际执行顺序写。先备份，再改固件设置，然后做启动盘、腾空间、进 Live 环境。装完系统以后再处理桌面环境。
+下面按实际执行顺序来写：先备份，再改固件设置，然后做启动盘、腾空间、进 Live 环境；装完系统以后，再处理桌面环境。
 
 ## 开始前准备
 
-需要一台 UEFI 模式的 Windows 11 电脑、一个至少 8 GB 的 U 盘，以及 100 GB 以上可用空间。磁盘最好提前清理，给 Linux 留出足够的余量。
+需要一台 UEFI 模式的 Windows 11 电脑、一个至少 8 GB 的 U 盘，以及 100 GB 以上可用空间。磁盘最好提前清理，给 Linux 留出足够余量。
 
-先备份重要文件。系统和分区操作通常不会碰个人文件，但备份仍然应该放在动手之前。
+先备份重要文件。系统和分区操作通常不会碰个人文件，但备份仍然应该放在动手之前——这是唯一一个“做了以后不会后悔”的步骤。
 
-如果 Windows 开了 BitLocker 或设备加密，先进入系统把它关掉。磁盘分区发生变化后，BitLocker 可能要求恢复密钥。这个问题在安装完成后很难绕开，提前关闭最省事。
+如果 Windows 开了 BitLocker 或设备加密，先进入系统把它关掉。磁盘分区发生变化后，BitLocker 可能要求恢复密钥，这个问题在安装完成后很难绕开，提前关闭最省事。
 
 需要下载两个文件。
 
@@ -56,9 +55,9 @@ audience: 想从 Windows 开始尝试 Linux 的用户
 | Fast Boot | Disabled |
 | CSM 或 Legacy Boot | Disabled |
 
-Secure Boot 会拦截没有进入固件签名数据库的引导程序。关闭以后，CachyOS 的 GRUB 才能正常启动。Fast Boot 会跳过部分硬件初始化和启动项检测，关闭它可以减少 U 盘不识别和 GRUB 加载失败。
+Secure Boot 会拦截没有进入固件签名数据库的引导程序，关闭以后 CachyOS 的 GRUB 才能正常启动。Fast Boot 会跳过部分硬件初始化和启动项检测，关闭它可以减少 U 盘不识别和 GRUB 加载失败。CSM 则会把启动方式拉回传统 BIOS，和 UEFI 双系统的思路冲突。
 
-部分联想和惠普机器会把 Secure Boot 选项锁住。可以先设置 Supervisor Password，保存后重新进入 BIOS，选项就会开放。改完再决定是否删除这个密码。
+部分联想和惠普机器会把 Secure Boot 选项锁住：可以先设置 Supervisor Password，保存后重新进入 BIOS，选项就会开放。改完再决定是否删除这个密码。
 
 按 `F10` 保存并退出。此时先不要插 U 盘。
 
@@ -76,11 +75,11 @@ Secure Boot 会拦截没有进入固件签名数据库的引导程序。关闭�
 
 ## 从 Windows 腾出空间
 
-再次确认 BitLocker 已经关闭。然后在任务栏搜索磁盘管理，打开以后找到 Windows 所在的磁盘。
+再次确认 BitLocker 已经关闭。然后在任务栏搜索“磁盘管理”，打开以后找到 Windows 所在的磁盘。
 
-右键 C 盘，选择压缩卷。等待系统查询可以压缩的空间，再输入要给 Linux 的大小。试装可以分配 `51200` MB，日常使用建议 `102400` MB，准备长期作为主力系统时可以给 `204800` MB 或更多。
+右键 C 盘，选择“压缩卷”。等待系统查询可以压缩的空间，再输入要给 Linux 的大小：试装可以分配 `51200` MB，日常使用建议 `102400` MB，准备长期作为主力系统时可以给 `204800` MB 或更多。
 
-压缩完成后，磁盘管理里会出现一块标记为未分配的空间。不要格式化，也不要新建卷。安装程序会在这块空间里创建 Linux 分区。
+压缩完成后，磁盘管理里会出现一块标记为“未分配”的空间。**不要格式化，也不要新建卷**，安装程序会在这块空间里创建 Linux 分区。
 
 ## 进入 Live 环境
 
@@ -88,9 +87,7 @@ Secure Boot 会拦截没有进入固件签名数据库的引导程序。关闭�
 
 进入 CachyOS 启动菜单后，选择桌面 Live 环境。等待一两分钟进入桌面。此时系统仍然运行在 U 盘上，硬盘里的 Windows 没有被修改。
 
-第一次联网需要手动完成。没有网络，OpenCode 无法连接模型。
-
-有线网络插上网线后通常会自动获取地址。Wi-Fi 可以点击桌面右下角的网络图标，也可以打开终端执行下面的命令。
+第一次联网需要手动完成。没有网络，OpenCode 无法连接模型。有线网络插上网线后通常会自动获取地址；Wi-Fi 可以点击桌面右下角的网络图标，也可以打开终端执行下面的命令。
 
 ```bash
 nmcli device wifi list
@@ -134,7 +131,7 @@ show me disk partition layout
 
 ## 让 OpenCode 协助安装 CachyOS
 
-现在的目标是在未分配空间里安装 CachyOS，并保留 Windows 的 EFI 分区。把下面这段提示词交给 OpenCode，尖括号内容换成自己的信息。
+现在的目标，是在未分配空间里安装 CachyOS，并保留 Windows 的 EFI 分区。把下面这段提示词交给 OpenCode，尖括号内容换成自己的信息。
 
 ```text
 I want to install CachyOS alongside Windows 11 (dual boot). Do it step by step:
@@ -160,9 +157,9 @@ I want to install CachyOS alongside Windows 11 (dual boot). Do it step by step:
 Always confirm with me before making important decisions.
 ```
 
-重要分区会被再次确认。格式化错误分区会直接破坏 Windows，因此不要在 OpenCode 要求确认时随手回答。先看设备名和分区大小，再决定是否继续。
+重要分区会被再次确认。格式化错误分区会直接破坏 Windows，因此不要在 OpenCode 要求确认时随手回答“yes”——先看设备名和分区大小，再决定是否继续。
 
-如果一次提示太长，可以拆成几步。每一步只处理一个目标，检查结果后再继续。
+如果一次提示太长，可以拆成几步，每一步只处理一个目标，检查结果后再继续。
 
 ```text
 show me disk layout with lsblk -f
@@ -230,7 +227,7 @@ TTY 不依赖图形会话。Wayland 或 Xorg 崩溃时，它仍然可以用来�
 
 ## 安装 DMS 和 Niri
 
-进入 CachyOS 后先连接网络。可以继续使用 `nmcli`。确认网络可用后再安装桌面环境，否则脚本下载软件时会中断。
+进入 CachyOS 后先连接网络，可以继续使用 `nmcli`。确认网络可用后再安装桌面环境，否则脚本下载软件时会中断。
 
 下面是一键安装脚本。
 
@@ -238,7 +235,7 @@ TTY 不依赖图形会话。Wayland 或 Xorg 崩溃时，它仍然可以用来�
 curl -L shorin.xyz/archsetup | bash
 ```
 
-脚本会先询问软件源。国内网络可以优先选择 Gitee。随后用方向键选择 `Shorin_DMS_Niri`，等待安装完成。
+脚本会先询问软件源，国内网络可以优先选择 Gitee。随后用方向键选择 `Shorin_DMS_Niri`，等待安装完成。
 
 安装过程通常需要二十到四十分钟。脚本会处理下面这些事情。
 
