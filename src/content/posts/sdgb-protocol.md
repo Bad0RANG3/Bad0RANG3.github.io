@@ -499,6 +499,107 @@ versionCode = major * 1000000 + minor * 1000 + patch
 
 这些列表的存在，说明服务端把“解锁状态”也当作存档的一部分存储，而不是每次单独调用“解锁接口”。这也是为什么存档回写必须是完整快照。
 
+### 9.8 收藏品：把道具写进 `userItemList`
+
+游戏里没有单独的“领取收藏品”接口。获得一个姓名框 / 称号 / 头像 / 搭档 / 背景板 / 功能票，本质上就是往存档快照的 `userItemList` 里**多写一行道具**，再整包回写。类别由 `itemKind` 区分：
+
+| `itemKind` | 类别 |
+| --- | --- |
+| 1 | 姓名框 |
+| 2 | 称号 |
+| 3 | 头像 |
+| 10 | 搭档（Partner） |
+| 11 | 背景板 |
+| 12 | 功能票 |
+| 5 / 6 / 7 | 歌曲 / Master / Re:Master（与收藏品共用同一张表） |
+
+每一行的结构固定为：
+
+```json
+{
+  "itemKind": 3,
+  "itemId": 250103,
+  "stock": 1,
+  "isValid": true
+}
+```
+
+- `itemKind`：上面的类别编号。
+- `itemId`：该类别下的条目 ID（如头像 ID、称号 ID）。
+- `stock`：持有数量，领取场景固定 `1`。
+- `isValid`：该行是否生效。
+
+和 `userItemList` 成对出现的是 `isNewItemList`：它是一个**按行数生成的标志串**，一行一个字符。要 N 行道具，就拼 N 个 `"1"`：
+
+```text
+userItemList  = [行1, 行2, ..., 行N]
+isNewItemList = "111...1"   // 长度 = N
+```
+
+这个标志决定游戏里是否把它们当成“新获得”的东西展示。长度和行数对不上时，可能出现“拿到了但没有 NEW 提示”，或直接被服务端判为结构不合法。
+
+放进完整的 `UpsertUserAllApi` 请求体里，关键部分大致是这样：
+
+```json
+{
+  "userId": 123456,
+  "playlogId": 987654,
+  "isEventMode": false,
+  "isFreePlay": false,
+  "loginDateTime": 1700000600,
+  "userPlaylogList": [ "一条 userPlaylog" ],
+  "upsertUserAll": {
+    "userData": [ "清洗后的 userData" ],
+    "userExtend": [ "..." ],
+    "userOption": [ "..." ],
+    "userCharacterList": [],
+    "userMapList": [],
+    "userRatingList": [ "..." ],
+    "userItemList": [
+      { "itemKind": 3, "itemId": 250103, "stock": 1, "isValid": true }
+    ],
+    "userMusicDetailList": [ "占位的一条 musicDetail" ],
+    "userChargeList": [ "..." ],
+    "userActivityList": [ "..." ],
+    "userMissionDataList": [ "..." ],
+    "userWeeklyData": { "lastLoginWeek": "..." },
+    "userGamePlaylogList": [ "一条 session 记录" ],
+    "user2pPlaylog": { "...": "..." },
+    "isNewItemList": "1",
+    "isNewMusicDetailList": "0",
+    "isNewCharacterList": "",
+    "isNewMapList": "",
+    "isNewLoginBonusList": "",
+    "isNewCourseList": "",
+    "isNewFavoriteList": ""
+  }
+}
+```
+
+想一次发多个收藏品，就往 `userItemList` 里追加多行，并把 `isNewItemList` 同步拼成等长字符串。同一对 `(itemKind, itemId)` 建议去重，重复行没有意义。
+
+一次完整的操作顺序是：
+
+```text
+1. 确保处于登录会话（有 loginId / loginDateTime / JSESSIONID）
+2. GetData × 7，把所有存档拉齐
+3. 按 9.3~9.5 节清洗 userData / userOption / userRating / userChargeList / mission 等
+4. 组装 UpsertUserAllApi 报文：userPlaylogList + upsertUserAll
+5. 把目标收藏品写成 userItemList 行，并按行数生成 isNewItemList
+6. POST 到 UpsertUserAllApi
+   （路径 = MD5("UpsertUserAllApiMaimaiChn" + obfuscateParam)）
+7. 视需要发 UserLogoutApi 结束会话
+```
+
+几个容易踩的点：
+
+- **必须整包发**。`userItemList` 不能单独成一个请求，它只是快照里的一块；缺了其它列表，服务器很可能把整包丢掉。
+- **`userItemList` 里可以混放不同类别**。客户端本就是先把姓名框 / 称号 / 头像 / 搭档 / 背景板 / 功能票，以及歌曲解锁的 5/6/7 拼成一张表再发的，所以“收藏品”和“解锁”共用同一段结构，只是 `itemKind` 不同。
+- **`isNewMusicDetailList` 默认 `"0"`**，只有这一次真的带了新的 `userMusicDetailList` 时才置 `"1"`；只发收藏品时保持 `"0"`。
+- **静默失败**：这类回写通常没有明确错误码。发完最好重新 `GetData` 核对，而不是只看 HTTP 200。
+
+> 边界：向线上账号写入自己并未合法获得的收藏品，属于作弊，可能违反服务器规则并破坏账号数据。上面只是协议结构说明，请只在你合法拥有、且有权改动的账号与环境里操作。
+
 ---
 
 ## 10. 票券：UpsertUserChargelogApi
