@@ -133,6 +133,8 @@ export const SITE = {
   THEME_STORAGE_KEY: 'b0-theme',
   /** Written by article pages, read by series pages. */
   READING_HISTORY_STORAGE_KEY: 'b0-reading-history',
+  /** Written by the article bookmark button, read by the explore page. */
+  BOOKMARKS_STORAGE_KEY: 'b0-bookmarks',
 } as const;
 
 /**

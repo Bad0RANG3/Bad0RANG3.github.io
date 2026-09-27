@@ -6,10 +6,13 @@ import TagList from '../../components/blog/TagList.astro';
 import ArticleTools from '../../components/blog/ArticleTools.astro';
 import ArticleEnhancements from '../../components/blog/ArticleEnhancements.astro';
 import Comments from '../../components/blog/Comments.astro';
+import PostCard from '../../components/blog/PostCard.astro';
 import { STAGGER } from '../../config/ui';
 import { postPath } from '../../config/routes';
 import { getPublishedPosts, getPostReadingMinutes, getPostWordCount } from '../../lib/content';
 import { formatDate } from '../../lib/date';
+import { getPublicImageSize } from '../../lib/images';
+import { isOgAvailable, ogImagePath } from '../../lib/og';
 import type { MarkdownHeading } from 'astro';
 
 export async function getStaticPaths() {
@@ -25,17 +28,33 @@ export async function getStaticPaths() {
           .filter((item) => item.data.series === post.data.series)
           .sort((a, b) => (a.data.seriesOrder ?? 999) - (b.data.seriesOrder ?? 999))
         : [],
+      // Up to three posts ranked by shared tags (plus a small bonus for the same
+      // category). Series siblings already have their own navigation block.
+      related: posts
+        .filter((item) => item.slug !== post.slug && !(post.data.series && item.data.series === post.data.series))
+        .map((item) => ({
+          item,
+          score: item.data.tags.filter((tag) => post.data.tags.includes(tag)).length * 2
+            + (post.data.category && item.data.category === post.data.category ? 1 : 0),
+        }))
+        .filter(({ score }) => score > 0)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 3)
+        .map(({ item }) => item),
     },
   }));
 }
 
-const { post, previous, next, seriesPosts } = Astro.props;
+const { post, previous, next, seriesPosts, related } = Astro.props;
 const rendered = await post.render();
 const { Content, headings: renderedHeadings } = rendered;
 const readingMinutes = getPostReadingMinutes(post);
 const wordCount = getPostWordCount(post);
 const headings = (renderedHeadings ?? []).filter((heading: MarkdownHeading) => heading.depth >= 2 && heading.depth <= 3);
 const seriesIndex = seriesPosts.findIndex((item) => item.slug === post.slug);
+const coverSize = getPublicImageSize(post.data.cover);
+// Posts without a cover share a generated title card when one was built.
+const shareImage = post.data.cover ?? (await isOgAvailable() ? ogImagePath(post.slug) : undefined);
 const seriesPrevious = seriesIndex > 0 ? seriesPosts[seriesIndex - 1] : undefined;
 const seriesNext = seriesIndex >= 0 ? seriesPosts[seriesIndex + 1] : undefined;
 ---
@@ -43,7 +62,7 @@ const seriesNext = seriesIndex >= 0 ? seriesPosts[seriesIndex + 1] : undefined;
 <BaseLayout
   title={post.data.title}
   description={post.data.description}
-  ogImage={post.data.cover}
+  ogImage={shareImage}
   type="article"
   publishedTime={post.data.date.toISOString()}
   modifiedTime={post.data.updatedDate?.toISOString()}
@@ -90,7 +109,7 @@ const seriesNext = seriesIndex >= 0 ? seriesPosts[seriesIndex + 1] : undefined;
       <div class="mt-8 h-1.5 w-full bg-gradient-to-r from-primary via-secondary to-accent"></div>
     </header>
 
-    {post.data.cover && <img src={withBase(post.data.cover)} alt={post.data.coverAlt ?? post.data.title} class="reveal mb-10 w-full rounded-[1.5rem] object-cover shadow-punch" style={`--reveal-delay:${STAGGER.POST_COVER}ms`} fetchpriority="high" decoding="async" />}
+    {post.data.cover && <img src={withBase(post.data.cover)} alt={post.data.coverAlt ?? post.data.title} width={coverSize?.width} height={coverSize?.height} class="reveal mb-10 h-auto w-full rounded-[1.5rem] object-cover shadow-punch" style={`--reveal-delay:${STAGGER.POST_COVER}ms`} fetchpriority="high" decoding="async" />}
 
     <div class:list={['article-layout', headings.length > 0 && 'has-toc']}>
       {headings.length > 0 && (
@@ -120,6 +139,13 @@ const seriesNext = seriesIndex >= 0 ? seriesPosts[seriesIndex + 1] : undefined;
           {seriesPrevious ? <a href={withBase(postPath(seriesPrevious.slug))} class="text-sm font-bold text-base-content/65 hover:text-primary">← 上一篇：{seriesPrevious.data.title}</a> : <span class="text-sm text-base-content/40">已经是系列第一篇</span>}
           {seriesNext ? <a href={withBase(postPath(seriesNext.slug))} class="text-sm font-bold text-base-content/65 hover:text-primary sm:text-right">下一篇：{seriesNext.data.title} →</a> : <span class="text-sm text-base-content/40 sm:text-right">已经是系列最后一篇</span>}
         </div>
+      </section>
+    )}
+
+    {related.length > 0 && (
+      <section class="mt-12" aria-labelledby="related-title">
+        <h2 id="related-title" class="mb-5 text-xl font-black">相关文章</h2>
+        <div class="grid gap-5 md:grid-cols-3">{related.map((item) => <PostCard post={item} />)}</div>
       </section>
     )}
 

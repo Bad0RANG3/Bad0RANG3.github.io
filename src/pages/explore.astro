@@ -8,7 +8,9 @@ import { postPath, ROUTES } from '../config/routes';
 
 const posts = await getPublishedPosts();
 const featured = (await getFeaturedPosts()).slice(0, 3);
-const randomPool = posts.map((post) => ({ url: withBase(postPath(post.slug)) }));
+// slug → title/url for the local shelf and the random button. Only published
+// posts are listed, so stale bookmarks for removed posts are simply skipped.
+const postIndex = Object.fromEntries(posts.map((post) => [post.slug, { title: post.data.title, url: withBase(postPath(post.slug)) }]));
 const browseLinks = [
   [ROUTES.POSTS, '全部文章'],
   [ROUTES.ARCHIVE, '归档'],
@@ -20,8 +22,28 @@ const browseLinks = [
 ---
 
 <BaseLayout title="探索" description="从精选和最近更新的文章开始浏览。">
-  <div class="site-frame py-5 sm:py-8">
+  <div class="site-frame py-5 sm:py-8" data-explore data-post-index={JSON.stringify(postIndex)}>
     <PageHeader label="探索" title="探索" description="从精选和最近更新的文章开始浏览。" />
+
+    <section class="mb-12" aria-labelledby="shelf-title" data-shelf hidden>
+      <div class="mb-5 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 id="shelf-title" class="text-xl font-black sm:text-2xl">我的书架</h2>
+          <p class="mt-1 text-xs text-base-content/50">收藏和阅读进度只保存在当前浏览器。</p>
+        </div>
+        <button type="button" class="btn-brutal-outline w-auto text-sm" data-shelf-clear>清除本地记录</button>
+      </div>
+      <div class="grid gap-5 md:grid-cols-2">
+        <div data-shelf-group="history" hidden>
+          <p class="eyebrow mb-3">继续阅读</p>
+          <ul class="space-y-2" data-shelf-list="history"></ul>
+        </div>
+        <div data-shelf-group="bookmarks" hidden>
+          <p class="eyebrow mb-3">收藏</p>
+          <ul class="space-y-2" data-shelf-list="bookmarks"></ul>
+        </div>
+      </div>
+    </section>
 
     {featured.length > 0 && (
       <section aria-labelledby="featured-title">
@@ -47,15 +69,83 @@ const browseLinks = [
   </div>
 </BaseLayout>
 
-<script is:inline data-astro-rerun define:vars={{ randomPool }}>
-  const randomButton = document.getElementById('random-post');
-  randomButton?.addEventListener('click', () => {
-    if (!randomPool.length) return;
-    const anchor = document.createElement('a');
-    anchor.href = randomPool[Math.floor(Math.random() * randomPool.length)].url;
-    anchor.hidden = true;
-    document.body.append(anchor);
-    anchor.click();
-    anchor.remove();
-  });
+<script>
+  import { navigate } from 'astro:transitions/client';
+  import { SITE } from '../config/site';
+
+  type PostIndex = Record<string, { title: string; url: string }>;
+  type HistoryEntry = { slug: string; progress?: number; completed?: boolean };
+
+  const readJson = (key: string): unknown => {
+    try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch { return []; }
+  };
+
+  const renderItem = (post: { title: string; url: string }, meta: string) => {
+    const item = document.createElement('li');
+    const link = document.createElement('a');
+    link.href = post.url;
+    link.className = 'hard-card flex items-center justify-between gap-3 rounded-2xl px-4 py-3 text-sm font-bold';
+    const title = document.createElement('span');
+    title.className = 'min-w-0 truncate';
+    title.textContent = post.title;
+    link.append(title);
+    if (meta) {
+      const badge = document.createElement('span');
+      badge.className = 'chip-signal shrink-0';
+      badge.textContent = meta;
+      link.append(badge);
+    }
+    item.append(link);
+    return item;
+  };
+
+  const renderShelf = (root: HTMLElement, index: PostIndex) => {
+    const shelf = root.querySelector<HTMLElement>('[data-shelf]');
+    if (!shelf) return;
+    const history = readJson(SITE.READING_HISTORY_STORAGE_KEY);
+    const bookmarks = readJson(SITE.BOOKMARKS_STORAGE_KEY);
+    const inProgress = (Array.isArray(history) ? history : [])
+      .filter((entry): entry is HistoryEntry => typeof entry?.slug === 'string' && Boolean(index[entry.slug]))
+      .slice(0, 6);
+    const saved = (Array.isArray(bookmarks) ? bookmarks : [])
+      .filter((slug): slug is string => typeof slug === 'string' && Boolean(index[slug]))
+      .reverse();
+
+    const fill = (name: string, items: HTMLLIElement[]) => {
+      const group = root.querySelector<HTMLElement>(`[data-shelf-group="${name}"]`);
+      const list = root.querySelector(`[data-shelf-list="${name}"]`);
+      if (!group || !list) return;
+      list.replaceChildren(...items);
+      group.hidden = items.length === 0;
+    };
+    fill('history', inProgress.map((entry) => renderItem(index[entry.slug], entry.completed ? '已读完' : `${Math.round((entry.progress ?? 0) * 100)}%`)));
+    fill('bookmarks', saved.map((slug) => renderItem(index[slug], '')));
+    shelf.hidden = inProgress.length === 0 && saved.length === 0;
+  };
+
+  const initExplore = () => {
+    const root = document.querySelector<HTMLElement>('[data-explore]');
+    if (!root || root.dataset.bound === '1') return;
+    root.dataset.bound = '1';
+    let index: PostIndex = {};
+    try { index = JSON.parse(root.dataset.postIndex || '{}'); } catch {}
+
+    renderShelf(root, index);
+    root.querySelector('[data-shelf-clear]')?.addEventListener('click', () => {
+      if (!window.confirm('清除本浏览器里的收藏和阅读进度？此操作无法撤销。')) return;
+      try {
+        localStorage.removeItem(SITE.READING_HISTORY_STORAGE_KEY);
+        localStorage.removeItem(SITE.BOOKMARKS_STORAGE_KEY);
+      } catch {}
+      renderShelf(root, index);
+    });
+
+    const urls = Object.values(index).map((post) => post.url);
+    root.querySelector('#random-post')?.addEventListener('click', () => {
+      if (urls.length) void navigate(urls[Math.floor(Math.random() * urls.length)]);
+    });
+  };
+
+  document.addEventListener('astro:page-load', initExplore);
+  initExplore();
 </script>

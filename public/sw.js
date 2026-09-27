@@ -49,10 +49,23 @@ const isPageRequest = (request) => {
   return !/\.[a-z\d]+$/i.test(pathname);
 };
 
+// Hashed bundles from older deploys are never requested again, so without a
+// cap the runtime cache only ever grows. Keys come back in insertion order,
+// which makes trimming from the front a cheap "oldest first" eviction.
+const RUNTIME_CACHE_LIMIT = 120;
+const trimRuntimeCache = async () => {
+  const cache = await caches.open(RUNTIME_CACHE);
+  const keys = await cache.keys();
+  await Promise.all(keys.slice(0, Math.max(0, keys.length - RUNTIME_CACHE_LIMIT)).map((key) => cache.delete(key)));
+};
+
 const stash = (request, response) => {
   if (!isCacheableResponse(response)) return response;
   const copy = response.clone();
-  caches.open(RUNTIME_CACHE).then((cache) => cache.put(request, copy)).catch(() => {});
+  caches.open(RUNTIME_CACHE)
+    .then((cache) => cache.put(request, copy))
+    .then(trimRuntimeCache)
+    .catch(() => {});
   return response;
 };
 

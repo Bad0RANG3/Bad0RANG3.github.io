@@ -1,9 +1,11 @@
+import { SITE } from '../config/site';
+
 const initArticleTools = () => {
   document.querySelectorAll<HTMLElement>('[data-article-tools]').forEach((root) => {
     if (root.dataset.bound === '1') return;
     root.dataset.bound = '1';
     const slug = root.dataset.slug || '';
-    const key = 'b0-bookmarks';
+    const key = SITE.BOOKMARKS_STORAGE_KEY;
     const read = (): string[] => {
       try {
         const value = JSON.parse(localStorage.getItem(key) || '[]');

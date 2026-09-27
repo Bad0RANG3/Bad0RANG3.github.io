@@ -2,6 +2,7 @@ import { defineConfig } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
 import tailwindcss from '@tailwindcss/vite';
 import remarkWithBase from './plugins/remark-with-base.mjs';
+import rehypeWrapTables from './plugins/rehype-wrap-tables.mjs';
 
 const base = process.env.BASE_PATH || '/';
 
@@ -12,6 +13,7 @@ export default defineConfig({
   output: 'static',
   markdown: {
     remarkPlugins: [[remarkWithBase, { base }]],
+    rehypePlugins: [rehypeWrapTables],
   },
   integrations: [sitemap({ filter: (page) => !page.includes('/about-alt') })],
   // With ClientRouter, prefetch same-origin links on hover/tap so navigation
