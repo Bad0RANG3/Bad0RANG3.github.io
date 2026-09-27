@@ -1,25 +1,9 @@
 // @ts-nocheck
 // Progressive chrome that has to survive ClientRouter navigations: the
-// back-to-top control, the navigation drawer and responsive table wrapping.
-// Page transitions themselves are handled by <ClientRouter />, so there is
-// no custom enter/leave animation to run here.
+// back-to-top control and the navigation drawer. Article tables are wrapped
+// at build time by plugins/rehype-wrap-tables.mjs. Page transitions
+// themselves are handled by <ClientRouter />.
 import { LAYOUT } from '../config/ui';
-
-/* Keep article tables readable on narrow screens without widening the page. */
-const wrapTables = () => {
-  document.querySelectorAll('.prose table').forEach((table) => {
-    if (table.parentElement?.classList.contains('table-wrapper')) return;
-    const wrapper = document.createElement('div');
-    wrapper.className = 'table-wrapper';
-    table.parentNode.insertBefore(wrapper, table);
-    wrapper.appendChild(table);
-  });
-};
-
-const init = () => wrapTables();
-
-document.addEventListener('astro:page-load', init);
-init();
 
 /* Navigation drawer (MobileDrawer.astro). The dialog is replaced on every
    navigation, so everything is delegated from document and bound once. */

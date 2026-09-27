@@ -73,6 +73,37 @@ const initArticleEnhancements = () => {
   window.addEventListener('pagehide', flushHistory);
   scheduleProgressUpdate();
 
+  // Offer to jump back when the reader left this post part-way through. Read
+  // before any new history is written, and never when a #fragment already
+  // decided where the page should be.
+  let resumeButton: HTMLButtonElement | null = null;
+  let resumeTimer = 0;
+  const dismissResume = () => {
+    window.clearTimeout(resumeTimer);
+    resumeButton?.remove();
+    resumeButton = null;
+  };
+  try {
+    const saved = JSON.parse(localStorage.getItem(historyKey) || '[]');
+    const entry = Array.isArray(saved) ? saved.find((item) => item?.slug === slug) : undefined;
+    const previous = Number(entry?.progress);
+    if (slug && !window.location.hash && window.scrollY < 80 && !entry?.completed && previous > 0.08 && previous < 0.95) {
+      lastStoredProgress = previous;
+      resumeButton = document.createElement('button');
+      resumeButton.type = 'button';
+      resumeButton.className = 'btn-brutal fixed bottom-6 left-1/2 z-50 -translate-x-1/2 shadow-lg';
+      resumeButton.textContent = `继续上次阅读（${Math.round(previous * 100)}%）`;
+      resumeButton.addEventListener('click', () => {
+        const max = document.documentElement.scrollHeight - window.innerHeight;
+        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        window.scrollTo({ top: Math.max(0, max * previous), behavior: reduceMotion ? 'auto' : 'smooth' });
+        dismissResume();
+      });
+      document.body.append(resumeButton);
+      resumeTimer = window.setTimeout(dismissResume, 9000);
+    }
+  } catch {}
+
   article.querySelectorAll('pre').forEach((pre) => {
     if (pre.closest('[data-code-block]')) return;
     const block = document.createElement('div');
@@ -151,6 +182,7 @@ const initArticleEnhancements = () => {
     window.removeEventListener('resize', scheduleProgressUpdate);
     window.removeEventListener('pagehide', flushHistory);
     if (frame) window.cancelAnimationFrame(frame);
+    dismissResume();
     flushHistory();
     observer?.disconnect();
   };

@@ -228,12 +228,21 @@ import '../../styles/tools/switch-your-cfg.css';
   <div class="scfg-key-tooltip" id="keyTooltip"></div>
 </BaseLayout>
 
-<script is:inline data-astro-rerun>
+<script>
 // @ts-nocheck
 /* ============================================================
-   SwitchYourCFG — Application Logic (optimized)
+   SwitchYourCFG — Application Logic
+   Bundled (not inline) so it is cached across visits. ClientRouter swaps in
+   fresh markup on every visit, so the app is initialised per page load, and
+   its window listeners are tied to an AbortController that fires when the
+   visitor leaves — otherwise key presses on other pages kept driving it.
    ============================================================ */
-;(function(){
+function initSwitchYourCfg(){
+var _root=document.getElementById('kbdWrap');
+if(!_root||_root.dataset.bound==='1')return;
+_root.dataset.bound='1';
+var _page=new AbortController();
+document.addEventListener('astro:before-swap',function(){_page.abort();},{once:true});
 var $=function(s){return document.querySelector(s);};
 var $$=function(s){return document.querySelectorAll(s);};
 
@@ -508,6 +517,7 @@ function updateUI(){
 }
 
 function doUpdateUI(){
+  if(_page.signal.aborted)return;
   var ha=!!(S.machine||S.user||S.keys);
   $('#optionsCard').classList.toggle('hidden',!ha);$('#buyCard').classList.toggle('hidden',!ha);$('#outputCard').classList.toggle('hidden',!ha);
   if(!ha){$('#statsBar').classList.add('hidden');$('#pvPre').innerHTML='<span class="scfg-pv-m">// 等待选择文件夹...</span>';$('#btnDownload').disabled=true;$('#btnCopy').disabled=true;updateKeyboardScale();return;}
@@ -530,7 +540,7 @@ if(dz&&fin){
   dz.addEventListener('drop',function(e){e.preventDefault();e.stopPropagation();dz.classList.remove('active');var items=e.dataTransfer.items;if(!items)return;var files=[];
     function tr(it){if(it.kind!=='file')return Promise.resolve();var en=it.webkitGetAsEntry?it.webkitGetAsEntry():null;if(en&&en.isDirectory){return rd(en,files);}else{files.push(it.getAsFile());return Promise.resolve();}}
     function rd(en,out){return new Promise(function(rs){var r=en.createReader(),es=[];
-      function rb(){r.readEntries(function(b){if(b.length===0){var ps=[];for(var i=0;i<es.length;i++){(function(e){if(e.isFile)ps.push(new Promise(function(rr){e.file(rr);}));else if(e.isDirectory)ps.push(rd(e,out));})(es[i]);}Promise.all(ps).then(rs);return;}es.push.apply(es,b);rb();});}rb();});}
+      function rb(){r.readEntries(function(b){if(b.length===0){var ps=[];for(var i=0;i<es.length;i++){(function(e){if(e.isFile)ps.push(new Promise(function(rr){e.file(function(f){out.push(f);rr();},function(){rr();});}));else if(e.isDirectory)ps.push(rd(e,out));})(es[i]);}Promise.all(ps).then(rs);return;}es.push.apply(es,b);rb();},function(){rs();});}rb();});}
     var ps=[];for(var i=0;i<items.length;i++)ps.push(tr(items[i]));Promise.all(ps).then(function(){if(files.length>0){loadFiles(files);dz.classList.add('ready');}});});
 }
 
@@ -561,7 +571,7 @@ window.addEventListener('keydown',function(e){
   for(var i=0;i<all.length;i++){if(all[i].dataset.key===k){target=all[i];break;}}
   if(!target||target.classList.contains('disabled'))return;
   chooseKey(k);target.classList.add('physical-press');setTimeout(function(){target.classList.remove('physical-press');},140);
-});
+},{signal:_page.signal});
 var bc=$('#buyCats');
 if(bc){bc.addEventListener('click',function(e){var c=e.target.closest('.scfg-buy-cat');if(!c)return;_bc=c.dataset.cat;renderBuyItems();});}
 var bg=$('#buyGrid');
@@ -596,9 +606,11 @@ if(br){br.addEventListener('click',function(){
 });}
 
 /* Throttled resize via requestAnimationFrame */
-window.addEventListener('resize',scheduleResize);
+window.addEventListener('resize',scheduleResize,{signal:_page.signal});
 
 /* Initial render */
 renderKeyboard();renderBuyItems();renderSavedBinds();updateKeyboardScale();
-})();
+}
+document.addEventListener('astro:page-load',initSwitchYourCfg);
+initSwitchYourCfg();
 </script>

@@ -39,7 +39,7 @@ Astro 5 静态站点（`output: 'static'`），Tailwind CSS 4（通过 `@tailwin
     │   ├── icons/               Icon.astro / RailIcon.astro（图标入口）
     │   ├── layout/              SiteHeader、SiteFooter、MobileDrawer
     │   ├── profile/             ProfileOverviewCard、ProjectCard
-    │   ├── search/              SearchModal（自带索引加载与筛选逻辑）
+    │   ├── search/              SearchModal（只含对话框标记，逻辑在 scripts/search.ts）
     │   └── ui/                  ContentCard、EmptyState、PageHeader、SectionHeader
     ├── config/                 站点静态数据，一个模块一个关注点
     │   ├── routes.ts             ROUTES —— 全部内部 URL 的唯一来源
@@ -55,7 +55,8 @@ Astro 5 静态站点（`output: 'static'`），Tailwind CSS 4（通过 `@tailwin
     │   ├── theme.ts              主题控制器（首屏由 BaseLayout 内联小脚本兜底）
     │   ├── atmosphere.ts         樱花背景（精灵缓存 + 约 30fps，滚动时持续播放）
     │   ├── player.ts             动态岛音乐播放器
-    │   ├── site.ts               表格包裹 / 回到顶部
+    │   ├── search.ts             站内搜索（首次打开时才由 bootstrap.ts 按需加载）
+    │   ├── site.ts               表格包裹 / 回到顶部 / 导航抽屉
     │   └── service-worker.ts     注册 Service Worker
     ├── lib/                    运行时工具，只放这一层
     │   ├── content.ts            集合读取（posts / thoughts）+ 单篇统计
