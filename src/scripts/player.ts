@@ -31,6 +31,9 @@ export {};
     let closeTimer = 0;
     let cueTimer = 0;
     let cueCleanup = () => {};
+    // Set while we programmatically move focus back to the pill, so the
+    // island's own `focusin` handler does not immediately re-open it.
+    let restoringFocus = false;
     let isResolving = false;
     let lyricTimeline = [];
     let lastLyricText = '';
@@ -78,6 +81,102 @@ export {};
           bar.style.setProperty('--visualizer-opacity', '0.44');
         });
       });
+    };
+
+    /* ------------------------------------------------------------------
+       Visualiser colour: take it from the album cover itself.
+
+       The bars are drawn on pure black, so a colour sampled verbatim from the
+       artwork is often too dark to see. Sample the cover once into a 24x24
+       canvas, score every pixel for "would this read as a colour on black"
+       (saturation, mid lightness), then re-anchor the winner's HSL to a vivid,
+       mid-light value. One `--island-wave` custom property drives every bar, so
+       this is the whole theming hook.
+
+       Wrapped in try/catch on purpose: a tainted canvas (cross-origin artwork),
+       a decode failure or a missing element must all degrade to the default
+       white rather than break the player.
+       ------------------------------------------------------------------ */
+    const rgbToHsl = (r: number, g: number, b: number) => {
+      const maximum = Math.max(r, g, b);
+      const minimum = Math.min(r, g, b);
+      const l = (maximum + minimum) / 2;
+      if (maximum === minimum) return { h: 0, s: 0, l };
+      const d = maximum - minimum;
+      const s = l > 0.5 ? d / (2 - maximum - minimum) : d / (maximum + minimum);
+      let h: number;
+      if (maximum === r) h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
+      else if (maximum === g) h = ((b - r) / d + 2) / 6;
+      else h = ((r - g) / d + 4) / 6;
+      return { h, s, l };
+    };
+
+    const hslToRgb = (h: number, s: number, l: number) => {
+      if (s === 0) {
+        const v = Math.round(l * 255);
+        return [v, v, v];
+      }
+      const hue2rgb = (p: number, q: number, t: number) => {
+        let tt = t;
+        if (tt < 0) tt += 1;
+        if (tt > 1) tt -= 1;
+        if (tt < 1 / 6) return p + (q - p) * 6 * tt;
+        if (tt < 1 / 2) return q;
+        if (tt < 2 / 3) return p + (q - p) * (2 / 3 - tt) * 6;
+        return p;
+      };
+      const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+      const p = 2 * l - q;
+      return [
+        Math.round(hue2rgb(p, q, h + 1 / 3) * 255),
+        Math.round(hue2rgb(p, q, h) * 255),
+        Math.round(hue2rgb(p, q, h - 1 / 3) * 255),
+      ];
+    };
+
+    const applyCoverAccent = async () => {
+      const art = island.querySelector('.island-player-art');
+      if (!(art instanceof HTMLImageElement)) return;
+      try {
+        if (!art.complete) {
+          await new Promise<void>((resolve) => {
+            art.addEventListener('load', () => resolve(), { once: true });
+            art.addEventListener('error', () => resolve(), { once: true });
+          });
+        }
+        const size = 24;
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const context = canvas.getContext('2d', { willReadFrequently: true });
+        if (!context) return;
+        context.drawImage(art, 0, 0, size, size);
+        const { data } = context.getImageData(0, 0, size, size);
+        let bestHsl: { h: number; s: number; l: number } | null = null;
+        let bestScore = 0;
+        for (let index = 0; index < data.length; index += 4) {
+          if (data[index + 3] < 200) continue;
+          const hsl = rgbToHsl(data[index] / 255, data[index + 1] / 255, data[index + 2] / 255);
+          // Ignore near-black, near-white and near-grey pixels: they carry no hue.
+          if (hsl.l < 0.14 || hsl.l > 0.9 || hsl.s < 0.18) continue;
+          const score = hsl.s * (1 - Math.abs(hsl.l - 0.55));
+          if (score > bestScore) {
+            bestScore = score;
+            bestHsl = hsl;
+          }
+        }
+        if (!bestHsl || bestScore < 0.08) return;
+        // Re-anchor to a value that is legible on black but still recognisably
+        // the artwork's hue: clamp saturation up, pin lightness to a mid tone.
+        const s = Math.min(0.92, Math.max(0.55, bestHsl.s * 1.3));
+        const l = Math.min(0.72, Math.max(0.56, bestHsl.l));
+        const [r, g, b] = hslToRgb(bestHsl.h, s, l);
+        const hex = `#${[r, g, b].map((v) => v.toString(16).padStart(2, '0')).join('')}`;
+        island.style.setProperty('--island-wave', hex);
+        island.dataset.accent = hex;
+      } catch {
+        // Tainted canvas / decode failure: keep the default white bars.
+      }
     };
 
     const renderAudioVisualizer = () => {
@@ -214,12 +313,26 @@ export {};
       updateLyric();
     };
 
+    // The island's visualiser is a claim about what you can hear, so the CSS
+    // is told which of three honest states it is in:
+    //   live  frames from the analyser (set by the rAF loop itself)
+    //   idle  a source exists but nothing is playing -> static rest bars
+    //   off   no playable source at all -> flat dashes
+    // Only `live` animates. `idle` used to breathe on a 3.6s loop, which read as
+    // "audio is playing" when it was not; the bars now hold still until the
+    // analyser actually has frames.
+    const setVisualizerMode = (mode) => {
+      if (island.dataset.visualizer === mode) return;
+      island.dataset.visualizer = mode;
+    };
+
     const setPlayerState = (state, message) => {
       island.dataset.playerState = state;
       if (status) status.textContent = message;
       const playing = state === 'playing';
       const label = `${playing ? '暂停' : '播放'} ${songTitle}`;
       if (panelPlay instanceof HTMLButtonElement) panelPlay.setAttribute('aria-label', label);
+      setVisualizerMode(playing ? 'live' : (state === 'unavailable' ? 'off' : 'idle'));
     };
 
     const syncVolumeUI = () => {
@@ -236,7 +349,14 @@ export {};
     };
 
     try {
-      const storedVolume = Number(localStorage.getItem('b0-player-volume'));
+      // `localStorage.getItem` returns null when unset, and `Number(null)` is 0 —
+      // which is finite and inside [0, 1], so the old guard let it through and
+      // EVERY first-time visitor started at volume 0: the track "played", the
+      // element volume was 0, the AnalyserNode only ever saw digital silence, and
+      // the visualiser stayed flat forever. Reject null/'' explicitly before
+      // coercing.
+      const rawVolume = localStorage.getItem('b0-player-volume');
+      const storedVolume = rawVolume === null || rawVolume.trim() === '' ? Number.NaN : Number(rawVolume);
       if (Number.isFinite(storedVolume) && storedVolume >= 0 && storedVolume <= 1) audio.volume = storedVolume;
       else audio.volume = 0.72;
       audio.muted = localStorage.getItem('b0-player-muted') === 'true';
@@ -377,17 +497,25 @@ export {};
       if (target && !island.contains(target)) setOpen(false);
     });
     document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape') {
-        if (island.dataset.volumeOpen === 'true') {
-          setVolumeMenuOpen(false);
-          if (volumeButton instanceof HTMLButtonElement) volumeButton.focus({ preventScroll: true });
-          return;
-        }
-        toggle.focus({ preventScroll: true });
-        setOpen(false);
+      if (event.key !== 'Escape') return;
+      if (island.dataset.volumeOpen === 'true') {
+        setVolumeMenuOpen(false);
+        if (volumeButton instanceof HTMLButtonElement) volumeButton.focus({ preventScroll: true });
+        return;
       }
+      if (island.dataset.open !== 'true') return;
+      // Escape returns focus to the pill. `focusin` opens the island, so the
+      // guard has to be set before focus moves and cleared after the current
+      // focus event has been dispatched.
+      restoringFocus = true;
+      toggle.focus({ preventScroll: true });
+      setOpen(false);
+      window.setTimeout(() => { restoringFocus = false; }, 0);
     });
-    island.addEventListener('focusin', () => setOpen(true));
+    island.addEventListener('focusin', () => {
+      if (restoringFocus) return;
+      setOpen(true);
+    });
     island.addEventListener('focusout', (event) => {
       if (!(event.relatedTarget instanceof Node) || !island.contains(event.relatedTarget)) setOpen(false);
     });
@@ -469,6 +597,7 @@ export {};
     else refreshForPage();
 
     void loadLyrics().then(() => updateLyric());
+    void applyCoverAccent();
     updateProgress();
     syncVolumeUI();
     setVisualizerBaseline();

@@ -20,7 +20,8 @@ Astro 5 静态站点（`output: 'static'`），Tailwind CSS 4（通过 `@tailwin
 ```
 ├── astro.config.mjs          站点与构建配置（Tailwind v4 走 Vite 插件）
 ├── plugins/                  构建期插件，只被 astro.config.mjs 消费
-│   └── remark-with-base.mjs    在 Markdown 渲染前改写原始 HTML 里的根相对 URL
+│   ├── remark-with-base.mjs    在 Markdown 渲染前改写原始 HTML 里的根相对 URL
+│   └── rehype-wrap-tables.mjs  给正文表格套一层可横向滚动的容器
 ├── scripts/                  开发与 CI 脚本
 │   ├── lib/                    脚本共享助手（不要在各脚本里重复实现）
 │   │   ├── paths.mjs             rootDir / fromRoot / normalizeBase
@@ -32,6 +33,7 @@ Astro 5 静态站点（`output: 'static'`），Tailwind CSS 4（通过 `@tailwin
 │   ├── new-project.mjs         pnpm new:project
 │   ├── validate-content.mjs    pnpm validate:content
 │   ├── smoke.mjs               pnpm smoke
+│   ├── perf-audit.mjs          pnpm perf:audit（关键路径体积与运行时不变式）
 │   └── dist-fingerprint.mjs    pnpm dist:fingerprint
 └── src/
     ├── components/            全部按域分目录，不往 components/ 根目录放文件
@@ -52,22 +54,32 @@ Astro 5 静态站点（`output: 'static'`），Tailwind CSS 4（通过 `@tailwin
     │   └── thoughts/*.md
     ├── layouts/BaseLayout.astro
     ├── scripts/                浏览器端入口，由 Astro 打包为可缓存模块
+    │   ├── bootstrap.ts          按需加载其余模块的唯一入口
     │   ├── theme.ts              主题控制器（首屏由 BaseLayout 内联小脚本兜底）
     │   ├── atmosphere.ts         樱花背景（精灵缓存 + 约 30fps，滚动时持续播放）
     │   ├── player.ts             动态岛音乐播放器
+    │   ├── home.ts               首页（资料卡、歌词舞台）
     │   ├── search.ts             站内搜索（首次打开时才由 bootstrap.ts 按需加载）
     │   ├── site.ts               表格包裹 / 回到顶部 / 导航抽屉
+    │   ├── article.ts            文章页入口
+    │   ├── article-tools.ts      文章工具条（阅读进度、目录）
+    │   ├── article-enhancements.ts  代码块复制 / 图片灯箱 / 续读按钮
+    │   ├── comments.ts           评论区（IntersectionObserver 懒加载）
     │   └── service-worker.ts     注册 Service Worker
     ├── lib/                    运行时工具，只放这一层
     │   ├── content.ts            集合读取（posts / thoughts）+ 单篇统计
     │   ├── taxonomy.ts           tag / category / series / archive 分组视图
     │   ├── search.ts             搜索文档构建
     │   ├── date.ts               日期格式化
-    │   └── urls.ts               withBase / siteUrl
+    │   ├── urls.ts               withBase / siteUrl
+    │   ├── images.ts             图片元信息（尺寸、占位）
+    │   ├── og.ts                 OG 图生成（satori + resvg）
+    │   └── storage.ts            localStorage JSON 读取的唯一实现
     ├── pages/                  路由（目录结构即 URL 结构）
     └── styles/
         ├── theme.css              设计 token（亮/暗两套）——颜色的唯一来源
         ├── global.css             Tailwind v4 入口（@import / @plugin / @theme / @source）+ 全局组件类
+        ├── island.css             动态岛（头部胶囊 + 展开面板）的全部样式，唯一归属
         └── tools/*.css           各工具页私有样式
 ```
 
@@ -83,13 +95,14 @@ Astro 5 静态站点（`output: 'static'`），Tailwind CSS 4（通过 `@tailwin
 | 读取 content collection | `src/lib/content.ts` |
 | 由 frontmatter 派生的分组视图 | `src/lib/taxonomy.ts` |
 | 只在构建期跑、不被页面 import 的代码 | `plugins/` |
-| 可被多个脚本复用的逻辑 | `scripts/lib/` |
+| 可被多个脚本或构建期插件复用的逻辑 | `scripts/lib/` |
 
 `src/lib/` **不放**构建期插件；`src/` **不放**脚本；组件**不裸放**在 `components/` 根目录。
 
 ### 主题与颜色
 
 - **`src/styles/theme.css` 是颜色的唯一来源**：`paper`（亮色，SSR 默认）与 `paper-dark`（暗色）两套 token 都在这里定义，`BaseLayout.astro` 在 `global.css` 之前引入。
+  语义色（`--color-success` / `--color-warning` / `--color-error` / `--color-info`）、NCM 资料卡图标色（`--ncm-icon-provider` / `--ncm-icon-meta`）和文本选区色（`--selection-bg` / `--selection-text`）也在这里按主题各声明一次。**这些过去靠 daisyUI 内置 `light` 主题注入**，导致 `ncm.css` / `switch-your-cfg.css` 的 35 处 `var()` 在两种主题下取到同一个值，而亮色主题上实测只有 1.7–2.8:1。现在每套主题各有自己的值，改动时请按主题成对声明，不要只改一边。
 - 组件**不允许**写死与主题相关的颜色（如 `#fff`、`text-white`）。文字用 `--fx-text` / `--color-base-content`，次要文字用 `--text-dim` / `--text-faint`，面板用 `--surface*` / `--fx-surface*`，边框用 `--line*` / `--fx-line`。代码块在两种主题下都是深底浅字，统一用 `--code-block-bg` / `--code-block-text`（Shiki 会把底色内联写在 `<pre>` 上，所以 `global.css` 用 `!important` 拉回主题色）。
 - **正文与界面分字体**：`.prose` 用系统无衬线字体（`--md-font`）排长文，标题、代码块与站点其它界面仍用 JetBrains Mono。中英混排的长文在手机上比等宽字体更好读。
 - 主题切换由两段代码负责：`BaseLayout.astro` `<head>` 里的内联小脚本（首屏前解析 `localStorage` / `prefers-color-scheme` 并上色，避免闪烁），以及打包在 `src/scripts/theme.ts` 的控制器（切换、监听 `astro:before-swap` / `astro:after-swap`、`MutationObserver` 兜底）。改动后请用两种主题分别过一遍所有页面（`pnpm smoke` 不覆盖对比度）。
@@ -146,6 +159,17 @@ pnpm validate:content && pnpm check && pnpm build && pnpm smoke
 
 > 指纹覆盖的是 `dist/`，**不覆盖 `scripts/`**。改动脚本时请另行对比 stdout、错误消息与生成文件内容。
 
+指纹只能告诉你「哪个文件变了」，不能告诉你「像素有没有变」。做大范围 CSS 重构时另有一层保护：`.verify/lead-style-diff.mjs` 用 CDP 抓取 19 条代表路由 × 2 个视口 × 2 套主题（76 个用例、约 5.4 万个元素的 130 个计算样式属性），对基线做逐属性比对：
+
+```bash
+# 基线从 pnpm preview 的产物抓（源码改动不会影响它）
+node .verify/lead-style-diff.mjs --base=http://127.0.0.1:4399 --capture=.verify/style-baseline-dist.json
+# 改完再抓一次并比对；有差异以 1 退出
+node .verify/lead-style-diff.mjs --base=http://127.0.0.1:4321 --compare=.verify/style-baseline-dist.json
+```
+
+它内部对同一状态采样两次，把两次之间会自己动的元素（樱花背景、浮动吉祥物、歌词呼吸点）标记为 `@UNSTABLE@` 并从比对中排除——**空跑两次的差异必须是 0**，否则这次的差异不能作为证据。
+
 ---
 
 ## 6. 样式编译：Tailwind v4 + daisyUI 5
@@ -155,7 +179,20 @@ pnpm validate:content && pnpm check && pnpm build && pnpm smoke
 - **daisyUI 5 不会自动 tree-shake。** 它的 `addComponents` 默认输出全部组件，所以 `global.css` 用 `exclude` 明确排掉了本站未使用的约 58 个组件。**新增组件类前，先用渲染后的 HTML 确认组件名已在 `exclude` 里移除**，否则会静默丢失样式。当前实际用到的是 `button` / `badge` / `modal`。
 - **Tailwind v4 默认扫描整个项目**（遵守 `.gitignore`）。`@source not '../content/**'` 把文章正文排除，避免散文里的普通词（`card`、`step`、`stack`…）命中 daisyUI 组件名、把整套组件样式拉进产物。
 - **不要写死 daisyUI 旧版本的变量名。** v5 使用 `--color-primary` / `--color-base-content`（完整 oklch 颜色），不再有 `--p` / `--bc` / `--b1`。工具页里的半透明色统一写成 `oklch(from var(--color-primary) l c h / .2)`，或 `color-mix()`。
-- 产物仍集中在单个 `dist/_astro/about.*.css`（约 155 KB，gzip 约 26 KB），工具页样式单独成文件。
+- 产物仍集中在单个 `dist/_astro/about.*.css`（约 160 KB / gzip 约 27.5 KiB，104 个页面全都链接它），工具页样式单独成文件。文件名带内容哈希、且不叫 `global`，容易误认成「只有 about 页用」——它是全站共享包，改任何全局样式都会改名。
+
+### 动态岛（头部音乐胶囊）
+
+- 结构与交互在 `src/components/layout/SiteHeader.astro` + `src/scripts/player.ts`；**样式全部归 `src/styles/island.css`**，`global.css` 里不应再出现任何 `.music-island` / `.dynamic-island` / `.header-action` 规则。同一个选择器在两个文件里各写一遍，就得靠 `!important` 打架——这正是重构前的问题。
+- 形态切换只改 `data-open`、`data-player-state`、`data-visualizer`、`data-cue-active` 这几个属性，动画交给 CSS 过渡；JS 不写内联几何。展开/收起必须**可中断**：中途反向点击要从当前几何继续，而不是先塌成空壳。
+- **视觉规格对齐 iPhone 的灵动岛**，这不是随意调的，改之前先理解这几点：
+  - 背景是**不透明纯黑**（`--island-bg: #000`），没有边框、没有 `backdrop-filter`。真机上它本来就是屏幕挖孔，不是一块玻璃面板。所以它和 `paper` / `paper-dark` 两套主题都无关。
+  - 比例：紧凑态约 **4.9:1**（196×40，完全胶囊，圆角 = 高度一半）；展开态约 **2.1–2.3:1**（372×176，圆角很大）。这两个数字定了，里面所有尺寸都靠 `cqw` 跟着缩放——面板内的一切用 `cqw` 而不是 `px`，改宽度就是整体缩放。
+  - 紧凑态是**两端分置**：左边专辑封面（26px、圆角 6px），右边 5 根白色细条波形，中间留空（真机那里是摄像头）。不要把两者居中凑在一起。
+  - 展开态的信息层级是**歌名（白色粗体）→ 歌手（次级灰）→ 歌词（最弱）**，而不是反过来。
+  - 波形**只有 `live` 会动**，且高度由 JS 从真实 AnalyserNode 频谱帧算出。`idle` / `off` 一律静止；`idle` 用一组不等高的静态剪影（像暂停的波形），不要用等高的横线——那看起来像加载指示器。
+- 播放器模块只能按需加载（用户首次交互时才 import），不能进入文档首屏的脚本链——`pnpm perf:audit` 会断言这一点。
+- `prefers-reduced-motion: reduce` 下保留一次短过渡（约 0.2s），不要用全局 reset 的 `0.01ms` 直接跳变。
 
 修改样式后如果只想确认体积变化，直接看 `dist/_astro/about.*.css` 的原始/ gzip 大小即可；`pnpm dist:fingerprint` 会如实列出差异。
 

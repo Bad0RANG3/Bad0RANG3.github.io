@@ -1,7 +1,4 @@
-function normalizeBase(value = '/') {
-  if (!value || value === '/') return '/';
-  return `/${String(value).replace(/^\/+|\/+$/g, '')}/`;
-}
+import { normalizeBase } from '../scripts/lib/paths.mjs';
 
 function visit(node, callback) {
   if (!node || typeof node !== 'object') return;

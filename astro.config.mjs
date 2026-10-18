@@ -15,7 +15,7 @@ export default defineConfig({
     remarkPlugins: [[remarkWithBase, { base }]],
     rehypePlugins: [rehypeWrapTables],
   },
-  integrations: [sitemap({ filter: (page) => !page.includes('/about-alt') })],
+  integrations: [sitemap()],
   // With ClientRouter, prefetch same-origin links on hover/tap so navigation
   // feels instant without eagerly downloading the whole site.
   prefetch: true,
