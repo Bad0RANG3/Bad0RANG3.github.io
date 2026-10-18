@@ -1,4 +1,5 @@
 import { SITE } from '../config/site';
+import { readJsonArray } from '../lib/storage';
 
 const initArticleTools = () => {
   document.querySelectorAll<HTMLElement>('[data-article-tools]').forEach((root) => {
@@ -6,12 +7,7 @@ const initArticleTools = () => {
     root.dataset.bound = '1';
     const slug = root.dataset.slug || '';
     const key = SITE.BOOKMARKS_STORAGE_KEY;
-    const read = (): string[] => {
-      try {
-        const value = JSON.parse(localStorage.getItem(key) || '[]');
-        return Array.isArray(value) ? value : [];
-      } catch { return []; }
-    };
+    const read = (): string[] => readJsonArray<string>(key);
     const save = (items: string[]) => { try { localStorage.setItem(key, JSON.stringify(items)); } catch {} };
     const bookmark = root.querySelector('[data-bookmark]');
     const label = root.querySelector('[data-bookmark-label]');

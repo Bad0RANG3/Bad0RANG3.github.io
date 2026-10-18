@@ -33,6 +33,20 @@ html[data-theme="paper"] {
   --color-neutral: oklch(28% 0.045 340);
   --color-neutral-content: oklch(97.5% 0.01 350);
 
+  /* Status colours. daisyUI's built-in `light` theme injects these for every
+     theme it does not override, so until now `ncm.css` and
+     `switch-your-cfg.css` got the SAME vivid values in `paper` and
+     `paper-dark`, and they were unreadable on the light theme: 1.7–2.8:1 where
+     WCAG AA wants 4.5:1 for text. Declaring them here keeps `theme.css` the
+     single source of truth and lets each theme carry its own value.
+     `paper` uses the lightest value that still clears 4.5:1 on the lightest
+     surface it is drawn on (`--fx-surface` over `--fx-bg`); measured worst case
+     is 4.62:1 for success, 4.66 warning, 4.72 error, 4.63 info. */
+  --color-success: oklch(51% 0.177 163.223);
+  --color-warning: oklch(55% 0.189 84.429);
+  --color-error: oklch(57% 0.194 13.428);
+  --color-info: oklch(53% 0.16 232.661);
+
   --surface: rgba(255, 255, 255, 0.72);
   --surface-strong: rgba(255, 255, 255, 0.92);
   --surface-soft: rgba(255, 255, 255, 0.54);
@@ -56,6 +70,27 @@ html[data-theme="paper"] {
   --fx-pink: #d94f81;
   --fx-pink-soft: #f29ab9;
   --fx-shadow: rgb(105 47 70 / 0.15);
+
+  /* NCM profile-card glyph accents. These were literal `#ff879f` / `#ffb04a`
+     in `global.css`, chosen to stand out on the dark card — but `paper` renders
+     the card near-white (#ffffff → #f9e8f0 gradient), where they measured
+     1.93:1 and 1.66:1. WCAG 1.4.11 wants 3:1 for a graphic that carries
+     meaning. The hues are kept; only lightness is lowered enough to clear it,
+     measured against the darkest stop of the card gradient (and, for the meta
+     chip, the chip fill over that stop). Worst case here: 3.21:1 and 3.17:1. */
+  --ncm-icon-provider: oklch(63% 0.16 15);
+  --ncm-icon-meta: oklch(64% 0.15 70);
+
+  /* Text selection. These are OPAQUE on purpose: a translucent selection
+     changes colour with whatever surface it lands on (page, card, code block,
+     island), so no single foreground can be readable over all of them. Opaque
+     removes the surface from the equation. Contrast is measured text-on-fill:
+       paper       11.04:1  (was #fff on the pale composite = 1.34:1, a fail)
+       paper-dark   7.28:1  (was #fff = 9.82:1, already fine)
+     `--color-base-content` is dark in `paper` and light in `paper-dark`, so it
+     is the correct foreground in both. */
+  --selection-bg: oklch(88% 0.09 350);
+  --selection-text: var(--color-base-content);
 }
 
 html[data-theme="paper-dark"] {
@@ -74,6 +109,15 @@ html[data-theme="paper-dark"] {
   --color-accent-content: oklch(17% 0.04 315);
   --color-neutral: oklch(30% 0.025 340);
   --color-neutral-content: oklch(82% 0.015 340);
+
+  /* Status colours — see the note in the `paper` block. These are the same
+     vivid values daisyUI was injecting, which is correct here: on a near-black
+     surface they measure 6.2–11.3:1. Declared explicitly so the tokens do not
+     depend on daisyUI's `light` theme continuing to fill them in. */
+  --color-success: oklch(76% 0.177 163.223);
+  --color-warning: oklch(82% 0.189 84.429);
+  --color-error: oklch(71% 0.194 13.428);
+  --color-info: oklch(74% 0.16 232.661);
 
   --surface: rgba(255, 255, 255, 0.055);
   --surface-strong: rgba(255, 255, 255, 0.09);
@@ -98,6 +142,17 @@ html[data-theme="paper-dark"] {
   --fx-pink: #ff8fb6;
   --fx-pink-soft: #ffc5d8;
   --fx-shadow: rgb(0 0 0 / 0.44);
+
+  /* Same accents as `paper`, but left vivid: the card is dark here, so the
+     original literals already measured 8.53:1 and 10.70:1. */
+  --ncm-icon-provider: oklch(80% 0.14 10);
+  --ncm-icon-meta: oklch(82% 0.15 75);
+
+  /* Deep magenta rather than the pale `paper` pink, because here the
+     foreground is light. Almost identical to the colour this theme already
+     composited to (#603748), so the look is preserved. */
+  --selection-bg: oklch(35% 0.11 352);
+  --selection-text: var(--color-base-content);
 }
 
 /* Motion curves and code-block colours are theme-independent. */
@@ -106,6 +161,44 @@ html[data-theme="paper-dark"] {
   --spring: cubic-bezier(0.34, 1.45, 0.5, 1);
   --code-block-bg: #1c161f;
   --code-block-text: #e5e7eb;
+}
+
+/* Island tokens (`island.css`).
+   Deliberately declared once, outside both theme blocks: like Apple's
+   Dynamic Island the music pill is near-black glass in `paper` and
+   `paper-dark` alike. Keeping the literals here — rather than inline in
+   island.css — makes that a stated decision instead of an unexplained
+   hard-coded colour, and keeps every island surface readable against
+   its own background rather than the page's.
+
+   Measured WCAG contrast: the fill is now the same opaque `#000` Apple's
+   Dynamic Island is (it is literally the OLED cutout, not a glass panel),
+   which is strictly better for every text token than the previous
+   translucent `rgb(12 11 16 / 0.9)` — the page can no longer show through
+   and lift the background. Re-measure with `.verify/lead-contrast2.mjs`
+   after touching these; the previous numbers were taken against the
+   translucent fill and are no longer the reference. */
+:root {
+  /* Opaque black, both states. This is the single most "Dynamic Island"
+     decision in the file: on the device the pill is the display cutout, so it
+     is pure black and opaque regardless of what is behind it. No border and no
+     backdrop blur for the same reason. */
+  --island-bg: #000;
+  --island-bg-open: #000;
+  --island-border: transparent;
+  --island-menu-bg: rgb(22 22 24 / 0.98);
+  --island-actions-bg: rgb(0 0 0 / 0.55);
+  --island-shadow: 0 10px 30px rgb(0 0 0 / 0.32);
+  --island-shadow-open: 0 22px 64px rgb(0 0 0 / 0.5);
+  --island-text: #fff8fb;
+  --island-text-strong: #fff;
+  --island-text-dim: rgb(255 236 245 / 0.58);
+  --island-text-faint: rgb(255 236 245 / 0.54);
+  /* White bars, like the iPhone's compact waveform, instead of the site pink. */
+  --island-wave: rgb(255 255 255 / 0.92);
+  --island-wave-top: rgb(255 255 255 / 0.95);
+  --island-wave-bottom: rgb(255 255 255 / 0.55);
+  --island-focus: #ffc5d8;
 }
 
 body {

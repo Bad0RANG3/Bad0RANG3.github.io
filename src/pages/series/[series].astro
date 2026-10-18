@@ -73,6 +73,9 @@ const difficultyLevels = [...new Set(group.posts.map((post) => post.data.difficu
 
 <script>
   import { SITE } from '../../config/site';
+  import { readJsonArray } from '../../lib/storage';
+
+  type HistoryEntry = { slug?: string; completed?: boolean };
 
   // Reading history is written by article pages into this browser only, so the
   // series progress is filled in client-side; the static HTML shows 0 / N.
@@ -80,14 +83,16 @@ const difficultyLevels = [...new Set(group.posts.map((post) => post.data.difficu
     const root = document.querySelector<HTMLElement>('[data-series-progress]');
     if (!root) return;
     let slugs: string[] = [];
-    let completed = new Set<string>();
     try {
       slugs = JSON.parse(root.dataset.seriesSlugs || '[]');
-      const history = JSON.parse(localStorage.getItem(SITE.READING_HISTORY_STORAGE_KEY) || '[]');
-      if (Array.isArray(history)) completed = new Set(history.filter((item) => item?.completed).map((item) => String(item.slug)));
     } catch {
       return;
     }
+    const completed = new Set(
+      readJsonArray<HistoryEntry>(SITE.READING_HISTORY_STORAGE_KEY)
+        .filter((item) => item?.completed)
+        .map((item) => String(item.slug)),
+    );
     const read = slugs.filter((slug) => completed.has(slug));
     const count = root.querySelector('[data-series-count]');
     if (count) count.textContent = `${read.length} / ${slugs.length}`;

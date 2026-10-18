@@ -72,13 +72,10 @@ const browseLinks = [
 <script>
   import { navigate } from 'astro:transitions/client';
   import { SITE } from '../config/site';
+  import { readJsonArray } from '../lib/storage';
 
   type PostIndex = Record<string, { title: string; url: string }>;
   type HistoryEntry = { slug: string; progress?: number; completed?: boolean };
-
-  const readJson = (key: string): unknown => {
-    try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch { return []; }
-  };
 
   const renderItem = (post: { title: string; url: string }, meta: string) => {
     const item = document.createElement('li');
@@ -102,12 +99,12 @@ const browseLinks = [
   const renderShelf = (root: HTMLElement, index: PostIndex) => {
     const shelf = root.querySelector<HTMLElement>('[data-shelf]');
     if (!shelf) return;
-    const history = readJson(SITE.READING_HISTORY_STORAGE_KEY);
-    const bookmarks = readJson(SITE.BOOKMARKS_STORAGE_KEY);
-    const inProgress = (Array.isArray(history) ? history : [])
+    const history = readJsonArray<HistoryEntry>(SITE.READING_HISTORY_STORAGE_KEY);
+    const bookmarks = readJsonArray<string>(SITE.BOOKMARKS_STORAGE_KEY);
+    const inProgress = history
       .filter((entry): entry is HistoryEntry => typeof entry?.slug === 'string' && Boolean(index[entry.slug]))
       .slice(0, 6);
-    const saved = (Array.isArray(bookmarks) ? bookmarks : [])
+    const saved = bookmarks
       .filter((slug): slug is string => typeof slug === 'string' && Boolean(index[slug]))
       .reverse();
 

@@ -232,7 +232,12 @@
   width: 2.25rem;
   flex-shrink: 0;
   border-radius: 999px;
-  background: oklch(from var(--color-base-content) l c h / 0.15);
+  /* 0.15 alpha made the unchecked track nearly the same colour as the page in
+     `paper` (1.41:1) and left the white knob at 1.55:1 against it. WCAG 1.4.11
+     wants 3:1 for the boundary of a control and for the part of it that carries
+     state. At 0.5 the track reaches 3.25:1 against the page and 3.40:1 against
+     the knob in `paper`, and 3.65:1 / 5.46:1 in `paper-dark`. */
+  background: oklch(from var(--color-base-content) l c h / 0.5);
   transition: background .2s;
 }
 .scfg-opt-sw::after {
@@ -243,7 +248,14 @@
   height: 0.92rem;
   width: 0.92rem;
   border-radius: 999px;
-  background: white;
+  /* The knob is the part that carries the on/off state, so it must stay >= 3:1
+     against BOTH track states (WCAG 1.4.11). A fixed white knob passed on the
+     unchecked track but only reached 2.63:1 against the checked `paper-dark`
+     track (`--color-primary` there is a light pink). Following the theme's own
+     background token keeps it readable in both: light knob on the dark-checked
+     `paper` track, dark knob on the light-checked `paper-dark` track. */
+  background: var(--color-base-100);
+  box-shadow: 0 1px 2px oklch(from var(--color-base-content) l c h / 0.35);
   transition: transform .2s;
 }
 .scfg-opt input:checked + .scfg-opt-sw { background: var(--color-primary); }
@@ -436,8 +448,8 @@
 .scfg-kbd-key[data-key="SPACE"] { font-size: 0.74rem; }
 .scfg-kbd-key.w1{width:48px} .scfg-kbd-key.w1d2{width:56px} .scfg-kbd-key.w1d5{width:74px}
 .scfg-kbd-key.w1d8{width:88px} .scfg-kbd-key.w2{width:100px} .scfg-kbd-key.w2d2{width:108px}
-.scfg-kbd-key.w2d5{width:122px} .scfg-kbd-key.w2d8{width:138px} .scfg-kbd-key.w3{width:148px}
-.scfg-kbd-key.w6{width:292px} .scfg-kbd-key.w6d5{width:320px}
+.scfg-kbd-key.w2d5{width:122px} .scfg-kbd-key.w2d8{width:138px}
+.scfg-kbd-key.w6d5{width:320px}
 .scfg-mouse-shell {
   display: grid;
   gap: 0.9rem;
@@ -953,7 +965,7 @@
   }
   .scfg-kbd-key.w1{width:40px} .scfg-kbd-key.w1d2{width:48px} .scfg-kbd-key.w1d5{width:64px}
   .scfg-kbd-key.w1d8{width:76px} .scfg-kbd-key.w2{width:88px} .scfg-kbd-key.w2d2{width:96px}
-  .scfg-kbd-key.w2d5{width:108px} .scfg-kbd-key.w2d8{width:122px} .scfg-kbd-key.w6{width:252px} .scfg-kbd-key.w6d5{width:276px}
+  .scfg-kbd-key.w2d5{width:108px} .scfg-kbd-key.w2d8{width:122px} .scfg-kbd-key.w6d5{width:276px}
   .scfg-stats-grid { grid-template-columns: 1fr 1fr; }
   .scfg-pv-btns,
   .scfg-buy-actions { flex-direction: column; }

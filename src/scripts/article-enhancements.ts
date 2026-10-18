@@ -2,6 +2,7 @@
 // frame and persist reading history sparingly: localStorage is synchronous and
 // writing it for every scroll event causes visible jank on long posts.
 import { SITE } from '../config/site';
+import { readJsonArray } from '../lib/storage';
 
 declare global {
   interface Window {
@@ -10,6 +11,7 @@ declare global {
 }
 
 type PendingHistory = { progress: number; completed: boolean };
+type HistoryEntry = { slug: string; at: number; progress: number; completed: boolean };
 
 const cleanupArticleEnhancements = () => {
   const cleanup = window.__b0ArticleEnhancementsCleanup;
@@ -40,8 +42,7 @@ const initArticleEnhancements = () => {
     pendingHistory = null;
     if (!completed && Math.abs(progressValue - lastStoredProgress) < 0.03) return;
     try {
-      const value = JSON.parse(localStorage.getItem(historyKey) || '[]');
-      const history = Array.isArray(value) ? value.filter((item) => item?.slug !== slug) : [];
+      const history = readJsonArray<HistoryEntry>(historyKey).filter((item) => item?.slug !== slug);
       history.unshift({ slug, at: Date.now(), progress: progressValue, completed });
       localStorage.setItem(historyKey, JSON.stringify(history.slice(0, 20)));
       lastStoredProgress = progressValue;
@@ -84,8 +85,7 @@ const initArticleEnhancements = () => {
     resumeButton = null;
   };
   try {
-    const saved = JSON.parse(localStorage.getItem(historyKey) || '[]');
-    const entry = Array.isArray(saved) ? saved.find((item) => item?.slug === slug) : undefined;
+    const entry = readJsonArray<HistoryEntry>(historyKey).find((item) => item?.slug === slug);
     const previous = Number(entry?.progress);
     if (slug && !window.location.hash && window.scrollY < 80 && !entry?.completed && previous > 0.08 && previous < 0.95) {
       lastStoredProgress = previous;
@@ -133,7 +133,16 @@ const initArticleEnhancements = () => {
     if (img.closest('a') || img.dataset.zoomBound === '1') return;
     img.dataset.zoomBound = '1';
     img.tabIndex = 0;
+    // The trigger is an <img>, so role="button" discards its implicit image
+    // role and with it the alt text as a name source. Name the trigger
+    // explicitly. A decorative image (alt="") still needs a name here: once it
+    // is a focusable button, an empty name is a WCAG 4.1.2 failure, so it falls
+    // back to the same generic label the lightbox dialog already uses.
     img.setAttribute('role', 'button');
+    if (!img.hasAttribute('aria-label')) {
+      const label = img.alt.trim();
+      img.setAttribute('aria-label', label ? `查看大图：${label}` : '查看大图');
+    }
     const open = () => {
       const dialog = document.createElement('dialog');
       dialog.className = 'image-lightbox';

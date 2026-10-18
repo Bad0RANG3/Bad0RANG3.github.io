@@ -1,0 +1,866 @@
+/* =================================================================
+   MUSIC ISLAND (音乐灵动岛)
+   Single owner for the site's music-player chrome: the zero-height
+   fixed header strip, the collapsed pill, the expanded panel, the
+   volume menu and the header action cluster that shares the row.
+
+   Why this file exists
+   --------------------
+   The island used to be declared twice in `global.css`: a retired
+   header implementation (`.dynamic-island` at `position:absolute`,
+   12rem wide, `:hover`/`:focus-within` driven) and the current music
+   one. The retired block fought the live one through nine
+   `!important`s. Everything island-owned now lives here, is imported
+   *after* `global.css` from `BaseLayout.astro`, and declares each
+   (selector, property) pair exactly once per at-rule context, so the
+   only overrides are deliberate breakpoint ones.
+   `.verify/island-css-dup.mjs` enforces that and censuses the
+   `!important`s; run it if this file is edited.
+
+   The only `!important`s left are in the single "Reduced motion" block
+   below, where they must beat the `*, *::before, *::after { …
+   !important }` reset that `global.css` ships under the same media
+   query.
+
+   Colour policy
+   -------------
+   The island is deliberately theme-independent: like Apple's Dynamic
+   Island it is near-black glass in `paper` and `paper-dark` alike. The
+   island's surface/text tokens are declared once in `theme.css`
+   (outside both theme blocks) and every colour here reads from them,
+   so the "no hardcoded theme colours" rule is satisfied by naming the
+   intent rather than by inheriting the page palette.
+
+   Geometry
+   --------
+   Collapsed 250x48 (>900px), 185x46 (641-900px), 185x44 (<=640px).
+   Expanded `min(34rem, 100vw - 24px)` x `min(17.875rem, ...0.526)`,
+   and `100vw - 20px` wide with a 0.526 aspect ratio on phones, so the
+   panel stays inside the viewport from 320px up and `cqw` sizing of
+   the panel contents keeps working off `container-type: inline-size`.
+   ================================================================= */
+
+/* -----------------------------------------------------------------
+   Host row: the header is a zero-height fixed strip whose only
+   interactive children are the island and the action cluster.
+   ----------------------------------------------------------------- */
+.site-header {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 80;
+  height: 0;
+  padding: 0;
+  pointer-events: none;
+}
+
+/* -----------------------------------------------------------------
+   Island shell + morph
+   `cubic-bezier(0.32, 0.72, 0, 1)` is the iOS sheet/spring curve: it
+   starts fast, settles long and gently, and never crosses its target,
+   so the box always lands exactly on the radius edge rather than
+   bouncing past it. Because it is a CSS transition, toggling
+   `data-open` mid-flight retargets from the *current* computed
+   width/height/radius with no reset and no queueing.
+   ----------------------------------------------------------------- */
+.dynamic-island {
+  pointer-events: auto;
+}
+
+.music-island {
+  --island-morph: 440ms;
+  --island-morph-ease: cubic-bezier(0.32, 0.72, 0, 1);
+  --island-fade: 220ms;
+  --island-delay: 120ms;
+
+  position: fixed;
+  top: max(11px, env(safe-area-inset-top));
+  left: 50%;
+  z-index: 82;
+  display: block;
+  /* Compact pill. 196 x 40 (4.9:1) — tuned up from 176 at the author's request;
+     the device's pill is ~160-190 x 37pt so this sits at the wider end, and it is
+     exactly a pill (radius = height / 2). */
+  width: 196px;
+  height: 40px;
+  overflow: hidden;
+  transform: translateX(-50%);
+  /* No border, no backdrop blur: on the device this is the OLED cutout itself,
+     so it is opaque pure black with only a drop shadow to lift it off the page. */
+  border: 0;
+  border-radius: 20px;
+  background: var(--island-bg);
+  box-shadow: var(--island-shadow);
+  container-type: inline-size;
+  transition:
+    width var(--island-morph) var(--island-morph-ease),
+    height var(--island-morph) var(--island-morph-ease),
+    border-radius var(--island-morph) var(--island-morph-ease),
+    border-color 320ms var(--ease),
+    background 320ms var(--ease),
+    box-shadow 360ms var(--ease);
+}
+
+.music-island[data-open="true"] {
+  /* iPhone expanded proportion: roughly 2.3:1 (the device's expanded Now
+     Playing card is ~370 x 160pt). 372 x 176 is the same shape, and the big
+     corner radius is what makes it read as the island rather than a tooltip.
+     Everything inside the panel is sized in `cqw`, so these two numbers set the
+     whole hierarchy. */
+  width: min(23.25rem, calc(100vw - 24px));
+  height: min(11rem, calc((100vw - 24px) * 0.473));
+  border-radius: min(2.75rem, calc((100vw - 24px) * 0.118));
+  background: var(--island-bg-open);
+  box-shadow: var(--island-shadow-open);
+}
+
+/* -----------------------------------------------------------------
+   Collapsed summary: cover art, copy, visualiser.
+   The button covers the whole collapsed pill, so any click anywhere on
+   the capsule opens the panel; the visualiser and cue are
+   `pointer-events: none` overlays that never steal that click.
+   ----------------------------------------------------------------- */
+.music-island .island-summary {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  /* Two islands of content at the two ends, like the iPhone's compact
+     presentation: artwork on the leading side, waveform on the trailing side,
+     with the middle deliberately empty (that is where the camera sits on the
+     device). Centering the pair would read as a generic toolbar pill. */
+  justify-content: space-between;
+  gap: 0.5rem;
+  border: 0;
+  padding: 0 0.6rem;
+  background: transparent;
+  color: var(--island-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+  opacity: 1;
+  transition:
+    opacity var(--island-fade) var(--ease),
+    transform var(--island-morph) var(--island-morph-ease);
+}
+
+.music-island .island-summary:focus-visible {
+  outline: 2px solid var(--island-focus);
+  outline-offset: -4px;
+}
+
+/* Faded out and click-through while open, but deliberately *still
+   focusable*: focusing the pill is what opens the island, so the pill is a
+   legitimate tab stop in both states (`aria-expanded` says which). Without
+   this the first Tab would focus the pill, the pill would go
+   `visibility:hidden`, and the browser would drop focus to `<body>` —
+   restarting the tab walk from the top of the page.
+
+   The 60ms delay is the cross-fade budget: the panel starts fading in after
+   `--island-delay` (120ms, but 40ms on the open state), so without a hold the
+   summary would be gone before the panel is up and the island would spend a
+   few frames showing *neither* face. Measured worst frame (max of the two
+   opacities) goes from 0.32 to >= 0.5 with this hold — see
+   `.verify/island-handoff.mjs`. */
+.music-island[data-open="true"] .island-summary {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-6px) scale(0.98);
+  transition:
+    opacity var(--island-fade) var(--ease) 60ms,
+    transform var(--island-morph) var(--island-morph-ease);
+}
+
+.music-island .island-mini-art,
+.music-island .island-player-art {
+  display: block;
+  flex: 0 0 auto;
+  object-fit: cover;
+}
+
+.music-island .island-mini-art {
+  width: 26px;
+  height: 26px;
+  /* ~22% of the artwork, matching how the island rounds its album thumbnail. */
+  border-radius: 6px;
+  box-shadow: none;
+}
+
+/* The collapsed pill is deliberately art + visualiser only: the track name and
+   artist live in the expanded panel (`.island-player-copy`) and in the button's
+   `aria-label`, so a second copy in the pill was redundant chrome. The markup
+   itself was removed rather than hidden — a permanently `display:none` node is
+   dead weight, and this file is supposed to own exactly what renders. */
+
+/* -----------------------------------------------------------------
+   Section cue: a 1.5s "you scrolled into a new section" morph. It takes
+   over the collapsed pill (the summary cross-fades out) and is gated on
+   `data-open="false"` so it can never fight the expanded panel. It is
+   `aria-hidden` decoration: every section already has a real heading,
+   so nothing is announced twice.
+   ----------------------------------------------------------------- */
+.music-island .island-section-cue {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 0.72rem;
+  padding: 0 0.95rem;
+  color: var(--island-text);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(5px) scale(0.98);
+  transition:
+    opacity 140ms ease,
+    transform 340ms var(--island-morph-ease);
+}
+
+.music-island[data-cue-active="true"][data-open="false"] .island-section-cue {
+  opacity: 1;
+  transform: none;
+}
+
+.music-island[data-cue-active="true"][data-open="false"] .island-summary,
+.music-island[data-cue-active="true"][data-open="false"] .island-mini-wave {
+  opacity: 0;
+  transition-delay: 0s;
+}
+
+.island-cue-pulse {
+  width: 10px;
+  height: 10px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--island-wave);
+  box-shadow: 0 0 0 7px rgb(255 143 182 / 0.12), 0 0 20px rgb(255 143 182 / 0.62);
+}
+
+.island-cue-copy {
+  display: grid;
+  min-width: 0;
+  gap: 0.04rem;
+}
+
+.island-cue-copy small {
+  color: var(--island-text-faint);
+  font-size: 0.5rem;
+  font-weight: 760;
+  letter-spacing: 0.18em;
+}
+
+.island-cue-copy strong {
+  overflow: hidden;
+  font-size: 0.75rem;
+  font-weight: 720;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* -----------------------------------------------------------------
+   Visualiser.
+   `data-visualizer` is the honest state of the bars:
+     live  real analyser frames, JS drives --visualizer-height
+     idle  a source exists but nothing is playing -> static rest bars.
+           Deliberately NOT animated: bars that move while no audio is
+           playing read as "audio is playing", which is a lie.
+     off   no playable source at all -> flat dashes
+   Only `live` ever animates.
+   ----------------------------------------------------------------- */
+.music-island .island-mini-wave {
+  display: flex;
+  /* No audio, no visualiser: the row collapses to zero width and the pill is
+     just the cover art. 22.5px = 5 bars x 2.5px + 4 gaps x 2.5px. */
+  width: 0;
+  height: 18px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 2.5px;
+  overflow: hidden;
+  opacity: 0;
+  transition: width 0.26s var(--island-morph-ease), opacity 0.16s var(--ease);
+}
+
+.music-island[data-visualizer="live"] .island-mini-wave {
+  width: 22.5px;
+  opacity: 1;
+}
+
+.music-island .island-mini-wave i {
+  display: block;
+  width: 2.5px;
+  height: var(--visualizer-height, 4px);
+  border-radius: 999px;
+  background: var(--island-wave);
+  opacity: var(--visualizer-opacity, 0.9);
+}
+
+.music-island[data-visualizer="live"] .island-mini-wave i {
+  animation: none;
+  transition: height 0.08s linear, opacity 0.08s linear;
+}
+
+/* There is deliberately NO idle/off appearance for the bars: when nothing is
+   playing the visualiser does not exist. A frozen or breathing bar row is a lie
+   either way — it claims "audio" when there is none. The pill falls back to the
+   cover art alone, which is what it shows before the first play too. */
+
+/* -----------------------------------------------------------------
+   Expanded panel
+   ----------------------------------------------------------------- */
+.music-island .island-player-panel {
+  position: absolute;
+  inset: 0;
+  display: block;
+  overflow: hidden;
+  padding: 12px;
+  border: 0;
+  opacity: 0;
+  /* `visibility` (not `display`) keeps the close fade animatable while
+     removing the collapsed panel and every control inside it from the
+     tab order, hit-testing and the a11y tree. Without this, Tab walked
+     into the invisible player controls. */
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(7px) scale(0.97);
+  transition:
+    opacity var(--island-fade) var(--ease) var(--island-delay),
+    transform var(--island-morph) var(--island-morph-ease) var(--island-delay),
+    visibility 0s linear calc(var(--island-fade) + var(--island-delay));
+}
+
+.music-island[data-open="true"] .island-player-panel {
+  padding: 5.2cqw 6.2cqw 3.8cqw 5.2cqw;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: none;
+  transition:
+    opacity var(--island-fade) var(--ease) 40ms,
+    transform var(--island-morph) var(--island-morph-ease) 40ms,
+    visibility 0s linear 0s;
+}
+
+.music-island .island-player-heading {
+  display: grid;
+  height: 16cqw;
+  grid-template-columns: 16cqw minmax(0, 1fr) 6.4cqw;
+  align-items: center;
+  gap: 4.4cqw;
+}
+
+.music-island .island-player-art {
+  width: 16cqw;
+  height: 16cqw;
+  border: 0;
+  border-radius: 3.2cqw;
+  box-shadow: none;
+}
+
+.music-island .island-player-copy {
+  display: grid;
+  min-width: 0;
+  gap: 0.4cqw;
+  font-family: Inter, "SF Pro Display", "Noto Sans SC", system-ui, sans-serif;
+}
+
+.music-island .island-player-copy span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.music-island .island-player-copy > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Title is the primary line, artist secondary — the same hierarchy the iPhone
+   uses. The lyric (when present) is a quiet third line, not the headline. */
+.music-island .island-player-title {
+  color: var(--island-text-strong);
+  font-size: 4.35cqw;
+  font-weight: 720;
+  letter-spacing: -0.035em;
+  line-height: 1.12;
+}
+
+.music-island .island-player-artist {
+  color: var(--island-text-dim);
+  font-size: 3.4cqw;
+  font-weight: 560;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.music-island .island-player-lyric {
+  overflow: hidden;
+  margin: 0;
+  color: var(--island-text-faint);
+  font-size: 3.1cqw;
+  font-weight: 560;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.music-island .island-player-status {
+  overflow: hidden;
+  color: var(--island-text-faint);
+  font-size: 2.8cqw;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.music-island .island-expanded-wave {
+  display: flex;
+  width: 6.4cqw;
+  height: 7cqw;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8cqw;
+}
+
+.music-island .island-expanded-wave i {
+  display: block;
+  width: 0.8cqw;
+  height: var(--visualizer-height, 4px);
+  border-radius: 999px;
+  background: var(--island-wave);
+  opacity: var(--visualizer-opacity, 0.86);
+}
+
+.music-island[data-visualizer="live"] .island-expanded-wave i {
+  animation: none;
+  transition: height 0.08s linear, opacity 0.12s ease;
+}
+
+.music-island .island-expanded-wave {
+  opacity: 0;
+  transition: opacity 0.16s var(--ease);
+}
+
+.music-island[data-visualizer="live"] .island-expanded-wave {
+  opacity: 1;
+}
+
+/* -----------------------------------------------------------------
+   Timeline
+   ----------------------------------------------------------------- */
+.music-island .island-player-timeline {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: 0.7cqw;
+  margin: 2.4cqw 0 0;
+}
+
+.music-island .island-player-timeline input {
+  display: block;
+  grid-column: 1;
+  grid-row: 1;
+  width: 100%;
+  height: 1.9cqw;
+  margin: 0;
+  appearance: none;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #dedee2 0 var(--player-progress, 0%), #242427 var(--player-progress, 0%) 100%);
+  accent-color: var(--island-wave-top);
+  cursor: pointer;
+}
+
+.music-island .island-player-timeline input:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.music-island .island-player-timeline input::-webkit-slider-thumb {
+  width: 0.8cqw;
+  height: 1.9cqw;
+  appearance: none;
+  border: 0;
+  border-radius: 999px;
+  background: #fff;
+}
+
+.music-island .island-player-timeline > div {
+  display: flex;
+  grid-column: 1;
+  grid-row: 2;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0;
+  padding: 0 0.25cqw;
+}
+
+.music-island .island-player-timeline > div span {
+  color: var(--island-text-faint);
+  font-family: Inter, "SF Pro Display", "Noto Sans SC", system-ui, sans-serif;
+  font-size: 3cqw;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+/* -----------------------------------------------------------------
+   Action row
+   ----------------------------------------------------------------- */
+.music-island .island-player-actions {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  align-items: center;
+  justify-items: center;
+  /* Action buttons are 12.8cqw tall; the row must match so the controls
+     clear the island's rounded bottom edge instead of being clipped. */
+  height: 11.4cqw;
+  margin: 1.6cqw -2.6cqw 0;
+}
+
+.music-island .island-player-favorite,
+.music-island .island-player-skip,
+.music-island .island-volume-button,
+.music-island .island-player-toggle {
+  display: grid;
+  /* Match the largest action icon so focus/hover backgrounds stay centered. */
+  width: 11.4cqw;
+  height: 11.4cqw;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+}
+
+/* Foreground colour is per control, not shared: the favourite and the volume
+   button sit at the dim weight, the transport controls at the strong one. */
+.music-island .island-player-favorite,
+.music-island .island-player-skip,
+.music-island .island-player-toggle {
+  color: var(--island-text-strong);
+}
+
+.music-island .island-volume-button {
+  color: var(--island-text-dim);
+}
+
+.music-island .island-player-skip svg {
+  width: 11.4cqw;
+  height: 10.2cqw;
+  fill: currentColor;
+}
+
+.music-island .island-player-favorite svg {
+  width: 7.9cqw;
+  height: 7.9cqw;
+  fill: currentColor;
+  color: var(--island-text-dim);
+}
+
+.music-island .island-player-skip--previous svg {
+  transform: scaleX(-1);
+}
+
+.music-island .player-icon {
+  width: 8.8cqw;
+  height: 10.6cqw;
+  fill: currentColor;
+}
+
+.music-island .player-icon--pause {
+  display: none;
+}
+
+.music-island[data-player-state="playing"] .player-icon--play {
+  display: none;
+}
+
+.music-island[data-player-state="playing"] .player-icon--pause {
+  display: block;
+}
+
+.music-island .island-player-toggle:hover,
+.music-island .island-player-toggle:focus-visible,
+.music-island .island-player-favorite:hover,
+.music-island .island-player-favorite:focus-visible,
+.music-island .island-player-skip:hover,
+.music-island .island-player-skip:focus-visible,
+.music-island .island-volume-button:hover,
+.music-island .island-volume-button:focus-visible {
+  background: rgb(255 255 255 / 0.13);
+  color: var(--island-text-strong);
+  outline: 0;
+}
+
+/* -----------------------------------------------------------------
+   Volume menu
+   ----------------------------------------------------------------- */
+.music-island .island-volume-control {
+  position: relative;
+  justify-self: center;
+}
+
+/* The button's resting colour is declared once, with the other action
+   controls above; only the open state overrides it here. */
+.music-island[data-volume-open="true"] .island-volume-button {
+  background: rgb(255 255 255 / 0.11);
+  color: var(--island-text-strong);
+}
+
+.music-island .island-volume-button .island-output-icon {
+  width: 8cqw;
+  height: 8cqw;
+  fill: currentColor;
+}
+
+.music-island .volume-icon {
+  width: 15px;
+  height: 15px;
+  fill: currentColor;
+}
+
+.music-island .volume-icon--muted {
+  display: none;
+}
+
+.music-island[data-muted="true"] .volume-icon--on {
+  display: none;
+}
+
+.music-island[data-muted="true"] .volume-icon--muted {
+  display: block;
+}
+
+.music-island .island-volume-menu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 0.65rem);
+  left: auto;
+  z-index: 8;
+  display: grid;
+  width: 184px;
+  grid-template-columns: 26px minmax(0, 1fr) 34px;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.48rem 0.58rem;
+  border: 1px solid var(--island-border);
+  border-radius: 999px;
+  background: var(--island-menu-bg);
+  box-shadow: 0 14px 34px rgb(0 0 0 / 0.44);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(5px) scale(0.96);
+  transform-origin: bottom right;
+  transition: opacity 0.16s ease, transform 0.24s var(--island-morph-ease);
+}
+
+.music-island[data-volume-open="true"] .island-volume-menu {
+  opacity: 1;
+  pointer-events: auto;
+  transform: none;
+}
+
+.music-island .island-volume-menu .volume-icon {
+  width: 15px;
+  height: 15px;
+}
+
+.music-island .island-volume-mute {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.08);
+  color: var(--island-text-dim);
+  cursor: pointer;
+}
+
+.music-island .island-volume-mute:hover,
+.music-island .island-volume-mute:focus-visible {
+  background: rgb(255 143 182 / 0.18);
+  color: var(--island-text-strong);
+  outline: 0;
+}
+
+.music-island .island-volume-menu input {
+  display: block;
+  width: 100%;
+  height: 4px;
+  margin: 0;
+  appearance: none;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--island-wave) 0 var(--volume-progress, 72%), rgb(255 255 255 / 0.16) var(--volume-progress, 72%) 100%);
+  cursor: pointer;
+}
+
+.music-island .island-volume-menu input::-webkit-slider-thumb {
+  width: 11px;
+  height: 11px;
+  appearance: none;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.4);
+}
+
+.music-island .island-volume-menu output {
+  color: var(--island-text-faint);
+  font-family: 'JetBrains Mono', 'Noto Sans SC', ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.55rem;
+  text-align: right;
+}
+
+/* -----------------------------------------------------------------
+   Header action cluster (shares the island's fixed row)
+   ----------------------------------------------------------------- */
+.header-actions {
+  position: fixed;
+  top: max(12px, env(safe-area-inset-top));
+  right: max(16px, env(safe-area-inset-right));
+  z-index: 81;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.3rem;
+  background: var(--island-actions-bg);
+  box-shadow: 0 10px 28px rgb(0 0 0 / 0.32);
+  pointer-events: auto;
+  transition: opacity 0.25s var(--ease), transform 0.25s var(--ease);
+}
+
+.music-island[data-open="true"] ~ .header-actions {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-8px);
+}
+
+.header-action {
+  display: inline-grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--island-text-dim);
+  cursor: pointer;
+  transition: transform 0.25s var(--spring), background 0.25s var(--ease), border-color 0.25s var(--ease), color 0.25s var(--ease);
+}
+
+.header-action:hover,
+.header-action:focus-visible {
+  border-color: rgb(255 143 182 / 0.34);
+  background: rgb(255 143 182 / 0.13);
+  color: var(--island-text-strong);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.mobile-menu-action {
+  display: inline-grid;
+}
+
+/* -----------------------------------------------------------------
+   Breakpoints
+   ----------------------------------------------------------------- */
+@media (max-width: 900px) {
+  /* The base pill is already the compact size, so this tier only needs the
+     narrow-screen clamp that keeps it clear of the action cluster. */
+  .music-island:not([data-open="true"]) {
+    width: min(196px, calc(100vw - 104px));
+  }
+}
+
+@media (max-width: 640px) {
+  .music-island:not([data-open="true"]) {
+    width: min(196px, calc(100vw - 104px));
+  }
+
+  .music-island[data-open="true"] {
+    width: calc(100vw - 20px);
+    height: calc((100vw - 20px) * 0.473);
+    border-radius: calc((100vw - 20px) * 0.118);
+  }
+
+  /* No type-scale compensation here any more: the island is 372px on desktop
+     and ~370px on a phone, so the same `cqw` values now produce the same
+     absolute sizes. Only the volume popover keeps a fixed pixel width, because
+     it hangs outside the pill and must not scale with it. */
+  .music-island .island-volume-menu {
+    width: 168px;
+  }
+
+  .header-actions {
+    right: max(8px, env(safe-area-inset-right));
+  }
+}
+
+@media (max-width: 430px) {
+  .header-actions {
+    gap: 0.15rem;
+  }
+
+  .header-action {
+    width: 2.1rem;
+    height: 2.1rem;
+  }
+}
+
+/* -----------------------------------------------------------------
+   Reduced motion
+   A short, non-janky morph instead of the 0.01ms snap from the global
+   reset: the island is a geometry change, so a 0ms transition makes the
+   panel pop in at full size and the panel contents teleport. 200ms with
+   a no-overshoot curve reads as an instant-but-smooth swap.
+
+   The `!important`s here are required: `global.css` ships
+   `*, *::before, *::after { transition-duration: .01ms !important;
+   animation-duration: .01ms !important }` under the same media query,
+   and a `!important` declaration from `*` outranks any non-important
+   one regardless of specificity. These rules have higher specificity
+   and are loaded later, so they win.
+   ----------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .music-island {
+    --island-morph: 200ms;
+    --island-morph-ease: cubic-bezier(0.33, 0, 0.2, 1);
+    --island-fade: 130ms;
+    --island-delay: 0ms;
+    transition-duration: var(--island-morph) !important;
+    transition-timing-function: var(--island-morph-ease) !important;
+  }
+
+  .music-island .island-summary,
+  .music-island .island-section-cue {
+    transition-duration: var(--island-fade) !important;
+    transition-delay: 0s !important;
+  }
+
+  .music-island .island-player-panel {
+    transition:
+      opacity var(--island-fade) var(--ease),
+      transform var(--island-fade) var(--ease),
+      visibility 0s linear var(--island-fade) !important;
+  }
+
+  .music-island[data-open="true"] .island-player-panel {
+    transition:
+      opacity var(--island-fade) var(--ease),
+      transform var(--island-fade) var(--ease),
+      visibility 0s linear 0s !important;
+  }
+
+  .island-cue-pulse {
+    box-shadow: 0 0 0 7px rgb(255 143 182 / 0.12);
+  }
+}

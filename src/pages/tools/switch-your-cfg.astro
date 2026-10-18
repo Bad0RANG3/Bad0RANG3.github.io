@@ -55,7 +55,7 @@ import '../../styles/tools/switch-your-cfg.css';
             <div class="scfg-card-body space-y-5">
               <div class="scfg-dz" id="dropzone">
                 <div class="scfg-dz-orb"></div>
-                <svg class="scfg-dz-icon" viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
+                <svg aria-hidden="true" class="scfg-dz-icon" viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
                 <div class="scfg-dz-title">拖放 CFG 文件夹到这里</div>
                 <div class="scfg-dz-sub">或点击选择整个配置目录，自动识别 machine / user / keys 文件</div>
                 <div class="scfg-dz-path">Steam\userdata\[你的ID]\730\local\cfg</div>
@@ -193,21 +193,21 @@ import '../../styles/tools/switch-your-cfg.css';
               <div class="scfg-cta-bar">
                 <div class="scfg-pv-btns">
                   <button class="btn btn-primary rounded-xl scfg-btn scfg-btn-main" id="btnDownload" disabled>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                     <span class="scfg-btn-text">
                       <strong>下载 CFG</strong>
                       <small>导出最终配置文件</small>
                     </span>
                   </button>
                   <button class="btn btn-outline rounded-xl scfg-btn scfg-btn-secondary" id="btnCopy" disabled>
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                    <svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
                     <span class="scfg-btn-text">
                       <strong>复制文本</strong>
                       <small>复制到剪贴板</small>
                     </span>
                   </button>
                   <button class="btn btn-ghost rounded-xl scfg-btn scfg-btn-tertiary" id="btnReset">
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+                    <svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
                     <span class="scfg-btn-text">
                       <strong>重新开始</strong>
                       <small>清空当前状态</small>
