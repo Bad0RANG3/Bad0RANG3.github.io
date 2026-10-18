@@ -40,9 +40,14 @@ export {};
     let audioContext = null;
     let analyser = null;
     let audioSourceNode = null;
+    let outputGain = null;
     let visualizerData = null;
     let visualizerFrame = 0;
     let visualizerAutoGain = 1;
+    // Output loudness is owned by us, not by the media element. See
+    // `applyOutputLevel` for why that matters to the visualiser.
+    let userVolume = 0.72;
+    let userMuted = false;
     const visualizerBandEdges = [55, 180, 400, 900, 2200, 6000, 16000];
     const visualizerBandGains = [0.9, 0.96, 1.04, 1.14, 1.3, 1.48];
     const visualizerGroups = [...document.querySelectorAll('[data-audio-visualizer]')]
@@ -249,7 +254,13 @@ export {};
           visualizerData = new Uint8Array(analyser.frequencyBinCount);
           audioSourceNode = audioContext.createMediaElementSource(audio);
           audioSourceNode.connect(analyser);
-          analyser.connect(audioContext.destination);
+          // analyser -> gain -> speakers. The analyser therefore sees the
+          // unattenuated track, so the bars keep moving when the user turns the
+          // volume down or mutes.
+          outputGain = audioContext.createGain();
+          analyser.connect(outputGain);
+          outputGain.connect(audioContext.destination);
+          applyOutputLevel();
         } catch (_) {
           audioContext = null;
           analyser = null;
@@ -335,8 +346,30 @@ export {};
       setVisualizerMode(playing ? 'live' : (state === 'unavailable' ? 'off' : 'idle'));
     };
 
+    // Volume lives on a GainNode *after* the analyser, not on the media element.
+    //
+    // On a phone the waveform shows the track, not your speaker volume: muting
+    // does not stop the bars. With `audio.volume` / `audio.muted` the element's
+    // own attenuation is applied to what the MediaElementAudioSourceNode emits,
+    // so muting fed the analyser digital silence and the bars went flat. Keeping
+    // the element at unity and attenuating downstream means the analyser always
+    // sees the full signal, and the silence happens where it belongs — after the
+    // tap. `audio.volume` is only used as the fallback when the Web Audio graph
+    // could not be built (no AudioContext), where there is no node to attenuate.
+    const applyOutputLevel = () => {
+      const level = userMuted ? 0 : userVolume;
+      if (outputGain) {
+        outputGain.gain.value = level;
+        audio.volume = 1;
+        audio.muted = false;
+        return;
+      }
+      audio.volume = userVolume;
+      audio.muted = userMuted;
+    };
+
     const syncVolumeUI = () => {
-      const level = audio.muted ? 0 : audio.volume;
+      const level = userMuted ? 0 : userVolume;
       const percent = Math.round(level * 100);
       island.dataset.muted = level <= 0 ? 'true' : 'false';
       if (volumeSlider instanceof HTMLInputElement) {
@@ -357,12 +390,13 @@ export {};
       // coercing.
       const rawVolume = localStorage.getItem('b0-player-volume');
       const storedVolume = rawVolume === null || rawVolume.trim() === '' ? Number.NaN : Number(rawVolume);
-      if (Number.isFinite(storedVolume) && storedVolume >= 0 && storedVolume <= 1) audio.volume = storedVolume;
-      else audio.volume = 0.72;
-      audio.muted = localStorage.getItem('b0-player-muted') === 'true';
+      userVolume = Number.isFinite(storedVolume) && storedVolume >= 0 && storedVolume <= 1 ? storedVolume : 0.72;
+      userMuted = localStorage.getItem('b0-player-muted') === 'true';
     } catch (_) {
-      audio.volume = 0.72;
+      userVolume = 0.72;
+      userMuted = false;
     }
+    applyOutputLevel();
 
     const loadLyrics = async () => {
       if (!lyricsSource) return;
@@ -456,16 +490,18 @@ export {};
     volumeMute?.addEventListener('click', (event) => {
       event.preventDefault();
       event.stopPropagation();
-      audio.muted = !audio.muted;
-      try { localStorage.setItem('b0-player-muted', String(audio.muted)); } catch (_) {}
+      userMuted = !userMuted;
+      applyOutputLevel();
+      try { localStorage.setItem('b0-player-muted', String(userMuted)); } catch (_) {}
       syncVolumeUI();
     });
     volumeSlider?.addEventListener('input', () => {
       if (!(volumeSlider instanceof HTMLInputElement)) return;
-      audio.volume = Math.min(1, Math.max(0, Number(volumeSlider.value)));
-      audio.muted = false;
+      userVolume = Math.min(1, Math.max(0, Number(volumeSlider.value)));
+      userMuted = false;
+      applyOutputLevel();
       try {
-        localStorage.setItem('b0-player-volume', String(audio.volume));
+        localStorage.setItem('b0-player-volume', String(userVolume));
         localStorage.setItem('b0-player-muted', 'false');
       } catch (_) {}
       syncVolumeUI();
