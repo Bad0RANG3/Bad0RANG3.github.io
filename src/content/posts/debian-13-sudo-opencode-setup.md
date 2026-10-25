@@ -84,7 +84,7 @@ Debian 的安装镜像有三种，别下错。
 
 本文只走 netinst。它的安装器是 Debian 自己的，和 live 镜像里的图形安装器不是同一套流程。
 
-如果你其实想要的是滚动更新、永远最新内核的路线，那不适合 Debian，可以去看同站的 [Arch Linux 安装实录](/posts/ArchLinuxinstallguide/)——那篇走的是 CachyOS + OpenCode 的完全不同的路线。
+如果你其实想要的是滚动更新、永远最新内核的路线，那不适合 Debian，可以去看同站的 [Arch Linux 安装实录](/posts/archlinuxinstallguide/)——那篇走的是 CachyOS + OpenCode 的完全不同的路线。
 
 ---
 

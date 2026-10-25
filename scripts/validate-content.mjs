@@ -179,7 +179,11 @@ try {
     else publicSlugFiles.set(key, post.filename);
   }
 
-  const publicPostIds = new Set(posts.filter((post) => !post.draft).map((post) => post.id));
+  // Astro slugifies collection entries, so the public URL never keeps the
+  // filename's original casing. Compare against the real slug: a link written
+  // as /posts/ArchLinuxinstallguide/ would pass a case-blind check here yet
+  // 404 in production, because the generated route is lowercase.
+  const publicPostIds = new Set(posts.filter((post) => !post.draft).map((post) => post.id.toLowerCase()));
   for (const record of records) {
     if (record.parsed.error) continue;
     for (const { target, kind } of collectMarkdownTargets(record.source)) {
@@ -198,7 +202,10 @@ try {
       const postMatch = cleaned.match(/^\/posts\/([^/]+)\/?$/i);
       if (postMatch) {
         const slug = decodeURIComponent(postMatch[1]);
-        if (!publicPostIds.has(slug)) addError(record.filename, `Internal post link points to no public post: ${target}`);
+        if (!publicPostIds.has(slug)) {
+          const hint = publicPostIds.has(slug.toLowerCase()) ? ` (post URLs are case-sensitive; use "/posts/${slug.toLowerCase()}/")` : '';
+          addError(record.filename, `Internal post link points to no public post: ${target}${hint}`);
+        }
       } else if (/\.(?:md|mdx)$/i.test(cleaned)) {
         if (!localAsset || !await existsAsFile(localAsset)) addError(record.filename, `Relative Markdown link does not exist: ${target}`);
       } else if (cleaned.startsWith('/') && imageExtensions.has(path.extname(cleaned).toLowerCase())) {
