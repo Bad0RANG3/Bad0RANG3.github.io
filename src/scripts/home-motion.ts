@@ -1,9 +1,10 @@
 /**
- * Homepage motion.
+ * Homepage live column.
  *
- * The only live element is the now-playing pill: it stays collapsed until the
- * island reports real audio, then expands and mirrors that state. Everything
- * else on the page (card cascade, hover lift) is plain CSS.
+ * The sidebar player is a mirror, never an independent player: it reads the
+ * island's real `data-player-state`, forwards clicks to the island's own button,
+ * and shows the lyric line the island is currently on. Progress and timings come
+ * from the `[data-live-*]` hooks that player.ts already updates globally.
  */
 
 const PLAYER_LABELS = {
@@ -15,47 +16,58 @@ const PLAYER_LABELS = {
   unavailable: '音频不可用',
 } as const;
 
-/** States worth showing: there is audio in the pipe. */
-const ACTIVE_STATES = new Set(['playing', 'paused', 'loading']);
-
 let observer: MutationObserver | undefined;
+let lyricListener: ((event: Event) => void) | undefined;
 
 const teardown = () => {
   observer?.disconnect();
   observer = undefined;
+  if (lyricListener) {
+    document.removeEventListener('b0-player-lyric', lyricListener);
+    lyricListener = undefined;
+  }
 };
 
 const init = () => {
   teardown();
 
   const island = document.getElementById('site-island');
-  const pill = document.querySelector<HTMLElement>('[data-now-pill]');
-  if (!island || !pill) return;
+  const card = document.querySelector<HTMLElement>('[data-now-card]');
+  if (!island || !card) return;
 
-  const stateLabel = pill.querySelector<HTMLElement>('[data-now-state-label]');
-  const toggle = pill.querySelector<HTMLButtonElement>('[data-now-toggle]');
+  const stateLabel = card.querySelector<HTMLElement>('[data-now-state-label]');
+  const toggle = card.querySelector<HTMLButtonElement>('[data-now-toggle]');
+  const toggleCopy = card.querySelector<HTMLElement>('[data-now-toggle-copy]');
+  const lyric = card.querySelector<HTMLElement>('[data-now-lyric]');
+  const placeholder = lyric?.textContent?.trim() ?? '';
 
   const sync = () => {
     const state = (island.dataset.playerState ?? 'idle') as keyof typeof PLAYER_LABELS;
-    const visible = ACTIVE_STATES.has(state);
     const playing = state === 'playing';
 
-    pill.dataset.visible = String(visible);
-    pill.dataset.playing = String(playing);
-    pill.toggleAttribute('inert', !visible);
-    pill.setAttribute('aria-hidden', String(!visible));
-
+    card.dataset.playing = String(playing);
     if (stateLabel) stateLabel.textContent = PLAYER_LABELS[state] ?? PLAYER_LABELS.idle;
+
     if (toggle) {
-      toggle.textContent = playing ? '暂停' : '播放';
+      toggle.dataset.playing = String(playing);
       toggle.setAttribute('aria-label', playing ? '暂停音乐' : '播放音乐');
     }
+    if (toggleCopy) toggleCopy.textContent = playing ? '暂停' : '播放';
+
+    // A finished or unavailable track should not leave a stale lyric on screen.
+    if (lyric && (state === 'ready' || state === 'unavailable')) lyric.textContent = placeholder;
   };
 
   sync();
 
   observer = new MutationObserver(sync);
   observer.observe(island, { attributes: true, attributeFilter: ['data-player-state'] });
+
+  lyricListener = (event) => {
+    const text = (event as CustomEvent<{ text?: string }>).detail?.text;
+    if (lyric && typeof text === 'string' && text.trim()) lyric.textContent = text.trim();
+  };
+  document.addEventListener('b0-player-lyric', lyricListener);
 
   toggle?.addEventListener('click', () => {
     document.getElementById('island-player-toggle')?.click();
