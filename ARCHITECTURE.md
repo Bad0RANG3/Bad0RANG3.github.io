@@ -58,7 +58,8 @@ Astro 5 静态站点（`output: 'static'`），Tailwind CSS 4（通过 `@tailwin
     │   ├── theme.ts              主题控制器（首屏由 BaseLayout 内联小脚本兜底）
     │   ├── atmosphere.ts         樱花背景（精灵缓存 + 约 30fps，滚动时持续播放）
     │   ├── player.ts             动态岛音乐播放器
-    │   ├── home.ts               首页（资料卡、歌词舞台）
+    │   ├── home.ts               首页资料卡（网易云 / GitHub 快照刷新）
+    │   ├── home-motion.ts        首页动效（滚动揭示、数字滚动、播放状态联动）
     │   ├── search.ts             站内搜索（首次打开时才由 bootstrap.ts 按需加载）
     │   ├── site.ts               表格包裹 / 回到顶部 / 导航抽屉
     │   ├── article.ts            文章页入口

@@ -173,7 +173,6 @@
 .eyebrow::before { display: inline-block; width: 1.5rem; height: 2px; border-radius: 999px; background: linear-gradient(90deg, var(--accent-pink), var(--accent-violet)); content: ''; }
 .section-heading h2 { color: #fff6fa; font-size: clamp(1.35rem, 3vw, 1.8rem); font-weight: 760; }
 
-.home-section { padding-bottom: 5rem; }
 .section-heading-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; }
 .section-heading-row .section-heading { margin-bottom: 1.25rem; }
 .section-link { display: inline-flex; align-items: center; gap: 0.35rem; margin-bottom: 1.35rem; color: var(--text-dim); font-size: 0.75rem; font-weight: 700; transition: color 0.25s var(--ease), transform 0.25s var(--spring); }
@@ -607,7 +606,6 @@ html:not([data-theme="paper-dark"]) #theme-toggle .theme-icon-moon { display: no
   .section-heading-row { align-items: flex-start; flex-direction: column; gap: 0; }
   .section-heading-row .section-heading { margin-bottom: 0.55rem; }
   .section-link { margin-bottom: 1.1rem; }
-  .home-section { padding-bottom: 3.6rem; }
   .footer-caption { line-height: 1.7; }
 }
 
@@ -730,58 +728,6 @@ html[data-theme="paper-dark"] .profile-overview {
 
 .eyebrow::before { width: 1.6rem; height: 3px; background: linear-gradient(90deg, var(--color-primary), var(--color-secondary)); }
 
-.home-main-cards { margin-top: 2rem; }
-
-.lyric-stage {
-  position: relative;
-  display: flex;
-  min-height: 19rem;
-  flex-direction: column;
-  justify-content: space-between;
-  overflow: hidden;
-}
-
-.lyric-stage::before,
-.lyric-stage::after {
-  position: absolute;
-  border-radius: 50%;
-  content: '';
-  pointer-events: none;
-}
-
-.lyric-stage::before {
-  top: -5rem;
-  right: -4rem;
-  width: 13rem;
-  height: 13rem;
-  background: color-mix(in oklab, var(--color-secondary) 38%, transparent);
-  filter: blur(8px);
-}
-
-.lyric-stage::after {
-  bottom: -6rem;
-  left: 18%;
-  width: 16rem;
-  height: 16rem;
-  border: 2px solid color-mix(in oklab, var(--color-primary) 32%, transparent);
-}
-
-.lyric-stage-top,
-.lyric-stage-footer,
-.lyric-stage-window { position: relative; z-index: 1; }
-.lyric-stage-top { display: flex; align-items: center; gap: 0.55rem; color: color-mix(in oklab, var(--color-base-content) 55%, transparent); font-size: 0.67rem; font-weight: 900; letter-spacing: 0.15em; }
-.lyric-live-dot { width: 0.55rem; height: 0.55rem; border-radius: 50%; background: var(--color-primary); box-shadow: 0 0 0 0 color-mix(in oklab, var(--color-primary) 55%, transparent); animation: lyric-pulse 1.9s ease-out infinite; }
-.lyric-stage-window { display: grid; min-height: 9rem; align-items: center; margin: 1.4rem 0; }
-.lyric-stage-line { grid-area: 1 / 1; margin: 0; }
-.lyric-stage-line { max-width: 12ch; color: var(--color-base-content); font-size: clamp(1.55rem, 4vw, 3.35rem); font-weight: 900; letter-spacing: -0.04em; line-height: 1.18; text-wrap: balance; animation: lyric-rise 4.8s var(--spring) infinite; }
-.lyric-stage-footer { display: flex; align-items: center; gap: 0.75rem; color: color-mix(in oklab, var(--color-base-content) 52%, transparent); font-family: 'JetBrains Mono', 'Noto Sans SC', ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 0.63rem; font-weight: 700; letter-spacing: 0.08em; }
-.lyric-progress { display: block; height: 5px; flex: 1; overflow: hidden; border: 1px solid color-mix(in oklab, var(--color-base-content) 18%, transparent); border-radius: 999px; background: color-mix(in oklab, var(--color-base-100) 50%, transparent); }
-.lyric-progress i { display: block; width: 44%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--color-primary), var(--color-accent)); animation: lyric-progress 4.8s ease-in-out infinite; }
-
-@keyframes lyric-pulse { 0% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--color-primary) 55%, transparent); } 70% { box-shadow: 0 0 0 0.5rem transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
-@keyframes lyric-rise { 0%, 100% { transform: translateY(0); } 48% { transform: translateY(-0.32rem); } }
-@keyframes lyric-progress { 0%, 100% { transform: translateX(-15%); } 50% { transform: translateX(68%); } }
-
 /* Existing portal cards now use the original card language too. */
 /* Let the original contact callout keep the same tangible card treatment. */
 .contact-panel {
@@ -829,10 +775,6 @@ html[data-theme="paper-dark"] .contact-panel {
   .rail-link.is-active { border-color: color-mix(in oklab, var(--color-primary) 48%, transparent); background: color-mix(in oklab, var(--color-primary) 14%, transparent); color: var(--color-primary); transform: translateX(2px); }
 }
 
-@media (max-width: 720px) {
-  .lyric-stage { min-height: 16rem; }
-  .lyric-stage-line { font-size: clamp(1.55rem, 8vw, 2.55rem); }
-}
 
 /*
  * A restrained effects layer inspired by me.yuxing.dev.
@@ -1143,63 +1085,9 @@ html[data-theme="paper"] #sakura-canvas {
   }
 }
 
-/* Home: original two-card composition, with the reference site's calmer scale. */
+/* Home: the shell keeps the same vertical rhythm as the rest of the site. */
 #main-content {
   padding-top: 4.5rem;
-}
-
-.home-overview {
-  padding-top: clamp(2rem, 5vw, 4.5rem);
-  padding-bottom: clamp(4rem, 8vw, 7rem);
-}
-
-.home-welcome {
-  max-width: 68rem;
-  margin-bottom: clamp(2rem, 5vw, 3.4rem);
-}
-
-.home-greeting {
-  margin: 0 0 0.55rem;
-  color: var(--fx-muted);
-  font-size: clamp(0.92rem, 1.5vw, 1.08rem);
-  font-weight: 560;
-  letter-spacing: 0.08em;
-}
-
-.home-name {
-  margin: 0;
-  background: linear-gradient(112deg, var(--fx-text), var(--fx-pink-soft) 62%, var(--fx-pink));
-  background-clip: text;
-  color: transparent;
-  font-size: clamp(3.4rem, 7vw, 5.35rem);
-  font-weight: 820;
-  letter-spacing: -0.065em;
-  line-height: 0.96;
-  filter: drop-shadow(0 12px 30px rgb(255 143 182 / 0.13));
-}
-
-.home-intro {
-  max-width: 43rem;
-  margin: 1.25rem 0 0;
-  color: var(--fx-muted);
-  font-size: clamp(0.94rem, 1.4vw, 1.05rem);
-  line-height: 1.9;
-}
-
-.hero-grid {
-  display: grid;
-  gap: 1.5rem;
-}
-
-.home-main-cards {
-  margin-top: 0;
-}
-
-@media (min-width: 900px) {
-  .hero-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    align-items: stretch;
-  }
 }
 
 .hard-card,
@@ -1251,118 +1139,10 @@ html[data-theme="paper"] #sakura-canvas {
   padding-block: 1rem !important;
 }
 
-.lyric-stage {
-  position: relative;
-  display: flex;
-  min-height: 29rem;
-  flex-direction: column;
-  justify-content: space-between;
-  overflow: hidden;
-  padding: 2rem !important;
-}
-
-.lyric-stage::before {
-  top: auto;
-  right: -5rem;
-  bottom: -6rem;
-  width: 18rem;
-  height: 18rem;
-  background: color-mix(in srgb, var(--fx-pink) 26%, transparent);
-  filter: blur(22px);
-}
-
-.lyric-stage::after {
-  top: -5rem;
-  right: -3rem;
-  bottom: auto;
-  left: auto;
-  width: 12rem;
-  height: 12rem;
-  border: 1px solid color-mix(in srgb, var(--fx-pink-soft) 24%, transparent);
-}
-
-.lyric-stage-top,
-.lyric-stage-window,
-.lyric-stage-footer,
-.lyric-actions {
-  position: relative;
-  z-index: 1;
-}
-
-.lyric-stage-top {
-  color: var(--fx-faint);
-}
-
-.lyric-stage-window {
-  display: flex;
-  min-height: 13rem;
-  flex-direction: column;
-  justify-content: center;
-  margin: 1.3rem 0;
-}
-
-.lyric-stage-line {
-  position: relative;
-  max-width: 16ch;
-  margin: 0;
-  background: linear-gradient(110deg, var(--fx-text) 0 42%, var(--fx-pink-soft) 50%, var(--fx-text) 58% 100%);
-  background-size: 240% 100%;
-  background-clip: text;
-  color: transparent;
-  font-size: clamp(1.8rem, 3.5vw, 3rem);
-  font-weight: 820;
-  letter-spacing: -0.045em;
-  line-height: 1.23;
-  text-wrap: balance;
-  animation: lyric-shine 6s ease-in-out infinite;
-}
-
-.lyric-stage-note {
-  margin: 1rem 0 0;
-  color: var(--fx-faint);
-  font-size: 0.74rem;
-  letter-spacing: 0.05em;
-}
-
-.lyric-stage-footer {
-  color: var(--fx-faint);
-}
-
-.lyric-progress {
-  height: 4px;
-  border: 0;
-  background: color-mix(in srgb, var(--fx-text) 13%, transparent);
-}
-
-.lyric-progress i {
-  width: 38%;
-  background: linear-gradient(90deg, var(--fx-pink), var(--fx-pink-soft));
-  animation: lyric-progress 6s ease-in-out infinite;
-}
-
 [data-live-progress] i {
   width: var(--live-progress, 0%);
   animation: none;
   transition: width 0.22s linear;
-}
-
-.lyric-actions {
-  display: grid;
-  grid-template-columns: 1.35fr 0.72fr 0.72fr;
-  gap: 0.7rem;
-  margin-top: 1.5rem;
-  padding-top: 1.25rem;
-  border-top: 1px solid var(--fx-line);
-}
-
-@keyframes lyric-shine {
-  0%, 25%, 100% { background-position: 100% 0; }
-  55%, 72% { background-position: 0 0; }
-}
-
-.home-section {
-  padding-top: 0;
-  padding-bottom: clamp(4rem, 8vw, 7rem);
 }
 
 .presence-grid {
@@ -2053,16 +1833,6 @@ button.chip-signal[aria-pressed="true"] {
   color: var(--fx-pink);
 }
 
-@media (max-width: 900px) {
-  .home-name {
-    font-size: clamp(3.2rem, 14vw, 5.8rem);
-  }
-
-  .lyric-stage {
-    min-height: 25rem;
-  }
-}
-
 @media (max-width: 640px) {
   #main-content {
     padding-top: 4rem;
@@ -2079,26 +1849,6 @@ button.chip-signal[aria-pressed="true"] {
 
   .mobile-menu-action {
     display: inline-grid;
-  }
-
-  .home-overview {
-    padding-top: 1.8rem;
-  }
-
-  .home-welcome {
-    margin-bottom: 1.8rem;
-  }
-
-  .home-intro {
-    line-height: 1.75;
-  }
-
-  .lyric-stage {
-    min-height: 23rem;
-  }
-
-  .lyric-actions {
-    grid-template-columns: 1fr 0.6fr 0.6fr;
   }
 
   .presence-card {
@@ -2133,14 +1883,6 @@ button.chip-signal[aria-pressed="true"] {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  /* The island's own reduced-motion behaviour lives in `island.css`, next to
-     the transitions it shortens. */
-  .lyric-stage-line,
-  .lyric-progress i {
-    animation: none !important;
-    transition-duration: 0.01ms !important;
-  }
-
   .site-atmosphere::before,
   #sakura-canvas { transform: none !important; }
 }

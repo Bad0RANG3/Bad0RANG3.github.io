@@ -1,81 +1,174 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import PostCard from '../components/blog/PostCard.astro';
-import ProjectCard from '../components/profile/ProjectCard.astro';
-import ProfileOverviewCard from '../components/profile/ProfileOverviewCard.astro';
 import Icon from '../components/icons/Icon.astro';
 import SectionHeader from '../components/ui/SectionHeader.astro';
 import { projects } from '../config/projects';
-import { ROUTES } from '../config/routes';
+import { ROUTES, postPath } from '../config/routes';
 import { siteConfig } from '../config/site';
-import { LAYOUT, STAGGER } from '../config/ui';
-import { getPublishedPosts } from '../lib/content';
+import { getPublishedPosts, getPostReadingMinutes } from '../lib/content';
+import { getTagGroups } from '../lib/taxonomy';
+import { formatDate } from '../lib/date';
 import { withBase } from '../lib/urls';
 
 const posts = await getPublishedPosts();
-const recentPosts = posts.slice(0, LAYOUT.RECENT_POSTS_COUNT);
-const { author, hero, netease, github } = siteConfig;
+const recentPosts = posts.slice(0, 4);
+const tagGroups = await getTagGroups();
+const { author, hero, music, netease, github, about } = siteConfig;
 
-const profileMetrics = [
-  { label: '文章', value: String(posts.length).padStart(2, '0') },
-  { label: '项目', value: String(projects.length).padStart(2, '0') },
-  { label: '状态', value: '在线' },
+const nameChars = [...author.name];
+const roles = ['拆解软件', '写点代码', '折腾配置'];
+const featuredProjects = projects.slice(0, 3);
+const keywords = tagGroups.slice(0, 10).map((group) => group.name);
+/* The ribbon loops by translating -50%, so one copy has to stay wider than the
+   widest viewport; four passes cover screens up to ~4300px without a gap. */
+const marqueeLoop = [...keywords, ...keywords, ...keywords, ...keywords];
+const toolCount = about.techStack.length + about.devTools.length;
+const indexItems = [
+  { value: posts.length, label: '篇文章' },
+  { value: projects.length, label: '个项目' },
+  { value: toolCount, label: '件常用工具' },
+  { value: tagGroups.length, label: '个标签' },
 ];
+const waveHeights = [42, 68, 34, 84, 52, 74, 38];
 ---
 
 <BaseLayout title={siteConfig.title} description={siteConfig.description}>
-  <div class="home-page">
-    <section class="site-frame home-overview" aria-labelledby="home-title" data-island-cue="首页概览">
-      <header class="home-welcome reveal">
-        <p class="home-greeting">こんにちは、I'm</p>
-        <h1 id="home-title" class="home-name">{author.name}</h1>
-        <p class="home-intro">{author.intro} 这里记录软件折腾、开发实验、游戏和那些值得留下来的小发现。</p>
-      </header>
+  <div class="home-stage">
+    <section class="stage-hero site-frame" aria-labelledby="home-title" data-island-cue="首页概览">
+      <div class="stage-copy">
+        <p class="stage-kicker"><span class="stage-dot" aria-hidden="true"></span>你好，我是</p>
 
-      <div class="hero-grid home-main-cards">
-        <ProfileOverviewCard
-          layout="stack"
-          eyebrow="个人档案"
-          heading={author.name}
-          headingTag="h2"
-          subtitle=""
-          metrics={profileMetrics}
-        />
+        <h1 id="home-title" class="stage-name" aria-label={author.name}>
+          {nameChars.map((char, index) => (
+            <span class="stage-name__char" style={`--i:${index}`} aria-hidden="true">{char}</span>
+          ))}
+          <span class="stage-name__dot" aria-hidden="true">.</span>
+        </h1>
 
-        <section class="profile-card lyric-stage reveal hard-card rounded-[2rem] p-6 sm:p-8 lg:p-9" aria-label="歌词展示" style="--reveal-delay:100ms">
-          <div class="lyric-stage-top">
-            <span class="lyric-live-dot"></span>
-            <span>NOW PLAYING</span>
-          </div>
+        <p class="stage-role">
+          <span>正在</span>
+          <span class="stage-role__window">
+            <span class="stage-role__list" aria-hidden="true">
+              {roles.map((role) => <span>{role}</span>)}
+              <span>{roles[0]}</span>
+            </span>
+          </span>
+          <span class="sr-only">拆解软件、写点代码、折腾配置</span>
+        </p>
 
-          <div class="lyric-stage-window">
-            <blockquote class="lyric-stage-line">{hero.lyric}</blockquote>
-            <p class="lyric-stage-note">当这一行亮起，故事也继续向前。</p>
-          </div>
+        <p class="stage-intro">
+          {author.intro} 这里记录软件折腾、开发实验、游戏，以及那些值得留下来的小发现。
+        </p>
 
-          <div class="lyric-stage-footer">
-            <span data-live-elapsed>0:00</span>
-            <span class="lyric-progress" data-live-progress><i></i></span>
-            <span data-live-duration>{siteConfig.music.durationLabel}</span>
-          </div>
-
-          <div class="lyric-actions">
-            <a href={withBase(ROUTES.POSTS)} class="btn-brutal"><Icon name="book" class="h-4 w-4" />阅读文章</a>
-            <a href={withBase(ROUTES.TOOLS)} class="btn-brutal-outline">工具</a>
-            <a href={withBase(ROUTES.ABOUT)} class="btn-brutal-outline">关于</a>
-          </div>
-        </section>
+        <div class="stage-actions">
+          <a href={withBase(ROUTES.POSTS)} class="stage-btn stage-btn--primary">
+            阅读文章 <Icon name="arrow-up-right" class="h-4 w-4" />
+          </a>
+          <a href={withBase(ROUTES.PROJECTS)} class="stage-btn">看看项目</a>
+          <a href={`mailto:${author.email}`} class="stage-link">直接找我</a>
+        </div>
       </div>
+
+      <aside class="stage-now" data-now-card data-playing="false" aria-label="当前曲目与播放状态">
+        <div class="stage-now__head">
+          <span class="stage-now__label">NOW PLAYING</span>
+          <span class="stage-now__state"><i aria-hidden="true"></i><span data-now-state>准备播放</span></span>
+        </div>
+
+        <p class="stage-now__title">{music.title}</p>
+        <p class="stage-now__meta">{music.artist} · {music.album}</p>
+
+        <div class="stage-now__wave" aria-hidden="true">
+          {waveHeights.map((height, index) => (
+            <i style={`--i:${index};--h:${height}%`}></i>
+          ))}
+        </div>
+
+        <div class="stage-now__foot">
+          <span data-live-elapsed>0:00</span>
+          <span class="stage-now__bar" data-live-progress><i></i></span>
+          <span data-live-duration>{music.durationLabel}</span>
+        </div>
+
+        <button class="stage-now__toggle" type="button" data-now-toggle aria-label="播放音乐">
+          <span class="stage-now__glyph" aria-hidden="true"></span>
+          <span data-now-toggle-copy>听一下</span>
+        </button>
+      </aside>
+
+      <ul class="stage-index" aria-label="站点概览">
+        {indexItems.map((item) => (
+          <li>
+            <strong data-count={item.value}>{item.value}</strong>
+            <span>{item.label}</span>
+          </li>
+        ))}
+      </ul>
     </section>
 
-    <section id="home-presence" class="site-frame home-section presence-section" aria-labelledby="presence-title" data-island-cue="音乐与开发">
+    <div class="stage-marquee" role="presentation">
+      <p class="sr-only">关键词：{keywords.join('、')}</p>
+      <div class="stage-marquee__track" aria-hidden="true">
+        {[0, 1].map(() => (
+          <div class="stage-marquee__group">
+            {marqueeLoop.map((word) => <span class="stage-marquee__item">{word}</span>)}
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <section id="home-projects" class="stage-section site-frame" aria-labelledby="projects-title" data-island-cue="项目与实验" data-motion>
+      <div class="section-heading-row">
+        <SectionHeader label="Selected" title="项目与实验" titleId="projects-title" />
+        <a href={withBase(ROUTES.PROJECTS)} class="stage-link">全部项目 <Icon name="arrow-up-right" class="h-3.5 w-3.5" /></a>
+      </div>
+
+      <ul class="stage-list">
+        {featuredProjects.map((project, index) => (
+          <li data-motion style={`--d:${index * 70}ms`}>
+            <a href={withBase(project.href)} class="stage-row">
+              <span class="stage-row__index">{String(index + 1).padStart(2, '0')}</span>
+              <span class="stage-row__body">
+                <strong class="stage-row__title">{project.name}</strong>
+                <span class="stage-row__desc">{project.summary}</span>
+              </span>
+              <Icon name="arrow-up-right" class="stage-row__arrow h-4 w-4" />
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <section id="home-journal" class="stage-section site-frame" aria-labelledby="recent-posts-title" data-island-cue="最近更新" data-motion>
+      <div class="section-heading-row">
+        <SectionHeader label="Journal" title="最近更新" titleId="recent-posts-title" />
+        <a href={withBase(ROUTES.POSTS)} class="stage-link">全部文章 <Icon name="arrow-up-right" class="h-3.5 w-3.5" /></a>
+      </div>
+
+      <ul class="stage-list">
+        {recentPosts.map((post, index) => (
+          <li data-motion style={`--d:${index * 60}ms`}>
+            <a href={withBase(postPath(post.slug))} class="stage-row stage-row--post">
+              <span class="stage-row__index">{formatDate(post.data.date)}</span>
+              <span class="stage-row__body">
+                <strong class="stage-row__title">{post.data.title}</strong>
+                <span class="stage-row__meta">{post.data.category} · {getPostReadingMinutes(post)} 分钟</span>
+              </span>
+              <Icon name="arrow-up-right" class="stage-row__arrow h-4 w-4" />
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <section id="home-presence" class="stage-section site-frame" aria-labelledby="presence-title" data-island-cue="音乐与开发" data-motion>
       <div class="section-heading-row">
         <SectionHeader label="Presence" title="音乐与开发" titleId="presence-title" />
       </div>
 
       <div class="presence-grid">
         <article
-          class="profile-card presence-card ncm-profile-card reveal"
+          class="profile-card presence-card ncm-profile-card"
           data-ncm-profile
           data-api-base={netease.apiBase}
           data-user-id={netease.userId}
@@ -111,7 +204,7 @@ const profileMetrics = [
           </dl>
         </article>
 
-        <article class="profile-card presence-card presence-github-card reveal" style="--reveal-delay:100ms" data-github-profile data-api-url={github.apiUrl}>
+        <article class="profile-card presence-card presence-github-card" data-github-profile data-api-url={github.apiUrl}>
           <header class="presence-card-header">
             <span class="presence-provider"><Icon name="github" class="h-4 w-4" /> GitHub</span>
             <a href={github.profileUrl} target="_blank" rel="noreferrer" aria-label={`前往 ${github.username} 的 GitHub`}><Icon name="arrow-up-right" class="h-4 w-4" /></a>
@@ -140,51 +233,21 @@ const profileMetrics = [
       </div>
     </section>
 
-    <section id="home-projects" class="site-frame home-section" aria-labelledby="projects-title" data-island-cue="项目与实验">
-      <div class="section-heading-row">
-        <SectionHeader label="Selected" title="项目与实验" titleId="projects-title" />
-        <a href={withBase(ROUTES.PROJECTS)} class="section-link">查看全部 <Icon name="arrow-up-right" class="h-4 w-4" /></a>
-      </div>
-      <div class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-        {projects.map((project, index) => (
-          <div class="min-w-0" style={`--reveal-delay:${STAGGER.CARD_START + index * STAGGER.CARD_STEP}ms`}>
-            <ProjectCard project={project} />
-          </div>
-        ))}
-      </div>
+    <section class="stage-quote site-frame" aria-label="此刻循环的歌词" data-motion>
+      <p class="stage-quote__label">此刻循环 · {music.title}</p>
+      <blockquote>{hero.lyric}</blockquote>
     </section>
 
-    <section id="home-journal" class="site-frame home-section" aria-labelledby="recent-posts-title" data-island-cue="最近更新">
-      <div class="section-heading-row">
-        <SectionHeader label="Journal" title="最近更新" titleId="recent-posts-title" />
-        <a href={withBase(ROUTES.POSTS)} class="section-link">全部文章 <Icon name="arrow-up-right" class="h-4 w-4" /></a>
-      </div>
-      <div class="grid gap-5 md:grid-cols-2">
-        {recentPosts.map((post, index) => (
-          <div class="min-w-0" style={`--reveal-delay:${STAGGER.LIST_START + index * STAGGER.LIST_STEP}ms`}>
-            <PostCard post={post} />
-          </div>
-        ))}
-      </div>
-
-      {posts.length > LAYOUT.RECENT_POSTS_COUNT && (
-        <div class="mt-8 text-center reveal" style="--reveal-delay:500ms">
-          <a href={withBase(ROUTES.POSTS)} class="btn-brutal-outline">查看全部文章 <Icon name="arrow-up-right" class="h-4 w-4" /></a>
+    <section id="home-contact" class="site-frame stage-contact" aria-labelledby="contact-title" data-island-cue="保持联系" data-motion>
+      <div class="stage-contact__inner">
+        <div>
+          <p class="stage-kicker">保持联系</p>
+          <h2 id="contact-title">想聊点什么？</h2>
+          <p class="stage-contact__copy">工具、配置、特效实验都欢迎交流，也可以从页脚的社交链接找到我。</p>
         </div>
-      )}
-    </section>
-
-    <section id="home-contact" class="site-frame home-section home-contact" aria-labelledby="contact-title" data-island-cue="保持联系">
-      <div class="profile-card reveal contact-panel">
-        <div class="grid gap-8 lg:grid-cols-[1.4fr_0.8fr] lg:items-end">
-          <div>
-            <SectionHeader label="Contact" title="想聊点什么？" titleId="contact-title" />
-            <p class="max-w-xl text-sm leading-7 text-base-content/65 sm:text-base">工具、配置、特效实验都欢迎交流，也可以从社交链接找到我。</p>
-          </div>
-          <div class="flex flex-col gap-3 sm:flex-row lg:flex-col">
-            <a href={withBase(ROUTES.ABOUT)} class="btn-brutal-outline w-full">关于我 <Icon name="arrow-up-right" class="h-4 w-4" /></a>
-            <a href={`mailto:${author.email}`} class="btn-brutal w-full">发送邮件 <Icon name="arrow-up-right" class="h-4 w-4" /></a>
-          </div>
+        <div class="stage-actions">
+          <a href={`mailto:${author.email}`} class="stage-btn stage-btn--primary">发送邮件 <Icon name="arrow-up-right" class="h-4 w-4" /></a>
+          <a href={withBase(ROUTES.ABOUT)} class="stage-btn">关于我</a>
         </div>
       </div>
     </section>
@@ -192,5 +255,671 @@ const profileMetrics = [
 
   <script>
     import '../scripts/home';
+    import '../scripts/home-motion';
   </script>
 </BaseLayout>
+
+<style>
+  .home-stage {
+    --ink: var(--fx-text);
+    --muted: var(--fx-muted);
+    --soft: var(--text-faint);
+    --line: var(--fx-line);
+    --accent: var(--fx-pink);
+    padding-bottom: clamp(2rem, 5vw, 4rem);
+  }
+
+  /* ------------------------------------------------------------------
+     Opening: oversized name, a cycling role, and the live player card.
+     ------------------------------------------------------------------ */
+  .stage-hero {
+    position: relative;
+    isolation: isolate;
+    display: grid;
+    grid-template-columns: minmax(0, 1.12fr) minmax(17rem, 0.88fr);
+    align-items: start;
+    gap: clamp(2rem, 5vw, 4.5rem);
+    overflow: clip;
+    /* The player card keeps the site's 7px offset shadow; this padding keeps
+       that shadow inside the clip box instead of slicing its right edge. */
+    padding-right: 0.6rem;
+    padding-block: clamp(2.2rem, 6vw, 4.5rem) clamp(1rem, 3vw, 1.75rem);
+  }
+
+  /* One slow glow behind the copy. It drifts on transform only, so it never
+     triggers layout, and it is clipped by the section. */
+  .stage-hero::before {
+    position: absolute;
+    z-index: 0;
+    top: -8rem;
+    right: -6rem;
+    width: min(34rem, 74vw);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: radial-gradient(circle, color-mix(in srgb, var(--accent) 20%, transparent), transparent 64%);
+    filter: blur(26px);
+    content: '';
+    opacity: 0.6;
+    pointer-events: none;
+    animation: stage-drift 19s ease-in-out infinite alternate;
+  }
+
+  .stage-copy,
+  .stage-now,
+  .stage-index { position: relative; z-index: 1; }
+
+  .stage-copy { min-width: 0; }
+
+  .stage-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    color: var(--soft);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+  }
+
+  .stage-dot {
+    position: relative;
+    width: 0.42rem;
+    height: 0.42rem;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  .stage-dot::after {
+    position: absolute;
+    inset: -0.28rem;
+    border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+    border-radius: 50%;
+    content: '';
+    animation: stage-ping 2.8s ease-out infinite;
+  }
+
+  .stage-name {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0.85rem 0 0;
+    color: var(--ink);
+    font-size: clamp(3.1rem, 8.6vw, 6.1rem);
+    font-weight: 820;
+    letter-spacing: -0.06em;
+    line-height: 0.95;
+  }
+
+  .stage-name__char,
+  .stage-name__dot {
+    display: inline-block;
+    animation: stage-rise 0.85s var(--ease) both;
+    animation-delay: calc(90ms + var(--i, 9) * 42ms);
+  }
+
+  .stage-name__dot { color: var(--accent); }
+
+  .stage-role {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    margin: 1.35rem 0 0;
+    color: var(--soft);
+    font-size: clamp(0.9rem, 1.3vw, 1rem);
+  }
+
+  .stage-role__window {
+    display: inline-flex;
+    height: 1.55em;
+    overflow: hidden;
+  }
+
+  .stage-role__list {
+    display: flex;
+    flex-direction: column;
+    animation: stage-role 12s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+  }
+
+  .stage-role__list > span {
+    height: 1.55em;
+    color: var(--ink);
+    font-weight: 700;
+    line-height: 1.55em;
+    white-space: nowrap;
+  }
+
+  .stage-intro {
+    max-width: 33rem;
+    margin: 1.4rem 0 0;
+    color: var(--muted);
+    font-size: clamp(0.95rem, 1.25vw, 1.02rem);
+    line-height: 1.95;
+  }
+
+  .stage-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem;
+    margin-top: 1.8rem;
+  }
+
+  .stage-btn {
+    display: inline-flex;
+    min-height: 2.8rem;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 0.7rem 1.15rem;
+    background: color-mix(in srgb, var(--fx-surface-strong) 72%, transparent);
+    color: var(--ink);
+    font-size: 0.8rem;
+    font-weight: 700;
+    line-height: 1;
+    transition: transform 0.25s var(--ease), border-color 0.25s ease, background 0.25s ease;
+  }
+
+  .stage-btn:hover,
+  .stage-btn:focus-visible {
+    border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
+    transform: translateY(-2px);
+  }
+
+  .stage-btn:focus-visible,
+  .stage-link:focus-visible,
+  .stage-row:focus-visible,
+  .stage-now__toggle:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+
+  .stage-btn--primary {
+    border-color: transparent;
+    background: var(--accent);
+    color: #2a1220;
+  }
+
+  .stage-btn--primary:hover,
+  .stage-btn--primary:focus-visible {
+    background: color-mix(in srgb, var(--accent) 88%, black);
+    color: #2a1220;
+  }
+
+  .stage-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    color: var(--soft);
+    font-size: 0.8rem;
+    text-decoration: none;
+    transition: color 0.2s ease, gap 0.2s ease;
+  }
+
+  .stage-link:hover,
+  .stage-link:focus-visible { color: var(--ink); gap: 0.45rem; }
+
+  /* The player card reports the island's real state; see home-motion.ts. */
+  .stage-now {
+    align-self: start;
+    border: 1px solid var(--line);
+    border-radius: 1.35rem;
+    padding: 1.3rem 1.35rem 1.2rem;
+    background: color-mix(in srgb, var(--fx-surface-strong) 84%, transparent);
+    box-shadow: 7px 7px 0 color-mix(in srgb, var(--accent) 14%, transparent), 0 28px 60px -45px var(--fx-shadow);
+    backdrop-filter: blur(14px);
+  }
+
+  .stage-now__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    color: var(--soft);
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.14em;
+  }
+
+  .stage-now__label { font-weight: 700; }
+
+  .stage-now__state {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    letter-spacing: 0.06em;
+  }
+
+  .stage-now__state i {
+    width: 0.38rem;
+    height: 0.38rem;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--soft) 70%, transparent);
+    transition: background 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .stage-now[data-playing="true"] .stage-now__state i {
+    background: var(--accent);
+    box-shadow: 0 0 0 0.22rem color-mix(in srgb, var(--accent) 16%, transparent);
+  }
+
+  .stage-now__title {
+    margin: 1.15rem 0 0;
+    color: var(--ink);
+    font-size: clamp(1.3rem, 2.4vw, 1.55rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+
+  .stage-now__meta {
+    margin: 0.35rem 0 0;
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+
+  .stage-now__wave {
+    display: flex;
+    height: 2rem;
+    align-items: flex-end;
+    gap: 3px;
+    margin: 1.15rem 0 0.9rem;
+  }
+
+  .stage-now__wave i {
+    flex: 1;
+    height: var(--h, 40%);
+    border-radius: 2px;
+    background: linear-gradient(180deg, var(--accent), color-mix(in srgb, var(--accent) 42%, transparent));
+    transform-origin: bottom;
+  }
+
+  /* Bars only move while audio is actually playing. */
+  .stage-now[data-playing="true"] .stage-now__wave i {
+    animation: stage-eq 1.05s ease-in-out infinite alternate;
+    animation-delay: calc(var(--i) * -0.13s);
+  }
+
+  .stage-now__foot {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    color: var(--soft);
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .stage-now__bar {
+    flex: 1;
+    height: 3px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--ink) 12%, transparent);
+  }
+
+  .stage-now__bar i {
+    display: block;
+    width: var(--live-progress, 0%);
+    height: 100%;
+    border-radius: inherit;
+    background: var(--accent);
+    transition: width 0.2s linear;
+  }
+
+  .stage-now__toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    min-height: 2.5rem;
+    margin-top: 1.15rem;
+    border: 1px solid color-mix(in srgb, var(--accent) 32%, var(--line));
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--accent) 10%, transparent);
+    color: var(--ink);
+    font-size: 0.78rem;
+    font-weight: 700;
+    transition: background 0.25s ease, border-color 0.25s ease;
+  }
+
+  .stage-now__toggle:hover,
+  .stage-now__toggle:focus-visible {
+    border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
+    background: color-mix(in srgb, var(--accent) 18%, transparent);
+  }
+
+  .stage-now__glyph {
+    width: 0;
+    height: 0;
+    margin-left: 0.12rem;
+    border-top: 0.34rem solid transparent;
+    border-bottom: 0.34rem solid transparent;
+    border-left: 0.52rem solid currentColor;
+  }
+
+  .stage-now__toggle[data-playing="true"] .stage-now__glyph {
+    width: 0.16rem;
+    height: 0.7rem;
+    margin-left: 0;
+    border: 0;
+    background: currentColor;
+    box-shadow: 0.3rem 0 0 currentColor;
+  }
+
+  /* ------------------------------------------------------------------
+     Numbers
+     ------------------------------------------------------------------ */
+  .stage-index {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin: 0.75rem 0 0;
+    padding: 0;
+    border-top: 1px solid var(--line);
+    list-style: none;
+  }
+
+  .stage-index li {
+    display: grid;
+    gap: 0.35rem;
+    border-left: 1px solid var(--line);
+    padding: 1.1rem 1rem 0;
+  }
+
+  .stage-index li:first-child { border-left: 0; padding-left: 0; }
+
+  .stage-index strong {
+    color: var(--ink);
+    font-family: var(--font-mono);
+    font-size: clamp(1.45rem, 3vw, 1.95rem);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+
+  .stage-index span { color: var(--soft); font-size: 0.74rem; }
+
+  /* ------------------------------------------------------------------
+     Keyword ribbon
+     ------------------------------------------------------------------ */
+  .stage-marquee {
+    overflow: hidden;
+    border-block: 1px solid var(--line);
+    padding-block: 0.8rem;
+    background: color-mix(in srgb, var(--fx-surface) 55%, transparent);
+  }
+
+  .stage-marquee__track {
+    display: flex;
+    width: max-content;
+    animation: stage-marquee 70s linear infinite;
+  }
+
+  .stage-marquee:hover .stage-marquee__track,
+  .stage-marquee:focus-within .stage-marquee__track { animation-play-state: paused; }
+
+  .stage-marquee__group {
+    display: flex;
+    align-items: center;
+    gap: 1.9rem;
+    padding-right: 1.9rem;
+  }
+
+  .stage-marquee__item {
+    color: var(--soft);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    white-space: nowrap;
+    text-transform: uppercase;
+  }
+
+  .stage-marquee__item::after {
+    margin-left: 1.9rem;
+    color: color-mix(in srgb, var(--accent) 55%, transparent);
+    content: '◆';
+    font-size: 0.5rem;
+    vertical-align: 0.2em;
+  }
+
+  /* ------------------------------------------------------------------
+     Sections and rows
+     ------------------------------------------------------------------ */
+  .stage-section { padding-block: clamp(2.6rem, 6vw, 4.5rem); }
+  .stage-section + .stage-section { border-top: 1px solid var(--line); }
+
+  .stage-list {
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--line);
+    list-style: none;
+  }
+
+  .stage-list li { border-bottom: 1px solid var(--line); }
+
+  .stage-row {
+    display: grid;
+    grid-template-columns: 3.2rem minmax(0, 1fr) auto;
+    align-items: baseline;
+    gap: 1.1rem;
+    padding: 1.15rem 0.1rem;
+    color: var(--ink);
+    text-decoration: none;
+  }
+
+  .stage-row--post { grid-template-columns: 7.4rem minmax(0, 1fr) auto; }
+
+  .stage-row__index {
+    color: var(--soft);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+  }
+
+  .stage-row__body {
+    display: grid;
+    gap: 0.3rem;
+    min-width: 0;
+    transition: transform 0.3s var(--ease);
+  }
+
+  .stage-row__title {
+    font-size: clamp(1.02rem, 1.6vw, 1.12rem);
+    font-weight: 750;
+    letter-spacing: -0.01em;
+    transition: color 0.25s ease;
+  }
+
+  .stage-row__desc,
+  .stage-row__meta {
+    color: var(--muted);
+    font-size: 0.8rem;
+    line-height: 1.7;
+  }
+
+  .stage-row__arrow {
+    align-self: center;
+    color: var(--soft);
+    transition: transform 0.3s var(--ease), color 0.25s ease;
+  }
+
+  .stage-row:hover .stage-row__body,
+  .stage-row:focus-visible .stage-row__body { transform: translateX(0.5rem); }
+
+  .stage-row:hover .stage-row__title,
+  .stage-row:hover .stage-row__arrow,
+  .stage-row:focus-visible .stage-row__title,
+  .stage-row:focus-visible .stage-row__arrow { color: var(--accent); }
+
+  .stage-row:hover .stage-row__arrow,
+  .stage-row:focus-visible .stage-row__arrow { transform: translate(0.15rem, -0.15rem); }
+
+  /* ------------------------------------------------------------------
+     Closing quote and contact
+     ------------------------------------------------------------------ */
+  .stage-quote { padding-block: clamp(3rem, 8vw, 6rem); }
+
+  .stage-quote__label {
+    margin: 0 0 1.1rem;
+    color: var(--soft);
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.16em;
+  }
+
+  .stage-quote blockquote {
+    position: relative;
+    display: inline-block;
+    margin: 0;
+    max-width: 20ch;
+    color: var(--ink);
+    font-size: clamp(1.6rem, 4.6vw, 3rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.34;
+    text-wrap: balance;
+  }
+
+  .stage-quote blockquote::after {
+    position: absolute;
+    bottom: -0.5rem;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--accent), transparent);
+    content: '';
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 1s var(--ease) 0.2s;
+  }
+
+  .stage-quote:not(.is-pending) blockquote::after { transform: scaleX(1); }
+
+  .stage-contact {
+    border-top: 1px solid var(--line);
+    padding-block: clamp(2.6rem, 6vw, 4.5rem);
+  }
+
+  .stage-contact__inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: 1.5rem;
+  }
+
+  .stage-contact h2 {
+    margin: 0.7rem 0 0;
+    color: var(--ink);
+    font-size: clamp(1.6rem, 3.4vw, 2.2rem);
+    font-weight: 800;
+    letter-spacing: -0.035em;
+  }
+
+  .stage-contact__copy {
+    max-width: 30rem;
+    margin: 0.85rem 0 0;
+    color: var(--muted);
+    font-size: 0.92rem;
+    line-height: 1.85;
+  }
+
+  .stage-contact .stage-actions { margin-top: 0; }
+
+  /* ------------------------------------------------------------------
+     Scroll-in. `is-pending` is only ever added by JS, after it has
+     confirmed the element is below the fold, so nothing here can hide
+     content for a visitor without scripts.
+     ------------------------------------------------------------------ */
+  [data-motion] {
+    transition: opacity 0.7s var(--ease), transform 0.7s var(--ease);
+    transition-delay: var(--d, 0ms);
+  }
+
+  [data-motion].is-pending {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  @keyframes stage-rise {
+    from { opacity: 0; transform: translateY(0.55em) rotate(3deg); }
+    to { opacity: 1; transform: none; }
+  }
+
+  @keyframes stage-ping {
+    0% { opacity: 0.85; transform: scale(0.7); }
+    70%, 100% { opacity: 0; transform: scale(1.6); }
+  }
+
+  @keyframes stage-drift {
+    from { transform: translate3d(-1.5rem, 0, 0) scale(0.95); }
+    to { transform: translate3d(1.5rem, -2rem, 0) scale(1.05); }
+  }
+
+  @keyframes stage-role {
+    0%, 24% { transform: translateY(0); }
+    30%, 54% { transform: translateY(-1.55em); }
+    60%, 84% { transform: translateY(-3.1em); }
+    100% { transform: translateY(-4.65em); }
+  }
+
+  @keyframes stage-eq {
+    from { transform: scaleY(0.32); }
+    to { transform: scaleY(1); }
+  }
+
+  @keyframes stage-marquee {
+    to { transform: translateX(-50%); }
+  }
+
+  @media (max-width: 980px) {
+    .stage-hero {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 2rem;
+    }
+
+    .stage-now { width: min(100%, 26rem); }
+
+    .stage-contact__inner {
+      grid-template-columns: minmax(0, 1fr);
+      align-items: start;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .stage-hero { padding-top: 1.6rem; }
+
+    .stage-index { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+    .stage-index li:nth-child(odd) { border-left: 0; padding-left: 0; }
+    .stage-index li:nth-child(n + 3) { border-top: 1px solid var(--line); margin-top: 0.9rem; }
+
+    .stage-row,
+    .stage-row--post {
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 0.7rem 0.9rem;
+    }
+
+    .stage-row__index { grid-column: 1 / -1; }
+
+    .stage-quote blockquote { max-width: 100%; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .stage-name__char,
+    .stage-name__dot,
+    .stage-dot::after,
+    .stage-hero::before,
+    .stage-role__list,
+    .stage-marquee__track,
+    .stage-now__wave i {
+      animation: none;
+    }
+
+    .stage-quote blockquote::after { transform: scaleX(1); }
+
+    [data-motion] { transition: none; }
+  }
+</style>
