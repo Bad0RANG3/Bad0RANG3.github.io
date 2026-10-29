@@ -1,169 +1,167 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Icon from '../components/icons/Icon.astro';
+import PostCard from '../components/blog/PostCard.astro';
+import ProjectCard from '../components/profile/ProjectCard.astro';
 import SectionHeader from '../components/ui/SectionHeader.astro';
 import { projects } from '../config/projects';
-import { ROUTES, postPath } from '../config/routes';
+import { ROUTES, postPath, tagPath } from '../config/routes';
 import { siteConfig } from '../config/site';
+import { LAYOUT, STAGGER } from '../config/ui';
 import { getPublishedPosts, getPostReadingMinutes } from '../lib/content';
 import { getTagGroups } from '../lib/taxonomy';
 import { formatDate } from '../lib/date';
 import { withBase } from '../lib/urls';
 
 const posts = await getPublishedPosts();
-const recentPosts = posts.slice(0, 4);
 const tagGroups = await getTagGroups();
-const { author, hero, music, netease, github, about } = siteConfig;
+const { author, music, netease, github, about } = siteConfig;
 
-const nameChars = [...author.name];
-const roles = ['拆解软件', '写点代码', '折腾配置'];
+/* Lead with a featured post, preferring one that also ships a cover image. */
+const featured =
+  posts.find((post) => post.data.featured && post.data.cover) ??
+  posts.find((post) => post.data.featured) ??
+  posts[0];
+
+const latestPosts = posts
+  .filter((post) => post.slug !== featured?.slug)
+  .slice(0, LAYOUT.RECENT_POSTS_COUNT);
+
 const featuredProjects = projects.slice(0, 3);
-const keywords = tagGroups.slice(0, 10).map((group) => group.name);
-/* The ribbon loops by translating -50%, so one copy has to stay wider than the
-   widest viewport; four passes cover screens up to ~4300px without a gap. */
-const marqueeLoop = [...keywords, ...keywords, ...keywords, ...keywords];
-const toolCount = about.techStack.length + about.devTools.length;
-const indexItems = [
-  { value: posts.length, label: '篇文章' },
-  { value: projects.length, label: '个项目' },
-  { value: toolCount, label: '件常用工具' },
-  { value: tagGroups.length, label: '个标签' },
+const topTags = tagGroups.slice(0, 8);
+
+const stats = [
+  { label: '文章', value: posts.length },
+  { label: '项目', value: projects.length },
+  { label: '标签', value: tagGroups.length },
+  { label: '工具', value: about.techStack.length + about.devTools.length },
 ];
-const waveHeights = [42, 68, 34, 84, 52, 74, 38];
+
+const newest = posts[0];
+const updatedLabel = newest ? formatDate(newest.data.updatedDate ?? newest.data.date) : '—';
+const featuredMeta = featured
+  ? `${formatDate(featured.data.date)} · ${getPostReadingMinutes(featured)} 分钟阅读`
+  : '';
+const featuredTags = featured?.data.tags.slice(0, 3) ?? [];
 ---
 
 <BaseLayout title={siteConfig.title} description={siteConfig.description}>
-  <div class="home-stage">
-    <section class="stage-hero site-frame" aria-labelledby="home-title" data-island-cue="首页概览">
-      <div class="stage-copy">
-        <p class="stage-kicker"><span class="stage-dot" aria-hidden="true"></span>你好，我是</p>
-
-        <h1 id="home-title" class="stage-name" aria-label={author.name}>
-          {nameChars.map((char, index) => (
-            <span class="stage-name__char" style={`--i:${index}`} aria-hidden="true">{char}</span>
-          ))}
-          <span class="stage-name__dot" aria-hidden="true">.</span>
-        </h1>
-
-        <p class="stage-role">
-          <span>正在</span>
-          <span class="stage-role__window">
-            <span class="stage-role__list" aria-hidden="true">
-              {roles.map((role) => <span>{role}</span>)}
-              <span>{roles[0]}</span>
-            </span>
-          </span>
-          <span class="sr-only">拆解软件、写点代码、折腾配置</span>
-        </p>
-
-        <p class="stage-intro">
-          {author.intro} 这里记录软件折腾、开发实验、游戏，以及那些值得留下来的小发现。
-        </p>
-
-        <div class="stage-actions">
-          <a href={withBase(ROUTES.POSTS)} class="stage-btn stage-btn--primary">
-            阅读文章 <Icon name="arrow-up-right" class="h-4 w-4" />
-          </a>
-          <a href={withBase(ROUTES.PROJECTS)} class="stage-btn">看看项目</a>
-          <a href={`mailto:${author.email}`} class="stage-link">直接找我</a>
+  <div class="index-page site-frame">
+    <header class="index-head" data-island-cue="首页概览">
+      <div class="index-head__main">
+        <img
+          class="index-avatar"
+          src={withBase(author.avatar)}
+          alt={author.name}
+          width="64"
+          height="64"
+          loading="eager"
+        />
+        <div>
+          <p class="eyebrow">Index</p>
+          <h1 id="home-title" class="index-title">{author.name}</h1>
+          <p class="index-lede">
+            拆解软件、写点代码、折腾配置。这里收着最新的文章、项目，和那些值得留下来的记录。
+          </p>
         </div>
       </div>
 
-      <aside class="stage-now" data-now-card data-playing="false" aria-label="当前曲目与播放状态">
-        <div class="stage-now__head">
-          <span class="stage-now__label">NOW PLAYING</span>
-          <span class="stage-now__state"><i aria-hidden="true"></i><span data-now-state>准备播放</span></span>
-        </div>
-
-        <p class="stage-now__title">{music.title}</p>
-        <p class="stage-now__meta">{music.artist} · {music.album}</p>
-
-        <div class="stage-now__wave" aria-hidden="true">
-          {waveHeights.map((height, index) => (
-            <i style={`--i:${index};--h:${height}%`}></i>
-          ))}
-        </div>
-
-        <div class="stage-now__foot">
-          <span data-live-elapsed>0:00</span>
-          <span class="stage-now__bar" data-live-progress><i></i></span>
-          <span data-live-duration>{music.durationLabel}</span>
-        </div>
-
-        <button class="stage-now__toggle" type="button" data-now-toggle aria-label="播放音乐">
-          <span class="stage-now__glyph" aria-hidden="true"></span>
-          <span data-now-toggle-copy>听一下</span>
-        </button>
-      </aside>
-
-      <ul class="stage-index" aria-label="站点概览">
-        {indexItems.map((item) => (
-          <li>
-            <strong data-count={item.value}>{item.value}</strong>
-            <span>{item.label}</span>
-          </li>
+      <dl class="index-stats">
+        {stats.map((stat) => (
+          <div>
+            <dt>{stat.label}</dt>
+            <dd>{stat.value}</dd>
+          </div>
         ))}
-      </ul>
-    </section>
+        <div>
+          <dt>更新于</dt>
+          <dd class="index-stats__date">{updatedLabel}</dd>
+        </div>
+      </dl>
+    </header>
 
-    <div class="stage-marquee" role="presentation">
-      <p class="sr-only">关键词：{keywords.join('、')}</p>
-      <div class="stage-marquee__track" aria-hidden="true">
-        {[0, 1].map(() => (
-          <div class="stage-marquee__group">
-            {marqueeLoop.map((word) => <span class="stage-marquee__item">{word}</span>)}
+    <!-- Collapsed until the island reports real audio; driven by home-motion.ts. -->
+    <div class="now-pill" data-now-pill data-visible="false" data-playing="false" aria-hidden="true" inert>
+      <span class="now-pill__eq" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span class="now-pill__state" data-now-state-label>正在播放</span>
+      <span class="now-pill__text">
+        <strong>{music.title}</strong>
+        <span>{music.artist} · {music.album}</span>
+      </span>
+      <span class="now-pill__time"><span data-live-elapsed>0:00</span> / <span data-live-duration>{music.durationLabel}</span></span>
+      <button class="now-pill__toggle" type="button" data-now-toggle aria-label="暂停音乐">暂停</button>
+    </div>
+
+    {featured && (
+      <a class="feature-card" href={withBase(postPath(featured.slug))} aria-labelledby="featured-title">
+        {featured.data.cover && (
+          <span class="feature-card__media">
+            <img
+              src={withBase(featured.data.cover)}
+              alt={featured.data.coverAlt ?? featured.data.title}
+              loading="eager"
+              decoding="async"
+            />
+          </span>
+        )}
+        <span class="feature-card__body">
+          <span class="feature-card__label">
+            <span class="feature-card__dot" aria-hidden="true"></span>
+            精选 · {featured.data.category ?? '文章'}
+          </span>
+          <h2 id="featured-title" class="feature-card__title">{featured.data.title}</h2>
+          <span class="feature-card__desc">{featured.data.description}</span>
+          <span class="feature-card__foot">
+            <span class="feature-card__meta">{featuredMeta}</span>
+            {featuredTags.length > 0 && (
+              <span class="feature-card__tags">{featuredTags.map((tag) => `#${tag}`).join('  ')}</span>
+            )}
+            <Icon name="arrow-up-right" class="feature-card__arrow h-4 w-4" />
+          </span>
+        </span>
+      </a>
+    )}
+
+    <section id="home-posts" class="index-section" aria-labelledby="recent-posts-title" data-island-cue="最新文章">
+      <div class="section-heading-row">
+        <SectionHeader label="Recent" title="最新文章" titleId="recent-posts-title" />
+        <a href={withBase(ROUTES.POSTS)} class="index-more">
+          全部 {posts.length} 篇 <Icon name="arrow-up-right" class="h-3.5 w-3.5" />
+        </a>
+      </div>
+
+      <div class="grid gap-4 sm:gap-5 md:grid-cols-2 xl:grid-cols-3">
+        {latestPosts.map((post, index) => (
+          <div style={`--reveal-delay:${STAGGER.LIST_START + index * STAGGER.LIST_STEP}ms`}>
+            <PostCard post={post} />
           </div>
         ))}
       </div>
-    </div>
+    </section>
 
-    <section id="home-projects" class="stage-section site-frame" aria-labelledby="projects-title" data-island-cue="项目与实验" data-motion>
+    <section id="home-projects" class="index-section" aria-labelledby="projects-title" data-island-cue="项目">
       <div class="section-heading-row">
-        <SectionHeader label="Selected" title="项目与实验" titleId="projects-title" />
-        <a href={withBase(ROUTES.PROJECTS)} class="stage-link">全部项目 <Icon name="arrow-up-right" class="h-3.5 w-3.5" /></a>
+        <SectionHeader label="Projects" title="在做的东西" titleId="projects-title" />
+        <a href={withBase(ROUTES.PROJECTS)} class="index-more">
+          全部 {projects.length} 个 <Icon name="arrow-up-right" class="h-3.5 w-3.5" />
+        </a>
       </div>
 
-      <ul class="stage-list">
+      <div class="grid gap-4 sm:gap-5 md:grid-cols-2 xl:grid-cols-3">
         {featuredProjects.map((project, index) => (
-          <li data-motion style={`--d:${index * 70}ms`}>
-            <a href={withBase(project.href)} class="stage-row">
-              <span class="stage-row__index">{String(index + 1).padStart(2, '0')}</span>
-              <span class="stage-row__body">
-                <strong class="stage-row__title">{project.name}</strong>
-                <span class="stage-row__desc">{project.summary}</span>
-              </span>
-              <Icon name="arrow-up-right" class="stage-row__arrow h-4 w-4" />
-            </a>
-          </li>
+          <div style={`--reveal-delay:${STAGGER.CARD_START + index * STAGGER.CARD_STEP}ms`}>
+            <ProjectCard project={project} />
+          </div>
         ))}
-      </ul>
-    </section>
-
-    <section id="home-journal" class="stage-section site-frame" aria-labelledby="recent-posts-title" data-island-cue="最近更新" data-motion>
-      <div class="section-heading-row">
-        <SectionHeader label="Journal" title="最近更新" titleId="recent-posts-title" />
-        <a href={withBase(ROUTES.POSTS)} class="stage-link">全部文章 <Icon name="arrow-up-right" class="h-3.5 w-3.5" /></a>
       </div>
-
-      <ul class="stage-list">
-        {recentPosts.map((post, index) => (
-          <li data-motion style={`--d:${index * 60}ms`}>
-            <a href={withBase(postPath(post.slug))} class="stage-row stage-row--post">
-              <span class="stage-row__index">{formatDate(post.data.date)}</span>
-              <span class="stage-row__body">
-                <strong class="stage-row__title">{post.data.title}</strong>
-                <span class="stage-row__meta">{post.data.category} · {getPostReadingMinutes(post)} 分钟</span>
-              </span>
-              <Icon name="arrow-up-right" class="stage-row__arrow h-4 w-4" />
-            </a>
-          </li>
-        ))}
-      </ul>
     </section>
 
-    <section id="home-presence" class="stage-section site-frame" aria-labelledby="presence-title" data-island-cue="音乐与开发" data-motion>
+    <section id="home-presence" class="index-section" aria-labelledby="presence-title" data-island-cue="音乐与开发">
       <div class="section-heading-row">
         <SectionHeader label="Presence" title="音乐与开发" titleId="presence-title" />
+        <a href={withBase(ROUTES.ABOUT)} class="index-more">
+          关于我 <Icon name="arrow-up-right" class="h-3.5 w-3.5" />
+        </a>
       </div>
 
       <div class="presence-grid">
@@ -233,22 +231,30 @@ const waveHeights = [42, 68, 34, 84, 52, 74, 38];
       </div>
     </section>
 
-    <section class="stage-quote site-frame" aria-label="此刻循环的歌词" data-motion>
-      <p class="stage-quote__label">此刻循环 · {music.title}</p>
-      <blockquote>{hero.lyric}</blockquote>
+    <section class="index-tags" aria-labelledby="home-tags-title">
+      <h2 id="home-tags-title" class="index-tags__title">常用标签</h2>
+      <ul>
+        {topTags.map((tag) => (
+          <li>
+            <a href={withBase(tagPath(tag.name))}>
+              {tag.name}<span>{tag.posts.length}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
     </section>
 
-    <section id="home-contact" class="site-frame stage-contact" aria-labelledby="contact-title" data-island-cue="保持联系" data-motion>
-      <div class="stage-contact__inner">
-        <div>
-          <p class="stage-kicker">保持联系</p>
-          <h2 id="contact-title">想聊点什么？</h2>
-          <p class="stage-contact__copy">工具、配置、特效实验都欢迎交流，也可以从页脚的社交链接找到我。</p>
-        </div>
-        <div class="stage-actions">
-          <a href={`mailto:${author.email}`} class="stage-btn stage-btn--primary">发送邮件 <Icon name="arrow-up-right" class="h-4 w-4" /></a>
-          <a href={withBase(ROUTES.ABOUT)} class="stage-btn">关于我</a>
-        </div>
+    <section id="home-contact" class="index-contact" aria-labelledby="contact-title" data-island-cue="保持联系">
+      <div>
+        <p class="eyebrow">Contact</p>
+        <h2 id="contact-title">想聊点什么？</h2>
+        <p class="index-contact__copy">工具、配置、特效实验都欢迎，直接发邮件就好。</p>
+      </div>
+      <div class="index-contact__actions">
+        <a class="index-action index-action--primary" href={`mailto:${author.email}`}>
+          发送邮件 <Icon name="arrow-up-right" class="h-4 w-4" />
+        </a>
+        <a class="index-action" href={withBase(ROUTES.ABOUT)}>关于我</a>
       </div>
     </section>
   </div>
@@ -260,666 +266,506 @@ const waveHeights = [42, 68, 34, 84, 52, 74, 38];
 </BaseLayout>
 
 <style>
-  .home-stage {
+  .index-page {
     --ink: var(--fx-text);
     --muted: var(--fx-muted);
     --soft: var(--text-faint);
     --line: var(--fx-line);
     --accent: var(--fx-pink);
-    padding-bottom: clamp(2rem, 5vw, 4rem);
+    padding-block: clamp(1.6rem, 4vw, 2.6rem) clamp(2rem, 5vw, 3.5rem);
   }
 
   /* ------------------------------------------------------------------
-     Opening: oversized name, a cycling role, and the live player card.
+     Header: identity in one compact block, then the numbers.
      ------------------------------------------------------------------ */
-  .stage-hero {
-    position: relative;
-    isolation: isolate;
+  .index-head {
     display: grid;
-    grid-template-columns: minmax(0, 1.12fr) minmax(17rem, 0.88fr);
-    align-items: start;
-    gap: clamp(2rem, 5vw, 4.5rem);
-    overflow: clip;
-    /* The player card keeps the site's 7px offset shadow; this padding keeps
-       that shadow inside the clip box instead of slicing its right edge. */
-    padding-right: 0.6rem;
-    padding-block: clamp(2.2rem, 6vw, 4.5rem) clamp(1rem, 3vw, 1.75rem);
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: 1.5rem 2rem;
   }
 
-  /* One slow glow behind the copy. It drifts on transform only, so it never
-     triggers layout, and it is clipped by the section. */
-  .stage-hero::before {
-    position: absolute;
-    z-index: 0;
-    top: -8rem;
-    right: -6rem;
-    width: min(34rem, 74vw);
-    aspect-ratio: 1;
-    border-radius: 50%;
-    background: radial-gradient(circle, color-mix(in srgb, var(--accent) 20%, transparent), transparent 64%);
-    filter: blur(26px);
-    content: '';
-    opacity: 0.6;
-    pointer-events: none;
-    animation: stage-drift 19s ease-in-out infinite alternate;
+  .index-head__main {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.9rem;
   }
 
-  .stage-copy,
-  .stage-now,
-  .stage-index { position: relative; z-index: 1; }
+  .index-avatar {
+    width: 3.4rem;
+    height: 3.4rem;
+    flex-shrink: 0;
+    border: 1px solid var(--line);
+    border-radius: 1rem;
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    object-fit: cover;
+  }
 
-  .stage-copy { min-width: 0; }
+  .index-title {
+    margin: 0.4rem 0 0;
+    color: var(--ink);
+    font-size: clamp(1.7rem, 3.4vw, 2.3rem);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1.05;
+  }
 
-  .stage-kicker {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
+  .index-lede {
+    max-width: 32rem;
+    margin: 0.6rem 0 0;
+    color: var(--muted);
+    font-size: 0.9rem;
+    line-height: 1.8;
+  }
+
+  .index-stats {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0.4rem 1.5rem;
     margin: 0;
+  }
+
+  .index-stats > div {
+    display: grid;
+    gap: 0.2rem;
+    min-width: 3rem;
+  }
+
+  .index-stats dt {
+    color: var(--soft);
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+  }
+
+  .index-stats dd {
+    margin: 0;
+    color: var(--ink);
+    font-family: var(--font-mono);
+    font-size: 1.2rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+
+  .index-stats .index-stats__date {
+    font-family: inherit;
+    font-size: 0.8rem;
+    letter-spacing: -0.01em;
+  }
+
+  /* ------------------------------------------------------------------
+     Now-playing pill: collapsed until audio is actually in the pipe.
+     ------------------------------------------------------------------ */
+  .now-pill {
+    display: flex;
+    max-height: 0;
+    align-items: center;
+    gap: 0.7rem;
+    overflow: hidden;
+    border-radius: 999px;
+    opacity: 0;
+    transition: max-height 0.35s var(--ease), opacity 0.3s ease, margin-top 0.35s var(--ease);
+  }
+
+  .now-pill[data-visible='true'] {
+    max-height: 4rem;
+    margin-top: 1.3rem;
+    opacity: 1;
+  }
+
+  .now-pill__eq {
+    display: flex;
+    height: 0.9rem;
+    flex-shrink: 0;
+    align-items: flex-end;
+    gap: 2px;
+  }
+
+  .now-pill__eq i {
+    width: 2px;
+    height: 100%;
+    border-radius: 1px;
+    background: var(--accent);
+    transform-origin: bottom;
+  }
+
+  .now-pill__eq i:nth-child(2) { height: 65%; }
+  .now-pill__eq i:nth-child(3) { height: 82%; }
+
+  .now-pill[data-playing='true'] .now-pill__eq i {
+    animation: pill-eq 0.9s ease-in-out infinite alternate;
+  }
+
+  .now-pill[data-playing='true'] .now-pill__eq i:nth-child(2) { animation-delay: 0.15s; }
+  .now-pill[data-playing='true'] .now-pill__eq i:nth-child(3) { animation-delay: 0.3s; }
+
+  .now-pill__state {
+    flex-shrink: 0;
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    white-space: nowrap;
+  }
+
+  .now-pill__text {
+    display: flex;
+    min-width: 0;
+    align-items: baseline;
+    gap: 0.5rem;
+  }
+
+  .now-pill__text strong {
+    overflow: hidden;
+    color: var(--ink);
+    font-size: 0.84rem;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .now-pill__text span {
+    overflow: hidden;
+    color: var(--soft);
+    font-size: 0.76rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .now-pill__time {
+    margin-left: auto;
     color: var(--soft);
     font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .now-pill__toggle {
+    flex-shrink: 0;
+    border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--line));
+    border-radius: 999px;
+    padding: 0.3rem 0.7rem;
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    color: var(--ink);
     font-size: 0.72rem;
+    font-weight: 700;
+    transition: background 0.2s ease, border-color 0.2s ease;
+  }
+
+  .now-pill__toggle:hover,
+  .now-pill__toggle:focus-visible {
+    border-color: color-mix(in srgb, var(--accent) 62%, var(--line));
+    background: color-mix(in srgb, var(--accent) 20%, transparent);
+  }
+
+  /* ------------------------------------------------------------------
+     Featured post
+     ------------------------------------------------------------------ */
+  .feature-card {
+    display: grid;
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+    align-items: stretch;
+    margin-top: clamp(1.5rem, 3.5vw, 2.2rem);
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 1.5rem;
+    background: color-mix(in srgb, var(--fx-surface-strong) 90%, transparent);
+    box-shadow: 0 24px 60px -46px var(--fx-shadow);
+    color: var(--ink);
+    text-decoration: none;
+    transition: border-color 0.3s ease, transform 0.3s var(--ease);
+  }
+
+  .feature-card:hover,
+  .feature-card:focus-visible {
+    border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+    transform: translateY(-2px);
+  }
+
+  .feature-card__media {
+    display: block;
+    overflow: hidden;
+    background: color-mix(in srgb, var(--accent) 10%, transparent);
+  }
+
+  .feature-card__media img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 11rem;
+    object-fit: cover;
+    transition: transform 0.6s var(--ease);
+  }
+
+  .feature-card:hover .feature-card__media img { transform: scale(1.03); }
+
+  .feature-card__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    padding: clamp(1.15rem, 2.5vw, 1.8rem);
+  }
+
+  .feature-card__label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: var(--soft);
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
     letter-spacing: 0.14em;
   }
 
-  .stage-dot {
-    position: relative;
-    width: 0.42rem;
-    height: 0.42rem;
+  .feature-card__dot {
+    width: 0.34rem;
+    height: 0.34rem;
     border-radius: 50%;
     background: var(--accent);
   }
 
-  .stage-dot::after {
-    position: absolute;
-    inset: -0.28rem;
-    border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
-    border-radius: 50%;
-    content: '';
-    animation: stage-ping 2.8s ease-out infinite;
+  .feature-card__title {
+    margin: 0;
+    font-size: clamp(1.2rem, 2.3vw, 1.65rem);
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    line-height: 1.32;
+    transition: color 0.25s ease;
   }
 
-  .stage-name {
-    display: flex;
-    flex-wrap: wrap;
-    margin: 0.85rem 0 0;
-    color: var(--ink);
-    font-size: clamp(3.1rem, 8.6vw, 6.1rem);
-    font-weight: 820;
-    letter-spacing: -0.06em;
-    line-height: 0.95;
-  }
+  .feature-card:hover .feature-card__title { color: var(--accent); }
 
-  .stage-name__char,
-  .stage-name__dot {
-    display: inline-block;
-    animation: stage-rise 0.85s var(--ease) both;
-    animation-delay: calc(90ms + var(--i, 9) * 42ms);
-  }
-
-  .stage-name__dot { color: var(--accent); }
-
-  .stage-role {
-    display: flex;
-    align-items: baseline;
-    gap: 0.5rem;
-    margin: 1.35rem 0 0;
-    color: var(--soft);
-    font-size: clamp(0.9rem, 1.3vw, 1rem);
-  }
-
-  .stage-role__window {
-    display: inline-flex;
-    height: 1.55em;
+  .feature-card__desc {
+    display: -webkit-box;
     overflow: hidden;
-  }
-
-  .stage-role__list {
-    display: flex;
-    flex-direction: column;
-    animation: stage-role 12s cubic-bezier(0.65, 0, 0.35, 1) infinite;
-  }
-
-  .stage-role__list > span {
-    height: 1.55em;
-    color: var(--ink);
-    font-weight: 700;
-    line-height: 1.55em;
-    white-space: nowrap;
-  }
-
-  .stage-intro {
-    max-width: 33rem;
-    margin: 1.4rem 0 0;
     color: var(--muted);
-    font-size: clamp(0.95rem, 1.25vw, 1.02rem);
-    line-height: 1.95;
+    font-size: 0.86rem;
+    line-height: 1.8;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
   }
 
-  .stage-actions {
+  .feature-card__foot {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0.6rem;
-    margin-top: 1.8rem;
+    gap: 0.4rem 0.9rem;
+    margin-top: auto;
+    padding-top: 0.4rem;
   }
 
-  .stage-btn {
+  .feature-card__meta,
+  .feature-card__tags {
+    color: var(--soft);
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+  }
+
+  .feature-card__tags { color: color-mix(in srgb, var(--accent) 72%, var(--soft)); }
+
+  .feature-card__arrow {
+    margin-left: auto;
+    color: var(--soft);
+    transition: transform 0.3s var(--ease), color 0.25s ease;
+  }
+
+  .feature-card:hover .feature-card__arrow {
+    color: var(--accent);
+    transform: translate(0.15rem, -0.15rem);
+  }
+
+  /* ------------------------------------------------------------------
+     Sections, tags, contact
+     ------------------------------------------------------------------ */
+  .index-section { margin-top: clamp(2.3rem, 4.5vw, 3.2rem); }
+
+  .index-more {
     display: inline-flex;
-    min-height: 2.8rem;
     align-items: center;
-    justify-content: center;
+    gap: 0.3rem;
+    margin-bottom: 1.15rem;
+    color: var(--soft);
+    font-size: 0.76rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: color 0.2s ease, gap 0.2s ease;
+  }
+
+  .index-more:hover,
+  .index-more:focus-visible { color: var(--accent); gap: 0.45rem; }
+
+  .index-tags {
+    display: grid;
+    grid-template-columns: 5.5rem minmax(0, 1fr);
+    align-items: baseline;
+    gap: 1rem;
+    margin-top: clamp(2.3rem, 4.5vw, 3.2rem);
+    border-top: 1px solid var(--line);
+    padding-top: 1.3rem;
+  }
+
+  .index-tags__title {
+    margin: 0;
+    color: var(--soft);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+  }
+
+  .index-tags ul {
+    display: flex;
+    flex-wrap: wrap;
     gap: 0.45rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .index-tags a {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.3rem;
     border: 1px solid var(--line);
     border-radius: 999px;
-    padding: 0.7rem 1.15rem;
-    background: color-mix(in srgb, var(--fx-surface-strong) 72%, transparent);
-    color: var(--ink);
-    font-size: 0.8rem;
-    font-weight: 700;
-    line-height: 1;
-    transition: transform 0.25s var(--ease), border-color 0.25s ease, background 0.25s ease;
+    padding: 0.24rem 0.6rem;
+    color: var(--muted);
+    font-size: 0.76rem;
+    text-decoration: none;
+    transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
   }
 
-  .stage-btn:hover,
-  .stage-btn:focus-visible {
+  .index-tags a:hover,
+  .index-tags a:focus-visible {
+    border-color: color-mix(in srgb, var(--accent) 50%, var(--line));
+    background: color-mix(in srgb, var(--accent) 8%, transparent);
+    color: var(--ink);
+  }
+
+  .index-tags a span {
+    color: var(--soft);
+    font-family: var(--font-mono);
+    font-size: 0.64rem;
+  }
+
+  .index-contact {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: 1.2rem;
+    margin-top: clamp(2.3rem, 4.5vw, 3.2rem);
+    border-top: 1px solid var(--line);
+    padding-top: clamp(1.5rem, 3vw, 2.1rem);
+  }
+
+  .index-contact h2 {
+    margin: 0.55rem 0 0;
+    color: var(--ink);
+    font-size: clamp(1.25rem, 2.4vw, 1.6rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+  }
+
+  .index-contact__copy {
+    margin: 0.45rem 0 0;
+    color: var(--muted);
+    font-size: 0.86rem;
+    line-height: 1.8;
+  }
+
+  .index-contact__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .index-action {
+    display: inline-flex;
+    min-height: 2.55rem;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 0.6rem 1rem;
+    background: color-mix(in srgb, var(--fx-surface-strong) 70%, transparent);
+    color: var(--ink);
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1;
+    text-decoration: none;
+    transition: transform 0.25s var(--ease), border-color 0.25s ease;
+  }
+
+  .index-action:hover,
+  .index-action:focus-visible {
     border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
     transform: translateY(-2px);
   }
 
-  .stage-btn:focus-visible,
-  .stage-link:focus-visible,
-  .stage-row:focus-visible,
-  .stage-now__toggle:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 3px;
-  }
-
-  .stage-btn--primary {
+  .index-action--primary {
     border-color: transparent;
     background: var(--accent);
     color: #2a1220;
   }
 
-  .stage-btn--primary:hover,
-  .stage-btn--primary:focus-visible {
+  .index-action--primary:hover,
+  .index-action--primary:focus-visible {
     background: color-mix(in srgb, var(--accent) 88%, black);
     color: #2a1220;
   }
 
-  .stage-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
-    color: var(--soft);
-    font-size: 0.8rem;
-    text-decoration: none;
-    transition: color 0.2s ease, gap 0.2s ease;
+  .index-action:focus-visible,
+  .now-pill__toggle:focus-visible,
+  .index-more:focus-visible,
+  .feature-card:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
   }
 
-  .stage-link:hover,
-  .stage-link:focus-visible { color: var(--ink); gap: 0.45rem; }
-
-  /* The player card reports the island's real state; see home-motion.ts. */
-  .stage-now {
-    align-self: start;
-    border: 1px solid var(--line);
-    border-radius: 1.35rem;
-    padding: 1.3rem 1.35rem 1.2rem;
-    background: color-mix(in srgb, var(--fx-surface-strong) 84%, transparent);
-    box-shadow: 7px 7px 0 color-mix(in srgb, var(--accent) 14%, transparent), 0 28px 60px -45px var(--fx-shadow);
-    backdrop-filter: blur(14px);
-  }
-
-  .stage-now__head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    color: var(--soft);
-    font-family: var(--font-mono);
-    font-size: 0.66rem;
-    letter-spacing: 0.14em;
-  }
-
-  .stage-now__label { font-weight: 700; }
-
-  .stage-now__state {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    letter-spacing: 0.06em;
-  }
-
-  .stage-now__state i {
-    width: 0.38rem;
-    height: 0.38rem;
-    border-radius: 50%;
-    background: color-mix(in srgb, var(--soft) 70%, transparent);
-    transition: background 0.3s ease, box-shadow 0.3s ease;
-  }
-
-  .stage-now[data-playing="true"] .stage-now__state i {
-    background: var(--accent);
-    box-shadow: 0 0 0 0.22rem color-mix(in srgb, var(--accent) 16%, transparent);
-  }
-
-  .stage-now__title {
-    margin: 1.15rem 0 0;
-    color: var(--ink);
-    font-size: clamp(1.3rem, 2.4vw, 1.55rem);
-    font-weight: 800;
-    letter-spacing: -0.02em;
-    line-height: 1.2;
-  }
-
-  .stage-now__meta {
-    margin: 0.35rem 0 0;
-    color: var(--muted);
-    font-size: 0.8rem;
-  }
-
-  .stage-now__wave {
-    display: flex;
-    height: 2rem;
-    align-items: flex-end;
-    gap: 3px;
-    margin: 1.15rem 0 0.9rem;
-  }
-
-  .stage-now__wave i {
-    flex: 1;
-    height: var(--h, 40%);
-    border-radius: 2px;
-    background: linear-gradient(180deg, var(--accent), color-mix(in srgb, var(--accent) 42%, transparent));
-    transform-origin: bottom;
-  }
-
-  /* Bars only move while audio is actually playing. */
-  .stage-now[data-playing="true"] .stage-now__wave i {
-    animation: stage-eq 1.05s ease-in-out infinite alternate;
-    animation-delay: calc(var(--i) * -0.13s);
-  }
-
-  .stage-now__foot {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    color: var(--soft);
-    font-family: var(--font-mono);
-    font-size: 0.66rem;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .stage-now__bar {
-    flex: 1;
-    height: 3px;
-    overflow: hidden;
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--ink) 12%, transparent);
-  }
-
-  .stage-now__bar i {
-    display: block;
-    width: var(--live-progress, 0%);
-    height: 100%;
-    border-radius: inherit;
-    background: var(--accent);
-    transition: width 0.2s linear;
-  }
-
-  .stage-now__toggle {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    width: 100%;
-    min-height: 2.5rem;
-    margin-top: 1.15rem;
-    border: 1px solid color-mix(in srgb, var(--accent) 32%, var(--line));
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--accent) 10%, transparent);
-    color: var(--ink);
-    font-size: 0.78rem;
-    font-weight: 700;
-    transition: background 0.25s ease, border-color 0.25s ease;
-  }
-
-  .stage-now__toggle:hover,
-  .stage-now__toggle:focus-visible {
-    border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
-    background: color-mix(in srgb, var(--accent) 18%, transparent);
-  }
-
-  .stage-now__glyph {
-    width: 0;
-    height: 0;
-    margin-left: 0.12rem;
-    border-top: 0.34rem solid transparent;
-    border-bottom: 0.34rem solid transparent;
-    border-left: 0.52rem solid currentColor;
-  }
-
-  .stage-now__toggle[data-playing="true"] .stage-now__glyph {
-    width: 0.16rem;
-    height: 0.7rem;
-    margin-left: 0;
-    border: 0;
-    background: currentColor;
-    box-shadow: 0.3rem 0 0 currentColor;
-  }
-
-  /* ------------------------------------------------------------------
-     Numbers
-     ------------------------------------------------------------------ */
-  .stage-index {
-    display: grid;
-    grid-column: 1 / -1;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    margin: 0.75rem 0 0;
-    padding: 0;
-    border-top: 1px solid var(--line);
-    list-style: none;
-  }
-
-  .stage-index li {
-    display: grid;
-    gap: 0.35rem;
-    border-left: 1px solid var(--line);
-    padding: 1.1rem 1rem 0;
-  }
-
-  .stage-index li:first-child { border-left: 0; padding-left: 0; }
-
-  .stage-index strong {
-    color: var(--ink);
-    font-family: var(--font-mono);
-    font-size: clamp(1.45rem, 3vw, 1.95rem);
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-    line-height: 1;
-  }
-
-  .stage-index span { color: var(--soft); font-size: 0.74rem; }
-
-  /* ------------------------------------------------------------------
-     Keyword ribbon
-     ------------------------------------------------------------------ */
-  .stage-marquee {
-    overflow: hidden;
-    border-block: 1px solid var(--line);
-    padding-block: 0.8rem;
-    background: color-mix(in srgb, var(--fx-surface) 55%, transparent);
-  }
-
-  .stage-marquee__track {
-    display: flex;
-    width: max-content;
-    animation: stage-marquee 70s linear infinite;
-  }
-
-  .stage-marquee:hover .stage-marquee__track,
-  .stage-marquee:focus-within .stage-marquee__track { animation-play-state: paused; }
-
-  .stage-marquee__group {
-    display: flex;
-    align-items: center;
-    gap: 1.9rem;
-    padding-right: 1.9rem;
-  }
-
-  .stage-marquee__item {
-    color: var(--soft);
-    font-family: var(--font-mono);
-    font-size: 0.72rem;
-    letter-spacing: 0.14em;
-    white-space: nowrap;
-    text-transform: uppercase;
-  }
-
-  .stage-marquee__item::after {
-    margin-left: 1.9rem;
-    color: color-mix(in srgb, var(--accent) 55%, transparent);
-    content: '◆';
-    font-size: 0.5rem;
-    vertical-align: 0.2em;
-  }
-
-  /* ------------------------------------------------------------------
-     Sections and rows
-     ------------------------------------------------------------------ */
-  .stage-section { padding-block: clamp(2.6rem, 6vw, 4.5rem); }
-  .stage-section + .stage-section { border-top: 1px solid var(--line); }
-
-  .stage-list {
-    margin: 0;
-    padding: 0;
-    border-top: 1px solid var(--line);
-    list-style: none;
-  }
-
-  .stage-list li { border-bottom: 1px solid var(--line); }
-
-  .stage-row {
-    display: grid;
-    grid-template-columns: 3.2rem minmax(0, 1fr) auto;
-    align-items: baseline;
-    gap: 1.1rem;
-    padding: 1.15rem 0.1rem;
-    color: var(--ink);
-    text-decoration: none;
-  }
-
-  .stage-row--post { grid-template-columns: 7.4rem minmax(0, 1fr) auto; }
-
-  .stage-row__index {
-    color: var(--soft);
-    font-family: var(--font-mono);
-    font-size: 0.72rem;
-    letter-spacing: 0.04em;
-  }
-
-  .stage-row__body {
-    display: grid;
-    gap: 0.3rem;
-    min-width: 0;
-    transition: transform 0.3s var(--ease);
-  }
-
-  .stage-row__title {
-    font-size: clamp(1.02rem, 1.6vw, 1.12rem);
-    font-weight: 750;
-    letter-spacing: -0.01em;
-    transition: color 0.25s ease;
-  }
-
-  .stage-row__desc,
-  .stage-row__meta {
-    color: var(--muted);
-    font-size: 0.8rem;
-    line-height: 1.7;
-  }
-
-  .stage-row__arrow {
-    align-self: center;
-    color: var(--soft);
-    transition: transform 0.3s var(--ease), color 0.25s ease;
-  }
-
-  .stage-row:hover .stage-row__body,
-  .stage-row:focus-visible .stage-row__body { transform: translateX(0.5rem); }
-
-  .stage-row:hover .stage-row__title,
-  .stage-row:hover .stage-row__arrow,
-  .stage-row:focus-visible .stage-row__title,
-  .stage-row:focus-visible .stage-row__arrow { color: var(--accent); }
-
-  .stage-row:hover .stage-row__arrow,
-  .stage-row:focus-visible .stage-row__arrow { transform: translate(0.15rem, -0.15rem); }
-
-  /* ------------------------------------------------------------------
-     Closing quote and contact
-     ------------------------------------------------------------------ */
-  .stage-quote { padding-block: clamp(3rem, 8vw, 6rem); }
-
-  .stage-quote__label {
-    margin: 0 0 1.1rem;
-    color: var(--soft);
-    font-family: var(--font-mono);
-    font-size: 0.7rem;
-    letter-spacing: 0.16em;
-  }
-
-  .stage-quote blockquote {
-    position: relative;
-    display: inline-block;
-    margin: 0;
-    max-width: 20ch;
-    color: var(--ink);
-    font-size: clamp(1.6rem, 4.6vw, 3rem);
-    font-weight: 800;
-    letter-spacing: -0.03em;
-    line-height: 1.34;
-    text-wrap: balance;
-  }
-
-  .stage-quote blockquote::after {
-    position: absolute;
-    bottom: -0.5rem;
-    left: 0;
-    width: 100%;
-    height: 2px;
-    border-radius: 999px;
-    background: linear-gradient(90deg, var(--accent), transparent);
-    content: '';
-    transform: scaleX(0);
-    transform-origin: left;
-    transition: transform 1s var(--ease) 0.2s;
-  }
-
-  .stage-quote:not(.is-pending) blockquote::after { transform: scaleX(1); }
-
-  .stage-contact {
-    border-top: 1px solid var(--line);
-    padding-block: clamp(2.6rem, 6vw, 4.5rem);
-  }
-
-  .stage-contact__inner {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: end;
-    gap: 1.5rem;
-  }
-
-  .stage-contact h2 {
-    margin: 0.7rem 0 0;
-    color: var(--ink);
-    font-size: clamp(1.6rem, 3.4vw, 2.2rem);
-    font-weight: 800;
-    letter-spacing: -0.035em;
-  }
-
-  .stage-contact__copy {
-    max-width: 30rem;
-    margin: 0.85rem 0 0;
-    color: var(--muted);
-    font-size: 0.92rem;
-    line-height: 1.85;
-  }
-
-  .stage-contact .stage-actions { margin-top: 0; }
-
-  /* ------------------------------------------------------------------
-     Scroll-in. `is-pending` is only ever added by JS, after it has
-     confirmed the element is below the fold, so nothing here can hide
-     content for a visitor without scripts.
-     ------------------------------------------------------------------ */
-  [data-motion] {
-    transition: opacity 0.7s var(--ease), transform 0.7s var(--ease);
-    transition-delay: var(--d, 0ms);
-  }
-
-  [data-motion].is-pending {
-    opacity: 0;
-    transform: translateY(18px);
-  }
-
-  @keyframes stage-rise {
-    from { opacity: 0; transform: translateY(0.55em) rotate(3deg); }
-    to { opacity: 1; transform: none; }
-  }
-
-  @keyframes stage-ping {
-    0% { opacity: 0.85; transform: scale(0.7); }
-    70%, 100% { opacity: 0; transform: scale(1.6); }
-  }
-
-  @keyframes stage-drift {
-    from { transform: translate3d(-1.5rem, 0, 0) scale(0.95); }
-    to { transform: translate3d(1.5rem, -2rem, 0) scale(1.05); }
-  }
-
-  @keyframes stage-role {
-    0%, 24% { transform: translateY(0); }
-    30%, 54% { transform: translateY(-1.55em); }
-    60%, 84% { transform: translateY(-3.1em); }
-    100% { transform: translateY(-4.65em); }
-  }
-
-  @keyframes stage-eq {
-    from { transform: scaleY(0.32); }
+  @keyframes pill-eq {
+    from { transform: scaleY(0.3); }
     to { transform: scaleY(1); }
   }
 
-  @keyframes stage-marquee {
-    to { transform: translateX(-50%); }
-  }
-
-  @media (max-width: 980px) {
-    .stage-hero {
-      grid-template-columns: minmax(0, 1fr);
-      gap: 2rem;
-    }
-
-    .stage-now { width: min(100%, 26rem); }
-
-    .stage-contact__inner {
+  @media (max-width: 900px) {
+    .index-head {
       grid-template-columns: minmax(0, 1fr);
       align-items: start;
+      gap: 1.1rem;
     }
+
+    .index-stats { gap: 0.4rem 1.1rem; }
+  }
+
+  @media (max-width: 760px) {
+    .feature-card { grid-template-columns: minmax(0, 1fr); }
+    .feature-card__media img { max-height: 12rem; }
   }
 
   @media (max-width: 640px) {
-    .stage-hero { padding-top: 1.6rem; }
-
-    .stage-index { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-
-    .stage-index li:nth-child(odd) { border-left: 0; padding-left: 0; }
-    .stage-index li:nth-child(n + 3) { border-top: 1px solid var(--line); margin-top: 0.9rem; }
-
-    .stage-row,
-    .stage-row--post {
-      grid-template-columns: minmax(0, 1fr) auto;
-      gap: 0.7rem 0.9rem;
-    }
-
-    .stage-row__index { grid-column: 1 / -1; }
-
-    .stage-quote blockquote { max-width: 100%; }
+    .index-head__main { gap: 0.75rem; }
+    .index-avatar { width: 2.9rem; height: 2.9rem; border-radius: 0.9rem; }
+    .now-pill[data-visible='true'] { flex-wrap: wrap; }
+    .now-pill__time { margin-left: 0; }
+    .index-tags { grid-template-columns: minmax(0, 1fr); gap: 0.7rem; }
+    .index-contact { grid-template-columns: minmax(0, 1fr); align-items: start; }
+    .index-contact__actions { width: 100%; }
+    .index-action { flex: 1; }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .stage-name__char,
-    .stage-name__dot,
-    .stage-dot::after,
-    .stage-hero::before,
-    .stage-role__list,
-    .stage-marquee__track,
-    .stage-now__wave i {
+    .now-pill,
+    .now-pill__eq i,
+    .feature-card,
+    .feature-card__media img,
+    .index-action {
       animation: none;
+      transition: none;
     }
 
-    .stage-quote blockquote::after { transform: scaleX(1); }
-
-    [data-motion] { transition: none; }
+    .feature-card:hover,
+    .index-action:hover { transform: none; }
   }
 </style>
