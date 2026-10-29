@@ -18,10 +18,19 @@ const PLAYER_LABELS = {
 
 let observer: MutationObserver | undefined;
 let lyricListener: ((event: Event) => void) | undefined;
+/**
+ * The island is `transition:persist`, so its buttons outlive this script's
+ * page instance. Every listener must therefore be abortable: `init()` runs both
+ * on module evaluation and on `astro:page-load`, and a listener that survives
+ * that would fire the proxied click twice — play, then immediately pause.
+ */
+let controller: AbortController | undefined;
 
 const teardown = () => {
   observer?.disconnect();
   observer = undefined;
+  controller?.abort();
+  controller = undefined;
   if (lyricListener) {
     document.removeEventListener('b0-player-lyric', lyricListener);
     lyricListener = undefined;
@@ -35,18 +44,29 @@ const init = () => {
   const card = document.querySelector<HTMLElement>('[data-now-card]');
   if (!island || !card) return;
 
+  controller = new AbortController();
+  const { signal } = controller;
+
   const stateLabel = card.querySelector<HTMLElement>('[data-now-state-label]');
   const toggle = card.querySelector<HTMLButtonElement>('[data-now-toggle]');
   const toggleCopy = card.querySelector<HTMLElement>('[data-now-toggle-copy]');
   const lyric = card.querySelector<HTMLElement>('[data-now-lyric]');
   const placeholder = lyric?.textContent?.trim() ?? '';
+  /* `ready` covers both "loaded, never started" and "finished", so the very
+     first paint is told apart by whether playback ever ran in this instance. */
+  let hasPlayed = false;
 
   const sync = () => {
     const state = (island.dataset.playerState ?? 'idle') as keyof typeof PLAYER_LABELS;
     const playing = state === 'playing';
+    if (playing) hasPlayed = true;
 
     card.dataset.playing = String(playing);
-    if (stateLabel) stateLabel.textContent = PLAYER_LABELS[state] ?? PLAYER_LABELS.idle;
+    if (stateLabel) {
+      stateLabel.textContent = state === 'ready' && !hasPlayed
+        ? '准备播放'
+        : PLAYER_LABELS[state] ?? PLAYER_LABELS.idle;
+    }
 
     if (toggle) {
       toggle.dataset.playing = String(playing);
@@ -67,11 +87,12 @@ const init = () => {
     const text = (event as CustomEvent<{ text?: string }>).detail?.text;
     if (lyric && typeof text === 'string' && text.trim()) lyric.textContent = text.trim();
   };
-  document.addEventListener('b0-player-lyric', lyricListener);
+  document.addEventListener('b0-player-lyric', lyricListener, { signal });
 
+  // One proxy, one toggle: the island owns playback, this only forwards the click.
   toggle?.addEventListener('click', () => {
     document.getElementById('island-player-toggle')?.click();
-  });
+  }, { signal });
 };
 
 if (document.readyState === 'loading') {
