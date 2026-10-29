@@ -5,234 +5,175 @@ import PostCard from '../components/blog/PostCard.astro';
 import ProjectCard from '../components/profile/ProjectCard.astro';
 import SectionHeader from '../components/ui/SectionHeader.astro';
 import { projects } from '../config/projects';
-import { ROUTES, postPath, tagPath } from '../config/routes';
+import { ROUTES, tagPath } from '../config/routes';
 import { siteConfig } from '../config/site';
 import { LAYOUT, STAGGER } from '../config/ui';
-import { getPublishedPosts, getPostReadingMinutes } from '../lib/content';
+import { getPublishedPosts } from '../lib/content';
 import { getTagGroups } from '../lib/taxonomy';
 import { formatDate } from '../lib/date';
 import { withBase } from '../lib/urls';
 
 const posts = await getPublishedPosts();
 const tagGroups = await getTagGroups();
-const { author, music, netease, github, about } = siteConfig;
+const { author, hero, music, netease, github, about } = siteConfig;
 
-/* Lead with a featured post, preferring one that also ships a cover image. */
-const featured =
-  posts.find((post) => post.data.featured && post.data.cover) ??
-  posts.find((post) => post.data.featured) ??
-  posts[0];
-
-const latestPosts = posts
-  .filter((post) => post.slug !== featured?.slug)
-  .slice(0, LAYOUT.RECENT_POSTS_COUNT);
-
+const recentPosts = posts.slice(0, LAYOUT.RECENT_POSTS_COUNT);
 const featuredProjects = projects.slice(0, 3);
 const topTags = tagGroups.slice(0, 8);
 
-const stats = [
-  { label: '文章', value: posts.length },
-  { label: '项目', value: projects.length },
-  { label: '标签', value: tagGroups.length },
-  { label: '工具', value: about.techStack.length + about.devTools.length },
-];
-
 const newest = posts[0];
 const updatedLabel = newest ? formatDate(newest.data.updatedDate ?? newest.data.date) : '—';
-const featuredMeta = featured
-  ? `${formatDate(featured.data.date)} · ${getPostReadingMinutes(featured)} 分钟阅读`
-  : '';
-const featuredTags = featured?.data.tags.slice(0, 3) ?? [];
+const songUrl = music.officialUrl;
 ---
 
 <BaseLayout title={siteConfig.title} description={siteConfig.description}>
-  <div class="index-page site-frame">
-    <header class="index-head" data-island-cue="首页概览">
-      <div class="index-head__main">
-        <img
-          class="index-avatar"
-          src={withBase(author.avatar)}
-          alt={author.name}
-          width="64"
-          height="64"
-          loading="eager"
-        />
-        <div>
-          <p class="eyebrow">Index</p>
-          <h1 id="home-title" class="index-title">{author.name}</h1>
-          <p class="index-lede">
-            拆解软件、写点代码、折腾配置。这里收着最新的文章、项目，和那些值得留下来的记录。
-          </p>
-        </div>
+  <div class="home site-frame">
+    <header class="home-intro" data-island-cue="首页概览">
+      <div class="home-intro__copy">
+        <p class="eyebrow">Index</p>
+        <h1 id="home-title" class="home-title">{author.name}</h1>
+        <p class="home-lede">
+          拆解软件、写点代码、折腾配置。文章在左边，正在听的东西和开发动态在右边。
+        </p>
       </div>
 
-      <dl class="index-stats">
-        {stats.map((stat) => (
-          <div>
-            <dt>{stat.label}</dt>
-            <dd>{stat.value}</dd>
-          </div>
-        ))}
-        <div>
-          <dt>更新于</dt>
-          <dd class="index-stats__date">{updatedLabel}</dd>
-        </div>
+      <dl class="home-counts">
+        <div><dt>文章</dt><dd>{posts.length}</dd></div>
+        <div><dt>项目</dt><dd>{projects.length}</dd></div>
+        <div><dt>标签</dt><dd>{tagGroups.length}</dd></div>
+        <div><dt>工具</dt><dd>{about.techStack.length + about.devTools.length}</dd></div>
+        <div><dt>更新于</dt><dd class="home-counts__date">{updatedLabel}</dd></div>
       </dl>
     </header>
 
-    <!-- Collapsed until the island reports real audio; driven by home-motion.ts. -->
-    <div class="now-pill" data-now-pill data-visible="false" data-playing="false" aria-hidden="true" inert>
-      <span class="now-pill__eq" aria-hidden="true"><i></i><i></i><i></i></span>
-      <span class="now-pill__state" data-now-state-label>正在播放</span>
-      <span class="now-pill__text">
-        <strong>{music.title}</strong>
-        <span>{music.artist} · {music.album}</span>
-      </span>
-      <span class="now-pill__time"><span data-live-elapsed>0:00</span> / <span data-live-duration>{music.durationLabel}</span></span>
-      <button class="now-pill__toggle" type="button" data-now-toggle aria-label="暂停音乐">暂停</button>
-    </div>
-
-    {featured && (
-      <a class="feature-card" href={withBase(postPath(featured.slug))} aria-labelledby="featured-title">
-        {featured.data.cover && (
-          <span class="feature-card__media">
-            <img
-              src={withBase(featured.data.cover)}
-              alt={featured.data.coverAlt ?? featured.data.title}
-              loading="eager"
-              decoding="async"
-            />
-          </span>
-        )}
-        <span class="feature-card__body">
-          <span class="feature-card__label">
-            <span class="feature-card__dot" aria-hidden="true"></span>
-            精选 · {featured.data.category ?? '文章'}
-          </span>
-          <h2 id="featured-title" class="feature-card__title">{featured.data.title}</h2>
-          <span class="feature-card__desc">{featured.data.description}</span>
-          <span class="feature-card__foot">
-            <span class="feature-card__meta">{featuredMeta}</span>
-            {featuredTags.length > 0 && (
-              <span class="feature-card__tags">{featuredTags.map((tag) => `#${tag}`).join('  ')}</span>
-            )}
-            <Icon name="arrow-up-right" class="feature-card__arrow h-4 w-4" />
-          </span>
-        </span>
-      </a>
-    )}
-
-    <section id="home-posts" class="index-section" aria-labelledby="recent-posts-title" data-island-cue="最新文章">
-      <div class="section-heading-row">
-        <SectionHeader label="Recent" title="最新文章" titleId="recent-posts-title" />
-        <a href={withBase(ROUTES.POSTS)} class="index-more">
-          全部 {posts.length} 篇 <Icon name="arrow-up-right" class="h-3.5 w-3.5" />
-        </a>
-      </div>
-
-      <div class="grid gap-4 sm:gap-5 md:grid-cols-2 xl:grid-cols-3">
-        {latestPosts.map((post, index) => (
-          <div style={`--reveal-delay:${STAGGER.LIST_START + index * STAGGER.LIST_STEP}ms`}>
-            <PostCard post={post} />
+    <div class="home-layout">
+      <div class="home-main">
+        <section id="home-posts" aria-labelledby="recent-posts-title" data-island-cue="最新文章">
+          <div class="section-heading-row">
+            <SectionHeader label="Recent" title="最新文章" titleId="recent-posts-title" />
+            <a href={withBase(ROUTES.POSTS)} class="home-more">
+              全部 {posts.length} 篇 <Icon name="arrow-up-right" class="h-3.5 w-3.5" />
+            </a>
           </div>
-        ))}
-      </div>
-    </section>
 
-    <section id="home-projects" class="index-section" aria-labelledby="projects-title" data-island-cue="项目">
-      <div class="section-heading-row">
-        <SectionHeader label="Projects" title="在做的东西" titleId="projects-title" />
-        <a href={withBase(ROUTES.PROJECTS)} class="index-more">
-          全部 {projects.length} 个 <Icon name="arrow-up-right" class="h-3.5 w-3.5" />
-        </a>
-      </div>
-
-      <div class="grid gap-4 sm:gap-5 md:grid-cols-2 xl:grid-cols-3">
-        {featuredProjects.map((project, index) => (
-          <div style={`--reveal-delay:${STAGGER.CARD_START + index * STAGGER.CARD_STEP}ms`}>
-            <ProjectCard project={project} />
+          <div class="grid gap-4 sm:gap-5 sm:grid-cols-2">
+            {recentPosts.map((post, index) => (
+              <div style={`--reveal-delay:${STAGGER.LIST_START + index * STAGGER.LIST_STEP}ms`}>
+                <PostCard post={post} />
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
-    </section>
+        </section>
 
-    <section id="home-presence" class="index-section" aria-labelledby="presence-title" data-island-cue="音乐与开发">
-      <div class="section-heading-row">
-        <SectionHeader label="Presence" title="音乐与开发" titleId="presence-title" />
-        <a href={withBase(ROUTES.ABOUT)} class="index-more">
-          关于我 <Icon name="arrow-up-right" class="h-3.5 w-3.5" />
-        </a>
+        <section id="home-projects" class="home-section" aria-labelledby="projects-title" data-island-cue="项目">
+          <div class="section-heading-row">
+            <SectionHeader label="Projects" title="在做的东西" titleId="projects-title" />
+            <a href={withBase(ROUTES.PROJECTS)} class="home-more">
+              全部 {projects.length} 个 <Icon name="arrow-up-right" class="h-3.5 w-3.5" />
+            </a>
+          </div>
+
+          <div class="grid gap-4 sm:gap-5 sm:grid-cols-2">
+            {featuredProjects.map((project, index) => (
+              <div style={`--reveal-delay:${STAGGER.CARD_START + index * STAGGER.CARD_STEP}ms`}>
+                <ProjectCard project={project} />
+              </div>
+            ))}
+          </div>
+        </section>
       </div>
 
-      <div class="presence-grid">
-        <article
-          class="profile-card presence-card ncm-profile-card"
+      <aside class="home-side" aria-label="音乐与开发动态">
+        <!-- The player card is the anchor of this column: it mirrors the island. -->
+        <section class="player-card" data-now-card data-playing="false" data-island-cue="正在播放">
+          <div class="player-card__art">
+            <img src={withBase(music.cover)} alt={`${music.album} 专辑封面`} width="320" height="320" loading="eager" />
+            <span class="player-card__state"><i aria-hidden="true"></i><span data-now-state-label>准备播放</span></span>
+          </div>
+
+          <h2 class="player-card__title">{music.title}</h2>
+          <p class="player-card__artist">{music.artist} · {music.album}</p>
+
+          <p class="player-card__lyric" data-now-lyric>{hero.lyric}</p>
+
+          <div class="player-card__bar" data-live-progress><i></i></div>
+          <div class="player-card__time">
+            <span data-live-elapsed>0:00</span>
+            <span data-live-duration>{music.durationLabel}</span>
+          </div>
+
+          <div class="player-card__actions">
+            <button class="player-card__toggle" type="button" data-now-toggle aria-label="播放音乐">
+              <span class="player-card__glyph" aria-hidden="true"></span>
+              <span data-now-toggle-copy>播放</span>
+            </button>
+            <a class="player-card__link" href={songUrl} target="_blank" rel="noreferrer">
+              网易云 <Icon name="arrow-up-right" class="h-3.5 w-3.5" />
+            </a>
+          </div>
+        </section>
+
+        <section
+          class="side-block"
           data-ncm-profile
           data-api-base={netease.apiBase}
           data-user-id={netease.userId}
+          aria-labelledby="side-ncm-title"
         >
-          <header class="presence-card-header">
-            <span class="presence-provider"><Icon name="music" class="h-4 w-4" /> 网易云音乐</span>
-            <a href={netease.profileUrl} target="_blank" rel="noreferrer" aria-label={`前往 ${netease.fallback.nickname} 的网易云主页`}><Icon name="arrow-up-right" class="h-4 w-4" /></a>
+          <header class="side-block__head">
+            <h2 id="side-ncm-title"><Icon name="music" class="h-3.5 w-3.5" /> 网易云</h2>
+            <a href={netease.profileUrl} target="_blank" rel="noreferrer" aria-label={`前往 ${netease.fallback.nickname} 的网易云主页`}><Icon name="arrow-up-right" class="h-3.5 w-3.5" /></a>
           </header>
 
-          <div class="ncm-profile-layout">
-            <div class="ncm-avatar-shell">
-              <img src={netease.fallback.avatarUrl} alt={`${netease.fallback.nickname} 的网易云头像`} width="116" height="116" loading="lazy" data-ncm-avatar />
-            </div>
-
-            <div class="ncm-profile-copy">
-              <div class="presence-name-line ncm-name-line">
-                <h3 data-ncm-name>{netease.fallback.nickname}</h3>
-                <span class="ncm-vip-badge" data-ncm-vip>{netease.fallback.vipLabel}</span>
-              </div>
-              <p class="ncm-profile-signature" data-ncm-signature>{netease.fallback.signature}</p>
-              <div class="ncm-profile-meta" aria-label="网易云身份信息">
-                <span><Icon name="star" class="h-3.5 w-3.5" /><b data-ncm-medals>{netease.fallback.medalNum}</b> 枚徽章</span>
-                <span><Icon name="music" class="h-3.5 w-3.5" /><b data-ncm-fan>{netease.fallback.fanLabel}</b></span>
-              </div>
+          <div class="side-person">
+            <img data-ncm-avatar src={netease.fallback.avatarUrl} alt={`${netease.fallback.nickname} 的网易云头像`} width="80" height="80" loading="lazy" />
+            <div>
+              <p class="side-person__name">
+                <strong data-ncm-name>{netease.fallback.nickname}</strong>
+                <span class="side-badge" data-ncm-vip>{netease.fallback.vipLabel}</span>
+              </p>
+              <p class="side-person__note" data-ncm-signature>{netease.fallback.signature}</p>
             </div>
           </div>
 
-          <dl class="ncm-profile-metrics">
+          <dl class="side-metrics">
             <div><dt>关注</dt><dd data-ncm-follows>{netease.fallback.follows}</dd></div>
             <div><dt>粉丝</dt><dd data-ncm-followeds>{netease.fallback.followeds}</dd></div>
             <div><dt>等级</dt><dd>Lv.<span data-ncm-level>{netease.fallback.level}</span></dd></div>
             <div><dt>播放</dt><dd data-ncm-listens>{netease.fallback.listenSongs.toLocaleString('zh-CN')}</dd></div>
           </dl>
-        </article>
 
-        <article class="profile-card presence-card presence-github-card" data-github-profile data-api-url={github.apiUrl}>
-          <header class="presence-card-header">
-            <span class="presence-provider"><Icon name="github" class="h-4 w-4" /> GitHub</span>
-            <a href={github.profileUrl} target="_blank" rel="noreferrer" aria-label={`前往 ${github.username} 的 GitHub`}><Icon name="arrow-up-right" class="h-4 w-4" /></a>
+          <p class="side-footnote">
+            <span><b data-ncm-medals>{netease.fallback.medalNum}</b> 枚徽章</span>
+            <span><b data-ncm-fan>{netease.fallback.fanLabel}</b></span>
+          </p>
+        </section>
+
+        <section class="side-block" data-github-profile data-api-url={github.apiUrl} aria-labelledby="side-github-title">
+          <header class="side-block__head">
+            <h2 id="side-github-title"><Icon name="github" class="h-3.5 w-3.5" /> GitHub</h2>
+            <a href={github.profileUrl} target="_blank" rel="noreferrer" aria-label={`前往 ${github.username} 的 GitHub`}><Icon name="arrow-up-right" class="h-3.5 w-3.5" /></a>
           </header>
 
-          <div class="github-profile-row">
-            <div class="github-avatar-shell">
-              <img src={withBase(author.avatar)} alt={`${github.username} 的头像`} width="116" height="116" loading="lazy" />
-            </div>
-            <div class="github-profile-copy">
-              <div class="presence-name-line github-name-line">
-                <h3>{author.name}</h3>
-                <span class="github-profile-badge">PUBLIC</span>
-              </div>
-              <a href={github.profileUrl} target="_blank" rel="noreferrer">@{github.username}</a>
-              <p class="github-profile-bio" data-github-bio>代码、博客与持续进行中的小实验。</p>
+          <div class="side-person">
+            <img src={withBase(author.avatar)} alt={`${github.username} 的头像`} width="80" height="80" loading="lazy" />
+            <div>
+              <p class="side-person__name"><strong>{author.name}</strong></p>
+              <p class="side-person__note" data-github-bio>代码、博客与持续进行中的小实验。</p>
             </div>
           </div>
 
-          <dl class="github-metrics">
+          <dl class="side-metrics side-metrics--three">
             <div><dt>仓库</dt><dd data-github-repos>—</dd></div>
             <div><dt>关注者</dt><dd data-github-followers>—</dd></div>
-            <div><dt>正在关注</dt><dd data-github-following>—</dd></div>
+            <div><dt>关注中</dt><dd data-github-following>—</dd></div>
           </dl>
-        </article>
-      </div>
-    </section>
+        </section>
+      </aside>
+    </div>
 
-    <section class="index-tags" aria-labelledby="home-tags-title">
-      <h2 id="home-tags-title" class="index-tags__title">常用标签</h2>
+    <section class="home-tags" aria-labelledby="home-tags-title">
+      <h2 id="home-tags-title" class="home-tags__title">常用标签</h2>
       <ul>
         {topTags.map((tag) => (
           <li>
@@ -244,17 +185,17 @@ const featuredTags = featured?.data.tags.slice(0, 3) ?? [];
       </ul>
     </section>
 
-    <section id="home-contact" class="index-contact" aria-labelledby="contact-title" data-island-cue="保持联系">
+    <section id="home-contact" class="home-contact" aria-labelledby="contact-title" data-island-cue="保持联系">
       <div>
         <p class="eyebrow">Contact</p>
         <h2 id="contact-title">想聊点什么？</h2>
-        <p class="index-contact__copy">工具、配置、特效实验都欢迎，直接发邮件就好。</p>
+        <p class="home-contact__copy">工具、配置、特效实验都欢迎，直接发邮件就好。</p>
       </div>
-      <div class="index-contact__actions">
-        <a class="index-action index-action--primary" href={`mailto:${author.email}`}>
+      <div class="home-contact__actions">
+        <a class="home-action home-action--primary" href={`mailto:${author.email}`}>
           发送邮件 <Icon name="arrow-up-right" class="h-4 w-4" />
         </a>
-        <a class="index-action" href={withBase(ROUTES.ABOUT)}>关于我</a>
+        <a class="home-action" href={withBase(ROUTES.ABOUT)}>关于我</a>
       </div>
     </section>
   </div>
@@ -266,506 +207,557 @@ const featuredTags = featured?.data.tags.slice(0, 3) ?? [];
 </BaseLayout>
 
 <style>
-  .index-page {
+  .home {
     --ink: var(--fx-text);
     --muted: var(--fx-muted);
     --soft: var(--text-faint);
     --line: var(--fx-line);
     --accent: var(--fx-pink);
-    padding-block: clamp(1.6rem, 4vw, 2.6rem) clamp(2rem, 5vw, 3.5rem);
+    padding-block: clamp(1.5rem, 3.5vw, 2.4rem) clamp(2rem, 5vw, 3.5rem);
   }
 
   /* ------------------------------------------------------------------
-     Header: identity in one compact block, then the numbers.
+     Intro line
      ------------------------------------------------------------------ */
-  .index-head {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: end;
-    gap: 1.5rem 2rem;
-  }
-
-  .index-head__main {
+  .home-intro {
     display: flex;
-    align-items: flex-start;
-    gap: 0.9rem;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem 2rem;
+    padding-bottom: clamp(1.2rem, 3vw, 1.8rem);
+    border-bottom: 1px solid var(--line);
   }
 
-  .index-avatar {
-    width: 3.4rem;
-    height: 3.4rem;
-    flex-shrink: 0;
-    border: 1px solid var(--line);
-    border-radius: 1rem;
-    background: color-mix(in srgb, var(--accent) 12%, transparent);
-    object-fit: cover;
-  }
-
-  .index-title {
-    margin: 0.4rem 0 0;
+  .home-title {
+    margin: 0.45rem 0 0;
     color: var(--ink);
-    font-size: clamp(1.7rem, 3.4vw, 2.3rem);
+    font-size: clamp(1.6rem, 3.2vw, 2.15rem);
     font-weight: 800;
     letter-spacing: -0.04em;
     line-height: 1.05;
   }
 
-  .index-lede {
-    max-width: 32rem;
-    margin: 0.6rem 0 0;
+  .home-lede {
+    max-width: 31rem;
+    margin: 0.55rem 0 0;
     color: var(--muted);
-    font-size: 0.9rem;
-    line-height: 1.8;
+    font-size: 0.88rem;
+    line-height: 1.75;
   }
 
-  .index-stats {
+  .home-counts {
     display: flex;
     flex-wrap: wrap;
-    align-items: flex-end;
-    gap: 0.4rem 1.5rem;
+    gap: 0.4rem 1.4rem;
     margin: 0;
   }
 
-  .index-stats > div {
-    display: grid;
-    gap: 0.2rem;
-    min-width: 3rem;
-  }
-
-  .index-stats dt {
-    color: var(--soft);
-    font-size: 0.68rem;
-    letter-spacing: 0.1em;
-  }
-
-  .index-stats dd {
+  .home-counts > div { display: grid; gap: 0.15rem; min-width: 2.8rem; }
+  .home-counts dt { color: var(--soft); font-size: 0.66rem; letter-spacing: 0.1em; }
+  .home-counts dd {
     margin: 0;
     color: var(--ink);
     font-family: var(--font-mono);
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
     line-height: 1;
   }
 
-  .index-stats .index-stats__date {
-    font-family: inherit;
-    font-size: 0.8rem;
-    letter-spacing: -0.01em;
-  }
+  .home-counts .home-counts__date { font-family: inherit; font-size: 0.78rem; letter-spacing: -0.01em; }
 
   /* ------------------------------------------------------------------
-     Now-playing pill: collapsed until audio is actually in the pipe.
+     Two-column shell: content left, live column right.
      ------------------------------------------------------------------ */
-  .now-pill {
-    display: flex;
-    max-height: 0;
-    align-items: center;
-    gap: 0.7rem;
-    overflow: hidden;
-    border-radius: 999px;
-    opacity: 0;
-    transition: max-height 0.35s var(--ease), opacity 0.3s ease, margin-top 0.35s var(--ease);
-  }
-
-  .now-pill[data-visible='true'] {
-    max-height: 4rem;
-    margin-top: 1.3rem;
-    opacity: 1;
-  }
-
-  .now-pill__eq {
-    display: flex;
-    height: 0.9rem;
-    flex-shrink: 0;
-    align-items: flex-end;
-    gap: 2px;
-  }
-
-  .now-pill__eq i {
-    width: 2px;
-    height: 100%;
-    border-radius: 1px;
-    background: var(--accent);
-    transform-origin: bottom;
-  }
-
-  .now-pill__eq i:nth-child(2) { height: 65%; }
-  .now-pill__eq i:nth-child(3) { height: 82%; }
-
-  .now-pill[data-playing='true'] .now-pill__eq i {
-    animation: pill-eq 0.9s ease-in-out infinite alternate;
-  }
-
-  .now-pill[data-playing='true'] .now-pill__eq i:nth-child(2) { animation-delay: 0.15s; }
-  .now-pill[data-playing='true'] .now-pill__eq i:nth-child(3) { animation-delay: 0.3s; }
-
-  .now-pill__state {
-    flex-shrink: 0;
-    color: var(--accent);
-    font-family: var(--font-mono);
-    font-size: 0.62rem;
-    font-weight: 700;
-    letter-spacing: 0.14em;
-    white-space: nowrap;
-  }
-
-  .now-pill__text {
-    display: flex;
-    min-width: 0;
-    align-items: baseline;
-    gap: 0.5rem;
-  }
-
-  .now-pill__text strong {
-    overflow: hidden;
-    color: var(--ink);
-    font-size: 0.84rem;
-    font-weight: 700;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .now-pill__text span {
-    overflow: hidden;
-    color: var(--soft);
-    font-size: 0.76rem;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .now-pill__time {
-    margin-left: auto;
-    color: var(--soft);
-    font-family: var(--font-mono);
-    font-size: 0.68rem;
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-  }
-
-  .now-pill__toggle {
-    flex-shrink: 0;
-    border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--line));
-    border-radius: 999px;
-    padding: 0.3rem 0.7rem;
-    background: color-mix(in srgb, var(--accent) 12%, transparent);
-    color: var(--ink);
-    font-size: 0.72rem;
-    font-weight: 700;
-    transition: background 0.2s ease, border-color 0.2s ease;
-  }
-
-  .now-pill__toggle:hover,
-  .now-pill__toggle:focus-visible {
-    border-color: color-mix(in srgb, var(--accent) 62%, var(--line));
-    background: color-mix(in srgb, var(--accent) 20%, transparent);
-  }
-
-  /* ------------------------------------------------------------------
-     Featured post
-     ------------------------------------------------------------------ */
-  .feature-card {
+  .home-layout {
     display: grid;
-    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
-    align-items: stretch;
-    margin-top: clamp(1.5rem, 3.5vw, 2.2rem);
-    overflow: hidden;
-    border: 1px solid var(--line);
-    border-radius: 1.5rem;
-    background: color-mix(in srgb, var(--fx-surface-strong) 90%, transparent);
-    box-shadow: 0 24px 60px -46px var(--fx-shadow);
-    color: var(--ink);
-    text-decoration: none;
-    transition: border-color 0.3s ease, transform 0.3s var(--ease);
+    grid-template-columns: minmax(0, 1fr) 19rem;
+    align-items: start;
+    gap: clamp(1.6rem, 3vw, 2.4rem);
+    margin-top: clamp(1.4rem, 3vw, 2rem);
   }
 
-  .feature-card:hover,
-  .feature-card:focus-visible {
-    border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
-    transform: translateY(-2px);
+  .home-side {
+    position: sticky;
+    top: 5.25rem;
+    display: grid;
+    gap: 0.9rem;
   }
 
-  .feature-card__media {
-    display: block;
-    overflow: hidden;
-    background: color-mix(in srgb, var(--accent) 10%, transparent);
-  }
+  .home-section { margin-top: clamp(2.2rem, 4vw, 3rem); }
 
-  .feature-card__media img {
-    display: block;
-    width: 100%;
-    height: 100%;
-    min-height: 11rem;
-    object-fit: cover;
-    transition: transform 0.6s var(--ease);
-  }
-
-  .feature-card:hover .feature-card__media img { transform: scale(1.03); }
-
-  .feature-card__body {
-    display: flex;
-    flex-direction: column;
-    gap: 0.55rem;
-    padding: clamp(1.15rem, 2.5vw, 1.8rem);
-  }
-
-  .feature-card__label {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    color: var(--soft);
-    font-family: var(--font-mono);
-    font-size: 0.66rem;
-    letter-spacing: 0.14em;
-  }
-
-  .feature-card__dot {
-    width: 0.34rem;
-    height: 0.34rem;
-    border-radius: 50%;
-    background: var(--accent);
-  }
-
-  .feature-card__title {
-    margin: 0;
-    font-size: clamp(1.2rem, 2.3vw, 1.65rem);
-    font-weight: 800;
-    letter-spacing: -0.025em;
-    line-height: 1.32;
-    transition: color 0.25s ease;
-  }
-
-  .feature-card:hover .feature-card__title { color: var(--accent); }
-
-  .feature-card__desc {
-    display: -webkit-box;
-    overflow: hidden;
-    color: var(--muted);
-    font-size: 0.86rem;
-    line-height: 1.8;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-  }
-
-  .feature-card__foot {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.4rem 0.9rem;
-    margin-top: auto;
-    padding-top: 0.4rem;
-  }
-
-  .feature-card__meta,
-  .feature-card__tags {
-    color: var(--soft);
-    font-family: var(--font-mono);
-    font-size: 0.7rem;
-  }
-
-  .feature-card__tags { color: color-mix(in srgb, var(--accent) 72%, var(--soft)); }
-
-  .feature-card__arrow {
-    margin-left: auto;
-    color: var(--soft);
-    transition: transform 0.3s var(--ease), color 0.25s ease;
-  }
-
-  .feature-card:hover .feature-card__arrow {
-    color: var(--accent);
-    transform: translate(0.15rem, -0.15rem);
-  }
-
-  /* ------------------------------------------------------------------
-     Sections, tags, contact
-     ------------------------------------------------------------------ */
-  .index-section { margin-top: clamp(2.3rem, 4.5vw, 3.2rem); }
-
-  .index-more {
+  .home-more {
     display: inline-flex;
     align-items: center;
     gap: 0.3rem;
     margin-bottom: 1.15rem;
     color: var(--soft);
-    font-size: 0.76rem;
+    font-size: 0.74rem;
     font-weight: 700;
     text-decoration: none;
     transition: color 0.2s ease, gap 0.2s ease;
   }
 
-  .index-more:hover,
-  .index-more:focus-visible { color: var(--accent); gap: 0.45rem; }
+  .home-more:hover,
+  .home-more:focus-visible { color: var(--accent); gap: 0.42rem; }
 
-  .index-tags {
-    display: grid;
-    grid-template-columns: 5.5rem minmax(0, 1fr);
-    align-items: baseline;
-    gap: 1rem;
-    margin-top: clamp(2.3rem, 4.5vw, 3.2rem);
-    border-top: 1px solid var(--line);
-    padding-top: 1.3rem;
+  /* ------------------------------------------------------------------
+     Player card
+     ------------------------------------------------------------------ */
+  .player-card {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 1.35rem;
+    padding: 0.8rem 0.8rem 1rem;
+    background: color-mix(in srgb, var(--fx-surface-strong) 92%, transparent);
+    box-shadow: 0 22px 50px -44px var(--fx-shadow);
   }
 
-  .index-tags__title {
-    margin: 0;
+  .player-card__art {
+    position: relative;
+    overflow: hidden;
+    border-radius: 1rem;
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+  }
+
+  .player-card__art img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 3 / 2;
+    object-fit: cover;
+    transition: transform 0.7s var(--ease);
+  }
+
+  .player-card[data-playing='true'] .player-card__art img { transform: scale(1.04); }
+
+  .player-card__state {
+    position: absolute;
+    bottom: 0.55rem;
+    left: 0.55rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border-radius: 999px;
+    padding: 0.22rem 0.55rem;
+    background: color-mix(in srgb, #000 52%, transparent);
+    color: #fff;
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.08em;
+    backdrop-filter: blur(6px);
+  }
+
+  .player-card__state i {
+    width: 0.36rem;
+    height: 0.36rem;
+    border-radius: 50%;
+    background: color-mix(in srgb, #fff 60%, transparent);
+  }
+
+  .player-card[data-playing='true'] .player-card__state i {
+    background: var(--accent);
+    box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--accent) 26%, transparent);
+    animation: card-dot 1.8s ease-out infinite;
+  }
+
+  .player-card__title {
+    margin: 0.8rem 0 0;
+    color: var(--ink);
+    font-size: 1.1rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.25;
+  }
+
+  .player-card__artist {
+    margin: 0.2rem 0 0;
+    color: var(--muted);
+    font-size: 0.76rem;
+  }
+
+  .player-card__lyric {
+    display: -webkit-box;
+    overflow: hidden;
+    min-height: 2.6em;
+    margin: 0.75rem 0 0;
+    color: var(--muted);
+    font-size: 0.8rem;
+    font-style: italic;
+    line-height: 1.65;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    transition: color 0.3s ease;
+  }
+
+  .player-card[data-playing='true'] .player-card__lyric { color: var(--ink); }
+
+  .player-card__bar {
+    height: 3px;
+    margin-top: 0.8rem;
+    overflow: hidden;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--ink) 12%, transparent);
+  }
+
+  .player-card__bar i {
+    display: block;
+    width: var(--live-progress, 0%);
+    height: 100%;
+    border-radius: inherit;
+    background: var(--accent);
+    transition: width 0.2s linear;
+  }
+
+  .player-card__time {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 0.35rem;
+    color: var(--soft);
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .player-card__actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.8rem;
+  }
+
+  .player-card__toggle {
+    display: inline-flex;
+    flex: 1;
+    min-height: 2.35rem;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    border: 0;
+    border-radius: 999px;
+    background: var(--accent);
+    color: #2a1220;
+    font-size: 0.78rem;
+    font-weight: 800;
+    transition: background 0.25s ease;
+  }
+
+  .player-card__toggle:hover,
+  .player-card__toggle:focus-visible { background: color-mix(in srgb, var(--accent) 86%, black); }
+
+  .player-card__glyph {
+    width: 0;
+    height: 0;
+    margin-left: 0.1rem;
+    border-top: 0.3rem solid transparent;
+    border-bottom: 0.3rem solid transparent;
+    border-left: 0.46rem solid currentColor;
+  }
+
+  .player-card__toggle[data-playing='true'] .player-card__glyph {
+    width: 0.14rem;
+    height: 0.62rem;
+    margin-left: 0;
+    border: 0;
+    background: currentColor;
+    box-shadow: 0.26rem 0 0 currentColor;
+  }
+
+  .player-card__link {
+    display: inline-flex;
+    min-height: 2.35rem;
+    align-items: center;
+    gap: 0.28rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 0 0.7rem;
     color: var(--soft);
     font-size: 0.72rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: color 0.2s ease, border-color 0.2s ease;
+  }
+
+  .player-card__link:hover,
+  .player-card__link:focus-visible {
+    border-color: color-mix(in srgb, var(--accent) 50%, var(--line));
+    color: var(--ink);
+  }
+
+  /* ------------------------------------------------------------------
+     Sidebar data blocks
+     ------------------------------------------------------------------ */
+  .side-block {
+    border: 1px solid var(--line);
+    border-radius: 1.1rem;
+    padding: 0.85rem 0.9rem 0.9rem;
+    background: color-mix(in srgb, var(--fx-surface-strong) 82%, transparent);
+  }
+
+  .side-block__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.7rem;
+  }
+
+  .side-block__head h2 {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin: 0;
+    color: var(--soft);
+    font-size: 0.7rem;
     font-weight: 700;
     letter-spacing: 0.12em;
   }
 
-  .index-tags ul {
+  .side-block__head a { color: var(--soft); transition: color 0.2s ease; }
+  .side-block__head a:hover,
+  .side-block__head a:focus-visible { color: var(--accent); }
+
+  .side-person {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .side-person img {
+    width: 2.4rem;
+    height: 2.4rem;
+    flex-shrink: 0;
+    border: 1px solid var(--line);
+    border-radius: 0.75rem;
+    object-fit: cover;
+  }
+
+  .side-person__name {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.45rem;
+    align-items: center;
+    gap: 0.35rem;
+    margin: 0;
+    color: var(--ink);
+    font-size: 0.82rem;
+    font-weight: 700;
+  }
+
+  .side-badge {
+    border-radius: 999px;
+    padding: 0.08rem 0.36rem;
+    background: color-mix(in srgb, var(--accent) 16%, transparent);
+    color: color-mix(in srgb, var(--accent) 82%, var(--ink));
+    font-size: 0.58rem;
+    font-weight: 700;
+  }
+
+  .side-person__note {
+    display: -webkit-box;
+    overflow: hidden;
+    margin: 0.16rem 0 0;
+    color: var(--soft);
+    font-size: 0.68rem;
+    line-height: 1.5;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .side-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.3rem;
+    margin: 0.75rem 0 0;
+    border-top: 1px solid var(--line);
+    padding-top: 0.65rem;
+  }
+
+  .side-metrics--three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+  .side-metrics > div { display: grid; gap: 0.1rem; }
+  .side-metrics dt { color: var(--soft); font-size: 0.6rem; }
+  .side-metrics dd {
+    margin: 0;
+    color: var(--ink);
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .side-footnote {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.2rem 0.7rem;
+    margin: 0.6rem 0 0;
+    color: var(--soft);
+    font-size: 0.66rem;
+  }
+
+  .side-footnote b { color: var(--ink); font-weight: 700; }
+
+  /* ------------------------------------------------------------------
+     Tags and contact (full width, below the two columns)
+     ------------------------------------------------------------------ */
+  .home-tags {
+    display: grid;
+    grid-template-columns: 5.5rem minmax(0, 1fr);
+    align-items: baseline;
+    gap: 1rem;
+    margin-top: clamp(2.2rem, 4vw, 3rem);
+    border-top: 1px solid var(--line);
+    padding-top: 1.2rem;
+  }
+
+  .home-tags__title {
+    margin: 0;
+    color: var(--soft);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+  }
+
+  .home-tags ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
     margin: 0;
     padding: 0;
     list-style: none;
   }
 
-  .index-tags a {
+  .home-tags a {
     display: inline-flex;
     align-items: baseline;
-    gap: 0.3rem;
+    gap: 0.28rem;
     border: 1px solid var(--line);
     border-radius: 999px;
-    padding: 0.24rem 0.6rem;
+    padding: 0.22rem 0.58rem;
     color: var(--muted);
-    font-size: 0.76rem;
+    font-size: 0.74rem;
     text-decoration: none;
     transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
   }
 
-  .index-tags a:hover,
-  .index-tags a:focus-visible {
+  .home-tags a:hover,
+  .home-tags a:focus-visible {
     border-color: color-mix(in srgb, var(--accent) 50%, var(--line));
     background: color-mix(in srgb, var(--accent) 8%, transparent);
     color: var(--ink);
   }
 
-  .index-tags a span {
-    color: var(--soft);
-    font-family: var(--font-mono);
-    font-size: 0.64rem;
-  }
+  .home-tags a span { color: var(--soft); font-family: var(--font-mono); font-size: 0.62rem; }
 
-  .index-contact {
+  .home-contact {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: end;
     gap: 1.2rem;
-    margin-top: clamp(2.3rem, 4.5vw, 3.2rem);
+    margin-top: clamp(2.2rem, 4vw, 3rem);
     border-top: 1px solid var(--line);
-    padding-top: clamp(1.5rem, 3vw, 2.1rem);
+    padding-top: clamp(1.4rem, 3vw, 2rem);
   }
 
-  .index-contact h2 {
-    margin: 0.55rem 0 0;
+  .home-contact h2 {
+    margin: 0.5rem 0 0;
     color: var(--ink);
-    font-size: clamp(1.25rem, 2.4vw, 1.6rem);
+    font-size: clamp(1.2rem, 2.3vw, 1.55rem);
     font-weight: 800;
     letter-spacing: -0.03em;
   }
 
-  .index-contact__copy {
-    margin: 0.45rem 0 0;
+  .home-contact__copy {
+    margin: 0.4rem 0 0;
     color: var(--muted);
-    font-size: 0.86rem;
-    line-height: 1.8;
+    font-size: 0.84rem;
+    line-height: 1.75;
   }
 
-  .index-contact__actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-  }
+  .home-contact__actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 
-  .index-action {
+  .home-action {
     display: inline-flex;
-    min-height: 2.55rem;
+    min-height: 2.5rem;
     align-items: center;
     justify-content: center;
-    gap: 0.4rem;
+    gap: 0.38rem;
     border: 1px solid var(--line);
     border-radius: 999px;
-    padding: 0.6rem 1rem;
+    padding: 0.58rem 0.95rem;
     background: color-mix(in srgb, var(--fx-surface-strong) 70%, transparent);
     color: var(--ink);
-    font-size: 0.78rem;
+    font-size: 0.77rem;
     font-weight: 700;
     line-height: 1;
     text-decoration: none;
     transition: transform 0.25s var(--ease), border-color 0.25s ease;
   }
 
-  .index-action:hover,
-  .index-action:focus-visible {
+  .home-action:hover,
+  .home-action:focus-visible {
     border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
     transform: translateY(-2px);
   }
 
-  .index-action--primary {
-    border-color: transparent;
-    background: var(--accent);
-    color: #2a1220;
-  }
+  .home-action--primary { border-color: transparent; background: var(--accent); color: #2a1220; }
+  .home-action--primary:hover,
+  .home-action--primary:focus-visible { background: color-mix(in srgb, var(--accent) 88%, black); color: #2a1220; }
 
-  .index-action--primary:hover,
-  .index-action--primary:focus-visible {
-    background: color-mix(in srgb, var(--accent) 88%, black);
-    color: #2a1220;
-  }
-
-  .index-action:focus-visible,
-  .now-pill__toggle:focus-visible,
-  .index-more:focus-visible,
-  .feature-card:focus-visible {
+  .home-action:focus-visible,
+  .player-card__toggle:focus-visible,
+  .player-card__link:focus-visible,
+  .home-more:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 3px;
   }
 
-  @keyframes pill-eq {
-    from { transform: scaleY(0.3); }
-    to { transform: scaleY(1); }
+  @keyframes card-dot {
+    0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 40%, transparent); }
+    70%, 100% { box-shadow: 0 0 0 0.4rem transparent; }
   }
 
-  @media (max-width: 900px) {
-    .index-head {
-      grid-template-columns: minmax(0, 1fr);
-      align-items: start;
-      gap: 1.1rem;
+  /* ------------------------------------------------------------------
+     Below 1024px the live column moves above the articles: the page is
+     about "音乐与动态", so the player leads instead of trailing.
+     ------------------------------------------------------------------ */
+  @media (max-width: 1023px) {
+    .home-layout {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 1.6rem;
     }
 
-    .index-stats { gap: 0.4rem 1.1rem; }
-  }
+    .home-side { display: contents; }
 
-  @media (max-width: 760px) {
-    .feature-card { grid-template-columns: minmax(0, 1fr); }
-    .feature-card__media img { max-height: 12rem; }
+    .player-card { order: -2; }
+    .home-main { order: -1; }
+    .side-block { order: 0; }
+
+    .player-card { max-width: 22rem; }
   }
 
   @media (max-width: 640px) {
-    .index-head__main { gap: 0.75rem; }
-    .index-avatar { width: 2.9rem; height: 2.9rem; border-radius: 0.9rem; }
-    .now-pill[data-visible='true'] { flex-wrap: wrap; }
-    .now-pill__time { margin-left: 0; }
-    .index-tags { grid-template-columns: minmax(0, 1fr); gap: 0.7rem; }
-    .index-contact { grid-template-columns: minmax(0, 1fr); align-items: start; }
-    .index-contact__actions { width: 100%; }
-    .index-action { flex: 1; }
+    .home-intro { align-items: flex-start; }
+    .home-counts { gap: 0.4rem 1rem; }
+    .home-tags { grid-template-columns: minmax(0, 1fr); gap: 0.6rem; }
+    .home-contact { grid-template-columns: minmax(0, 1fr); align-items: start; }
+    .home-contact__actions { width: 100%; }
+    .home-action { flex: 1; }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .now-pill,
-    .now-pill__eq i,
-    .feature-card,
-    .feature-card__media img,
-    .index-action {
+    .player-card__art img,
+    .player-card__bar i,
+    .home-action {
       animation: none;
       transition: none;
+      transform: none;
     }
 
-    .feature-card:hover,
-    .index-action:hover { transform: none; }
+    .player-card[data-playing='true'] .player-card__state i { animation: none; }
+    .home-action:hover { transform: none; }
   }
 </style>
