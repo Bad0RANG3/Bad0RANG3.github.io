@@ -281,15 +281,13 @@ export {};
       return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
     };
 
+    // The island's own lyric line is the only place lyrics are shown: the
+    // homepage card used to mirror them through `[data-live-lyric]` and a
+    // `b0-player-lyric` event, both of which were removed with that copy.
     const publishLyric = (text) => {
-      if (!text) return;
-      const changed = text !== lastLyricText;
+      if (!text || text === lastLyricText) return;
       lastLyricText = text;
       if (lyric) lyric.textContent = text;
-      document.querySelectorAll('[data-live-lyric]').forEach((node) => {
-        node.textContent = text;
-      });
-      if (changed) document.dispatchEvent(new CustomEvent('b0-player-lyric', { detail: { text } }));
     };
 
     const updateLyric = () => {
@@ -316,8 +314,9 @@ export {};
       }
       if (elapsed) elapsed.textContent = formatTime(current);
       if (duration) duration.textContent = `−${formatDuration(Math.max(0, total - current))}`;
-      document.querySelectorAll('[data-live-elapsed]').forEach((node) => { node.textContent = formatTime(current); });
-      document.querySelectorAll('[data-live-duration]').forEach((node) => { node.textContent = formatTime(total); });
+      // One hook, not three: the elapsed/duration mirrors lived only on the
+      // homepage card and went away with its time row, so this runs a single
+      // query per timeupdate instead of three.
       document.querySelectorAll('[data-live-progress]').forEach((node) => {
         if (node instanceof HTMLElement) node.style.setProperty('--live-progress', progress);
       });

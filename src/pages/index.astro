@@ -5,45 +5,28 @@ import PostCard from '../components/blog/PostCard.astro';
 import ProjectCard from '../components/profile/ProjectCard.astro';
 import SectionHeader from '../components/ui/SectionHeader.astro';
 import { projects } from '../config/projects';
-import { ROUTES, tagPath } from '../config/routes';
+import { ROUTES } from '../config/routes';
 import { siteConfig } from '../config/site';
 import { LAYOUT, STAGGER } from '../config/ui';
 import { getPublishedPosts } from '../lib/content';
-import { getTagGroups } from '../lib/taxonomy';
-import { formatDate } from '../lib/date';
 import { withBase } from '../lib/urls';
 
 const posts = await getPublishedPosts();
-const tagGroups = await getTagGroups();
-const { author, hero, music, netease, github, about } = siteConfig;
+const { author, music, netease, github } = siteConfig;
 
 const recentPosts = posts.slice(0, LAYOUT.RECENT_POSTS_COUNT);
 const featuredProjects = projects.slice(0, 3);
-const topTags = tagGroups.slice(0, 8);
-
-const newest = posts[0];
-const updatedLabel = newest ? formatDate(newest.data.updatedDate ?? newest.data.date) : '—';
 const songUrl = music.officialUrl;
 ---
 
 <BaseLayout title={siteConfig.title} description={siteConfig.description}>
   <div class="home site-frame">
     <header class="home-intro" data-island-cue="首页概览">
-      <div class="home-intro__copy">
-        <p class="eyebrow">Index</p>
-        <h1 id="home-title" class="home-title">{author.name}</h1>
-        <p class="home-lede">
-          拆解软件、写点代码、折腾配置。文章在左边，正在听的东西和开发动态在右边。
-        </p>
-      </div>
-
-      <dl class="home-counts">
-        <div><dt>文章</dt><dd>{posts.length}</dd></div>
-        <div><dt>项目</dt><dd>{projects.length}</dd></div>
-        <div><dt>标签</dt><dd>{tagGroups.length}</dd></div>
-        <div><dt>工具</dt><dd>{about.techStack.length + about.devTools.length}</dd></div>
-        <div><dt>更新于</dt><dd class="home-counts__date">{updatedLabel}</dd></div>
-      </dl>
+      <p class="eyebrow">Index</p>
+      <h1 id="home-title" class="home-title">{author.name}</h1>
+      <p class="home-lede">
+        拆解软件、写点代码、折腾配置。文章在左边，正在听的东西和开发动态在右边。
+      </p>
     </header>
 
     <div class="home-layout">
@@ -88,19 +71,15 @@ const songUrl = music.officialUrl;
         <section class="player-card" data-now-card data-playing="false" data-island-cue="正在播放">
           <div class="player-card__art">
             <img src={withBase(music.cover)} alt={`${music.album} 专辑封面`} width="320" height="320" loading="eager" />
-            <span class="player-card__state"><i aria-hidden="true"></i><span data-now-state-label>准备播放</span></span>
           </div>
 
           <h2 class="player-card__title">{music.title}</h2>
           <p class="player-card__artist">{music.artist} · {music.album}</p>
 
-          <p class="player-card__lyric" data-now-lyric>{hero.lyric}</p>
-
+          <!-- Progress only. The lyric line and the 0:00 / 4:26 row both repeated
+               what the island already shows when it is expanded, and the play
+               button already carries the state. -->
           <div class="player-card__bar" data-live-progress><i></i></div>
-          <div class="player-card__time">
-            <span data-live-elapsed>0:00</span>
-            <span data-live-duration>{music.durationLabel}</span>
-          </div>
 
           <div class="player-card__actions">
             <button class="player-card__toggle" type="button" data-now-toggle aria-label="播放音乐">
@@ -121,8 +100,11 @@ const songUrl = music.officialUrl;
           aria-labelledby="side-ncm-title"
         >
           <header class="side-block__head">
-            <h2 id="side-ncm-title"><Icon name="music" class="h-3.5 w-3.5" /> 网易云</h2>
-            <a href={netease.profileUrl} target="_blank" rel="noreferrer" aria-label={`前往 ${netease.fallback.nickname} 的网易云主页`}><Icon name="arrow-up-right" class="h-3.5 w-3.5" /></a>
+            <h2 id="side-ncm-title">在别处</h2>
+            <div class="side-block__links">
+              <a href={netease.profileUrl} target="_blank" rel="noreferrer" aria-label={`前往 ${netease.fallback.nickname} 的网易云主页`}><Icon name="arrow-up-right" class="h-3.5 w-3.5" /></a>
+              <a href={github.profileUrl} target="_blank" rel="noreferrer" aria-label={`前往 ${github.username} 的 GitHub`}><Icon name="github" class="h-3.5 w-3.5" /></a>
+            </div>
           </header>
 
           <div class="side-person">
@@ -139,65 +121,13 @@ const songUrl = music.officialUrl;
           <dl class="side-metrics">
             <div><dt>关注</dt><dd data-ncm-follows>{netease.fallback.follows}</dd></div>
             <div><dt>粉丝</dt><dd data-ncm-followeds>{netease.fallback.followeds}</dd></div>
-            <div><dt>等级</dt><dd>Lv.<span data-ncm-level>{netease.fallback.level}</span></dd></div>
             <div><dt>播放</dt><dd data-ncm-listens>{netease.fallback.listenSongs.toLocaleString('zh-CN')}</dd></div>
           </dl>
-
-          <p class="side-footnote">
-            <span><b data-ncm-medals>{netease.fallback.medalNum}</b> 枚徽章</span>
-            <span><b data-ncm-fan>{netease.fallback.fanLabel}</b></span>
-          </p>
         </section>
 
-        <section class="side-block" data-github-profile data-api-url={github.apiUrl} aria-labelledby="side-github-title">
-          <header class="side-block__head">
-            <h2 id="side-github-title"><Icon name="github" class="h-3.5 w-3.5" /> GitHub</h2>
-            <a href={github.profileUrl} target="_blank" rel="noreferrer" aria-label={`前往 ${github.username} 的 GitHub`}><Icon name="arrow-up-right" class="h-3.5 w-3.5" /></a>
-          </header>
-
-          <div class="side-person">
-            <img src={withBase(author.avatar)} alt={`${github.username} 的头像`} width="80" height="80" loading="lazy" />
-            <div>
-              <p class="side-person__name"><strong>{author.name}</strong></p>
-              <p class="side-person__note" data-github-bio>代码、博客与持续进行中的小实验。</p>
-            </div>
-          </div>
-
-          <dl class="side-metrics side-metrics--three">
-            <div><dt>仓库</dt><dd data-github-repos>—</dd></div>
-            <div><dt>关注者</dt><dd data-github-followers>—</dd></div>
-            <div><dt>关注中</dt><dd data-github-following>—</dd></div>
-          </dl>
-        </section>
       </aside>
     </div>
 
-    <section class="home-tags" aria-labelledby="home-tags-title">
-      <h2 id="home-tags-title" class="home-tags__title">常用标签</h2>
-      <ul>
-        {topTags.map((tag) => (
-          <li>
-            <a href={withBase(tagPath(tag.name))}>
-              {tag.name}<span>{tag.posts.length}</span>
-            </a>
-          </li>
-        ))}
-      </ul>
-    </section>
-
-    <section id="home-contact" class="home-contact" aria-labelledby="contact-title" data-island-cue="保持联系">
-      <div>
-        <p class="eyebrow">Contact</p>
-        <h2 id="contact-title">想聊点什么？</h2>
-        <p class="home-contact__copy">工具、配置、特效实验都欢迎，直接发邮件就好。</p>
-      </div>
-      <div class="home-contact__actions">
-        <a class="home-action home-action--primary" href={`mailto:${author.email}`}>
-          发送邮件 <Icon name="arrow-up-right" class="h-4 w-4" />
-        </a>
-        <a class="home-action" href={withBase(ROUTES.ABOUT)}>关于我</a>
-      </div>
-    </section>
   </div>
 
   <script>
@@ -219,53 +149,32 @@ const songUrl = music.officialUrl;
   /* ------------------------------------------------------------------
      Intro line
      ------------------------------------------------------------------ */
+  /* One column of copy, so no flex row: the counts that used to sit on the
+     opposite side were removed as duplicates of the nav and footer. */
   .home-intro {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 1rem 2rem;
     padding-bottom: clamp(1.2rem, 3vw, 1.8rem);
     border-bottom: 1px solid var(--line);
   }
 
+  /* The wordmark stays monospace on purpose: it is Latin-only, and it is the
+     one place the "terminal" character of the old design still earns its keep. */
   .home-title {
     margin: 0.45rem 0 0;
     color: var(--ink);
-    font-size: clamp(1.6rem, 3.2vw, 2.15rem);
-    font-weight: 800;
-    letter-spacing: -0.04em;
-    line-height: 1.05;
+    font-family: var(--font-mono);
+    font-size: var(--type-display);
+    font-weight: var(--weight-display);
+    letter-spacing: var(--tracking-display);
+    line-height: var(--leading-display);
   }
 
   .home-lede {
     max-width: 31rem;
     margin: 0.55rem 0 0;
     color: var(--muted);
-    font-size: 0.88rem;
-    line-height: 1.75;
+    font-size: var(--type-small);
+    line-height: var(--leading-prose);
   }
-
-  .home-counts {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem 1.4rem;
-    margin: 0;
-  }
-
-  .home-counts > div { display: grid; gap: 0.15rem; min-width: 2.8rem; }
-  .home-counts dt { color: var(--soft); font-size: 0.66rem; letter-spacing: 0.1em; }
-  .home-counts dd {
-    margin: 0;
-    color: var(--ink);
-    font-family: var(--font-mono);
-    font-size: 1.1rem;
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-    line-height: 1;
-  }
-
-  .home-counts .home-counts__date { font-family: inherit; font-size: 0.78rem; letter-spacing: -0.01em; }
 
   /* ------------------------------------------------------------------
      Two-column shell: content left, live column right.
@@ -293,8 +202,8 @@ const songUrl = music.officialUrl;
     gap: 0.3rem;
     margin-bottom: 1.15rem;
     color: var(--soft);
-    font-size: 0.74rem;
-    font-weight: 700;
+    font-size: var(--type-meta);
+    font-weight: var(--weight-strong);
     text-decoration: none;
     transition: color 0.2s ease, gap 0.2s ease;
   }
@@ -333,66 +242,22 @@ const songUrl = music.officialUrl;
 
   .player-card[data-playing='true'] .player-card__art img { transform: scale(1.04); }
 
-  .player-card__state {
-    position: absolute;
-    bottom: 0.55rem;
-    left: 0.55rem;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    border-radius: 999px;
-    padding: 0.22rem 0.55rem;
-    background: color-mix(in srgb, #000 52%, transparent);
-    color: #fff;
-    font-family: var(--font-mono);
-    font-size: 0.6rem;
-    letter-spacing: 0.08em;
-    backdrop-filter: blur(6px);
-  }
-
-  .player-card__state i {
-    width: 0.36rem;
-    height: 0.36rem;
-    border-radius: 50%;
-    background: color-mix(in srgb, #fff 60%, transparent);
-  }
-
-  .player-card[data-playing='true'] .player-card__state i {
-    background: var(--accent);
-    box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--accent) 26%, transparent);
-    animation: card-dot 1.8s ease-out infinite;
-  }
-
+  /* The play/pause button already states the state, so the floating status
+     chip over the artwork was a second copy of the same information. */
   .player-card__title {
     margin: 0.8rem 0 0;
     color: var(--ink);
-    font-size: 1.1rem;
-    font-weight: 800;
-    letter-spacing: -0.02em;
-    line-height: 1.25;
+    font-size: var(--type-lead);
+    font-weight: var(--weight-display);
+    letter-spacing: var(--tracking-display);
+    line-height: var(--leading-heading);
   }
 
   .player-card__artist {
     margin: 0.2rem 0 0;
     color: var(--muted);
-    font-size: 0.76rem;
+    font-size: var(--type-meta);
   }
-
-  .player-card__lyric {
-    display: -webkit-box;
-    overflow: hidden;
-    min-height: 2.6em;
-    margin: 0.75rem 0 0;
-    color: var(--muted);
-    font-size: 0.8rem;
-    font-style: italic;
-    line-height: 1.65;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    transition: color 0.3s ease;
-  }
-
-  .player-card[data-playing='true'] .player-card__lyric { color: var(--ink); }
 
   .player-card__bar {
     height: 3px;
@@ -409,16 +274,6 @@ const songUrl = music.officialUrl;
     border-radius: inherit;
     background: var(--accent);
     transition: width 0.2s linear;
-  }
-
-  .player-card__time {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 0.35rem;
-    color: var(--soft);
-    font-family: var(--font-mono);
-    font-size: 0.62rem;
-    font-variant-numeric: tabular-nums;
   }
 
   .player-card__actions {
@@ -439,8 +294,8 @@ const songUrl = music.officialUrl;
     border-radius: 999px;
     background: var(--accent);
     color: #2a1220;
-    font-size: 0.78rem;
-    font-weight: 800;
+    font-size: var(--type-small);
+    font-weight: var(--weight-display);
     transition: background 0.25s ease;
   }
 
@@ -474,8 +329,8 @@ const songUrl = music.officialUrl;
     border-radius: 999px;
     padding: 0 0.7rem;
     color: var(--soft);
-    font-size: 0.72rem;
-    font-weight: 700;
+    font-size: var(--type-meta);
+    font-weight: var(--weight-strong);
     text-decoration: none;
     transition: color 0.2s ease, border-color 0.2s ease;
   }
@@ -510,12 +365,21 @@ const songUrl = music.officialUrl;
     gap: 0.35rem;
     margin: 0;
     color: var(--soft);
-    font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 0.12em;
+    font-size: var(--type-meta);
+    font-weight: var(--weight-strong);
   }
 
-  .side-block__head a { color: var(--soft); transition: color 0.2s ease; }
+  .side-block__links {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .side-block__head a { display: inline-grid; width: 2rem; height: 2rem; place-items: center; border-radius: 0.5rem; color: var(--soft); transition: color 0.2s ease; }
+  .side-block__head a:focus-visible,
+  .player-card__toggle:focus-visible,
+  .player-card__link:focus-visible,
+  .home-more:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
   .side-block__head a:hover,
   .side-block__head a:focus-visible { color: var(--accent); }
 
@@ -541,8 +405,8 @@ const songUrl = music.officialUrl;
     gap: 0.35rem;
     margin: 0;
     color: var(--ink);
-    font-size: 0.82rem;
-    font-weight: 700;
+    font-size: var(--type-small);
+    font-weight: var(--weight-strong);
   }
 
   .side-badge {
@@ -550,8 +414,8 @@ const songUrl = music.officialUrl;
     padding: 0.08rem 0.36rem;
     background: color-mix(in srgb, var(--accent) 16%, transparent);
     color: color-mix(in srgb, var(--accent) 82%, var(--ink));
-    font-size: 0.58rem;
-    font-weight: 700;
+    font-size: var(--type-meta);
+    font-weight: var(--weight-strong);
   }
 
   .side-person__note {
@@ -559,7 +423,7 @@ const songUrl = music.officialUrl;
     overflow: hidden;
     margin: 0.16rem 0 0;
     color: var(--soft);
-    font-size: 0.68rem;
+    font-size: var(--type-meta);
     line-height: 1.5;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
@@ -567,155 +431,24 @@ const songUrl = music.officialUrl;
 
   .side-metrics {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    /* Three columns for three numbers; the fourth slot went with the level
+       metric, and an empty track would have halved the card's density. */
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 0.3rem;
     margin: 0.75rem 0 0;
     border-top: 1px solid var(--line);
     padding-top: 0.65rem;
   }
 
-  .side-metrics--three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-
   .side-metrics > div { display: grid; gap: 0.1rem; }
-  .side-metrics dt { color: var(--soft); font-size: 0.6rem; }
+  .side-metrics dt { color: var(--soft); font-size: var(--type-meta); }
   .side-metrics dd {
     margin: 0;
     color: var(--ink);
     font-family: var(--font-mono);
-    font-size: 0.8rem;
-    font-weight: 700;
+    font-size: var(--type-small);
+    font-weight: var(--weight-strong);
     font-variant-numeric: tabular-nums;
-  }
-
-  .side-footnote {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.2rem 0.7rem;
-    margin: 0.6rem 0 0;
-    color: var(--soft);
-    font-size: 0.66rem;
-  }
-
-  .side-footnote b { color: var(--ink); font-weight: 700; }
-
-  /* ------------------------------------------------------------------
-     Tags and contact (full width, below the two columns)
-     ------------------------------------------------------------------ */
-  .home-tags {
-    display: grid;
-    grid-template-columns: 5.5rem minmax(0, 1fr);
-    align-items: baseline;
-    gap: 1rem;
-    margin-top: clamp(2.2rem, 4vw, 3rem);
-    border-top: 1px solid var(--line);
-    padding-top: 1.2rem;
-  }
-
-  .home-tags__title {
-    margin: 0;
-    color: var(--soft);
-    font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-  }
-
-  .home-tags ul {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  .home-tags a {
-    display: inline-flex;
-    align-items: baseline;
-    gap: 0.28rem;
-    border: 1px solid var(--line);
-    border-radius: 999px;
-    padding: 0.22rem 0.58rem;
-    color: var(--muted);
-    font-size: 0.74rem;
-    text-decoration: none;
-    transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
-  }
-
-  .home-tags a:hover,
-  .home-tags a:focus-visible {
-    border-color: color-mix(in srgb, var(--accent) 50%, var(--line));
-    background: color-mix(in srgb, var(--accent) 8%, transparent);
-    color: var(--ink);
-  }
-
-  .home-tags a span { color: var(--soft); font-family: var(--font-mono); font-size: 0.62rem; }
-
-  .home-contact {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: end;
-    gap: 1.2rem;
-    margin-top: clamp(2.2rem, 4vw, 3rem);
-    border-top: 1px solid var(--line);
-    padding-top: clamp(1.4rem, 3vw, 2rem);
-  }
-
-  .home-contact h2 {
-    margin: 0.5rem 0 0;
-    color: var(--ink);
-    font-size: clamp(1.2rem, 2.3vw, 1.55rem);
-    font-weight: 800;
-    letter-spacing: -0.03em;
-  }
-
-  .home-contact__copy {
-    margin: 0.4rem 0 0;
-    color: var(--muted);
-    font-size: 0.84rem;
-    line-height: 1.75;
-  }
-
-  .home-contact__actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-
-  .home-action {
-    display: inline-flex;
-    min-height: 2.5rem;
-    align-items: center;
-    justify-content: center;
-    gap: 0.38rem;
-    border: 1px solid var(--line);
-    border-radius: 999px;
-    padding: 0.58rem 0.95rem;
-    background: color-mix(in srgb, var(--fx-surface-strong) 70%, transparent);
-    color: var(--ink);
-    font-size: 0.77rem;
-    font-weight: 700;
-    line-height: 1;
-    text-decoration: none;
-    transition: transform 0.25s var(--ease), border-color 0.25s ease;
-  }
-
-  .home-action:hover,
-  .home-action:focus-visible {
-    border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
-    transform: translateY(-2px);
-  }
-
-  .home-action--primary { border-color: transparent; background: var(--accent); color: #2a1220; }
-  .home-action--primary:hover,
-  .home-action--primary:focus-visible { background: color-mix(in srgb, var(--accent) 88%, black); color: #2a1220; }
-
-  .home-action:focus-visible,
-  .player-card__toggle:focus-visible,
-  .player-card__link:focus-visible,
-  .home-more:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 3px;
-  }
-
-  @keyframes card-dot {
-    0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 40%, transparent); }
-    70%, 100% { box-shadow: 0 0 0 0.4rem transparent; }
   }
 
   /* ------------------------------------------------------------------
@@ -739,25 +472,12 @@ const songUrl = music.officialUrl;
     .player-card { max-width: 22rem; }
   }
 
-  @media (max-width: 640px) {
-    .home-intro { align-items: flex-start; }
-    .home-counts { gap: 0.4rem 1rem; }
-    .home-tags { grid-template-columns: minmax(0, 1fr); gap: 0.6rem; }
-    .home-contact { grid-template-columns: minmax(0, 1fr); align-items: start; }
-    .home-contact__actions { width: 100%; }
-    .home-action { flex: 1; }
-  }
-
   @media (prefers-reduced-motion: reduce) {
     .player-card__art img,
-    .player-card__bar i,
-    .home-action {
+    .player-card__bar i {
       animation: none;
       transition: none;
       transform: none;
     }
-
-    .player-card[data-playing='true'] .player-card__state i { animation: none; }
-    .home-action:hover { transform: none; }
   }
 </style>

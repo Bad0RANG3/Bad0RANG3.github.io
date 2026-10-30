@@ -177,17 +177,23 @@ const values = [
   .about-kicker {
     margin: 0;
     color: var(--faint);
-    font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 0.18em;
+    font-size: var(--type-meta);
+    font-weight: var(--weight-strong);
+    letter-spacing: var(--tracking-label);
   }
 
   .about-head h1 {
     margin: 0.9rem 0 0;
     color: var(--ink);
-    font-size: clamp(2.4rem, 6vw, 3.4rem);
-    font-weight: 800;
-    letter-spacing: -0.045em;
+    /* Lower floor than the rest of the display type, because "Bad0RANG3." is a
+       single unbreakable word: it sets `.about-head__text`'s min-content width,
+       which at the old 2.4rem floor was ~226px and pushed the avatar 4px past a
+       320px frame. At 2rem the word measures ~188px, leaving the avatar room on
+       the same row. Only the narrow end changes — 6vw keeps every wider
+       viewport on exactly the size it had. */
+    font-size: clamp(2rem, 6vw, 3.4rem);
+    font-weight: var(--weight-display);
+    letter-spacing: var(--tracking-display);
     line-height: 1.05;
   }
 
@@ -199,8 +205,8 @@ const values = [
     max-width: 32rem;
     margin: 1.35rem 0 0;
     color: var(--muted);
-    font-size: 0.95rem;
-    line-height: 1.95;
+    font-size: var(--type-body);
+    line-height: var(--leading-prose);
   }
 
   .about-summary {
@@ -209,7 +215,7 @@ const values = [
     gap: 0.55rem;
     margin: 1.5rem 0 0;
     color: var(--faint);
-    font-size: 0.75rem;
+    font-size: var(--type-meta);
   }
 
   .about-summary span {
@@ -220,7 +226,7 @@ const values = [
 
   .about-summary strong {
     color: var(--ink);
-    font-weight: 700;
+    font-weight: var(--weight-strong);
     font-variant-numeric: tabular-nums;
   }
 
@@ -245,9 +251,9 @@ const values = [
   .about-section__label {
     margin: 0;
     color: var(--faint);
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.14em;
+    font-size: var(--type-meta);
+    font-weight: var(--weight-strong);
+    letter-spacing: var(--tracking-label);
     line-height: 1.6;
   }
 
@@ -258,7 +264,7 @@ const values = [
   .about-prose p {
     margin: 0 0 1rem;
     color: var(--muted);
-    font-size: 0.9rem;
+    font-size: var(--type-small);
     line-height: 2;
   }
 
@@ -271,7 +277,7 @@ const values = [
     border-left: 2px solid var(--line);
     padding-left: 1.1rem;
     color: var(--ink);
-    font-size: 0.9rem;
+    font-size: var(--type-small);
   }
 
   .about-values {
@@ -290,13 +296,13 @@ const values = [
 
   .about-values strong {
     color: var(--ink);
-    font-size: 0.85rem;
-    font-weight: 700;
+    font-size: var(--type-small);
+    font-weight: var(--weight-strong);
   }
 
   .about-values span {
     color: var(--faint);
-    font-size: 0.75rem;
+    font-size: var(--type-meta);
     line-height: 1.7;
   }
 
@@ -309,7 +315,7 @@ const values = [
     background: color-mix(in srgb, var(--fx-surface-strong) 70%, transparent);
     color: var(--ink);
     font-family: var(--font-mono, ui-monospace, monospace);
-    font-size: 0.76rem;
+    font-size: var(--type-small);
     line-height: 1.85;
   }
 
@@ -320,7 +326,7 @@ const values = [
   .about-note {
     margin: 1rem 0 0;
     color: var(--faint);
-    font-size: 0.78rem;
+    font-size: var(--type-small);
     line-height: 1.8;
   }
 
@@ -343,7 +349,7 @@ const values = [
 
   .about-tools dt {
     color: var(--faint);
-    font-size: 0.75rem;
+    font-size: var(--type-meta);
   }
 
   .about-tools dd {
@@ -355,7 +361,7 @@ const values = [
 
   .about-tools a {
     color: var(--muted);
-    font-size: 0.82rem;
+    font-size: var(--type-small);
   }
 
   .about-contact {
@@ -375,13 +381,13 @@ const values = [
     border-bottom: 1px solid var(--line);
     padding: 0.6rem 0;
     color: var(--muted);
-    font-size: 0.82rem;
+    font-size: var(--type-small);
     text-decoration: none;
   }
 
   .about-contact__arrow {
     color: var(--faint);
-    font-size: 0.75rem;
+    font-size: var(--type-meta);
     transition: transform 0.2s ease, color 0.2s ease;
   }
 
@@ -408,7 +414,7 @@ const values = [
     border-top: 1px solid var(--line);
     padding-top: 1.5rem;
     color: var(--faint);
-    font-size: 0.75rem;
+    font-size: var(--type-meta);
   }
 
   @media (max-width: 640px) {

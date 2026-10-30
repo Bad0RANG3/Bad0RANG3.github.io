@@ -2,19 +2,19 @@
    SwitchYourCFG — theme refresh
    ============================================================ */
 #scfg-root {
-  --scfg-surface: oklch(from var(--color-base-100) l c h / 0.92);
-  --scfg-soft: oklch(from var(--color-base-200) l c h / 0.68);
-  --scfg-muted: oklch(from var(--color-base-content) l c h / 0.6);
-  --scfg-faint: oklch(from var(--color-base-content) l c h / 0.34);
-  --scfg-border: oklch(from var(--color-base-content) l c h / 0.08);
-  --scfg-border-strong: oklch(from var(--color-base-content) l c h / 0.16);
+  --scfg-surface: color-mix(in srgb, var(--color-base-100) 92%, transparent);
+  --scfg-soft: color-mix(in srgb, var(--color-base-200) 68%, transparent);
+  --scfg-muted: color-mix(in srgb, var(--color-base-content) 60%, transparent);
+  --scfg-faint: color-mix(in srgb, var(--color-base-content) 34%, transparent);
+  --scfg-border: color-mix(in srgb, var(--color-base-content) 8%, transparent);
+  --scfg-border-strong: color-mix(in srgb, var(--color-base-content) 16%, transparent);
   --scfg-accent: var(--color-primary);
-  --scfg-accent-soft: oklch(from var(--color-primary) l c h / 0.12);
-  --scfg-secondary-soft: oklch(from var(--color-secondary) l c h / 0.1);
+  --scfg-accent-soft: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  --scfg-secondary-soft: color-mix(in srgb, var(--color-secondary) 10%, transparent);
   --scfg-success: var(--color-success);
-  --scfg-success-soft: oklch(from var(--color-success) l c h / 0.12);
+  --scfg-success-soft: color-mix(in srgb, var(--color-success) 12%, transparent);
   --scfg-danger: var(--color-error);
-  --scfg-danger-soft: oklch(from var(--color-error) l c h / 0.1);
+  --scfg-danger-soft: color-mix(in srgb, var(--color-error) 10%, transparent);
   --scfg-code-bg: oklch(0.17 0.02 255 / 0.98);
   --keyboard-scale: 1;
 }
@@ -27,28 +27,28 @@
   border-bottom: 1px solid var(--scfg-border);
   padding: 1.15rem 1.4rem;
   background:
-    linear-gradient(135deg, oklch(from var(--color-primary) l c h / 0.04), transparent 40%),
-    linear-gradient(180deg, oklch(from var(--color-base-200) l c h / 0.75), transparent);
+    linear-gradient(135deg, color-mix(in srgb, var(--color-primary) 4%, transparent), transparent 40%),
+    linear-gradient(180deg, color-mix(in srgb, var(--color-base-200) 75%, transparent), transparent);
 }
 .scfg-card-body { padding: 1.35rem 1.4rem 1.45rem; }
 .scfg-step-label {
   margin: 0;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.18em;
+  font-size: var(--type-meta);
+  font-weight: var(--weight-strong);
+  letter-spacing: var(--tracking-body);
   text-transform: uppercase;
   color: var(--color-primary);
 }
 .scfg-step-title {
   margin: 0.28rem 0 0;
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: oklch(from var(--color-base-content) l c h / 0.96);
+  font-size: var(--type-body);
+  font-weight: var(--weight-strong);
+  color: color-mix(in srgb, var(--color-base-content) 96%, transparent);
 }
 .scfg-card-hint,
 .scfg-pv-info {
   white-space: nowrap;
-  font-size: 0.72rem;
+  font-size: var(--type-meta);
   color: var(--scfg-faint);
 }
 
@@ -58,26 +58,26 @@
   overflow: hidden;
   border-radius: 1.5rem;
   border: 1.5px dashed var(--scfg-border-strong);
-  background: linear-gradient(180deg, oklch(from var(--color-base-200) l c h / 0.9), oklch(from var(--color-base-100) l c h / 0.85));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--color-base-200) 90%, transparent), color-mix(in srgb, var(--color-base-100) 85%, transparent));
   padding: 3rem 1.5rem;
   text-align: center;
   cursor: pointer;
   transition: border-color .25s, transform .25s, box-shadow .25s, background .25s;
 }
 .scfg-dz:hover {
-  border-color: oklch(from var(--color-primary) l c h / 0.45);
-  background: linear-gradient(180deg, oklch(from var(--color-primary) l c h / 0.08), oklch(from var(--color-base-100) l c h / 0.88));
-  box-shadow: 0 20px 45px -30px oklch(from var(--color-primary) l c h / 0.45);
+  border-color: color-mix(in srgb, var(--color-primary) 45%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--color-primary) 8%, transparent), color-mix(in srgb, var(--color-base-100) 88%, transparent));
+  box-shadow: 0 20px 45px -30px color-mix(in srgb, var(--color-primary) 45%, transparent);
 }
 .scfg-dz.active {
   border-color: var(--scfg-accent);
   transform: translateY(-1px);
-  box-shadow: 0 24px 54px -32px oklch(from var(--color-primary) l c h / 0.55);
+  box-shadow: 0 24px 54px -32px color-mix(in srgb, var(--color-primary) 55%, transparent);
 }
 .scfg-dz.ready {
   border-style: solid;
-  border-color: oklch(from var(--color-success) l c h / 0.42);
-  background: linear-gradient(180deg, oklch(from var(--color-success) l c h / 0.12), oklch(from var(--color-base-100) l c h / 0.92));
+  border-color: color-mix(in srgb, var(--color-success) 42%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--color-success) 12%, transparent), color-mix(in srgb, var(--color-base-100) 92%, transparent));
 }
 .scfg-dz input { display: none; }
 .scfg-dz-orb {
@@ -88,7 +88,7 @@
   height: 12rem;
   transform: translateX(-50%);
   border-radius: 999px;
-  background: radial-gradient(circle, oklch(from var(--color-primary) l c h / 0.18), transparent 65%);
+  background: radial-gradient(circle, color-mix(in srgb, var(--color-primary) 18%, transparent), transparent 65%);
   pointer-events: none;
 }
 .scfg-dz-icon {
@@ -96,21 +96,21 @@
   width: 3.5rem;
   height: 3.5rem;
   margin: 0 auto 0.95rem;
-  fill: oklch(from var(--color-base-content) l c h / 0.22);
+  fill: color-mix(in srgb, var(--color-base-content) 22%, transparent);
   transition: fill .25s;
 }
 .scfg-dz:hover .scfg-dz-icon { fill: var(--color-primary); }
 .scfg-dz.ready .scfg-dz-icon { fill: var(--color-success); }
 .scfg-dz-title {
   position: relative;
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: oklch(from var(--color-base-content) l c h / 0.94);
+  font-size: var(--type-lead);
+  font-weight: var(--weight-strong);
+  color: color-mix(in srgb, var(--color-base-content) 94%, transparent);
 }
 .scfg-dz-sub {
   position: relative;
   margin-top: 0.45rem;
-  font-size: 0.88rem;
+  font-size: var(--type-small);
   line-height: 1.65;
   color: var(--scfg-muted);
 }
@@ -121,10 +121,10 @@
   max-width: 100%;
   overflow-x: auto;
   border-radius: 999px;
-  background: oklch(from var(--color-base-100) l c h / 0.7);
+  background: color-mix(in srgb, var(--color-base-100) 70%, transparent);
   padding: 0.45rem 0.85rem;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.72rem;
+  font-family: var(--font-mono);
+  font-size: var(--type-meta);
   color: var(--scfg-faint);
 }
 
@@ -147,7 +147,7 @@
   border: 1px solid var(--scfg-border);
   background: var(--scfg-soft);
   padding: 0.9rem 1rem;
-  font-size: 0.82rem;
+  font-size: var(--type-small);
 }
 .scfg-fi > :first-child { font-size: 1.1rem; }
 .scfg-fi > :nth-child(2) {
@@ -155,25 +155,25 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-weight: 600;
-  color: oklch(from var(--color-base-content) l c h / 0.88);
+  font-weight: var(--weight-strong);
+  color: color-mix(in srgb, var(--color-base-content) 88%, transparent);
 }
 .scfg-fi > :nth-child(3) {
-  font-size: 0.72rem;
+  font-size: var(--type-meta);
   color: var(--scfg-muted);
 }
 .scfg-fi > :last-child {
-  font-size: 0.72rem;
-  font-weight: 700;
+  font-size: var(--type-meta);
+  font-weight: var(--weight-strong);
 }
 .scfg-fi.ok {
-  border-color: oklch(from var(--color-success) l c h / 0.28);
-  background: linear-gradient(180deg, oklch(from var(--color-success) l c h / 0.12), oklch(from var(--color-base-100) l c h / 0.88));
+  border-color: color-mix(in srgb, var(--color-success) 28%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--color-success) 12%, transparent), color-mix(in srgb, var(--color-base-100) 88%, transparent));
 }
 .scfg-fi.ok > :last-child { color: var(--color-success); }
 .scfg-fi.err {
-  border-color: oklch(from var(--color-error) l c h / 0.24);
-  background: linear-gradient(180deg, oklch(from var(--color-error) l c h / 0.09), oklch(from var(--color-base-100) l c h / 0.88));
+  border-color: color-mix(in srgb, var(--color-error) 24%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--color-error) 9%, transparent), color-mix(in srgb, var(--color-base-100) 88%, transparent));
 }
 .scfg-fi.err > :last-child { color: var(--color-error); }
 
@@ -194,12 +194,12 @@
 }
 .scfg-stats-grid em {
   font-style: normal;
-  font-size: 0.74rem;
+  font-size: var(--type-meta);
   color: var(--scfg-faint);
 }
 .scfg-stats-grid strong {
-  font-size: 1.2rem;
-  color: oklch(from var(--color-base-content) l c h / 0.96);
+  font-size: var(--type-title);
+  color: color-mix(in srgb, var(--color-base-content) 96%, transparent);
 }
 
 /* ----- Options --------------------------------------------- */
@@ -220,8 +220,8 @@
   transition: border-color .2s, background .2s, transform .2s;
 }
 .scfg-opt:hover {
-  border-color: oklch(from var(--color-primary) l c h / 0.26);
-  background: linear-gradient(180deg, oklch(from var(--color-primary) l c h / 0.08), oklch(from var(--color-base-100) l c h / 0.84));
+  border-color: color-mix(in srgb, var(--color-primary) 26%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--color-primary) 8%, transparent), color-mix(in srgb, var(--color-base-100) 84%, transparent));
   transform: translateY(-1px);
 }
 .scfg-opt input { display: none; }
@@ -237,7 +237,7 @@
      wants 3:1 for the boundary of a control and for the part of it that carries
      state. At 0.5 the track reaches 3.25:1 against the page and 3.40:1 against
      the knob in `paper`, and 3.65:1 / 5.46:1 in `paper-dark`. */
-  background: oklch(from var(--color-base-content) l c h / 0.5);
+  background: color-mix(in srgb, var(--color-base-content) 50%, transparent);
   transition: background .2s;
 }
 .scfg-opt-sw::after {
@@ -255,21 +255,23 @@
      background token keeps it readable in both: light knob on the dark-checked
      `paper` track, dark knob on the light-checked `paper-dark` track. */
   background: var(--color-base-100);
-  box-shadow: 0 1px 2px oklch(from var(--color-base-content) l c h / 0.35);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--color-base-content) 35%, transparent);
   transition: transform .2s;
 }
 .scfg-opt input:checked + .scfg-opt-sw { background: var(--color-primary); }
 .scfg-opt input:checked + .scfg-opt-sw::after { transform: translateX(1.05rem); }
 .scfg-opt-t {
   display: block;
-  font-size: 0.88rem;
-  font-weight: 700;
-  color: oklch(from var(--color-base-content) l c h / 0.92);
+  font-size: var(--type-small);
+  font-weight: var(--weight-strong);
+  color: color-mix(in srgb, var(--color-base-content) 92%, transparent);
 }
 .scfg-opt-d {
   display: block;
   margin-top: 0.28rem;
-  font-size: 0.76rem;
+  /* One step below its own label on purpose: both used to be 14px after the
+     scale pass, which flattened the option's title/description hierarchy. */
+  font-size: var(--type-meta);
   line-height: 1.55;
   color: var(--scfg-muted);
 }
@@ -287,9 +289,9 @@
   padding: 0.95rem 1rem;
 }
 .scfg-name-row span:first-child {
-  font-size: 0.84rem;
-  font-weight: 700;
-  color: oklch(from var(--color-base-content) l c h / 0.88);
+  font-size: var(--type-small);
+  font-weight: var(--weight-strong);
+  color: color-mix(in srgb, var(--color-base-content) 88%, transparent);
   white-space: nowrap;
 }
 .scfg-name-row input {
@@ -297,20 +299,20 @@
   flex: 1;
   border-radius: 0.85rem;
   border: 1px solid var(--scfg-border-strong);
-  background: oklch(from var(--color-base-100) l c h / 0.85);
+  background: color-mix(in srgb, var(--color-base-100) 85%, transparent);
   padding: 0.75rem 0.95rem;
-  color: oklch(from var(--color-base-content) l c h / 0.92);
-  font-size: 0.84rem;
+  color: color-mix(in srgb, var(--color-base-content) 92%, transparent);
+  font-size: var(--type-small);
   font-family: inherit;
   transition: border-color .2s, box-shadow .2s;
 }
 .scfg-name-row input:focus {
   outline: none;
-  border-color: oklch(from var(--color-primary) l c h / 0.38);
-  box-shadow: 0 0 0 4px oklch(from var(--color-primary) l c h / 0.08);
+  border-color: color-mix(in srgb, var(--color-primary) 38%, transparent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-primary) 8%, transparent);
 }
 .scfg-name-row input::placeholder { color: var(--scfg-faint); }
-.scfg-name-hint { font-size: 0.72rem; color: var(--scfg-muted); }
+.scfg-name-hint { font-size: var(--type-meta); color: var(--scfg-muted); }
 
 /* ============================================================
    KEYBOARD
@@ -331,7 +333,7 @@
   overflow: hidden;
   border-radius: 1.4rem;
   border: 1px solid var(--scfg-border);
-  background: linear-gradient(180deg, oklch(from var(--color-base-200) l c h / 0.82), oklch(from var(--color-base-100) l c h / 0.92));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--color-base-200) 82%, transparent), color-mix(in srgb, var(--color-base-100) 92%, transparent));
   padding: 1rem;
 }
 .scfg-input-panel-head {
@@ -343,13 +345,13 @@
 }
 .scfg-input-panel-head h3 {
   margin: 0;
-  font-size: 0.96rem;
-  font-weight: 700;
-  color: oklch(from var(--color-base-content) l c h / 0.94);
+  font-size: var(--type-body);
+  font-weight: var(--weight-strong);
+  color: color-mix(in srgb, var(--color-base-content) 94%, transparent);
 }
 .scfg-input-panel-head p {
   margin: 0.28rem 0 0;
-  font-size: 0.76rem;
+  font-size: var(--type-small);
   line-height: 1.6;
   color: var(--scfg-muted);
 }
@@ -357,8 +359,8 @@
   overflow-x: auto;
   overflow-y: hidden;
   border-radius: 1.25rem;
-  border: 1px solid oklch(from var(--color-base-content) l c h / 0.08);
-  background: linear-gradient(180deg, oklch(from var(--color-base-300) l c h / 0.58), oklch(from var(--color-base-100) l c h / 0.94));
+  border: 1px solid color-mix(in srgb, var(--color-base-content) 8%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--color-base-300) 58%, transparent), color-mix(in srgb, var(--color-base-100) 94%, transparent));
   padding: 1rem;
 }
 .scfg-kbd-viewport {
@@ -389,9 +391,9 @@
 .scfg-kbd-label {
   margin-bottom: 0.35rem;
   text-align: center;
-  font-size: 0.66rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
+  font-size: var(--type-meta);
+  font-weight: var(--weight-strong);
+  letter-spacing: var(--tracking-label);
   text-transform: uppercase;
   color: var(--scfg-faint);
 }
@@ -402,9 +404,9 @@
   height: 52px;
   border-radius: 1rem;
   border: 1px solid var(--scfg-border-strong);
-  background: linear-gradient(180deg, oklch(from var(--color-base-100) l c h / 0.98), oklch(from var(--color-base-200) l c h / 0.7));
-  color: oklch(from var(--color-base-content) l c h / 0.68);
-  font-family: 'JetBrains Mono', monospace;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--color-base-100) 98%, transparent), color-mix(in srgb, var(--color-base-200) 70%, transparent));
+  color: color-mix(in srgb, var(--color-base-content) 68%, transparent);
+  font-family: var(--font-mono);
   font-size: 0.84rem;
   font-weight: 700;
   cursor: pointer;
@@ -417,21 +419,21 @@
   transition: border-color .15s, background .15s, transform .15s, color .15s, box-shadow .15s;
 }
 .scfg-kbd-key:hover {
-  border-color: oklch(from var(--color-primary) l c h / 0.45);
-  color: oklch(from var(--color-base-content) l c h / 0.95);
-  background: linear-gradient(180deg, oklch(from var(--color-primary) l c h / 0.16), oklch(from var(--color-base-100) l c h / 0.96));
+  border-color: color-mix(in srgb, var(--color-primary) 45%, transparent);
+  color: color-mix(in srgb, var(--color-base-content) 95%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--color-primary) 16%, transparent), color-mix(in srgb, var(--color-base-100) 96%, transparent));
   transform: translateY(-1px);
 }
 .scfg-kbd-key.on {
-  border-color: oklch(from var(--color-primary) l c h / 0.6);
-  background: linear-gradient(180deg, oklch(from var(--color-primary) l c h / 0.3), oklch(from var(--color-primary) l c h / 0.14));
+  border-color: color-mix(in srgb, var(--color-primary) 60%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--color-primary) 30%, transparent), color-mix(in srgb, var(--color-primary) 14%, transparent));
   color: var(--color-primary);
-  box-shadow: 0 14px 30px -18px oklch(from var(--color-primary) l c h / 0.62);
+  box-shadow: 0 14px 30px -18px color-mix(in srgb, var(--color-primary) 62%, transparent);
 }
 .scfg-kbd-key.bound {
-  border-color: oklch(from var(--color-success) l c h / 0.36);
-  background: linear-gradient(180deg, oklch(from var(--color-success) l c h / 0.18), oklch(from var(--color-base-100) l c h / 0.96));
-  color: oklch(from var(--color-success) l c h / 0.92);
+  border-color: color-mix(in srgb, var(--color-success) 36%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--color-success) 18%, transparent), color-mix(in srgb, var(--color-base-100) 96%, transparent));
+  color: color-mix(in srgb, var(--color-success) 92%, transparent);
 }
 .scfg-kbd-key.disabled {
   opacity: 0.22;
@@ -454,8 +456,8 @@
   display: grid;
   gap: 0.9rem;
   border-radius: 1.25rem;
-  border: 1px solid oklch(from var(--color-base-content) l c h / 0.08);
-  background: linear-gradient(180deg, oklch(from var(--color-base-300) l c h / 0.58), oklch(from var(--color-base-100) l c h / 0.94));
+  border: 1px solid color-mix(in srgb, var(--color-base-content) 8%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--color-base-300) 58%, transparent), color-mix(in srgb, var(--color-base-100) 94%, transparent));
   padding: 1rem;
 }
 .scfg-mouse-figure {
@@ -465,10 +467,10 @@
   min-height: 320px;
   padding: 1rem 1rem 1.2rem;
   border-radius: 999px;
-  border: 1px solid oklch(from var(--color-base-content) l c h / 0.12);
+  border: 1px solid color-mix(in srgb, var(--color-base-content) 12%, transparent);
   background:
-    radial-gradient(circle at 50% 10%, oklch(from var(--color-base-content) l c h / 0.08), transparent 35%),
-    linear-gradient(180deg, oklch(from var(--color-base-100) l c h / 0.98), oklch(from var(--color-base-200) l c h / 0.7));
+    radial-gradient(circle at 50% 10%, color-mix(in srgb, var(--color-base-content) 8%, transparent), transparent 35%),
+    linear-gradient(180deg, color-mix(in srgb, var(--color-base-100) 98%, transparent), color-mix(in srgb, var(--color-base-200) 70%, transparent));
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,0.06),
     inset 0 -12px 18px rgba(0,0,0,0.18),
@@ -487,7 +489,7 @@
   top: 0.85rem;
   bottom: 1rem;
   width: 1px;
-  background: linear-gradient(180deg, oklch(from var(--color-base-content) l c h / 0.18), transparent 16%, transparent 84%, oklch(from var(--color-base-content) l c h / 0.1));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--color-base-content) 18%, transparent), transparent 16%, transparent 84%, color-mix(in srgb, var(--color-base-content) 10%, transparent));
   transform: translateX(-50%);
 }
 .scfg-mouse-figure .scfg-kbd-row {
@@ -558,7 +560,7 @@
   flex-wrap: wrap;
   justify-content: center;
   gap: 0.75rem 1rem;
-  font-size: 0.72rem;
+  font-size: var(--type-meta);
   color: var(--scfg-muted);
 }
 .scfg-mouse-legend span {
@@ -571,7 +573,7 @@
   width: 0.55rem;
   height: 0.55rem;
   border-radius: 999px;
-  background: oklch(from var(--color-base-content) l c h / 0.2);
+  background: color-mix(in srgb, var(--color-base-content) 20%, transparent);
 }
 .scfg-dot-active { background: var(--color-primary); }
 .scfg-dot-bound { background: var(--color-success); }
@@ -584,7 +586,7 @@
   overflow: hidden;
   border-radius: 1.4rem;
   border: 1px solid var(--scfg-border);
-  background: linear-gradient(180deg, oklch(from var(--color-base-200) l c h / 0.72), oklch(from var(--color-base-100) l c h / 0.95));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--color-base-200) 72%, transparent), color-mix(in srgb, var(--color-base-100) 95%, transparent));
   padding: 1rem;
 }
 .scfg-key-pick {
@@ -592,23 +594,23 @@
   align-items: center;
   gap: 0.8rem;
   margin-bottom: 1rem;
-  font-size: 0.86rem;
+  font-size: var(--type-small);
   color: var(--scfg-muted);
 }
 .scfg-key-pick span:first-child {
-  font-weight: 700;
-  color: oklch(from var(--color-base-content) l c h / 0.78);
+  font-weight: var(--weight-strong);
+  color: color-mix(in srgb, var(--color-base-content) 78%, transparent);
 }
 .scfg-key-pick span:last-child {
   min-width: 84px;
   border-radius: 999px;
-  border: 1px solid oklch(from var(--color-success) l c h / 0.28);
+  border: 1px solid color-mix(in srgb, var(--color-success) 28%, transparent);
   background: var(--scfg-success-soft);
   padding: 0.52rem 0.95rem;
   text-align: center;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.88rem;
-  font-weight: 700;
+  font-family: var(--font-mono);
+  font-size: var(--type-small);
+  font-weight: var(--weight-strong);
   color: var(--color-success);
 }
 .scfg-buy-cats,
@@ -629,41 +631,41 @@
 }
 .scfg-buy-cat {
   padding: 0.65rem 1.05rem;
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: oklch(from var(--color-base-content) l c h / 0.58);
+  font-size: var(--type-small);
+  font-weight: var(--weight-strong);
+  color: color-mix(in srgb, var(--color-base-content) 58%, transparent);
   cursor: pointer;
 }
 .scfg-buy-cat:hover,
 .scfg-buy-item:hover {
   transform: translateY(-1px);
-  border-color: oklch(from var(--color-primary) l c h / 0.26);
-  color: oklch(from var(--color-base-content) l c h / 0.92);
+  border-color: color-mix(in srgb, var(--color-primary) 26%, transparent);
+  color: color-mix(in srgb, var(--color-base-content) 92%, transparent);
 }
 .scfg-buy-cat.sel {
-  border-color: oklch(from var(--color-primary) l c h / 0.48);
+  border-color: color-mix(in srgb, var(--color-primary) 48%, transparent);
   background: var(--scfg-accent-soft);
   color: var(--color-primary);
-  box-shadow: 0 10px 22px -18px oklch(from var(--color-primary) l c h / 0.52);
+  box-shadow: 0 10px 22px -18px color-mix(in srgb, var(--color-primary) 52%, transparent);
 }
 .scfg-buy-item {
   max-width: 100%;
   padding: 0.7rem 1.05rem;
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: oklch(from var(--color-base-content) l c h / 0.62);
+  font-size: var(--type-small);
+  font-weight: var(--weight-strong);
+  color: color-mix(in srgb, var(--color-base-content) 62%, transparent);
   cursor: pointer;
   overflow-wrap: anywhere;
 }
 .scfg-buy-item.on {
-  border-color: oklch(from var(--color-success) l c h / 0.42);
+  border-color: color-mix(in srgb, var(--color-success) 42%, transparent);
   background: var(--scfg-success-soft);
   color: var(--color-success);
-  box-shadow: 0 10px 22px -18px oklch(from var(--color-success) l c h / 0.46);
+  box-shadow: 0 10px 22px -18px color-mix(in srgb, var(--color-success) 46%, transparent);
 }
 .scfg-buy-item .cost {
   margin-left: 0.32rem;
-  font-size: 0.68rem;
+  font-size: var(--type-meta);
   opacity: 0.56;
 }
 .scfg-buy-preview {
@@ -671,17 +673,17 @@
   max-width: 100%;
   overflow: hidden;
   border-radius: 1.1rem;
-  border: 1px solid oklch(from var(--color-base-content) l c h / 0.08);
+  border: 1px solid color-mix(in srgb, var(--color-base-content) 8%, transparent);
   background: var(--scfg-code-bg);
   padding: 1rem 1.05rem;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.8rem;
+  font-family: var(--font-mono);
+  font-size: var(--type-small);
   line-height: 1.75;
   color: oklch(0.77 0.11 200);
   overflow-wrap: anywhere;
   word-break: break-word;
 }
-.scfg-buy-empty { color: oklch(from var(--color-base-content) l c h / 0.28); }
+.scfg-buy-empty { color: color-mix(in srgb, var(--color-base-content) 28%, transparent); }
 .scfg-buy-actions {
   margin: 1rem 0 0;
   display: flex;
@@ -705,12 +707,12 @@
 }
 .scfg-sv-key {
   border-radius: 999px;
-  border: 1px solid oklch(from var(--color-success) l c h / 0.28);
+  border: 1px solid color-mix(in srgb, var(--color-success) 28%, transparent);
   background: var(--scfg-success-soft);
   padding: 0.32rem 0.76rem;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.74rem;
-  font-weight: 700;
+  font-family: var(--font-mono);
+  font-size: var(--type-meta);
+  font-weight: var(--weight-strong);
   color: var(--color-success);
 }
 .scfg-sv-cmd {
@@ -718,15 +720,15 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.75rem;
-  color: oklch(from var(--color-base-content) l c h / 0.68);
+  font-family: var(--font-mono);
+  font-size: var(--type-meta);
+  color: color-mix(in srgb, var(--color-base-content) 68%, transparent);
 }
 .scfg-sv-del {
   cursor: pointer;
-  font-size: 0.95rem;
+  font-size: var(--type-body);
   line-height: 1;
-  color: oklch(from var(--color-base-content) l c h / 0.22);
+  color: color-mix(in srgb, var(--color-base-content) 22%, transparent);
   transition: color .15s, transform .15s;
 }
 .scfg-sv-del:hover {
@@ -740,7 +742,7 @@
   gap: 0.75rem;
   justify-content: flex-start;
   padding-inline: 1rem;
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   border-width: 1px;
   box-shadow: 0 12px 24px -20px rgba(0,0,0,0.55);
 }
@@ -753,25 +755,25 @@
   line-height: 1.25;
 }
 .scfg-btn-text strong {
-  font-size: 0.92rem;
-  font-weight: 800;
+  font-size: var(--type-body);
+  font-weight: var(--weight-display);
   color: inherit;
 }
 .scfg-btn-text small {
   margin-top: 0.15rem;
-  font-size: 0.7rem;
-  color: oklch(from var(--color-base-content) l c h / 0.58);
+  font-size: var(--type-meta);
+  color: color-mix(in srgb, var(--color-base-content) 58%, transparent);
 }
 .scfg-buy-actions .scfg-btn,
 .scfg-pv-btns .scfg-btn {
-  color: oklch(from var(--color-base-content) l c h / 0.95);
+  color: color-mix(in srgb, var(--color-base-content) 95%, transparent);
 }
 .scfg-buy-actions .btn-primary,
 .scfg-pv-btns .btn-primary {
   background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
   border-color: transparent;
   color: oklch(0.18 0.01 255);
-  box-shadow: 0 18px 34px -18px oklch(from var(--color-primary) l c h / 0.72);
+  box-shadow: 0 18px 34px -18px color-mix(in srgb, var(--color-primary) 72%, transparent);
 }
 .scfg-buy-actions .btn-primary .scfg-btn-text small,
 .scfg-pv-btns .btn-primary .scfg-btn-text small {
@@ -785,25 +787,25 @@
 .scfg-buy-actions .btn-ghost,
 .scfg-pv-btns .btn-outline,
 .scfg-pv-btns .btn-ghost {
-  background: oklch(from var(--color-base-100) l c h / 0.96);
-  border-color: oklch(from var(--color-base-content) l c h / 0.16);
+  background: color-mix(in srgb, var(--color-base-100) 96%, transparent);
+  border-color: color-mix(in srgb, var(--color-base-content) 16%, transparent);
 }
 .scfg-pv-btns .btn-outline {
-  box-shadow: inset 0 0 0 1px oklch(from var(--color-primary) l c h / 0.08), 0 10px 22px -20px rgba(0,0,0,0.55);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-primary) 8%, transparent), 0 10px 22px -20px rgba(0,0,0,0.55);
 }
 .scfg-pv-btns .btn-ghost {
-  background: oklch(from var(--color-base-200) l c h / 0.78);
+  background: color-mix(in srgb, var(--color-base-200) 78%, transparent);
 }
 .scfg-pv-btns .btn-outline:hover,
 .scfg-pv-btns .btn-ghost:hover,
 .scfg-buy-actions .btn-ghost:hover {
-  background: oklch(from var(--color-base-200) l c h / 0.96);
-  border-color: oklch(from var(--color-primary) l c h / 0.24);
+  background: color-mix(in srgb, var(--color-base-200) 96%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 24%, transparent);
   transform: translateY(-1px);
 }
 .scfg-btn-main {
   flex: 1.3 1 280px;
-  font-size: 0.98rem;
+  font-size: var(--type-body);
 }
 .scfg-btn-secondary,
 .scfg-btn-tertiary {
@@ -815,7 +817,7 @@
   max-height: 520px;
   overflow: auto;
   border-radius: 1.25rem;
-  border: 1px solid oklch(from var(--color-base-content) l c h / 0.08);
+  border: 1px solid color-mix(in srgb, var(--color-base-content) 8%, transparent);
   background: var(--scfg-code-bg);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
@@ -826,19 +828,19 @@
   overflow-wrap: anywhere;
   word-break: break-word;
   tab-size: 4;
-  font-family: 'JetBrains Mono', 'Consolas', monospace;
-  font-size: 0.78rem;
+  font-family: var(--font-mono);
+  font-size: var(--type-small);
   line-height: 1.78;
-  color: oklch(from var(--color-base-content) l c h / 0.84);
+  color: color-mix(in srgb, var(--color-base-content) 84%, transparent);
 }
-.scfg-pv-m { color: oklch(from var(--color-base-content) l c h / 0.28); }
+.scfg-pv-m { color: color-mix(in srgb, var(--color-base-content) 28%, transparent); }
 .scfg-cta-bar {
   position: sticky;
   bottom: 0;
   margin-top: 1rem;
   border-radius: 1.25rem;
-  border: 1px solid oklch(from var(--color-base-content) l c h / 0.1);
-  background: linear-gradient(180deg, oklch(from var(--color-base-100) l c h / 0.96), oklch(from var(--color-base-200) l c h / 0.9));
+  border: 1px solid color-mix(in srgb, var(--color-base-content) 10%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--color-base-100) 96%, transparent), color-mix(in srgb, var(--color-base-200) 90%, transparent));
   padding: 0.9rem;
   box-shadow: 0 -18px 36px -28px rgba(0,0,0,0.52);
   backdrop-filter: blur(10px);
@@ -856,12 +858,12 @@
   bottom: 1.5rem;
   z-index: 999;
   border-radius: 999px;
-  border: 1px solid oklch(from var(--color-success) l c h / 0.3);
-  background: oklch(from var(--color-base-100) l c h / 0.94);
+  border: 1px solid color-mix(in srgb, var(--color-success) 30%, transparent);
+  background: color-mix(in srgb, var(--color-base-100) 94%, transparent);
   box-shadow: 0 18px 48px -28px rgba(0, 0, 0, 0.45);
   padding: 0.8rem 1rem;
-  font-size: 0.82rem;
-  font-weight: 700;
+  font-size: var(--type-small);
+  font-weight: var(--weight-strong);
   color: var(--color-success);
   opacity: 0;
   transform: translateY(10px);
@@ -877,13 +879,13 @@
   z-index: 1000;
   max-width: min(260px, calc(100vw - 2rem));
   border-radius: 0.85rem;
-  border: 1px solid oklch(from var(--color-base-content) l c h / 0.1);
-  background: oklch(from var(--color-base-100) l c h / 0.96);
+  border: 1px solid color-mix(in srgb, var(--color-base-content) 10%, transparent);
+  background: color-mix(in srgb, var(--color-base-100) 96%, transparent);
   box-shadow: 0 16px 40px -28px rgba(0,0,0,0.5);
   padding: 0.55rem 0.75rem;
-  font-size: 0.74rem;
+  font-size: var(--type-meta);
   line-height: 1.5;
-  color: oklch(from var(--color-base-content) l c h / 0.82);
+  color: color-mix(in srgb, var(--color-base-content) 82%, transparent);
   opacity: 0;
   pointer-events: none;
   transform: translateY(6px);
@@ -898,7 +900,7 @@
 .scfg-options-panel {
   border-radius: 1.35rem;
   border: 1px solid var(--scfg-border);
-  background: linear-gradient(180deg, oklch(from var(--color-base-200) l c h / 0.6), oklch(from var(--color-base-100) l c h / 0.92));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--color-base-200) 60%, transparent), color-mix(in srgb, var(--color-base-100) 92%, transparent));
   padding: 1rem;
 }
 .scfg-subhead {
@@ -910,17 +912,17 @@
 }
 .scfg-subhead-label {
   margin: 0;
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
+  font-size: var(--type-meta);
+  font-weight: var(--weight-strong);
+  letter-spacing: var(--tracking-body);
   text-transform: uppercase;
-  color: oklch(from var(--color-primary) l c h / 0.8);
+  color: color-mix(in srgb, var(--color-primary) 80%, transparent);
 }
 .scfg-subhead-title {
   margin: 0.28rem 0 0;
-  font-size: 0.96rem;
-  font-weight: 700;
-  color: oklch(from var(--color-base-content) l c h / 0.94);
+  font-size: var(--type-body);
+  font-weight: var(--weight-strong);
+  color: color-mix(in srgb, var(--color-base-content) 94%, transparent);
 }
 .scfg-flow > * { scroll-margin-top: 5rem; }
 #scfg-root .hidden { display: none !important; }
@@ -928,7 +930,7 @@
 #scfg-root ::-webkit-scrollbar-track { background: transparent; }
 #scfg-root ::-webkit-scrollbar-thumb {
   border-radius: 999px;
-  background: oklch(from var(--color-base-content) l c h / 0.12);
+  background: color-mix(in srgb, var(--color-base-content) 12%, transparent);
 }
 
 /* ----- Responsive ------------------------------------------ */
@@ -996,9 +998,9 @@
 #scfg-root .scfg-input-panel,
 #scfg-root .scfg-saved-panel,
 #scfg-root .scfg-buy-config {
-  border-color: oklch(from var(--color-base-content) l c h / 0.13);
+  border-color: color-mix(in srgb, var(--color-base-content) 13%, transparent);
   background:
-    linear-gradient(145deg, oklch(from var(--color-base-100) l c h / 0.98), oklch(from var(--color-base-200) l c h / 0.72)),
+    linear-gradient(145deg, color-mix(in srgb, var(--color-base-100) 98%, transparent), color-mix(in srgb, var(--color-base-200) 72%, transparent)),
     var(--color-base-100);
   box-shadow: 0 18px 38px -30px rgba(10, 16, 30, 0.75);
 }
@@ -1012,7 +1014,7 @@
   display: flex;
   align-items: center;
   gap: 0.55rem;
-  letter-spacing: -0.01em;
+  letter-spacing: var(--tracking-body);
 }
 
 #scfg-root .scfg-input-panel-head h3::before {
@@ -1022,7 +1024,7 @@
   height: 0.55rem;
   border-radius: 50%;
   background: var(--color-primary);
-  box-shadow: 0 0 0 0.28rem oklch(from var(--color-primary) l c h / 0.12);
+  box-shadow: 0 0 0 0.28rem color-mix(in srgb, var(--color-primary) 12%, transparent);
 }
 
 #scfg-root .scfg-keyboard-shell,
@@ -1078,8 +1080,8 @@
 #scfg-root .scfg-kbd-label {
   margin: 0.1rem 0 0.45rem;
   color: rgba(222, 235, 255, 0.45);
-  font-size: 0.6rem;
-  letter-spacing: 0.18em;
+  font-size: var(--type-meta);
+  letter-spacing: var(--tracking-label);
 }
 
 #scfg-root .scfg-kbd-key {
@@ -1259,12 +1261,12 @@
   margin-top: 0.9rem;
   gap: 0.55rem 0.8rem;
   color: rgba(223, 235, 255, 0.58);
-  font-size: 0.67rem;
+  font-size: var(--type-meta);
 }
 
 #scfg-root .scfg-buy-config {
   background:
-    linear-gradient(180deg, oklch(from var(--color-base-200) l c h / 0.7), oklch(from var(--color-base-100) l c h / 0.94));
+    linear-gradient(180deg, color-mix(in srgb, var(--color-base-200) 70%, transparent), color-mix(in srgb, var(--color-base-100) 94%, transparent));
 }
 
 #scfg-root .scfg-buy-cat,

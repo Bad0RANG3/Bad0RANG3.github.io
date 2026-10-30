@@ -58,8 +58,8 @@ Astro 5 静态站点（`output: 'static'`），Tailwind CSS 4（通过 `@tailwin
     │   ├── theme.ts              主题控制器（首屏由 BaseLayout 内联小脚本兜底）
     │   ├── atmosphere.ts         樱花背景（精灵缓存 + 约 30fps，滚动时持续播放）
     │   ├── player.ts             动态岛音乐播放器
-    │   ├── home.ts               首页资料卡（网易云 / GitHub 快照刷新）
-    │   ├── home-motion.ts        首页动效（滚动揭示、数字滚动、播放状态联动）
+    │   ├── home.ts               首页资料卡（网易云快照刷新，未配置 API 时只显示构建期快照）
+    │   ├── home-motion.ts        首页播放器镜像（读岛状态、转发播放/暂停）
     │   ├── search.ts             站内搜索（首次打开时才由 bootstrap.ts 按需加载）
     │   ├── site.ts               表格包裹 / 回到顶部 / 导航抽屉
     │   ├── article.ts            文章页入口
@@ -84,7 +84,7 @@ Astro 5 静态站点（`output: 'static'`），Tailwind CSS 4（通过 `@tailwin
         └── tools/*.css           各工具页私有样式
 ```
 
-字体自托管在 `public/fonts/`：`jetbrains-mono-*`（拉丁，UI/等宽，由 `BaseLayout` 全局声明），不依赖任何外部 CDN。
+字体只有两种角色：`--font-mono`（`public/fonts/jetbrains-mono-*`，自托管，由 `BaseLayout` 全局声明）与 `--font-sans`（系统无衬线）。两者都在 `global.css` 的 `@theme` 里定义一次，不依赖任何外部 CDN。
 
 ### 放置规则
 
@@ -105,7 +105,18 @@ Astro 5 静态站点（`output: 'static'`），Tailwind CSS 4（通过 `@tailwin
 - **`src/styles/theme.css` 是颜色的唯一来源**：`paper`（亮色，SSR 默认）与 `paper-dark`（暗色）两套 token 都在这里定义，`BaseLayout.astro` 在 `global.css` 之前引入。
   语义色（`--color-success` / `--color-warning` / `--color-error` / `--color-info`）、NCM 资料卡图标色（`--ncm-icon-provider` / `--ncm-icon-meta`）和文本选区色（`--selection-bg` / `--selection-text`）也在这里按主题各声明一次。**这些过去靠 daisyUI 内置 `light` 主题注入**，导致 `ncm.css` / `switch-your-cfg.css` 的 35 处 `var()` 在两种主题下取到同一个值，而亮色主题上实测只有 1.7–2.8:1。现在每套主题各有自己的值，改动时请按主题成对声明，不要只改一边。
 - 组件**不允许**写死与主题相关的颜色（如 `#fff`、`text-white`）。文字用 `--fx-text` / `--color-base-content`，次要文字用 `--text-dim` / `--text-faint`，面板用 `--surface*` / `--fx-surface*`，边框用 `--line*` / `--fx-line`。代码块在两种主题下都是深底浅字，统一用 `--code-block-bg` / `--code-block-text`（Shiki 会把底色内联写在 `<pre>` 上，所以 `global.css` 用 `!important` 拉回主题色）。
-- **正文与界面分字体**：`.prose` 用系统无衬线字体（`--md-font`）排长文，标题、代码块与站点其它界面仍用 JetBrains Mono。中英混排的长文在手机上比等宽字体更好读。
+- **字体：两种角色 + 一套刻度**（`theme.css` 的 `:root` 段）。
+  - 角色：`--font-sans` 用于界面与正文，`--font-mono` 只留给代码、按键、数字与小型大写英文标签。原来的第三个别名 `--font-display` 与另外两个取值完全相同，已删除。
+  - **两条栈都必须显式列出中文字体**（`PingFang SC` / `Hiragino Sans GB` / `Noto Sans SC` / `Microsoft YaHei` …）。JetBrains Mono 没有汉字，栈尾若直接落到 `monospace`，中文就交给操作系统决定——Windows 上是 NSimSun（宋体）。这正是过去文章 `h2` 变宋体、正文却还是黑体的原因。
+  - 刻度：字号 8 档（`--type-label` 11px … `--type-display` clamp）、字重 3 档（400 / 600 / 800）、字距 3 档（`--tracking-display` / `body` / `label`）、行高 4 档（`--leading-display` / `heading` / `ui` / `prose`）。改动前全站散落 51 个字号、16 个字重、21 个字距。
+  - **负字距只用于拉丁展示字**。汉字字身已占满 em 框，`-0.055em` 会让标题里的汉字互相挤压；含中文的标题一律用 `--tracking-body`（0）。
+  - 11px 的 `--type-label` 只给英文大写标签用。中文最小用 `--type-meta`（12px），正文 `--type-prose` 行高 1.8。
+  - **工具页（`styles/tools/*.css`）也用同一套刻度**，不要再写裸 `rem` 字号。
+  - 只有两处允许脱离刻度，改动前请先想清楚是不是又在给自己开例外：
+    - `island.css`：按 iPhone 灵动岛规格复刻的独立组件，字号用 `cqw`，字重 560–760 都是规格的一部分。
+    - 键盘 / 鼠标示意图的 `scfg-kbd-key`：键帽图例字号受物理键位尺寸约束，缩放会溢出键帽（其 `font-weight` / `letter-spacing` 同样跟着键帽走）。
+  - 另外三类**不参与刻度**，别把它们当成漏网之鱼：`.prose` 里的 `em` 相对字号（跟随正文等比缩放）、装饰性图符字号（♪、emoji 等），以及 `BaseLayout` 中 `@font-face` 的 `font-weight: 100 800`（可变字体轴范围）。
+  - 首页刻意保持精简：只有文章、项目、播放器和一张账号卡。计数、标签快捷区、联系区都曾存在并被删除——它们的入口在导航与页脚里已经各有一份，重复展示只会稀释首页。新增首页区块前请先确认它不是别处已有入口的第二份拷贝。
 - 主题切换由两段代码负责：`BaseLayout.astro` `<head>` 里的内联小脚本（首屏前解析 `localStorage` / `prefers-color-scheme` 并上色，避免闪烁），以及打包在 `src/scripts/theme.ts` 的控制器（切换、监听 `astro:before-swap` / `astro:after-swap`、`MutationObserver` 兜底）。改动后请用两种主题分别过一遍所有页面（`pnpm smoke` 不覆盖对比度）。
 
 ---
@@ -179,8 +190,9 @@ node .verify/lead-style-diff.mjs --base=http://127.0.0.1:4321 --compare=.verify/
 
 - **daisyUI 5 不会自动 tree-shake。** 它的 `addComponents` 默认输出全部组件，所以 `global.css` 用 `exclude` 明确排掉了本站未使用的约 58 个组件。**新增组件类前，先用渲染后的 HTML 确认组件名已在 `exclude` 里移除**，否则会静默丢失样式。当前实际用到的是 `button` / `badge` / `modal`。
 - **Tailwind v4 默认扫描整个项目**（遵守 `.gitignore`）。`@source not '../content/**'` 把文章正文排除，避免散文里的普通词（`card`、`step`、`stack`…）命中 daisyUI 组件名、把整套组件样式拉进产物。
-- **不要写死 daisyUI 旧版本的变量名。** v5 使用 `--color-primary` / `--color-base-content`（完整 oklch 颜色），不再有 `--p` / `--bc` / `--b1`。工具页里的半透明色统一写成 `oklch(from var(--color-primary) l c h / .2)`，或 `color-mix()`。
-- 产物仍集中在单个 `dist/_astro/about.*.css`（约 160 KB / gzip 约 27.5 KiB，104 个页面全都链接它），工具页样式单独成文件。文件名带内容哈希、且不叫 `global`，容易误认成「只有 about 页用」——它是全站共享包，改任何全局样式都会改名。
+- **不要写死 daisyUI 旧版本的变量名。** v5 使用 `--color-primary` / `--color-base-content`（完整 oklch 颜色），不再有 `--p` / `--bc` / `--b1`。工具页里的半透明色统一写成 `color-mix(in srgb, var(--color-primary) 20%, transparent)`。
+- **不要用 `oklch(from … l c h / a)` 这种相对颜色写法。** 它和 `color-mix()` 表达同一件事（同一个颜色、指定 alpha），但相对颜色要 Chrome/Edge 122、Safari 18；`color-mix()` 从 Chrome/Edge 111、Safari 16.2、Firefox 113 就有，正好落在基线内。两者等价性已逐像素验证：冻结动画后在 12 个页面上比对 67,622 个颜色值，零差异（主题切换带过渡，采样前若不禁用过渡会采到中间色，产生 1–2/255 的假差异）。
+- 产物仍集中在单个 `dist/_astro/about.*.css`（约 160 KB / gzip 约 34 KiB，109 个页面全都链接它），工具页样式单独成文件。文件名带内容哈希、且不叫 `global`，容易误认成「只有 about 页用」——它是全站共享包，改任何全局样式都会改名。
 
 ### 动态岛（头部音乐胶囊）
 
