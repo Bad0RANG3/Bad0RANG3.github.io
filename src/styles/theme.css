@@ -201,6 +201,54 @@ html[data-theme="paper-dark"] {
   --island-focus: #ffc5d8;
 }
 
+/* -----------------------------------------------------------------
+   Type system — two faces, one scale.
+
+   Faces answer "which typeface"; the tokens answer "how big, how heavy,
+   how tight, how loose". The scale deliberately has seven steps and the
+   weights three: the stylesheet used to carry 51 distinct font-sizes,
+   16 font-weights and 21 letter-spacings, which is why the same UI block
+   could look different from one card to the next.
+
+   The CJK entries in both stacks are load-bearing, not decorative. The
+   self-hosted JetBrains Mono has no Chinese glyphs, so without an explicit
+   CJK face Chinese falls through to the browser's generic `monospace`,
+   which on Windows is NSimSun — a Song-style serif. That is why article
+   h2s used to render in 宋体 while their own paragraphs were 黑体.
+   ----------------------------------------------------------------- */
+:root {
+  /* Eight steps: 11 · 12 · 14 · 16 · 18 · 20 · 22 · clamp(28–34).
+     `--type-label` is for short uppercase Latin labels and nothing else,
+     because 11px is below the size where Chinese stays legible. */
+  --type-label: 0.6875rem;
+  --type-meta: 0.75rem;
+  --type-small: 0.875rem;
+  --type-body: 1rem;
+  --type-lead: 1.125rem;
+  --type-title: 1.25rem;
+  --type-heading: 1.375rem;
+  --type-display: clamp(1.75rem, 3vw, 2.1rem);
+
+  /* Three weights: regular copy, emphasis, headings. */
+  --weight-body: 400;
+  --weight-strong: 600;
+  --weight-display: 800;
+
+  /* Three trackings. Negative tracking is for large Latin display type
+     only: at -0.055em Chinese headings started colliding with each other,
+     because CJK glyphs already fill their em box. */
+  --tracking-display: -0.02em;
+  --tracking-body: 0;
+  --tracking-label: 0.16em;
+
+  /* Four leadings. Chinese needs the loosest one: the em box is the
+     character, so 1.5 starts to feel cramped where 1.8 reads calmly. */
+  --leading-display: 1.05;
+  --leading-heading: 1.35;
+  --leading-ui: 1.55;
+  --leading-prose: 1.8;
+}
+
 body {
   background: var(--fx-bg);
   color: var(--fx-text);

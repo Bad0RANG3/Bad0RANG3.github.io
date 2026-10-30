@@ -49,9 +49,6 @@ export const siteConfig = {
     { name: 'YouTube', url: 'https://youtube.com/@Bad0RANG3' },
     { name: 'BiliBili', url: 'https://space.bilibili.com/482966540' },
   ],
-  hero: {
-    lyric: '当我的故事开篇之时，就是我书写人生之时',
-  },
   netease: {
     userId: ncmUserId,
     profileUrl: `https://music.163.com/#/user/home?id=${ncmUserId}`,
@@ -64,11 +61,8 @@ export const siteConfig = {
       avatarUrl: 'https://p1.music.126.net/aRpgZx-i37_k7v8pvXoAUw==/109951172597148609.jpg',
       follows: 67,
       followeds: 467,
-      level: 10,
       listenSongs: 188324,
-      medalNum: 101,
       vipLabel: '黑胶VIP',
-      fanLabel: 'Synthion 乐迷',
     },
   },
   music: {
@@ -88,7 +82,6 @@ export const siteConfig = {
   github: {
     username: 'Bad0RANG3',
     profileUrl: 'https://github.com/Bad0RANG3',
-    apiUrl: 'https://api.github.com/users/Bad0RANG3',
   },
   about: {
     greeting: 'Hi, there!',

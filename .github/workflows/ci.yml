@@ -35,6 +35,8 @@ jobs:
         run: pnpm build
       - name: Smoke test build output
         run: pnpm smoke
+      - name: Browser compatibility audit
+        run: pnpm compat:audit
       - name: Validate project Pages base path
         env:
           BASE_PATH: /project-pages/
