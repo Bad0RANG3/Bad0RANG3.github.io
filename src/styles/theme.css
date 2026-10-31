@@ -96,6 +96,14 @@ html[data-theme="paper"] {
      `paper` and light in `paper-dark`, so it is the correct foreground in both. */
   --selection-bg: oklch(88% 0.062 271);
   --selection-text: var(--color-base-content);
+
+  /* Hover veil over a gallery plate: the reference site wipes its thumbnails
+     with a translucent periwinkle pane and a 0.55rem blur, then puts the
+     caption on top of it. The pair has to be declared per theme because the
+     foreground cannot follow `--fx-text`: the pane is a fixed mid-tone, so on
+     the dark theme the label stays light while the pane goes deep blue. */
+  --veil-bg: rgb(193 200 247 / 0.72);
+  --veil-text: #0b0d16;
 }
 
 html[data-theme="paper-dark"] {
@@ -155,6 +163,11 @@ html[data-theme="paper-dark"] {
      foreground is light. */
   --selection-bg: oklch(34% 0.09 272);
   --selection-text: var(--color-base-content);
+
+  /* See the note in `paper`: the veil is a fixed mid-tone, so the label has to
+     stay light here instead of following `--fx-text` into the dark. */
+  --veil-bg: rgb(64 78 158 / 0.78);
+  --veil-text: #eef1ff;
 }
 
 /* Motion curves and code-block colours are theme-independent. */

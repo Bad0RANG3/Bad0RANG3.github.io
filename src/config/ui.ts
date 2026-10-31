@@ -7,7 +7,6 @@
  */
 export const LAYOUT = {
   BACK_TO_TOP_THRESHOLD: 300,
-  RECENT_POSTS_COUNT: 6,
   SEARCH_DEFAULT_COUNT: 5,
   SEARCH_FOCUS_DELAY: 100,
 } as const;
