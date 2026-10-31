@@ -209,10 +209,14 @@ html[data-theme="paper-dark"] #atmosphere-canvas { opacity: 1; }
    A hairline row of text links, the way the reference site carries its
    navigation in the page instead of pinning it to the viewport edge.
    ----------------------------------------------------------------- */
+/* Her header is a quiet band: mark on the left, menu on the right, and no rule
+   under it. The menu therefore sits in the top-right corner of the page exactly
+   as on the reference site; the spacing below it is the island's band, not a
+   divider. */
 .site-nav {
   position: relative;
   z-index: 2;
-  padding-top: calc(4.4rem + env(safe-area-inset-top, 0px));
+  padding-top: calc(4rem + env(safe-area-inset-top, 0px));
 }
 
 .site-nav__inner {
@@ -220,8 +224,7 @@ html[data-theme="paper-dark"] #atmosphere-canvas { opacity: 1; }
   align-items: center;
   justify-content: space-between;
   gap: 1.5rem;
-  padding-bottom: 0.85rem;
-  border-bottom: 1px solid var(--fx-line);
+  padding-bottom: 0.35rem;
 }
 
 .site-nav__brand {
