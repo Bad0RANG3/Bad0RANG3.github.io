@@ -38,7 +38,7 @@ Astro 5 静态站点（`output: 'static'`），Tailwind CSS 4（通过 `@tailwin
 └── src/
     ├── components/            全部按域分目录，不往 components/ 根目录放文件
     │   ├── blog/                PostCard、PostMeta、TagList、ArticleTools、ArticleEnhancements、Comments
-    │   ├── icons/               Icon.astro / RailIcon.astro（图标入口）
+    │   ├── icons/               Icon.astro（图标入口）
     │   ├── layout/              SiteHeader、SiteFooter、MobileDrawer
     │   ├── profile/             ProfileOverviewCard、ProjectCard
     │   ├── search/              SearchModal（只含对话框标记，逻辑在 scripts/search.ts）
@@ -56,7 +56,7 @@ Astro 5 静态站点（`output: 'static'`），Tailwind CSS 4（通过 `@tailwin
     ├── scripts/                浏览器端入口，由 Astro 打包为可缓存模块
     │   ├── bootstrap.ts          按需加载其余模块的唯一入口
     │   ├── theme.ts              主题控制器（首屏由 BaseLayout 内联小脚本兜底）
-    │   ├── atmosphere.ts         樱花背景（精灵缓存 + 约 30fps，滚动时持续播放）
+    │   ├── atmosphere.ts         粒子背景（精灵缓存 + 约 30fps，滚动时持续播放）
     │   ├── player.ts             动态岛音乐播放器
     │   ├── home.ts               首页资料卡（网易云快照刷新，未配置 API 时只显示构建期快照）
     │   ├── home-motion.ts        首页播放器镜像（读岛状态、转发播放/暂停）
@@ -75,6 +75,7 @@ Astro 5 静态站点（`output: 'static'`），Tailwind CSS 4（通过 `@tailwin
     │   ├── urls.ts               withBase / siteUrl
     │   ├── images.ts             图片元信息（尺寸、占位）
     │   ├── og.ts                 OG 图生成（satori + resvg）
+    │   ├── text.ts               标签是否纯拉丁（决定要不要上宽字距）
     │   └── storage.ts            localStorage JSON 读取的唯一实现
     ├── pages/                  路由（目录结构即 URL 结构）
     └── styles/
@@ -84,7 +85,7 @@ Astro 5 静态站点（`output: 'static'`），Tailwind CSS 4（通过 `@tailwin
         └── tools/*.css           各工具页私有样式
 ```
 
-字体只有两种角色：`--font-mono`（`public/fonts/jetbrains-mono-*`，自托管，由 `BaseLayout` 全局声明）与 `--font-sans`（系统无衬线）。两者都在 `global.css` 的 `@theme` 里定义一次，不依赖任何外部 CDN。
+字体有三种角色，全部自托管在 `public/fonts/`，不依赖任何外部 CDN：`--font-display`（Playfair Display，拉丁展示字：站名、分区标签、各级标题里的拉丁部分）、`--font-sans`（Roboto + 系统中文字体，界面与正文）、`--font-mono`（JetBrains Mono，代码 / 按键 / 数字 / 小型大写英文标签）。三者都在 `global.css` 的 `@theme` 里定义一次，`@font-face` 由 `BaseLayout` 统一声明；Roboto 与 Playfair 都是可变字体，一个文件覆盖各自用到的字重区间。
 
 ### 放置规则
 
@@ -102,15 +103,17 @@ Astro 5 静态站点（`output: 'static'`），Tailwind CSS 4（通过 `@tailwin
 
 ### 主题与颜色
 
-- **`src/styles/theme.css` 是颜色的唯一来源**：`paper`（亮色，SSR 默认）与 `paper-dark`（暗色）两套 token 都在这里定义，`BaseLayout.astro` 在 `global.css` 之前引入。
+- **`src/styles/theme.css` 是颜色的唯一来源**：`paper`（亮色，SSR 默认）与 `paper-dark`（暗色）两套 token 都在这里定义，`BaseLayout.astro` 在 `global.css` 之前引入。整套配色是「白底 + 单一蓝紫强调色」：`--fx-accent` 是粒子背景与悬停色用的那支蓝紫，`--accent-primary-soft` 是它的深色版本（专供白底上的链接文字，4.5:1）；旧配色里的 `--fx-pink` / `--accent-pink` / `--accent-violet` 已按语义改名为 `--fx-accent` / `--accent-primary` / `--accent-secondary`，暗色主题是同一色系入夜后的版本，不是另一套设计。
   语义色（`--color-success` / `--color-warning` / `--color-error` / `--color-info`）、NCM 资料卡图标色（`--ncm-icon-provider` / `--ncm-icon-meta`）和文本选区色（`--selection-bg` / `--selection-text`）也在这里按主题各声明一次。**这些过去靠 daisyUI 内置 `light` 主题注入**，导致 `ncm.css` / `switch-your-cfg.css` 的 35 处 `var()` 在两种主题下取到同一个值，而亮色主题上实测只有 1.7–2.8:1。现在每套主题各有自己的值，改动时请按主题成对声明，不要只改一边。
-- 组件**不允许**写死与主题相关的颜色（如 `#fff`、`text-white`）。文字用 `--fx-text` / `--color-base-content`，次要文字用 `--text-dim` / `--text-faint`，面板用 `--surface*` / `--fx-surface*`，边框用 `--line*` / `--fx-line`。代码块在两种主题下都是深底浅字，统一用 `--code-block-bg` / `--code-block-text`（Shiki 会把底色内联写在 `<pre>` 上，所以 `global.css` 用 `!important` 拉回主题色）。
-- **字体：两种角色 + 一套刻度**（`theme.css` 的 `:root` 段）。
-  - 角色：`--font-sans` 用于界面与正文，`--font-mono` 只留给代码、按键、数字与小型大写英文标签。原来的第三个别名 `--font-display` 与另外两个取值完全相同，已删除。
-  - **两条栈都必须显式列出中文字体**（`PingFang SC` / `Hiragino Sans GB` / `Noto Sans SC` / `Microsoft YaHei` …）。JetBrains Mono 没有汉字，栈尾若直接落到 `monospace`，中文就交给操作系统决定——Windows 上是 NSimSun（宋体）。这正是过去文章 `h2` 变宋体、正文却还是黑体的原因。
-  - 刻度：字号 8 档（`--type-label` 11px … `--type-display` clamp）、字重 3 档（400 / 600 / 800）、字距 3 档（`--tracking-display` / `body` / `label`）、行高 4 档（`--leading-display` / `heading` / `ui` / `prose`）。改动前全站散落 51 个字号、16 个字重、21 个字距。
-  - **负字距只用于拉丁展示字**。汉字字身已占满 em 框，`-0.055em` 会让标题里的汉字互相挤压；含中文的标题一律用 `--tracking-body`（0）。
-  - 11px 的 `--type-label` 只给英文大写标签用。中文最小用 `--type-meta`（12px），正文 `--type-prose` 行高 1.8。
+- 组件**不允许**写死与主题相关的颜色（如 `#fff`、`text-white`）。文字用 `--fx-text` / `--color-base-content`，次要文字用 `--text-dim` / `--text-faint`，面板用 `--surface*` / `--fx-surface*`，边框用 `--line*` / `--fx-line`。**唯一允许的例外是「强调色上的前景」**：这类地方用 `--color-primary-content`（`paper` 近白、`paper-dark` 深蓝），不要写 `#fff`——亮色强调色配白字在暗色主题上只有 2.4:1。代码块在两种主题下都是深底浅字，统一用 `--code-block-bg` / `--code-block-text`（Shiki 会把底色内联写在 `<pre>` 上，所以 `global.css` 用 `!important` 拉回主题色；Shiki 主题固定为 `github-dark-default`，因为 `github-dark` 的注释色在本站代码底板上只有 3.84:1）。
+- **不用半透明文字代替次级色**。`text-base-content/35`～`/50` 这类写法在两种主题下都过不了 4.5:1（亮色下实测 2.16–3.78:1）。全站的透明度取值已经收敛到 `/70`（次要）与 `/80`（更接近正文）两档，新增文案请沿用这两档或直接用 `--fx-muted` / `--fx-faint`。`.verify/synthion/contrast.mjs` 会在 14 条路由 × 2 套主题上逐元素复核（用 canvas 归一化 `oklch()` / `color(srgb …)` 再比较，直接解析这些新语法会把 0–1 分量当成 0–255，得出满屏假阳性）。
+- **字体：三种角色 + 一套刻度**（`theme.css` 的 `:root` 段）。
+  - 角色：`--font-display` 用于拉丁展示字，`--font-sans` 用于界面与正文，`--font-mono` 只留给代码、按键、数字与小型大写英文标签。
+  - **三条栈都必须显式列出中文字体**（`PingFang SC` / `Hiragino Sans GB` / `Noto Sans SC` / `Microsoft YaHei` …）。Roboto、Playfair Display、JetBrains Mono 都没有汉字，栈尾若直接落到 `sans-serif`，中文就交给操作系统决定——Windows 上是 NSimSun（宋体）。这正是过去文章 `h2` 变宋体、正文却还是黑体的原因。`--font-display` 因此**落到无衬线中文字体**而不是衬线：Playfair 只负责标题里的拉丁字母，汉字继续走黑体，和参考站把日文正文交给无衬线是同一个处理。
+  - 刻度：字号 8 档（`--type-label` 11px … `--type-display` clamp）、字重 3 档（400 / 600 / 700，另有 `--weight-serif` 供 Playfair 用 400）、字距 4 档（`--tracking-display` / `body` / `label` / `wide`）、行高 4 档（`--leading-display` / `heading` / `ui` / `prose`）。
+  - **`--tracking-wide`（0.3em）只给纯拉丁大写标签用**。汉字字身已占满 em 框，这么大字距会把中文标签拆散。`.eyebrow` 是中性小标签（两种文字都安全），`.eyebrow-latin` 才是宽字距版本，由 `lib/text.ts` 的 `isLatinOnly()` 自动选择——`SectionHeader` / `PageHeader` / `ContentCard` / `ProfileOverviewCard` 都走这个判断，所以调用方传中文标签也不会出问题。
+  - **负字距只用于拉丁展示字**。含中文的标题一律用 `--tracking-body`（0）。
+  - 11px 的 `--type-label` 只给英文大写标签用。中文最小用 `--type-meta`（12px）——页脚 / 抽屉的分组标题是中文，所以它们用 `--type-meta` 且不加字距；正文行高 `--leading-prose` 1.8。
   - **工具页（`styles/tools/*.css`）也用同一套刻度**，不要再写裸 `rem` 字号。
   - 只有两处允许脱离刻度，改动前请先想清楚是不是又在给自己开例外：
     - `island.css`：按 iPhone 灵动岛规格复刻的独立组件，字号用 `cqw`，字重 560–760 都是规格的一部分。
@@ -180,7 +183,7 @@ node .verify/lead-style-diff.mjs --base=http://127.0.0.1:4399 --capture=.verify/
 node .verify/lead-style-diff.mjs --base=http://127.0.0.1:4321 --compare=.verify/style-baseline-dist.json
 ```
 
-它内部对同一状态采样两次，把两次之间会自己动的元素（樱花背景、浮动吉祥物、歌词呼吸点）标记为 `@UNSTABLE@` 并从比对中排除——**空跑两次的差异必须是 0**，否则这次的差异不能作为证据。
+它内部对同一状态采样两次，把两次之间会自己动的元素（粒子背景、浮动吉祥物、歌词呼吸点）标记为 `@UNSTABLE@` 并从比对中排除——**空跑两次的差异必须是 0**，否则这次的差异不能作为证据。
 
 ---
 
@@ -197,6 +200,7 @@ node .verify/lead-style-diff.mjs --base=http://127.0.0.1:4321 --compare=.verify/
 ### 动态岛（头部音乐胶囊）
 
 - 结构与交互在 `src/components/layout/SiteHeader.astro` + `src/scripts/player.ts`；**样式全部归 `src/styles/island.css`**，`global.css` 里不应再出现任何 `.music-island` / `.dynamic-island` / `.header-action` 规则。同一个选择器在两个文件里各写一遍，就得靠 `!important` 打架——这正是重构前的问题。
+- 同一个组件里还渲染主站导航行 `.site-nav`：它是**文档流里的一行**（左侧站名 + 右侧文字链接），不是钉在视口上的图标栏，样式属于站点版式所以写在 `global.css`。这一行用 `padding-top` 为灵动岛预留出顶部那条带，`#main-content` 因此不再自带顶部内边距；改动顶部间距时先看这里，否则灵动岛会压住标题。
 - 形态切换只改 `data-open`、`data-player-state`、`data-visualizer`、`data-cue-active` 这几个属性，动画交给 CSS 过渡；JS 不写内联几何。展开/收起必须**可中断**：中途反向点击要从当前几何继续，而不是先塌成空壳。
 - **视觉规格对齐 iPhone 的灵动岛**，这不是随意调的，改之前先理解这几点：
   - 背景是**不透明纯黑**（`--island-bg: #000`），没有边框、没有 `backdrop-filter`。真机上它本来就是屏幕挖孔，不是一块玻璃面板。所以它和 `paper` / `paper-dark` 两套主题都无关。

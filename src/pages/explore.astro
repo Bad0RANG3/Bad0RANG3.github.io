@@ -23,13 +23,13 @@ const browseLinks = [
 
 <BaseLayout title="探索" description="从精选和最近更新的文章开始浏览。">
   <div class="site-frame py-5 sm:py-8" data-explore data-post-index={JSON.stringify(postIndex)}>
-    <PageHeader label="探索" title="探索" description="从精选和最近更新的文章开始浏览。" />
+    <PageHeader label="Explore" title="探索" description="从精选和最近更新的文章开始浏览。" />
 
     <section class="mb-12" aria-labelledby="shelf-title" data-shelf hidden>
       <div class="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 id="shelf-title" class="text-xl font-black sm:text-2xl">我的书架</h2>
-          <p class="mt-1 text-xs text-base-content/50">收藏和阅读进度只保存在当前浏览器。</p>
+          <h2 id="shelf-title" class="text-xl font-bold sm:text-2xl">我的书架</h2>
+          <p class="mt-1 text-xs text-base-content/70">收藏和阅读进度只保存在当前浏览器。</p>
         </div>
         <button type="button" class="btn-brutal-outline w-auto text-sm" data-shelf-clear>清除本地记录</button>
       </div>
@@ -48,7 +48,7 @@ const browseLinks = [
     {featured.length > 0 && (
       <section aria-labelledby="featured-title">
         <div class="mb-5 flex flex-wrap items-center justify-between gap-4">
-          <h2 id="featured-title" class="text-xl font-black sm:text-2xl">精选文章</h2>
+          <h2 id="featured-title" class="text-xl font-bold sm:text-2xl">精选文章</h2>
           <button id="random-post" type="button" class="btn-brutal-outline w-auto text-sm">随机打开一篇</button>
         </div>
         <div class="grid gap-5 md:grid-cols-3">{featured.map((post) => <PostCard post={post} />)}</div>
@@ -57,7 +57,7 @@ const browseLinks = [
 
     <section class="mt-12" aria-labelledby="latest-title">
       <div class="mb-5 flex items-end justify-between gap-4">
-        <h2 id="latest-title" class="text-xl font-black sm:text-2xl">最近更新</h2>
+        <h2 id="latest-title" class="text-xl font-bold sm:text-2xl">最近更新</h2>
         <a href={withBase(ROUTES.POSTS)} class="link-underline text-sm font-bold">全部文章</a>
       </div>
       <div class="grid gap-5 md:grid-cols-2 lg:grid-cols-3">{posts.slice(0, 6).map((post) => <PostCard post={post} />)}</div>

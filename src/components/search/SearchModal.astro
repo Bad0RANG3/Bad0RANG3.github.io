@@ -5,17 +5,17 @@ import { withBase } from '../../lib/urls';
 
 <!-- Behaviour lives in src/scripts/search.ts, loaded on first open by bootstrap.ts. -->
 <dialog id="search-modal" class="modal" aria-label="搜索文章" data-index-url={withBase(ROUTES.SEARCH_INDEX)} data-posts-url={withBase(ROUTES.POSTS)}>
-  <div class="modal-box max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-xl overflow-hidden rounded-2xl border-2 border-base-content/10 bg-base-100 p-0 shadow-[10px_10px_0_0] shadow-primary/40">
+  <div class="modal-box max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-xl overflow-hidden rounded-2xl border border-base-content/10 bg-base-100 p-0 shadow-punch">
     <div class="flex items-center gap-3 border-b-2 border-base-content/10 bg-secondary/20 px-4 py-3">
-      <svg class="h-5 w-5 shrink-0 text-base-content/50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-      <input id="search-input" type="search" class="flex-1 bg-transparent text-base outline-none placeholder:text-base-content/40" placeholder="搜索标题、摘要、正文、标签..." autocomplete="off" aria-label="搜索文章" />
-      <kbd class="hidden sm:inline-flex items-center rounded bg-base-200 px-1.5 py-0.5 font-mono text-xs text-base-content/40">ESC</kbd>
+      <svg class="h-5 w-5 shrink-0 text-base-content/70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input id="search-input" type="search" class="flex-1 bg-transparent text-base outline-none placeholder:text-base-content/70" placeholder="搜索标题、摘要、正文、标签..." autocomplete="off" aria-label="搜索文章" />
+      <kbd class="hidden sm:inline-flex items-center rounded bg-base-200 px-1.5 py-0.5 font-mono text-xs text-base-content/70">ESC</kbd>
     </div>
     <div id="search-filters" class="flex flex-wrap gap-2 border-b border-base-content/10 px-4 py-2" hidden></div>
     <div id="search-results" class="max-h-[min(28rem,60dvh)] overflow-y-auto" aria-live="polite">
-      <div class="px-4 py-8 text-center text-sm text-base-content/50">打开搜索后加载索引...</div>
+      <div class="px-4 py-8 text-center text-sm text-base-content/70">打开搜索后加载索引...</div>
     </div>
-    <div id="search-footer" class="hidden border-t border-base-content/10 px-4 py-2 text-center text-xs text-base-content/40"></div>
+    <div id="search-footer" class="hidden border-t border-base-content/10 px-4 py-2 text-center text-xs text-base-content/70"></div>
   </div>
   <form method="dialog" class="modal-backdrop"><button>关闭</button></form>
 </dialog>

@@ -121,8 +121,8 @@ export const SITE = {
   LOCALE: 'zh-CN',
   THEME: 'paper',
   THEME_DARK: 'paper-dark',
-  THEME_COLOR: '#fdf2f6',
-  THEME_COLOR_DARK: '#21131c',
+  THEME_COLOR: '#ffffff',
+  THEME_COLOR_DARK: '#070912',
   THEME_STORAGE_KEY: 'b0-theme',
   /** Written by article pages, read by series pages. */
   READING_HISTORY_STORAGE_KEY: 'b0-reading-history',

@@ -6,7 +6,7 @@ const { date, updatedDate, centered = false, long = false } = Astro.props;
 const fmt = long ? formatLongDate : formatDate;
 ---
 
-<div class:list={['flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-base-content/50', centered && 'justify-center']}>
+<div class:list={['flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-base-content/70', centered && 'justify-center']}>
   <time datetime={date.toISOString()} class="inline-flex items-center gap-1.5">
     <Icon name="calendar" class="h-3.5 w-3.5" />
     {fmt(date)}

@@ -22,7 +22,7 @@ const songUrl = music.officialUrl;
 <BaseLayout title={siteConfig.title} description={siteConfig.description}>
   <div class="home site-frame">
     <header class="home-intro" data-island-cue="首页概览">
-      <p class="eyebrow">Index</p>
+      <p class="eyebrow eyebrow-latin">Index</p>
       <h1 id="home-title" class="home-title">{author.name}</h1>
       <p class="home-lede">
         拆解软件、写点代码、折腾配置。文章在左边，正在听的东西和开发动态在右边。
@@ -142,7 +142,7 @@ const songUrl = music.officialUrl;
     --muted: var(--fx-muted);
     --soft: var(--text-faint);
     --line: var(--fx-line);
-    --accent: var(--fx-pink);
+    --accent: var(--fx-accent);
     padding-block: clamp(1.5rem, 3.5vw, 2.4rem) clamp(2rem, 5vw, 3.5rem);
   }
 
@@ -156,16 +156,18 @@ const songUrl = music.officialUrl;
     border-bottom: 1px solid var(--line);
   }
 
-  /* The wordmark stays monospace on purpose: it is Latin-only, and it is the
-     one place the "terminal" character of the old design still earns its keep. */
+  /* The wordmark is Latin-only, which is the one case Playfair Display is here
+     for: regular weight, caps, a third of an em of tracking — the same
+     treatment the reference site gives its name. */
   .home-title {
-    margin: 0.45rem 0 0;
+    margin: 0.55rem 0 0;
     color: var(--ink);
-    font-family: var(--font-mono);
-    font-size: var(--type-display);
-    font-weight: var(--weight-display);
-    letter-spacing: var(--tracking-display);
-    line-height: var(--leading-display);
+    font-family: var(--font-display);
+    font-size: clamp(1.6rem, 4vw, 2.35rem);
+    font-weight: var(--weight-serif);
+    letter-spacing: var(--tracking-wide);
+    line-height: 1.15;
+    text-transform: uppercase;
   }
 
   .home-lede {
@@ -293,7 +295,11 @@ const songUrl = music.officialUrl;
     border: 0;
     border-radius: 999px;
     background: var(--accent);
-    color: #2a1220;
+    /* The accent's own foreground token, not the old pink-era ink: on the light
+     theme this is near-white (4.7:1 on the periwinkle fill) and on the dark
+     theme it is deep navy, which is the only way white-on-light-periwinkle
+     stops failing at 2.4:1. */
+    color: var(--color-primary-content);
     font-size: var(--type-small);
     font-weight: var(--weight-display);
     transition: background 0.25s ease;

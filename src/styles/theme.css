@@ -1,10 +1,15 @@
 /* =================================================================
    THEME — single source of truth for every design token.
 
-   Two themes exist: `paper` (light, the SSR default) and `paper-dark`.
-   Components must never hard-code a theme-dependent colour; they consume
-   these tokens so both themes stay readable. Imported before global.css
-   from BaseLayout.astro.
+   The visual language is borrowed from Synthion's site (synthion.space):
+   a white page with a faint field of drifting periwinkle particles, near-black
+   type, Playfair Display for Latin display labels, Roboto for the interface,
+   hairline rules and pill-soft corners. Nothing here is copied from that site's
+   stylesheet — the resemblance is in the palette, the type pairing and the
+   amount of white space.
+
+   Two themes exist: `paper` (light, the SSR default) and `paper-dark`, which is
+   the same blue family after dark rather than a separate design.
 
    Token families:
      --color-*   daisyUI-compatible palette (oklch)
@@ -19,19 +24,22 @@
 html[data-theme="paper"] {
   color-scheme: light;
 
-  --color-ink: oklch(24% 0.045 345);
-  --color-base-100: oklch(97.5% 0.012 355);
-  --color-base-200: oklch(94.5% 0.024 350);
-  --color-base-300: oklch(89.5% 0.038 350);
-  --color-base-content: oklch(24% 0.045 345);
-  --color-primary: oklch(64% 0.23 355);
-  --color-primary-content: oklch(99% 0.008 350);
-  --color-secondary: oklch(88% 0.11 350);
-  --color-secondary-content: oklch(28% 0.06 350);
-  --color-accent: oklch(70% 0.16 320);
-  --color-accent-content: oklch(99% 0.008 330);
-  --color-neutral: oklch(28% 0.045 340);
-  --color-neutral-content: oklch(97.5% 0.01 350);
+  /* Periwinkle is the one hue the whole palette is built on: it is the colour
+     of the particle field (rgba(84,103,232,.11) on the reference site) and of
+     the hover wash. Everything else is neutral so the blue stays an accent. */
+  --color-ink: oklch(20% 0.03 278);
+  --color-base-100: oklch(100% 0 0);
+  --color-base-200: oklch(97.6% 0.008 275);
+  --color-base-300: oklch(94.2% 0.016 275);
+  --color-base-content: oklch(23.5% 0.03 278);
+  --color-primary: oklch(55.5% 0.193 271);
+  --color-primary-content: oklch(99% 0.004 271);
+  --color-secondary: oklch(85.5% 0.06 272);
+  --color-secondary-content: oklch(28% 0.055 275);
+  --color-accent: oklch(68% 0.115 258);
+  --color-accent-content: oklch(99% 0.004 258);
+  --color-neutral: oklch(26% 0.026 278);
+  --color-neutral-content: oklch(98% 0.004 275);
 
   /* Status colours. daisyUI's built-in `light` theme injects these for every
      theme it does not override, so until now `ncm.css` and
@@ -47,68 +55,65 @@ html[data-theme="paper"] {
   --color-error: oklch(57% 0.194 13.428);
   --color-info: oklch(53% 0.16 232.661);
 
-  --surface: rgba(255, 255, 255, 0.72);
-  --surface-strong: rgba(255, 255, 255, 0.92);
-  --surface-soft: rgba(255, 255, 255, 0.54);
-  --line: rgba(41, 23, 39, 0.13);
-  --line-soft: rgba(41, 23, 39, 0.08);
+  --surface: rgb(255 255 255 / 0.72);
+  --surface-strong: rgb(255 255 255 / 0.94);
+  --surface-soft: rgb(255 255 255 / 0.5);
+  --line: rgb(21 25 66 / 0.14);
+  --line-soft: rgb(21 25 66 / 0.07);
 
-  --text-dim: #8e5e73;
-  --text-faint: #87667a;
-  --accent-pink: #e95786;
-  --accent-pink-soft: #c83968;
-  --accent-violet: #8764c5;
-  --accent-blue: #477dae;
+  --text-dim: #414563;
+  --text-faint: #6b7089;
+  /* `-soft` is the darker of the pair on purpose: it is the one used for link
+     text, where 4.5:1 is required. The lighter one is for decoration only. */
+  --accent-primary: #5467e8;
+  --accent-primary-soft: #3f4fd4;
+  --accent-secondary: #7d7ce8;
+  --accent-blue: #3d7fd0;
 
-  --fx-bg: #fff8fa;
+  --fx-bg: #ffffff;
   --fx-surface: rgb(255 255 255 / 0.76);
-  --fx-surface-strong: rgb(255 255 255 / 0.9);
-  --fx-line: rgb(76 47 61 / 0.14);
-  --fx-text: #291c23;
-  --fx-muted: #755c68;
-  --fx-faint: #a18090;
-  --fx-pink: #d94f81;
-  --fx-pink-soft: #f29ab9;
-  --fx-shadow: rgb(105 47 70 / 0.15);
+  --fx-surface-strong: rgb(255 255 255 / 0.94);
+  --fx-line: rgb(21 25 66 / 0.14);
+  --fx-text: #101223;
+  --fx-muted: #474b66;
+  --fx-faint: #6b7089;
+  --fx-accent: #5467e8;
+  --fx-accent-soft: #3f4fd4;
+  --fx-shadow: rgb(21 25 66 / 0.14);
 
-  /* NCM profile-card glyph accents. These were literal `#ff879f` / `#ffb04a`
-     in `global.css`, chosen to stand out on the dark card — but `paper` renders
-     the card near-white (#ffffff → #f9e8f0 gradient), where they measured
-     1.93:1 and 1.66:1. WCAG 1.4.11 wants 3:1 for a graphic that carries
-     meaning. The hues are kept; only lightness is lowered enough to clear it,
-     measured against the darkest stop of the card gradient (and, for the meta
-     chip, the chip fill over that stop). Worst case here: 3.21:1 and 3.17:1. */
-  --ncm-icon-provider: oklch(63% 0.16 15);
-  --ncm-icon-meta: oklch(64% 0.15 70);
+  /* NCM profile-card glyph accents. `paper` renders the card near-white, where
+     the vivid hues measured 1.93:1 and 1.66:1; WCAG 1.4.11 wants 3:1 for a
+     graphic that carries meaning. The hues are kept (now blue-family), only
+     lightness is lowered enough to clear it against the card's darkest stop.
+     Re-measure with `.verify/audit-contrast.mjs` after touching these. */
+  --ncm-icon-provider: oklch(56% 0.17 271);
+  --ncm-icon-meta: oklch(58% 0.14 250);
 
   /* Text selection. These are OPAQUE on purpose: a translucent selection
      changes colour with whatever surface it lands on (page, card, code block,
      island), so no single foreground can be readable over all of them. Opaque
-     removes the surface from the equation. Contrast is measured text-on-fill:
-       paper       11.04:1  (was #fff on the pale composite = 1.34:1, a fail)
-       paper-dark   7.28:1  (was #fff = 9.82:1, already fine)
-     `--color-base-content` is dark in `paper` and light in `paper-dark`, so it
-     is the correct foreground in both. */
-  --selection-bg: oklch(88% 0.09 350);
+     removes the surface from the equation. `--color-base-content` is dark in
+     `paper` and light in `paper-dark`, so it is the correct foreground in both. */
+  --selection-bg: oklch(88% 0.062 271);
   --selection-text: var(--color-base-content);
 }
 
 html[data-theme="paper-dark"] {
   color-scheme: dark;
 
-  --color-ink: oklch(88% 0.02 340);
-  --color-base-100: oklch(18% 0.022 340);
-  --color-base-200: oklch(22% 0.026 340);
-  --color-base-300: oklch(28% 0.03 340);
-  --color-base-content: oklch(84% 0.018 340);
-  --color-primary: oklch(74% 0.2 355);
-  --color-primary-content: oklch(17% 0.035 350);
-  --color-secondary: oklch(82% 0.12 345);
-  --color-secondary-content: oklch(20% 0.05 345);
-  --color-accent: oklch(76% 0.15 315);
-  --color-accent-content: oklch(17% 0.04 315);
-  --color-neutral: oklch(30% 0.025 340);
-  --color-neutral-content: oklch(82% 0.015 340);
+  --color-ink: oklch(92% 0.016 275);
+  --color-base-100: oklch(15% 0.02 275);
+  --color-base-200: oklch(19% 0.024 275);
+  --color-base-300: oklch(25% 0.028 275);
+  --color-base-content: oklch(90% 0.014 275);
+  --color-primary: oklch(76% 0.145 272);
+  --color-primary-content: oklch(16% 0.03 275);
+  --color-secondary: oklch(72% 0.095 275);
+  --color-secondary-content: oklch(16% 0.03 275);
+  --color-accent: oklch(79% 0.1 258);
+  --color-accent-content: oklch(16% 0.03 258);
+  --color-neutral: oklch(28% 0.022 275);
+  --color-neutral-content: oklch(88% 0.012 275);
 
   /* Status colours — see the note in the `paper` block. These are the same
      vivid values daisyUI was injecting, which is correct here: on a near-black
@@ -119,39 +124,36 @@ html[data-theme="paper-dark"] {
   --color-error: oklch(71% 0.194 13.428);
   --color-info: oklch(74% 0.16 232.661);
 
-  --surface: rgba(255, 255, 255, 0.055);
-  --surface-strong: rgba(255, 255, 255, 0.09);
-  --surface-soft: rgba(255, 255, 255, 0.032);
-  --line: rgba(255, 255, 255, 0.12);
-  --line-soft: rgba(255, 255, 255, 0.075);
+  --surface: rgb(255 255 255 / 0.055);
+  --surface-strong: rgb(255 255 255 / 0.09);
+  --surface-soft: rgb(255 255 255 / 0.032);
+  --line: rgb(255 255 255 / 0.12);
+  --line-soft: rgb(255 255 255 / 0.075);
 
-  --text-dim: #e6b9cb;
-  --text-faint: #a8788d;
-  --accent-pink: #ff8fb6;
-  --accent-pink-soft: #ffc5d8;
-  --accent-violet: #c6a4ff;
-  --accent-blue: #91caff;
+  --text-dim: #b9bfe0;
+  --text-faint: #8b91b4;
+  --accent-primary: #93a1ff;
+  --accent-primary-soft: #b9c3ff;
+  --accent-secondary: #b6a8ff;
+  --accent-blue: #8ec5ff;
 
-  --fx-bg: #0b080d;
-  --fx-surface: rgb(24 17 23 / 0.72);
-  --fx-surface-strong: rgb(30 21 29 / 0.88);
-  --fx-line: rgb(255 236 245 / 0.12);
-  --fx-text: #fff7fb;
-  --fx-muted: #d6b9c6;
-  --fx-faint: #9e788b;
-  --fx-pink: #ff8fb6;
-  --fx-pink-soft: #ffc5d8;
-  --fx-shadow: rgb(0 0 0 / 0.44);
+  --fx-bg: #070912;
+  --fx-surface: rgb(16 19 34 / 0.72);
+  --fx-surface-strong: rgb(22 26 44 / 0.9);
+  --fx-line: rgb(255 255 255 / 0.12);
+  --fx-text: #eef1ff;
+  --fx-muted: #b3b9da;
+  --fx-faint: #8b91b4;
+  --fx-accent: #93a1ff;
+  --fx-accent-soft: #b9c3ff;
+  --fx-shadow: rgb(0 0 0 / 0.5);
 
-  /* Same accents as `paper`, but left vivid: the card is dark here, so the
-     original literals already measured 8.53:1 and 10.70:1. */
-  --ncm-icon-provider: oklch(80% 0.14 10);
-  --ncm-icon-meta: oklch(82% 0.15 75);
+  --ncm-icon-provider: oklch(80% 0.13 271);
+  --ncm-icon-meta: oklch(82% 0.12 250);
 
-  /* Deep magenta rather than the pale `paper` pink, because here the
-     foreground is light. Almost identical to the colour this theme already
-     composited to (#603748), so the look is preserved. */
-  --selection-bg: oklch(35% 0.11 352);
+  /* Deep periwinkle rather than the pale `paper` wash, because here the
+     foreground is light. */
+  --selection-bg: oklch(34% 0.09 272);
   --selection-text: var(--color-base-content);
 }
 
@@ -159,8 +161,10 @@ html[data-theme="paper-dark"] {
 :root {
   --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
   --spring: cubic-bezier(0.34, 1.45, 0.5, 1);
-  --code-block-bg: #1c161f;
-  --code-block-text: #e5e7eb;
+  /* Cool navy rather than the old plum: the code block is the one surface that
+     stays dark in both themes, and it should not look like a different site. */
+  --code-block-bg: #0f1322;
+  --code-block-text: #e6e9f7;
 }
 
 /* Island tokens (`island.css`).
@@ -171,18 +175,12 @@ html[data-theme="paper-dark"] {
    hard-coded colour, and keeps every island surface readable against
    its own background rather than the page's.
 
-   Measured WCAG contrast: the fill is now the same opaque `#000` Apple's
-   Dynamic Island is (it is literally the OLED cutout, not a glass panel),
-   which is strictly better for every text token than the previous
-   translucent `rgb(12 11 16 / 0.9)` — the page can no longer show through
-   and lift the background. Re-measure with `.verify/lead-contrast2.mjs`
-   after touching these; the previous numbers were taken against the
-   translucent fill and are no longer the reference. */
+   The fill is the opaque `#000` Apple's Dynamic Island is (it is literally the
+   OLED cutout, not a glass panel), which is strictly better for every text
+   token than a translucent fill — the page can no longer show through and lift
+   the background. Re-measure with `.verify/lead-contrast2.mjs` after touching
+   these. */
 :root {
-  /* Opaque black, both states. This is the single most "Dynamic Island"
-     decision in the file: on the device the pill is the display cutout, so it
-     is pure black and opaque regardless of what is behind it. No border and no
-     backdrop blur for the same reason. */
   --island-bg: #000;
   --island-bg-open: #000;
   --island-border: transparent;
@@ -190,19 +188,19 @@ html[data-theme="paper-dark"] {
   --island-actions-bg: rgb(0 0 0 / 0.55);
   --island-shadow: 0 10px 30px rgb(0 0 0 / 0.32);
   --island-shadow-open: 0 22px 64px rgb(0 0 0 / 0.5);
-  --island-text: #fff8fb;
+  --island-text: #f4f6ff;
   --island-text-strong: #fff;
-  --island-text-dim: rgb(255 236 245 / 0.58);
-  --island-text-faint: rgb(255 236 245 / 0.54);
-  /* White bars, like the iPhone's compact waveform, instead of the site pink. */
+  --island-text-dim: rgb(232 236 255 / 0.58);
+  --island-text-faint: rgb(232 236 255 / 0.54);
+  /* White bars, like the iPhone's compact waveform, instead of a brand hue. */
   --island-wave: rgb(255 255 255 / 0.92);
   --island-wave-top: rgb(255 255 255 / 0.95);
   --island-wave-bottom: rgb(255 255 255 / 0.55);
-  --island-focus: #ffc5d8;
+  --island-focus: #c1c8f7;
 }
 
 /* -----------------------------------------------------------------
-   Type system — two faces, one scale.
+   Type system — three faces, one scale.
 
    Faces answer "which typeface"; the tokens answer "how big, how heavy,
    how tight, how loose". The scale deliberately has seven steps and the
@@ -210,11 +208,17 @@ html[data-theme="paper-dark"] {
    16 font-weights and 21 letter-spacings, which is why the same UI block
    could look different from one card to the next.
 
-   The CJK entries in both stacks are load-bearing, not decorative. The
-   self-hosted JetBrains Mono has no Chinese glyphs, so without an explicit
-   CJK face Chinese falls through to the browser's generic `monospace`,
-   which on Windows is NSimSun — a Song-style serif. That is why article
-   h2s used to render in 宋体 while their own paragraphs were 黑体.
+   The third face is new with the Synthion-inspired re-skin: Playfair Display
+   is what makes a Latin label look like hers — a serif at regular weight with
+   wide tracking, set in caps. It never reaches a Chinese glyph (the family has
+   none), so every CJK heading falls through to the sans stack in
+   `--font-display`, exactly the way the reference site's Japanese copy does.
+
+   The CJK entries in every stack are load-bearing, not decorative. Roboto and
+   JetBrains Mono have no Chinese glyphs, so without an explicit CJK face
+   Chinese falls through to the browser's generic family, which on Windows is
+   NSimSun — a Song-style serif. That is why article h2s used to render in 宋体
+   while their own paragraphs were 黑体.
    ----------------------------------------------------------------- */
 :root {
   /* Eight steps: 11 · 12 · 14 · 16 · 18 · 20 · 22 · clamp(28–34).
@@ -232,14 +236,20 @@ html[data-theme="paper-dark"] {
   /* Three weights: regular copy, emphasis, headings. */
   --weight-body: 400;
   --weight-strong: 600;
-  --weight-display: 800;
+  --weight-display: 700;
+  /* Playfair's own display weight. The reference site sets its name and its
+     section labels at regular weight in caps; anything heavier stops reading as
+     engraved and starts reading as a banner. */
+  --weight-serif: 400;
 
-  /* Three trackings. Negative tracking is for large Latin display type
-     only: at -0.055em Chinese headings started colliding with each other,
-     because CJK glyphs already fill their em box. */
+  /* Four trackings. `--tracking-wide` is the signature of the reference site:
+     its name is 1em type with 0.375rem of tracking, i.e. a third of an em
+     between glyphs. It is Latin-only — a CJK glyph already fills its em box,
+     and this much tracking would pull a Chinese label apart. */
   --tracking-display: -0.02em;
   --tracking-body: 0;
   --tracking-label: 0.16em;
+  --tracking-wide: 0.3em;
 
   /* Four leadings. Chinese needs the loosest one: the em box is the
      character, so 1.5 starts to feel cramped where 1.8 reads calmly. */

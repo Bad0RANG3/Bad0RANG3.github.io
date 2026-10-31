@@ -1,85 +1,94 @@
 // @ts-nocheck
 export {};
 
-/* Sakura atmosphere.
-   The flowers were originally redrawn as five stroked ellipses every frame.
-   Each tone is now rasterised once into an offscreen sprite and blitted with
-   drawImage, which keeps the same look for a fraction of the per-frame path
-   work. Particle counts and DPR are capped, and the loop steps at ~30fps. */
+/* Particle atmosphere.
+   A fixed field of tiny, very faint periwinkle motes drifting slowly upward —
+   the one decorative element the reference design leans on. It replaced the
+   sakura petal field: same canvas, same ~30fps budget, different vocabulary.
+
+   Two things keep it cheap enough to run behind a 5000px article:
+     - every mote is blitted from one pre-rendered radial-gradient sprite, so a
+       frame costs no path work at all (the petals used to be five stroked
+       ellipses each);
+     - the field is seeded once per width, so a mobile address bar sliding in
+       and out does not teleport it.
+   Density, alpha and colour all follow the theme: the dark theme needs more
+   light per mote to stay visible on a near-black page. */
 export const startAtmosphere = () => {
-  const canvas = document.getElementById('sakura-canvas');
+  const canvas = document.getElementById('atmosphere-canvas');
   if (!(canvas instanceof HTMLCanvasElement) || canvas.dataset.bound === '1') return;
   canvas.dataset.bound = '1';
   const context = canvas.getContext('2d');
   if (!context) return;
 
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-  const FLOWER_R = 64;
   const FRAME_INTERVAL = 1000 / 30;
-  let blossoms = [];
+  const SPRITE_SIZE = 32;
+
+  /* [core, edge] per theme. `paper` is the faint wash the reference site uses
+     (its motes are rgba(84,103,232,.11)); `paper-dark` swaps to the lighter
+     periwinkle the dark palette already uses for text accents. */
+  const TONES = {
+    paper: { core: '84, 103, 232', peak: 0.3, floor: 0.08 },
+    'paper-dark': { core: '147, 161, 255', peak: 0.42, floor: 0.1 },
+  };
+
+  const spriteFor = (core) => {
+    const sprite = document.createElement('canvas');
+    sprite.width = SPRITE_SIZE;
+    sprite.height = SPRITE_SIZE;
+    const g = sprite.getContext('2d');
+    const half = SPRITE_SIZE / 2;
+    const gradient = g.createRadialGradient(half, half, 0, half, half, half);
+    // A soft edge rather than a hard one: at 1-3px a flat circle aliases into a
+    // grey square on a white page.
+    gradient.addColorStop(0, `rgba(${core}, 1)`);
+    gradient.addColorStop(0.55, `rgba(${core}, 0.72)`);
+    gradient.addColorStop(1, `rgba(${core}, 0)`);
+    g.fillStyle = gradient;
+    g.beginPath();
+    g.arc(half, half, half, 0, Math.PI * 2);
+    g.fill();
+    return sprite;
+  };
+
+  const sprites = {
+    paper: spriteFor(TONES.paper.core),
+    'paper-dark': spriteFor(TONES['paper-dark'].core),
+  };
+  let theme = document.documentElement.dataset.theme === 'paper-dark' ? 'paper-dark' : 'paper';
+
   let motes = [];
   let frame = 0;
   let lastFrame = 0;
   let width = 0;
   let height = 0;
 
-  const flowerSprites = [
-    ['#ff91af', '#ffd3df'],
-    ['#e56e91', '#ffb6c9'],
-    ['#b174b7', '#efafd5'],
-  ].map(([outer, inner]) => {
-    const sprite = document.createElement('canvas');
-    sprite.width = FLOWER_R * 2;
-    sprite.height = FLOWER_R * 2;
-    const g = sprite.getContext('2d');
-    g.translate(FLOWER_R, FLOWER_R);
-    g.lineWidth = Math.max(0.7, FLOWER_R * 0.018);
-    g.strokeStyle = outer;
-    for (let petal = 0; petal < 5; petal += 1) {
-      g.save();
-      g.rotate((Math.PI * 2 * petal) / 5);
-      g.beginPath();
-      g.ellipse(0, -FLOWER_R * 0.37, FLOWER_R * 0.25, FLOWER_R * 0.46, 0, 0, Math.PI * 2);
-      g.fillStyle = petal % 2 === 0 ? outer : inner;
-      g.fill();
-      g.stroke();
-      g.restore();
-    }
-    g.beginPath();
-    g.arc(0, 0, FLOWER_R * 0.13, 0, Math.PI * 2);
-    g.fillStyle = '#ffe2c5';
-    g.fill();
-    return sprite;
-  });
-
   const seed = () => {
-    const amount = Math.min(56, Math.max(28, Math.round((width * height) / 52000)));
-    blossoms = Array.from({ length: amount }, (_, index) => ({
-      x: Math.random() * width,
-      y: Math.random() * height,
-      radius: 16 + Math.random() * 38,
-      depth: 0.38 + Math.random() * 0.62,
-      speed: 0.18 + Math.random() * 0.34,
-      sway: 0.00042 + Math.random() * 0.00058,
-      phase: Math.random() * Math.PI * 2,
-      alpha: 0.08 + Math.random() * 0.15,
-      spin: (Math.random() - 0.5) * 0.0026,
-      angle: Math.random() * Math.PI,
-      tone: index % 3,
-    }));
-
-    motes = Array.from({ length: Math.min(24, Math.max(12, Math.round(width / 84))) }, () => ({
-      x: Math.random() * width,
-      y: Math.random() * height,
-      size: 1 + Math.random() * 2.8,
-      speed: 0.18 + Math.random() * 0.36,
-      phase: Math.random() * Math.PI * 2,
-      alpha: 0.08 + Math.random() * 0.14,
-    }));
+    const tone = TONES[theme];
+    const amount = Math.min(190, Math.max(36, Math.round((width * height) / 11_000)));
+    motes = Array.from({ length: amount }, () => {
+      // Two thirds of the field is barely-there dust; the rest is a little
+      // brighter so the drift reads as movement rather than noise.
+      const bright = Math.random() < 0.34;
+      return {
+        x: Math.random() * width,
+        y: Math.random() * height,
+        radius: bright ? 0.9 + Math.random() * 1.5 : 0.45 + Math.random() * 0.85,
+        alpha: bright
+          ? tone.peak * (0.55 + Math.random() * 0.45)
+          : tone.floor * (0.6 + Math.random() * 0.8),
+        rise: 0.05 + Math.random() * 0.22,
+        sway: 6 + Math.random() * 26,
+        swaySpeed: 0.00016 + Math.random() * 0.00035,
+        phase: Math.random() * Math.PI * 2,
+        twinkle: 0.0005 + Math.random() * 0.0011,
+      };
+    });
   };
 
   const resize = () => {
-    const ratio = Math.min(window.devicePixelRatio || 1, 1.25);
+    const ratio = Math.min(window.devicePixelRatio || 1, 1.5);
     const previousWidth = width;
     width = window.innerWidth;
     height = window.innerHeight;
@@ -89,34 +98,18 @@ export const startAtmosphere = () => {
     canvas.style.height = `${height}px`;
     context.setTransform(ratio, 0, 0, ratio, 0, 0);
     // Mobile browsers fire resize whenever the address bar slides in or out,
-    // which only changes the height. Reseeding then would teleport every
-    // blossom mid-scroll, so keep the field unless the width actually changed.
-    if (!blossoms.length || width !== previousWidth) seed();
+    // which only changes the height. Reseeding then would teleport the field
+    // mid-scroll, so keep it unless the width actually changed.
+    if (!motes.length || width !== previousWidth || motes.length === 0) seed();
   };
 
-  const drawBlossom = (flower, time) => {
-    const driftX = Math.sin(time * flower.sway + flower.phase) * 34 * flower.depth;
-    const driftY = Math.cos(time * flower.sway * 0.72 + flower.phase) * 20 * flower.depth;
-    const edgeDistance = Math.abs((flower.x / Math.max(width, 1)) - 0.5) * 2;
-    const radius = flower.radius;
-    context.save();
-    context.translate(flower.x + driftX, flower.y + driftY);
-    context.rotate(flower.angle);
-    context.globalAlpha = flower.alpha * (0.42 + edgeDistance * 0.58);
-    context.drawImage(flowerSprites[flower.tone], -radius, -radius, radius * 2, radius * 2);
-    context.restore();
-  };
-
-  const drawMote = (mote, time) => {
-    context.save();
-    context.translate(mote.x + Math.sin(time * 0.00045 + mote.phase) * 18, mote.y);
-    context.rotate(mote.phase + time * 0.00016);
-    context.globalAlpha = mote.alpha;
-    context.fillStyle = '#ffd1df';
-    context.beginPath();
-    context.ellipse(0, 0, mote.size * 1.8, mote.size, Math.PI / 4, 0, Math.PI * 2);
-    context.fill();
-    context.restore();
+  const draw = (mote, time) => {
+    const tone = TONES[theme];
+    const drift = Math.sin(time * mote.swaySpeed + mote.phase) * mote.sway;
+    const pulse = 0.62 + 0.38 * Math.sin(time * mote.twinkle * 6 + mote.phase);
+    const radius = mote.radius * 3.2;
+    context.globalAlpha = Math.min(tone.peak, mote.alpha * pulse);
+    context.drawImage(sprites[theme], mote.x + drift - radius, mote.y - radius, radius * 2, radius * 2);
   };
 
   const render = (now = performance.now()) => {
@@ -131,26 +124,16 @@ export const startAtmosphere = () => {
     lastFrame = now;
 
     context.clearRect(0, 0, width, height);
-    blossoms.forEach((flower) => {
-      drawBlossom(flower, now);
-      if (!reduceMotion.matches) {
-        flower.y += flower.speed;
-        flower.angle += flower.spin;
-      }
-      if (flower.y - flower.radius > height + 50) {
-        flower.x = Math.random() * width;
-        flower.y = -flower.radius - Math.random() * height * 0.18;
-      }
-    });
-
     motes.forEach((mote) => {
-      drawMote(mote, now);
-      if (!reduceMotion.matches) mote.y += mote.speed;
-      if (mote.y > height + 12) {
+      draw(mote, now);
+      if (reduceMotion.matches) return;
+      mote.y -= mote.rise;
+      if (mote.y + mote.radius * 3 < 0) {
+        mote.y = height + mote.radius * 3;
         mote.x = Math.random() * width;
-        mote.y = -12;
       }
     });
+    context.globalAlpha = 1;
 
     if (!reduceMotion.matches) frame = requestAnimationFrame(render);
   };
@@ -164,13 +147,24 @@ export const startAtmosphere = () => {
     render();
   };
 
+  // The theme switch changes the field's colour and its alpha, so the sprites
+  // are reseeded rather than merely repainted.
+  const themeObserver = new MutationObserver(() => {
+    const next = document.documentElement.dataset.theme === 'paper-dark' ? 'paper-dark' : 'paper';
+    if (next === theme) return;
+    theme = next;
+    seed();
+    refresh();
+  });
+  themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
   // Coalesce resize bursts (rotation, address bar animation) into one frame.
   let resizeFrame = 0;
   const scheduleRefresh = () => {
     if (!resizeFrame) resizeFrame = requestAnimationFrame(() => { resizeFrame = 0; refresh(); });
   };
 
-  // The BGA keeps animating while the reader scrolls: it is a fixed overlay and
+  // The field keeps drifting while the reader scrolls: it is a fixed overlay and
   // should feel alive on long pages. Cost stays bounded by the ~30fps step, the
   // capped DPR and the sprite cache, so scroll frames are not starved.
   window.addEventListener('resize', scheduleRefresh, { passive: true });
@@ -178,17 +172,17 @@ export const startAtmosphere = () => {
   document.addEventListener('visibilitychange', () => {
     cancelAnimationFrame(frame);
     frame = 0;
-    // Resume where the petals were instead of reseeding the whole field.
+    // Resume where the motes were instead of reseeding the whole field.
     if (!document.hidden && canvas.isConnected && width > 0) {
       lastFrame = 0;
       render();
     }
   });
 
-  // The canvas is a decorative overlay, so there is no reason to spend frames
-  // on it while the initial render is still settling. Start the ambient loop
-  // once the page has loaded and the browser is idle. Users who asked for
-  // reduced motion get their single static frame immediately.
+  // The canvas is a decorative overlay, so there is no reason to spend frames on
+  // it while the initial render is still settling. Start the ambient loop once
+  // the page has loaded and the browser is idle; readers who asked for reduced
+  // motion get their single static frame immediately.
   const start = () => refresh();
   if (reduceMotion.matches) {
     start();

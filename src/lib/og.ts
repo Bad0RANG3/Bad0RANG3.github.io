@@ -100,19 +100,19 @@ export async function renderOgImage(post: Post): Promise<Uint8Array> {
     flexDirection: 'column',
     justifyContent: 'space-between',
     padding: '72px 80px',
-    background: 'linear-gradient(135deg, #fff8fa 0%, #fdf2f6 45%, #f6c3d6 100%)',
-    color: '#291c23',
+    background: 'linear-gradient(135deg, #ffffff 0%, #f4f6ff 45%, #c1c8f7 100%)',
+    color: '#101223',
     fontFamily: 'Noto Sans SC',
   }, [
-    el('div', { display: 'flex', alignItems: 'center', gap: '18px', fontSize: 30, color: '#b0406b' }, [
-      el('div', { width: '56px', height: '8px', borderRadius: '8px', background: 'linear-gradient(90deg, #d94f81, #8764c5)' }),
+    el('div', { display: 'flex', alignItems: 'center', gap: '18px', fontSize: 30, color: '#3f4fd4' }, [
+      el('div', { width: '56px', height: '8px', borderRadius: '8px', background: 'linear-gradient(90deg, #5467e8, #7d7ce8)' }),
       siteConfig.title,
     ]),
     el('div', { display: 'flex', flexDirection: 'column', gap: '26px' }, [
       el('div', { fontSize: titleSize, lineHeight: 1.2, letterSpacing: '-0.01em' }, title),
-      el('div', { fontSize: 30, lineHeight: 1.5, color: '#755c68', maxHeight: '90px', overflow: 'hidden' }, post.data.description),
+      el('div', { fontSize: 30, lineHeight: 1.5, color: '#474b66', maxHeight: '90px', overflow: 'hidden' }, post.data.description),
     ]),
-    el('div', { display: 'flex', justifyContent: 'space-between', fontSize: 26, color: '#755c68' }, [
+    el('div', { display: 'flex', justifyContent: 'space-between', fontSize: 26, color: '#474b66' }, [
       post.data.category ? `${post.data.category}` : '',
       siteHost,
     ]),
