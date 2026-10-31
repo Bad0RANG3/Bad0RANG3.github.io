@@ -50,6 +50,7 @@ const {
 } = Astro.props;
 
 const currentPath = Astro.url.pathname;
+const isHomePage = currentPath === withBase(ROUTES.HOME);
 const pageTitle = title === siteConfig.title ? title : `${title} | ${siteConfig.title}`;
 const siteRootUrl = siteUrl('/');
 const canonicalUrl = canonical ? siteUrl(canonical) : siteUrl(currentPath);
@@ -213,7 +214,7 @@ const jsonLd = {
   <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)}></script>
 </head>
 
-  <body class="site-body flex min-h-screen flex-col overflow-x-hidden bg-base-100 text-base-content">
+  <body class:list={['site-body flex min-h-screen flex-col overflow-x-hidden bg-base-100 text-base-content', isHomePage && 'page-home']}>
   <div class="site-atmosphere" aria-hidden="true" transition:persist={ambientMotion ? 'site-atmosphere-motion' : 'site-atmosphere-static'}>
     {ambientMotion && <canvas id="atmosphere-canvas"></canvas>}
   </div>

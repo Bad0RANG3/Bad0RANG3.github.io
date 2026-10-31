@@ -219,6 +219,17 @@ html[data-theme="paper-dark"] #atmosphere-canvas { opacity: 1; }
   padding-top: calc(4rem + env(safe-area-inset-top, 0px));
 }
 
+/* The reference homepage places its compact navigation and hero lower in the
+   first viewport, leaving a broad quiet field above the portrait. */
+.page-home .site-nav {
+  padding-top: calc(4rem + clamp(2rem, 24vh, 17rem) + env(safe-area-inset-top, 0px));
+}
+
+.page-home .site-atmosphere::before { display: none; }
+.page-home #atmosphere-canvas { opacity: 1; }
+
+.page-home .site-nav__inner { width: min(calc(100% - 2rem), 70rem); }
+
 .site-nav__inner {
   display: flex;
   align-items: center;
