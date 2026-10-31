@@ -1,19 +1,10 @@
 // @ts-nocheck
 export {};
 
-/* Particle atmosphere.
-   A fixed field of tiny, very faint periwinkle motes drifting slowly upward —
-   the one decorative element the reference design leans on. It replaced the
-   sakura petal field: same canvas, same ~30fps budget, different vocabulary.
-
-   Two things keep it cheap enough to run behind a 5000px article:
-     - every mote is blitted from one pre-rendered radial-gradient sprite, so a
-       frame costs no path work at all (the petals used to be five stroked
-       ellipses each);
-     - the field is seeded once per width, so a mobile address bar sliding in
-       and out does not teleport it.
-   Density, alpha and colour all follow the theme: the dark theme needs more
-   light per mote to stay visible on a near-black page. */
+/* Sparse, translucent particles drift in short paths and fade away, matching
+   the reference's animated SVG background. The field stays fixed to the
+   viewport and uses simple circles so particles remain crisp rather than
+   reading as blurred star glows. */
 export const startAtmosphere = () => {
   const canvas = document.getElementById('atmosphere-canvas');
   if (!(canvas instanceof HTMLCanvasElement) || canvas.dataset.bound === '1') return;
@@ -23,38 +14,12 @@ export const startAtmosphere = () => {
 
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const FRAME_INTERVAL = 1000 / 30;
-  const SPRITE_SIZE = 32;
 
-  /* [core, edge] per theme. `paper` is the faint wash the reference site uses
-     (its motes are rgba(84,103,232,.11)); `paper-dark` swaps to the lighter
-     periwinkle the dark palette already uses for text accents. */
+  /* The reference uses rgba(84, 103, 232, 0.11) dots on white. Keep the same
+     restrained contrast in dark mode with the theme's light periwinkle. */
   const TONES = {
-    paper: { core: '84, 103, 232', peak: 0.3, floor: 0.08 },
-    'paper-dark': { core: '147, 161, 255', peak: 0.42, floor: 0.1 },
-  };
-
-  const spriteFor = (core) => {
-    const sprite = document.createElement('canvas');
-    sprite.width = SPRITE_SIZE;
-    sprite.height = SPRITE_SIZE;
-    const g = sprite.getContext('2d');
-    const half = SPRITE_SIZE / 2;
-    const gradient = g.createRadialGradient(half, half, 0, half, half, half);
-    // A soft edge rather than a hard one: at 1-3px a flat circle aliases into a
-    // grey square on a white page.
-    gradient.addColorStop(0, `rgba(${core}, 1)`);
-    gradient.addColorStop(0.55, `rgba(${core}, 0.72)`);
-    gradient.addColorStop(1, `rgba(${core}, 0)`);
-    g.fillStyle = gradient;
-    g.beginPath();
-    g.arc(half, half, half, 0, Math.PI * 2);
-    g.fill();
-    return sprite;
-  };
-
-  const sprites = {
-    paper: spriteFor(TONES.paper.core),
-    'paper-dark': spriteFor(TONES['paper-dark'].core),
+    paper: { core: '84, 103, 232', alpha: 0.11 },
+    'paper-dark': { core: '147, 161, 255', alpha: 0.11 },
   };
   let theme = document.documentElement.dataset.theme === 'paper-dark' ? 'paper-dark' : 'paper';
 
@@ -65,24 +30,20 @@ export const startAtmosphere = () => {
   let height = 0;
 
   const seed = () => {
-    const tone = TONES[theme];
-    const amount = Math.min(190, Math.max(36, Math.round((width * height) / 11_000)));
-    motes = Array.from({ length: amount }, () => {
-      // Two thirds of the field is barely-there dust; the rest is a little
-      // brighter so the drift reads as movement rather than noise.
-      const bright = Math.random() < 0.34;
+    motes = Array.from({ length: 87 }, () => {
+      const angle = Math.random() * Math.PI * 2;
+      const travel = 20 + Math.random() * 100;
+      const period = 5000;
       return {
         x: Math.random() * width,
         y: Math.random() * height,
-        radius: bright ? 0.9 + Math.random() * 1.5 : 0.45 + Math.random() * 0.85,
-        alpha: bright
-          ? tone.peak * (0.55 + Math.random() * 0.45)
-          : tone.floor * (0.6 + Math.random() * 0.8),
-        rise: 0.05 + Math.random() * 0.22,
-        sway: 6 + Math.random() * 26,
-        swaySpeed: 0.00016 + Math.random() * 0.00035,
-        phase: Math.random() * Math.PI * 2,
-        twinkle: 0.0005 + Math.random() * 0.0011,
+        dx: Math.cos(angle) * travel * (width / 640),
+        dy: Math.sin(angle) * travel * (height / 480),
+        radius: 0.2 + Math.pow(Math.random(), 0.85) * 2.8,
+        active: Math.random() < 0.4,
+        period,
+        lifetime: 1000 + Math.random() * 2000,
+        phase: Math.random() * period,
       };
     });
   };
@@ -105,11 +66,27 @@ export const startAtmosphere = () => {
 
   const draw = (mote, time) => {
     const tone = TONES[theme];
-    const drift = Math.sin(time * mote.swaySpeed + mote.phase) * mote.sway;
-    const pulse = 0.62 + 0.38 * Math.sin(time * mote.twinkle * 6 + mote.phase);
-    const radius = mote.radius * 3.2;
-    context.globalAlpha = Math.min(tone.peak, mote.alpha * pulse);
-    context.drawImage(sprites[theme], mote.x + drift - radius, mote.y - radius, radius * 2, radius * 2);
+    if (!mote.active) return;
+    const age = (time + mote.phase) % mote.period;
+    if (age >= mote.lifetime) return;
+
+    const progress = age / mote.period;
+    const eased = progress * progress;
+    const fadeProgress = age / mote.lifetime;
+    const fade = fadeProgress < 0.55 ? 1 : 1 - (fadeProgress - 0.55) / 0.45;
+    context.globalAlpha = tone.alpha * fade;
+    context.fillStyle = `rgb(${tone.core})`;
+    context.beginPath();
+    context.ellipse(
+      mote.x + mote.dx * eased,
+      mote.y + mote.dy * eased,
+      mote.radius * (width / 640) * (0.8 + progress * 0.4),
+      mote.radius * (height / 480) * (0.8 + progress * 0.4),
+      0,
+      0,
+      Math.PI * 2,
+    );
+    context.fill();
   };
 
   const render = (now = performance.now()) => {
@@ -117,22 +94,14 @@ export const startAtmosphere = () => {
     // ClientRouter persists this canvas between pages; a detached node means the
     // whole atmosphere was replaced, so stop instead of burning frames.
     if (!canvas.isConnected) return;
-    if (now - lastFrame < FRAME_INTERVAL) {
-      if (!reduceMotion.matches) frame = requestAnimationFrame(render);
+    if (!reduceMotion.matches && now - lastFrame < FRAME_INTERVAL) {
+      frame = requestAnimationFrame(render);
       return;
     }
     lastFrame = now;
 
     context.clearRect(0, 0, width, height);
-    motes.forEach((mote) => {
-      draw(mote, now);
-      if (reduceMotion.matches) return;
-      mote.y -= mote.rise;
-      if (mote.y + mote.radius * 3 < 0) {
-        mote.y = height + mote.radius * 3;
-        mote.x = Math.random() * width;
-      }
-    });
+    motes.forEach((mote) => draw(mote, now));
     context.globalAlpha = 1;
 
     if (!reduceMotion.matches) frame = requestAnimationFrame(render);
@@ -147,8 +116,7 @@ export const startAtmosphere = () => {
     render();
   };
 
-  // The theme switch changes the field's colour and its alpha, so the sprites
-  // are reseeded rather than merely repainted.
+  // Re-seed on a theme switch so the color change takes effect immediately.
   const themeObserver = new MutationObserver(() => {
     const next = document.documentElement.dataset.theme === 'paper-dark' ? 'paper-dark' : 'paper';
     if (next === theme) return;
@@ -164,9 +132,8 @@ export const startAtmosphere = () => {
     if (!resizeFrame) resizeFrame = requestAnimationFrame(() => { resizeFrame = 0; refresh(); });
   };
 
-  // The field keeps drifting while the reader scrolls: it is a fixed overlay and
-  // should feel alive on long pages. Cost stays bounded by the ~30fps step, the
-  // capped DPR and the sprite cache, so scroll frames are not starved.
+  // The fixed field keeps moving while the reader scrolls. The 30fps cap and
+  // capped DPR keep its work bounded behind long pages.
   window.addEventListener('resize', scheduleRefresh, { passive: true });
   reduceMotion.addEventListener?.('change', refresh);
   document.addEventListener('visibilitychange', () => {

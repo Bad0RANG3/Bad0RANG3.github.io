@@ -1,295 +1,65 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Icon from '../components/icons/Icon.astro';
 import SectionHeader from '../components/ui/SectionHeader.astro';
-import { projects } from '../config/projects';
-import { ROUTES, postPath, thoughtAnchor } from '../config/routes';
-import { siteConfig } from '../config/site';
-import { STAGGER } from '../config/ui';
-import { getPostReadingMinutes, getPublishedPosts, getThoughts } from '../lib/content';
-import { formatDate } from '../lib/date';
+import { ROUTES } from '../config/routes';
+import { SOCIAL_ICONS, siteConfig } from '../config/site';
 import { withBase } from '../lib/urls';
 
-/* The home page is laid out like the reference site it borrows its look from:
-   a hero plate with the author's illustration, an about block, and a works
-   block whose entries are grouped by year and shown as plates rather than as a
-   feed. The feed still exists at /posts/; this page is the front door. */
-const posts = await getPublishedPosts();
-const thoughts = await getThoughts();
-const { author, music, netease, github, about } = siteConfig;
-const songUrl = music.officialUrl;
-
-/** Newest year first. Frontmatter dates are UTC midnight (see lib/date.ts). */
-const groupByYear = <T extends { data: { date: Date } }>(items: T[]) => {
-  const groups = new Map<number, T[]>();
-  for (const item of items) {
-    const year = item.data.date.getUTCFullYear();
-    const bucket = groups.get(year);
-    if (bucket) bucket.push(item);
-    else groups.set(year, [item]);
-  }
-  return [...groups.entries()].sort(([a], [b]) => b - a);
-};
-
-/** Thoughts are body-only; the tile needs one line of preview text. */
-const thoughtPreview = (body: string) =>
-  (body ?? '')
-    .replace(/```[\s\S]*?```/g, ' ')
-    .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
-    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/[#>*_`~]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-
-const postYears = groupByYear(posts);
-const thoughtYears = groupByYear(thoughts);
-const coverHref = (cover: string) => withBase(cover);
-
-/* Most posts have no cover art, so their tile shows a typographic plate. The
-   plate's hue comes from the category: derived rather than hand-mapped, so a new
-   category still lands inside the accent family instead of falling back to a
-   default, and the grid reads as a mosaic rather than a wall of identical
-   washes. Three stops — periwinkle, violet, blue. */
-const plateHue = (label: string) => {
-  let hash = 0;
-  for (const char of label) hash = (hash * 31 + (char.codePointAt(0) ?? 0)) % 997;
-  return hash % 3;
-};
+const { author, socials, about } = siteConfig;
+const displaySocials = socials.filter((social) => social.name !== 'Email');
 ---
 
 <BaseLayout title={siteConfig.title} description={siteConfig.description}>
   <div class="home">
-    <!-- ------------------------------------------------------------------
-         Hero — the reference site leads with an illustration plate beside the
-         name, a hairline rule, the tagline and a single contact link.
-         ------------------------------------------------------------------ -->
-    <section id="home-section" class="home-hero site-frame" aria-labelledby="home-title" data-island-cue="首页概览">
+    <section id="home-section" class="home-hero site-frame" aria-labelledby="home-title" data-island-cue="Home">
       <div class="hero-plate reveal">
         <figure class="hero-plate__frame">
-          <img
-            src={withBase('/HP.webp')}
-            alt={`${author.name} 的形象插画`}
-            width="1200"
-            height="1200"
-            fetchpriority="high"
-            decoding="async"
-          />
+          <img src={withBase('/HP.webp')} alt={author.name + ' portrait illustration'} width="1200" height="1200" fetchpriority="high" decoding="async" />
         </figure>
         <p class="hero-credit">illustration · {author.name}</p>
       </div>
-
-      <div class="hero-identity reveal" style={`--reveal-delay:${STAGGER.CARD_START}ms`}>
+      <div class="hero-identity reveal">
         <h1 id="home-title" class="hero-name">{author.name}</h1>
         <div class="rule-hairline hero-rule"></div>
         <p class="hero-tagline">
-          <span>{author.intro}</span>
-          <span>拆解软件、写点代码、折腾配置。</span>
-          <span>来聊聊 / Say hi :</span>
+          <span>Computer enthusiast and software tinkerer.</span>
+          <span>Notes on code, games, tools, and projects.</span>
+          <span>Inquiries / Contact:</span>
         </p>
-        <ul class="hero-links">
-          <li><a href={`mailto:${author.email}`}>{author.email}</a></li>
-        </ul>
-      </div>
-    </section>
-
-    <!-- ------------------------------------------------------------------
-         About — two columns, the way the reference site pairs prose with a
-         plate. The right column keeps the two live cards the old sidebar
-         carried, so nothing that used to be on this page is lost.
-         ------------------------------------------------------------------ -->
-    <section id="about-section" class="home-about site-frame" aria-labelledby="about-title" data-island-cue="关于">
-      <div class="about-grid">
-        <div class="about-copy reveal">
-          <SectionHeader label="About" title="关于" titleId="about-title" />
-          <ul class="about-switch">
-            <li><a href={withBase(ROUTES.ABOUT)}>更多关于我</a></li>
-            <li><a href={withBase(ROUTES.ARCHIVE)}>全部归档</a></li>
-            <li><a href={withBase(ROUTES.RSS)}>RSS 订阅</a></li>
-          </ul>
-          <div class="about-prose">
-            <p>{author.intro}这里记录软件推荐、CS2、Minecraft、开发工具、项目实践与日常思考。</p>
-            <p>
-              常用语言与框架：
-              {about.techStack.map((item) => item.name).join(' · ')}。
-            </p>
-            <p>
-              日常工具：
-              {about.devTools.map((item) => item.name).join(' · ')}。
-            </p>
-          </div>
-        </div>
-
-        <aside class="about-side reveal" style={`--reveal-delay:${STAGGER.CARD_STEP}ms`} aria-label="音乐与开发动态">
-          <!-- The player card mirrors the island: the island is the control, this
-               is the readable copy of the same state. -->
-          <section class="player-card" data-now-card data-playing="false" data-island-cue="正在播放">
-            <div class="player-card__art">
-              <img src={withBase(music.cover)} alt={`${music.album} 专辑封面`} width="320" height="320" loading="lazy" />
-            </div>
-
-            <h2 class="player-card__title">{music.title}</h2>
-            <p class="player-card__artist">{music.artist} · {music.album}</p>
-
-            <div class="player-card__bar" data-live-progress><i></i></div>
-
-            <div class="player-card__actions">
-              <button class="player-card__toggle" type="button" data-now-toggle aria-label="播放音乐">
-                <span class="player-card__glyph" aria-hidden="true"></span>
-                <span data-now-toggle-copy>播放</span>
-              </button>
-              <a class="player-card__link" href={songUrl} target="_blank" rel="noreferrer">
-                网易云 <Icon name="arrow-up-right" class="h-3.5 w-3.5" />
-              </a>
-            </div>
-          </section>
-
-          <section
-            class="side-block"
-            data-ncm-profile
-            data-api-base={netease.apiBase}
-            data-user-id={netease.userId}
-            aria-labelledby="side-ncm-title"
-          >
-            <header class="side-block__head">
-              <h2 id="side-ncm-title">在别处</h2>
-              <div class="side-block__links">
-                <a href={netease.profileUrl} target="_blank" rel="noreferrer" aria-label={`前往 ${netease.fallback.nickname} 的网易云主页`}><Icon name="arrow-up-right" class="h-3.5 w-3.5" /></a>
-                <a href={github.profileUrl} target="_blank" rel="noreferrer" aria-label={`前往 ${github.username} 的 GitHub`}><Icon name="github" class="h-3.5 w-3.5" /></a>
-              </div>
-            </header>
-
-            <div class="side-person">
-              <img data-ncm-avatar src={netease.fallback.avatarUrl} alt={`${netease.fallback.nickname} 的网易云头像`} width="80" height="80" loading="lazy" />
-              <div>
-                <p class="side-person__name">
-                  <strong data-ncm-name>{netease.fallback.nickname}</strong>
-                  <span class="side-badge" data-ncm-vip>{netease.fallback.vipLabel}</span>
-                </p>
-                <p class="side-person__note" data-ncm-signature>{netease.fallback.signature}</p>
-              </div>
-            </div>
-
-            <dl class="side-metrics">
-              <div><dt>关注</dt><dd data-ncm-follows>{netease.fallback.follows}</dd></div>
-              <div><dt>粉丝</dt><dd data-ncm-followeds>{netease.fallback.followeds}</dd></div>
-              <div><dt>播放</dt><dd data-ncm-listens>{netease.fallback.listenSongs.toLocaleString('zh-CN')}</dd></div>
-            </dl>
-          </section>
-        </aside>
-      </div>
-    </section>
-
-    <!-- ------------------------------------------------------------------
-         Works — one gallery per content type, each writing group split by
-         year, exactly the shape the reference site uses for its releases.
-         ------------------------------------------------------------------ -->
-    <section id="works-section" class="home-works site-frame" aria-labelledby="works-title" data-island-cue="作品">
-      <div class="works-head reveal">
-        <SectionHeader label="Works" title="作品" titleId="works-title" />
-        <ul class="works-filter">
-          <li><a href="#works-writing">文章 {posts.length}</a></li>
-          <li><a href="#works-thoughts">碎碎念 {thoughts.length}</a></li>
-          <li><a href="#works-projects">项目 {projects.length}</a></li>
-        </ul>
-      </div>
-
-      <div id="works-writing" class="works-group">
-        {postYears.map(([year, items]) => (
-          <section class="works-year" aria-label={`${year} 年的文章`}>
-            <h3 class="works-year__label">{year}</h3>
-            <ul class="works-grid">
-              {items.map((post, index) => (
-                <li class="work reveal" style={`--reveal-delay:${STAGGER.LIST_START + index * STAGGER.LIST_STEP}ms`}>
-                  <a class="work__link" href={withBase(postPath(post.slug))}>
-                    <span class="work__frame">
-                      {post.data.cover ? (
-                        <img src={coverHref(post.data.cover)} alt="" width="640" height="480" loading="lazy" decoding="async" />
-                      ) : (
-                        <span class="work__plate" data-hue={plateHue(post.data.category ?? '笔记')} aria-hidden="true">{post.data.category ?? '笔记'}</span>
-                      )}
-                      <span class="work__veil" aria-hidden="true">
-                        <span class="work__veil-text">{post.data.description}</span>
-                      </span>
-                    </span>
-                    <span class="work__body">
-                      <strong class="work__title">{post.data.title}</strong>
-                      <span class="work__meta">
-                        {formatDate(post.data.date)} · {getPostReadingMinutes(post)} 分钟
-                      </span>
-                    </span>
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ))}
-      </div>
-
-      <div class="rule-hairline works-divider"></div>
-
-      <div id="works-thoughts" class="works-group">
-        {thoughtYears.map(([year, items]) => (
-          <section class="works-year" aria-label={`${year} 年的碎碎念`}>
-            <h3 class="works-year__label">碎碎念 · {year}</h3>
-            <ul class="works-grid works-grid--thoughts">
-              {items.map((thought, index) => (
-                <li class="work reveal" style={`--reveal-delay:${STAGGER.LIST_START + index * STAGGER.LIST_STEP}ms`}>
-                  <a class="work__link" href={withBase(`${ROUTES.THOUGHTS}/#${thoughtAnchor(thought.slug)}`)}>
-                    <span class="work__frame">
-                      <span class="work__plate work__plate--date" aria-hidden="true">
-                        {String(thought.data.date.getUTCMonth() + 1).padStart(2, '0')}/{String(thought.data.date.getUTCDate()).padStart(2, '0')}
-                      </span>
-                      <span class="work__veil" aria-hidden="true">
-                        <span class="work__veil-text">{thoughtPreview(thought.body)}</span>
-                      </span>
-                    </span>
-                    <span class="work__body">
-                      <strong class="work__title">{thoughtPreview(thought.body)}</strong>
-                      <span class="work__meta">碎碎念 · {formatDate(thought.data.date)}</span>
-                    </span>
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ))}
-      </div>
-
-      <div class="rule-hairline works-divider"></div>
-
-      <div id="works-projects" class="works-group">
-        <section class="works-year" aria-label="项目">
-          <h3 class="works-year__label">在做的东西</h3>
-          <ul class="works-grid">
-            {projects.map((project, index) => (
-              <li class="work reveal" style={`--reveal-delay:${STAGGER.CARD_START + index * STAGGER.CARD_STEP}ms`}>
-                <a class="work__link" href={withBase(project.href)}>
-                  <span class="work__frame">
-                    <span class="work__plate work__plate--mono" data-hue={plateHue(project.name)} aria-hidden="true">{project.name.slice(0, 1).toUpperCase()}</span>
-                    <span class="work__veil" aria-hidden="true">
-                      <span class="work__veil-text">{project.summary}</span>
-                    </span>
-                  </span>
-                  <span class="work__body">
-                    <strong class="work__title">{project.name}</strong>
-                    <span class="work__meta">{project.summary}</span>
-                  </span>
+        <ul class="hero-links"><li><a href={'mailto:' + author.email}>{author.email}</a></li></ul>
+        <ul class="hero-socials" aria-label="Social links">
+          {displaySocials.map((social) => {
+            const icon = SOCIAL_ICONS[social.name as keyof typeof SOCIAL_ICONS];
+            return (
+              <li>
+                <a href={social.url} target={social.url.startsWith('mailto:') ? undefined : '_blank'} rel={social.url.startsWith('mailto:') ? undefined : 'noopener noreferrer'} aria-label={social.name} title={social.name}>
+                  {icon && <img src={withBase(icon)} alt="" width="20" height="20" loading="lazy" />}
                 </a>
               </li>
-            ))}
-          </ul>
-        </section>
+            );
+          })}
+        </ul>
       </div>
+    </section>
 
-      <a class="works-more" href={withBase(ROUTES.EXPLORE)}>
-        在「探索」里按标签翻 <Icon name="arrow-up-right" class="h-3.5 w-3.5" />
-      </a>
+    <section id="about-section" class="home-about site-frame" aria-labelledby="about-title" data-island-cue="About">
+      <div class="about-copy reveal">
+        <SectionHeader label="About" title="About me" titleId="about-title" />
+        <ul class="about-switch" aria-label="More site links">
+          <li><a href={withBase(ROUTES.ABOUT)}>More about me</a></li>
+          <li><a href={withBase(ROUTES.ARCHIVE)}>Archive</a></li>
+          <li><a href={withBase(ROUTES.RSS)}>RSS feed</a></li>
+        </ul>
+        <div class="about-prose">
+          <p>I’m <strong>{author.name}</strong>, a computer enthusiast who enjoys taking things apart and figuring out how they work.</p>
+          <p>This blog is where I share notes on software, CS2, Minecraft, development tools, projects, and everyday thoughts.</p>
+          <p>Languages and frameworks: {about.techStack.map((item) => item.name).join(' · ')}.</p>
+          <p>Everyday tools: {about.devTools.map((item) => item.name).join(' · ')}.</p>
+        </div>
+      </div>
     </section>
   </div>
-
   <script>
-    import '../scripts/home';
     import '../scripts/home-motion';
   </script>
 </BaseLayout>
@@ -299,80 +69,50 @@ const plateHue = (label: string) => {
     --ink: var(--fx-text);
     --muted: var(--fx-muted);
     --soft: var(--text-faint);
-    --line: var(--fx-line);
     --accent: var(--fx-accent);
-    padding-block: clamp(1.25rem, 3vw, 2rem) clamp(2rem, 5vw, 3.5rem);
+    padding-block: clamp(1.25rem, 3vh, 2rem) clamp(3rem, 7vh, 5rem);
   }
 
-  /* ==================================================================
-     Hero
-     ================================================================== */
-  .home-hero {
+  .home .home-hero {
     display: grid;
-    grid-template-columns: minmax(0, 1.02fr) minmax(0, 0.98fr);
+    width: min(calc(100% - 2rem), 51rem);
+    grid-template-columns: minmax(0, 0.98fr) minmax(0, 1.02fr);
     align-items: center;
-    gap: clamp(1.5rem, 4vw, 3.25rem);
-    padding-block: clamp(0.75rem, 2vw, 1.5rem) clamp(2rem, 4.5vw, 3.25rem);
+    gap: clamp(1.5rem, 4vw, 2.5rem);
+    padding-block: clamp(0.75rem, 2vw, 1.5rem) clamp(2rem, 5vh, 3.5rem);
   }
 
-  /* The illustration plate copies the reference site's image frame: a hairline
-     box with a quarter-rem of white inlay between border and artwork. */
-  .hero-plate__frame {
-    margin: 0;
-    overflow: hidden;
-    border: 1px solid var(--line);
-    border-radius: 1.5rem;
-    padding: 0.25rem;
-    background: color-mix(in srgb, var(--fx-surface-strong) 92%, transparent);
-  }
-
-  .hero-plate__frame img {
-    display: block;
-    width: 100%;
-    height: auto;
-    aspect-ratio: 1 / 1;
-    object-fit: cover;
-    border-radius: calc(1.5rem - 0.25rem);
-  }
+  .hero-plate__frame { aspect-ratio: 4 / 3; margin: 0; overflow: hidden; }
+  .hero-plate__frame img { display: block; width: 100%; height: 100%; object-fit: cover; }
 
   .hero-credit {
-    margin: 0.7rem 0 0;
+    margin: 0.55rem 0 0;
     color: var(--soft);
     font-size: var(--type-meta);
+    text-align: right;
   }
 
   .hero-identity { min-width: 0; }
-
   .hero-name {
     margin: 0;
     color: var(--ink);
     font-family: var(--font-display);
-    font-size: clamp(1.9rem, 4.6vw, 3rem);
+    font-size: clamp(3rem, 5.5vw, 5rem);
     font-weight: var(--weight-serif);
-    letter-spacing: var(--tracking-wide);
+    letter-spacing: 0.025em;
     line-height: 1.08;
-    text-transform: uppercase;
   }
-
   .hero-rule { margin: clamp(1rem, 2.2vw, 1.5rem) 0; }
-
   .hero-tagline {
     display: grid;
-    gap: 0.4rem;
+    gap: 0.45rem;
     margin: 0;
     max-width: 27rem;
     color: var(--muted);
     font-size: var(--type-small);
     line-height: var(--leading-prose);
   }
-
-  .hero-links {
-    margin: 1.2rem 0 0;
-    padding: 0;
-    list-style: none;
-    font-size: var(--type-small);
-  }
-
+  .hero-links { margin: 1rem 0 0; padding: 0; list-style: none; font-size: var(--type-small); }
   .hero-links a {
     color: var(--accent-primary-soft);
     text-decoration: underline;
@@ -381,26 +121,37 @@ const plateHue = (label: string) => {
     text-underline-offset: 0.24em;
     transition: color 0.2s var(--ease), text-decoration-color 0.2s var(--ease);
   }
-
   .hero-links a:hover,
   .hero-links a:focus-visible { color: var(--accent); text-decoration-color: currentColor; }
 
-  /* ==================================================================
-     About
-     ================================================================== */
-  .home-about {
-    padding-block: clamp(2.25rem, 5.5vw, 4rem);
+  .hero-socials {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: clamp(0.75rem, 1vw, 1rem);
+    margin: clamp(2rem, 7vh, 4rem) 0 0;
+    padding: 0;
+    list-style: none;
   }
-
-  .about-grid {
+  .hero-socials a {
     display: grid;
-    grid-template-columns: minmax(0, 1.12fr) minmax(0, 0.88fr);
-    align-items: start;
-    gap: clamp(1.75rem, 4.5vw, 3.5rem);
+    width: 1.5rem;
+    height: 1.5rem;
+    place-items: center;
+    opacity: 0.78;
+    transition: opacity 0.2s var(--ease), transform 0.2s var(--ease);
   }
+  .hero-socials a:hover,
+  .hero-socials a:focus-visible { opacity: 1; transform: translateY(-2px); }
+  .hero-socials img { display: block; max-width: 1rem; max-height: 1rem; filter: grayscale(1) brightness(0.22); }
 
-  /* Directly under the heading, the way the reference site puts its language
-     switch there. */
+  html[data-theme="paper-dark"] .hero-socials img { filter: grayscale(1) brightness(0) invert(1); }
+
+  .home .home-about {
+    width: min(calc(100% - 2rem), 70rem);
+    padding-block: clamp(3rem, 8vh, 6rem) 0;
+  }
+  .about-copy { max-width: 45rem; }
   .about-switch {
     display: flex;
     flex-wrap: wrap;
@@ -410,7 +161,6 @@ const plateHue = (label: string) => {
     list-style: none;
     font-size: var(--type-meta);
   }
-
   .about-switch a {
     color: var(--muted);
     text-decoration: underline;
@@ -418,489 +168,36 @@ const plateHue = (label: string) => {
     text-underline-offset: 0.22em;
     transition: color 0.2s var(--ease);
   }
-
   .about-switch a:hover,
   .about-switch a:focus-visible { color: var(--accent); }
-
   .about-prose { display: grid; gap: 0.9rem; }
-
   .about-prose p {
     margin: 0;
     color: var(--muted);
     font-size: var(--type-body);
     line-height: var(--leading-prose);
   }
+  .about-prose strong { color: var(--ink); }
 
-  .about-side { display: grid; gap: 0.9rem; }
-
-  /* ==================================================================
-     Works
-     ================================================================== */
-  .home-works {
-    padding-block: clamp(2.25rem, 5.5vw, 4rem) 0;
-  }
-
-  /* The reference site separates its galleries with a plain hairline and gives
-     its header row no rule at all, so the only lines on this page are the ones
-     inside the works list. */
-  .works-head {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 1.5rem;
-    padding-bottom: 0.35rem;
-  }
-
-  .works-head :global(.section-heading) { margin-bottom: 0; }
-
-  .works-filter {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem clamp(0.9rem, 2.4vw, 1.9rem);
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    font-size: var(--type-small);
-  }
-
-  .works-filter a {
-    position: relative;
-    color: var(--muted);
-    transition: color 0.22s var(--ease);
-  }
-
-  .works-filter a::after {
-    position: absolute;
-    right: 0;
-    bottom: -0.2rem;
-    left: 0;
-    height: 1px;
-    transform: scaleX(0);
-    transform-origin: left;
-    background: var(--accent);
-    content: '';
-    transition: transform 0.28s var(--ease);
-  }
-
-  .works-filter a:hover,
-  .works-filter a:focus-visible { color: var(--ink); }
-  .works-filter a:hover::after,
-  .works-filter a:focus-visible::after { transform: scaleX(1); }
-
-  .works-group { padding-top: 0.5rem; }
-
-  .works-year { padding-block: clamp(1.5rem, 3.2vw, 2.25rem) 0; }
-
-  /* Between year groups only — the first one starts right under the header row,
-     which is how the reference site spaces its galleries. */
-  .works-year + .works-year {
-    margin-top: clamp(1.25rem, 2.6vw, 2rem);
-    border-top: 1px solid var(--line);
-  }
-
-  /* The reference site sets its year headings in a tracked grotesque at 1.5em. */
-  .works-year__label {
-    margin: 0 0 1rem;
-    color: var(--muted);
-    font-family: var(--font-display);
-    font-size: var(--type-heading);
-    font-weight: var(--weight-serif);
-    letter-spacing: var(--tracking-label);
-    line-height: 1.2;
-  }
-
-  .works-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 12.5rem), 1fr));
-    gap: clamp(0.75rem, 1.6vw, 1.15rem);
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  .work { min-width: 0; }
-
-  .work__link {
-    display: grid;
-    gap: 0.6rem;
-    color: inherit;
-  }
-
-  .work__frame {
-    position: relative;
-    display: block;
-    overflow: hidden;
-    aspect-ratio: 4 / 3;
-    border: 1px solid var(--line);
-    border-radius: 1.1rem;
-    background: color-mix(in srgb, var(--fx-surface-strong) 80%, transparent);
-  }
-
-  .work__frame img {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.5s var(--ease);
-  }
-
-  .work__link:hover .work__frame img,
-  .work__link:focus-visible .work__frame img { transform: scale(1.03); }
-
-  /* Posts without a cover art plate get a typographic one rather than a hole in
-     the grid: the category, tracked, over the same faint periwinkle wash the
-     rest of the site uses. `--plate-accent` lets the hue vary within the accent
-     family (see `plateHue`), which keeps a 16-tile grid from reading as one
-     flat wall. */
-  .work__plate {
-    --plate-accent: var(--accent);
-
-    display: grid;
-    height: 100%;
-    place-items: center;
-    background:
-      radial-gradient(ellipse 70% 60% at 30% 20%, color-mix(in srgb, var(--plate-accent) 16%, transparent), transparent 70%),
-      color-mix(in srgb, var(--plate-accent) 7%, transparent);
-    color: color-mix(in srgb, var(--plate-accent) 58%, var(--ink));
-    font-family: var(--font-display);
-    font-size: var(--type-meta);
-    font-weight: var(--weight-serif);
-    letter-spacing: var(--tracking-label);
-    text-transform: uppercase;
-  }
-
-  .work__plate[data-hue='1'] { --plate-accent: var(--accent-secondary); }
-  .work__plate[data-hue='2'] { --plate-accent: var(--accent-blue); }
-
-  .work__plate--date {
-    font-size: var(--type-heading);
-    letter-spacing: var(--tracking-body);
-    color: color-mix(in srgb, var(--plate-accent) 60%, var(--ink));
-  }
-
-  .work__plate--mono {
-    font-size: 2.6rem;
-    letter-spacing: var(--tracking-body);
-    text-transform: none;
-    color: color-mix(in srgb, var(--plate-accent) 55%, var(--ink));
-  }
-
-  /* The hover veil: a translucent periwinkle pane with a 0.55rem blur, exactly
-     the treatment the reference galleries use, holding the description. */
-  .work__veil {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    padding: 0.9rem 1rem;
-    opacity: 0;
-    background: var(--veil-bg);
-    color: var(--veil-text);
-    font-size: var(--type-meta);
-    line-height: 1.6;
-    backdrop-filter: blur(0.55rem);
-    transition: opacity 0.375s var(--ease), transform 0.25s var(--ease);
-  }
-
-  .work__veil-text {
-    display: -webkit-box;
-    overflow: hidden;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 4;
-  }
-
-  .work__link:hover .work__veil,
-  .work__link:focus-visible .work__veil { opacity: 1; transform: scale(1.0425); }
-
-  .work__body { display: grid; gap: 0.25rem; }
-
-  .work__title {
-    display: -webkit-box;
-    overflow: hidden;
-    color: var(--ink);
-    font-size: var(--type-small);
-    font-weight: var(--weight-strong);
-    line-height: 1.5;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-  }
-
-  .work__meta {
-    overflow: hidden;
-    color: var(--soft);
-    font-size: var(--type-meta);
-    line-height: 1.5;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .works-divider { margin-block: clamp(1.75rem, 4vw, 2.75rem) 0; }
-
-  .works-more {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
-    margin-top: clamp(1.75rem, 4vw, 2.5rem);
-    color: var(--soft);
-    font-size: var(--type-meta);
-    font-weight: var(--weight-strong);
-    transition: color 0.2s var(--ease), gap 0.2s var(--ease);
-  }
-
-  .works-more:hover,
-  .works-more:focus-visible { color: var(--accent); gap: 0.42rem; }
-
-  /* ==================================================================
-     Cards carried over from the old sidebar (player + account)
-     ================================================================== */
-  .player-card {
-    position: relative;
-    overflow: hidden;
-    border: 1px solid var(--line);
-    border-radius: 1.35rem;
-    padding: 0.8rem 0.8rem 1rem;
-    background: color-mix(in srgb, var(--fx-surface-strong) 92%, transparent);
-  }
-
-  .player-card__art {
-    position: relative;
-    overflow: hidden;
-    border-radius: 1rem;
-    background: color-mix(in srgb, var(--accent) 12%, transparent);
-  }
-
-  .player-card__art img {
-    display: block;
-    width: 100%;
-    height: auto;
-    aspect-ratio: 3 / 2;
-    object-fit: cover;
-    transition: transform 0.7s var(--ease);
-  }
-
-  .player-card[data-playing='true'] .player-card__art img { transform: scale(1.04); }
-
-  .player-card__title {
-    margin: 0.8rem 0 0;
-    color: var(--ink);
-    font-family: var(--font-display);
-    font-size: var(--type-lead);
-    font-weight: var(--weight-display);
-    line-height: var(--leading-heading);
-  }
-
-  .player-card__artist {
-    margin: 0.2rem 0 0;
-    color: var(--muted);
-    font-size: var(--type-meta);
-  }
-
-  .player-card__bar {
-    height: 3px;
-    margin-top: 0.8rem;
-    overflow: hidden;
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--ink) 12%, transparent);
-  }
-
-  .player-card__bar i {
-    display: block;
-    width: var(--live-progress, 0%);
-    height: 100%;
-    border-radius: inherit;
-    background: var(--accent);
-    transition: width 0.2s linear;
-  }
-
-  .player-card__actions {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-top: 0.8rem;
-  }
-
-  .player-card__toggle {
-    display: inline-flex;
-    flex: 1;
-    min-height: 2.35rem;
-    align-items: center;
-    justify-content: center;
-    gap: 0.4rem;
-    border: 0;
-    border-radius: 999px;
-    background: var(--accent);
-    color: var(--color-primary-content);
-    font-size: var(--type-small);
-    font-weight: var(--weight-strong);
-    transition: background 0.25s ease;
-  }
-
-  .player-card__toggle:hover,
-  .player-card__toggle:focus-visible { background: var(--accent-primary-soft); }
-
-  .player-card__glyph {
-    width: 0;
-    height: 0;
-    margin-left: 0.1rem;
-    border-top: 0.3rem solid transparent;
-    border-bottom: 0.3rem solid transparent;
-    border-left: 0.46rem solid currentColor;
-  }
-
-  .player-card__toggle[data-playing='true'] .player-card__glyph {
-    width: 0.14rem;
-    height: 0.62rem;
-    margin-left: 0;
-    border: 0;
-    background: currentColor;
-    box-shadow: 0.26rem 0 0 currentColor;
-  }
-
-  .player-card__link {
-    display: inline-flex;
-    min-height: 2.35rem;
-    align-items: center;
-    gap: 0.28rem;
-    border: 1px solid var(--line);
-    border-radius: 999px;
-    padding: 0 0.7rem;
-    color: var(--soft);
-    font-size: var(--type-meta);
-    font-weight: var(--weight-strong);
-    transition: color 0.2s ease, border-color 0.2s ease;
-  }
-
-  .player-card__link:hover,
-  .player-card__link:focus-visible {
-    border-color: color-mix(in srgb, var(--accent) 50%, var(--line));
-    color: var(--ink);
-  }
-
-  .side-block {
-    border: 1px solid var(--line);
-    border-radius: 1.1rem;
-    padding: 0.85rem 0.9rem 0.9rem;
-    background: color-mix(in srgb, var(--fx-surface-strong) 82%, transparent);
-  }
-
-  .side-block__head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.5rem;
-    margin-bottom: 0.7rem;
-  }
-
-  .side-block__head h2 {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    margin: 0;
-    color: var(--soft);
-    font-size: var(--type-meta);
-    font-weight: var(--weight-strong);
-  }
-
-  .side-block__links {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-  }
-
-  .side-block__head a { display: inline-grid; width: 2rem; height: 2rem; place-items: center; border-radius: 0.5rem; color: var(--soft); transition: color 0.2s ease; }
-  .side-block__head a:hover,
-  .side-block__head a:focus-visible { color: var(--accent); }
-
-  .side-person {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-  }
-
-  .side-person img {
-    width: 2.4rem;
-    height: 2.4rem;
-    flex-shrink: 0;
-    border: 1px solid var(--line);
-    border-radius: 0.75rem;
-    object-fit: cover;
-  }
-
-  .side-person__name {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.35rem;
-    margin: 0;
-    color: var(--ink);
-    font-size: var(--type-small);
-    font-weight: var(--weight-strong);
-  }
-
-  .side-badge {
-    border-radius: 999px;
-    padding: 0.08rem 0.36rem;
-    background: color-mix(in srgb, var(--accent) 14%, transparent);
-    color: color-mix(in srgb, var(--accent) 55%, var(--ink));
-    font-size: var(--type-meta);
-    font-weight: var(--weight-strong);
-  }
-
-  .side-person__note {
-    display: -webkit-box;
-    overflow: hidden;
-    margin: 0.16rem 0 0;
-    color: var(--soft);
-    font-size: var(--type-meta);
-    line-height: 1.5;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-  }
-
-  .side-metrics {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.3rem;
-    margin: 0.75rem 0 0;
-    border-top: 1px solid var(--line);
-    padding-top: 0.65rem;
-  }
-
-  .side-metrics > div { display: grid; gap: 0.1rem; }
-  .side-metrics dt { color: var(--soft); font-size: var(--type-meta); }
-  .side-metrics dd {
-    margin: 0;
-    color: var(--ink);
-    font-family: var(--font-mono);
-    font-size: var(--type-small);
-    font-weight: var(--weight-strong);
-    font-variant-numeric: tabular-nums;
-  }
-
-  /* ==================================================================
-     Breakpoints
-     ================================================================== */
-  @media (max-width: 960px) {
-    .home-hero { grid-template-columns: 1fr; }
-    .hero-plate { max-width: 26rem; }
-    .about-grid { grid-template-columns: 1fr; }
-    .about-side { max-width: 26rem; }
-    .works-head { align-items: flex-start; flex-direction: column; gap: 0.5rem; }
+  @media (max-width: 840px) {
+    .home .home-hero {
+      width: min(calc(100% - 2rem), 40rem);
+      grid-template-columns: 1fr;
+      gap: clamp(1.5rem, 4vw, 2.25rem);
+    }
+    .hero-plate,
+    .hero-identity { max-width: 28rem; }
+    .hero-socials { justify-content: flex-start; }
+    .home .home-about { width: min(calc(100% - 2rem), 40rem); }
   }
 
   @media (max-width: 720px) {
-    .works-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 9.5rem), 1fr)); }
-    .hero-plate { max-width: 20rem; }
+    .home .home-hero { width: min(calc(100% - 2rem), 30rem); }
+    .hero-name { font-size: clamp(2.5rem, 12vw, 3.6rem); }
+    .home .home-about { width: min(calc(100% - 2rem), 30rem); }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .work__frame img,
-    .work__veil,
-    .player-card__art img,
-    .player-card__bar i {
-      animation: none;
-      transition: none;
-      transform: none;
-    }
+    .hero-socials a { transition: none; }
   }
 </style>
