@@ -2,7 +2,7 @@
    SYNTHION-INSPIRED DESIGN SYSTEM — white paper, periwinkle, hairlines.
 
    The visual language:
-     - a white page with a faint field of drifting periwinkle particles behind
+     - a white page with a faint field of outward-moving periwinkle particles behind
        everything (drawn by `src/scripts/atmosphere.ts`);
      - near-black type, Playfair Display for Latin display labels set in caps
        with wide tracking, Roboto for the interface;
@@ -166,7 +166,7 @@ html[data-theme="paper-dark"] .site-atmosphere::before {
   inset: 0;
   width: 100%;
   height: 100%;
-  opacity: 0.9;
+  opacity: 1;
   pointer-events: none;
 }
 
@@ -180,6 +180,13 @@ html[data-theme="paper-dark"] #atmosphere-canvas { opacity: 1; }
 .site-footer { position: relative; z-index: 1; }
 
 .site-frame { width: min(calc(100% - 2rem), 76rem); margin-inline: auto; }
+.page-shell { padding-block: clamp(2rem, 4vw, 3rem) clamp(4rem, 7vw, 6rem); }
+
+/* Native dialogs trap focus; also keep the page underneath from scrolling. */
+html:has(dialog[open]) { overflow-y: hidden; }
+
+/* Reserve the scrollbar lane on short and long pages so navigation stays aligned. */
+html { scrollbar-gutter: stable; }
 
 /* The island is fixed over the top of the viewport, and the navigation row is
    what reserves its band: the row's own top padding is the space the pill
@@ -219,16 +226,13 @@ html[data-theme="paper-dark"] #atmosphere-canvas { opacity: 1; }
   padding-top: calc(4rem + env(safe-area-inset-top, 0px));
 }
 
-/* The reference homepage places its compact navigation and hero lower in the
-   first viewport, leaving a broad quiet field above the portrait. */
-.page-home .site-nav {
-  padding-top: calc(4rem + clamp(2rem, 24vh, 17rem) + env(safe-area-inset-top, 0px));
-}
-
 .page-home .site-atmosphere::before { display: none; }
-.page-home #atmosphere-canvas { opacity: 1; }
-
-.page-home .site-nav__inner { width: min(calc(100% - 2rem), 70rem); }
+.page-home .site-mascot { display: none; }
+.page-home #main-content {
+  display: grid;
+  align-items: center;
+  min-height: 0;
+}
 
 .site-nav__inner {
   display: flex;
@@ -400,7 +404,7 @@ html[data-theme="paper-dark"] #atmosphere-canvas { opacity: 1; }
 .link-underline:hover { color: var(--fx-accent-soft); }
 
 .page-header { padding-top: 1.1rem; }
-.page-header h1 { color: var(--fx-text); }
+.page-header h1 { color: var(--fx-text); font-family: var(--font-sans); font-size: clamp(2rem, 4vw, 3rem); line-height: 1.25; letter-spacing: var(--tracking-body); }
 .page-header p:not(.eyebrow) { color: var(--fx-muted); }
 /* Was a pink gradient with a soft-stop. The reference language uses plain
    hairline rules, so this is one — and so is every other divider on the site. */
@@ -428,11 +432,11 @@ html[data-theme="paper-dark"] #atmosphere-canvas { opacity: 1; }
 /* Entrance animation. The reference site fades its whole shell in from
    `scale(0.97875)`; this is the same idea per block, driven by `--reveal-delay`
    so lists cascade. */
-.reveal { animation: reveal-in 0.72s var(--ease) both; animation-delay: var(--reveal-delay, 0ms); }
+.reveal { animation: reveal-in 0.45s var(--ease) both; animation-delay: min(var(--reveal-delay, 0ms), 240ms); }
 
 @keyframes reveal-in {
-  from { opacity: 0; transform: translateY(16px) scale(0.986); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* -----------------------------------------------------------------
@@ -449,8 +453,7 @@ html[data-theme="paper-dark"] #atmosphere-canvas { opacity: 1; }
   border: 1px solid var(--fx-line) !important;
   border-radius: 1.5rem !important;
   background: var(--fx-surface) !important;
-  box-shadow: 0 20px 48px -42px var(--fx-shadow) !important;
-  backdrop-filter: blur(10px);
+  box-shadow: none !important;
   transition:
     transform 0.4s var(--ease),
     border-color 0.3s var(--ease),
@@ -461,13 +464,12 @@ html[data-theme="paper-dark"] #atmosphere-canvas { opacity: 1; }
 .hard-card:hover,
 .profile-card:hover,
 .profile-overview:hover,
-.content-card:hover article {
+.content-card:hover article,
+.content-card:focus-visible article {
   border-color: color-mix(in srgb, var(--fx-accent) 42%, var(--fx-line)) !important;
   background: var(--fx-surface-strong) !important;
-  box-shadow:
-    0 26px 60px -42px var(--fx-shadow),
-    0 0 0 3px color-mix(in srgb, var(--fx-accent) 9%, transparent) !important;
-  transform: translateY(-3px) !important;
+  box-shadow: none !important;
+  transform: translateY(-2px) !important;
 }
 
 /* The tone modifiers survive as tinted hairlines only. The old design gave each
@@ -477,12 +479,13 @@ html[data-theme="paper-dark"] #atmosphere-canvas { opacity: 1; }
 .hard-card-teal,
 .hard-card-coral { border-color: color-mix(in srgb, var(--fx-accent) 22%, var(--fx-line)) !important; }
 
-.content-card { display: block; }
+.content-card { display: block; min-width: 0; border-radius: 1.5rem; }
 .content-card-top { color: var(--fx-muted); }
-.content-card-title { color: var(--fx-text) !important; }
+.content-card-title { color: var(--fx-text) !important; font-size: var(--type-title); line-height: 1.5; overflow-wrap: anywhere; }
 .content-card-description { color: var(--fx-muted) !important; }
 .content-card-meta { color: var(--fx-faint) !important; }
 .content-card:hover .content-card-title { color: var(--fx-accent-soft) !important; }
+.content-card:focus-visible .content-card-title { color: var(--fx-accent-soft) !important; }
 .card-arrow { color: var(--fx-accent); opacity: 0.7; transition: transform 0.35s var(--spring), opacity 0.25s var(--ease); }
 .content-card:hover .card-arrow { opacity: 1; transform: translate(3px, -3px); }
 
@@ -491,6 +494,22 @@ html[data-theme="paper-dark"] #atmosphere-canvas { opacity: 1; }
   background: color-mix(in srgb, var(--fx-accent) 7%, transparent);
   line-height: 1;
 }
+
+.thought-entry { padding-block: 1.5rem; border-bottom: 1px solid var(--fx-line); }
+.thought-entry:first-child { padding-top: 0; }
+.thought-entry:last-child { border-bottom: 0; }
+.archive-title { overflow-wrap: anywhere; }
+article[data-article] > header > h1 { font-family: var(--font-sans); font-size: clamp(1.75rem, 3.6vw, 2.75rem); font-weight: var(--weight-strong); line-height: 1.4; letter-spacing: var(--tracking-body); overflow-wrap: anywhere; }
+
+/* Search and drawer controls use panel colors, not the black player's tokens. */
+.drawer-utilities { display: grid; gap: 0.5rem; }
+.drawer-utility { display: flex; align-items: center; gap: 0.75rem; min-height: 2.75rem; padding: 0.65rem 0.75rem; border: 1px solid var(--fx-line); border-radius: 0.75rem; color: var(--fx-muted); background: var(--fx-surface); font-size: var(--type-small); cursor: pointer; }
+.drawer-utility:hover { border-color: var(--fx-accent); color: var(--fx-text); }
+.search-close { display: grid; place-items: center; width: 2.5rem; height: 2.5rem; flex: none; border-radius: 50%; color: var(--fx-muted); font-size: var(--type-heading); cursor: pointer; }
+.search-close:hover { background: var(--surface-soft); color: var(--fx-text); }
+#search-results a { overflow-wrap: anywhere; }
+#search-results a:focus-visible { outline: 2px solid var(--fx-accent); outline-offset: -3px; }
+#search-filters button[aria-pressed="true"] { border-color: var(--fx-accent); color: var(--accent-primary-soft); background: color-mix(in srgb, var(--fx-accent) 10%, var(--fx-bg)); }
 
 .profile-overview {
   display: flex;
@@ -1062,39 +1081,9 @@ button.chip-signal[aria-pressed="true"] {
   margin-top: auto;
   overflow: hidden;
   border-top: 1px solid var(--fx-line);
-  background: color-mix(in srgb, var(--fx-bg) 72%, transparent);
-  backdrop-filter: blur(10px);
+  background: transparent;
 }
 
-.footer-avatar {
-  width: 3.8rem;
-  height: 3.8rem;
-  flex: 0 0 auto;
-  overflow: hidden;
-  border: 1px solid var(--fx-line);
-  border-radius: 1.15rem;
-}
-
-.footer-brand {
-  color: var(--fx-text);
-  font-family: var(--font-display);
-  font-size: var(--type-body);
-  font-weight: var(--weight-display);
-}
-
-.footer-caption {
-  margin-top: 1.5rem;
-  color: var(--fx-faint);
-  font-family: var(--font-mono);
-  font-size: var(--type-label);
-  letter-spacing: var(--tracking-body);
-}
-
-/* Footer / drawer group labels. These are Chinese in practice ("导航", "联系",
-   "账号与音乐"), so they take body tracking and `--type-meta`: `--type-label`
-   is an 11px step that the type scale reserves for uppercase Latin, and 11px is
-   below the size where Chinese stays comfortable. */
-.footer-label,
 .drawer-label {
   margin: 0;
   color: var(--fx-faint);
@@ -1103,38 +1092,6 @@ button.chip-signal[aria-pressed="true"] {
   font-weight: var(--weight-strong);
   letter-spacing: var(--tracking-body);
 }
-
-.footer-link {
-  color: var(--fx-muted);
-  font-size: var(--type-small);
-  font-weight: var(--weight-body);
-  transition: color 0.25s var(--ease), transform 0.25s var(--spring);
-}
-
-.footer-link:hover { color: var(--fx-accent-soft); transform: translateX(2px); }
-
-.footer-social {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  border: 1px solid var(--fx-line);
-  border-radius: 999px;
-  padding: 0.45rem 0.7rem;
-  background: var(--fx-surface-soft, var(--surface-soft));
-  color: var(--fx-muted);
-  font-size: var(--type-label);
-  font-weight: var(--weight-strong);
-  transition: transform 0.25s var(--spring), border-color 0.25s var(--ease), color 0.25s var(--ease), background 0.25s var(--ease);
-}
-
-.footer-social:hover {
-  border-color: color-mix(in srgb, var(--fx-accent) 40%, var(--fx-line));
-  background: color-mix(in srgb, var(--fx-accent) 8%, transparent);
-  color: var(--fx-accent-soft);
-  transform: translateY(-2px);
-}
-
-.footer-bottom a:hover { color: var(--fx-accent-soft); }
 
 /* -----------------------------------------------------------------
    Drawer, dialogs and the back-to-top button
@@ -1276,7 +1233,6 @@ html:not([data-theme="paper-dark"]) #theme-toggle .theme-icon-moon { display: no
   .site-frame { width: min(calc(100% - 1.25rem), 76rem); }
   .section-heading-row { align-items: flex-start; flex-direction: column; gap: 0; }
   .section-heading-row .section-heading { margin-bottom: 0.55rem; }
-  .footer-caption { line-height: 1.7; }
 }
 
 @media (max-width: 640px) {

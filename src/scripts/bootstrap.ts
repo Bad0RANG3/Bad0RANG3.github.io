@@ -3,8 +3,8 @@ import './site';
 import './service-worker';
 
 // Decorative animation stays a deferred import so it never blocks first paint.
-// Reading pages keep the BGA too; the throttled loop runs continuously over the
-// fixed overlay, so it stays alive while the reader scrolls.
+// Reading pages keep the BGA too; its SVG keyframes are replayed on a fixed
+// canvas with a throttled loop that stays alive while the reader scrolls.
 // Re-check after ClientRouter navigation because this module itself is cached.
 const syncAtmosphere = () => {
   if (document.documentElement.dataset.ambientMotion === 'true') {
@@ -50,7 +50,7 @@ const openSearch = () => {
   void import('./search').then(({ openSearch: open }) => open());
 };
 document.addEventListener('click', (event) => {
-  if (event.target instanceof Element && event.target.closest('#search-btn')) openSearch();
+  if (event.target instanceof Element && event.target.closest('#search-btn, [data-open-search]')) openSearch();
 });
 document.addEventListener('keydown', (event) => {
   if ((event.ctrlKey || event.metaKey) && event.key?.toLowerCase() === 'k') {

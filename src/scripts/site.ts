@@ -17,6 +17,7 @@ const setDrawerExpanded = (value) => {
 const closeDrawer = (dialog) => {
   const panel = dialog.querySelector('.drawer-panel');
   if (!dialog.open || panel?.classList.contains('animate-out')) return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { dialog.close(); return; }
   if (!panel) {
     dialog.close();
     return;
@@ -36,6 +37,10 @@ document.addEventListener('click', (event) => {
       dialog.showModal();
       setDrawerExpanded(true);
     }
+  } else if (dialog.contains(target) && target.closest('[data-open-search]')) {
+    dialog.close();
+  } else if (dialog.contains(target) && target.closest('a[href]')) {
+    dialog.close();
   } else if (dialog.contains(target) && target.closest('[data-close-drawer]')) {
     event.preventDefault();
     closeDrawer(dialog);

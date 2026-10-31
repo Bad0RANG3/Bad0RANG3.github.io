@@ -1,203 +1,104 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import SectionHeader from '../components/ui/SectionHeader.astro';
-import { ROUTES } from '../config/routes';
 import { SOCIAL_ICONS, siteConfig } from '../config/site';
 import { withBase } from '../lib/urls';
 
-const { author, socials, about } = siteConfig;
-const displaySocials = socials.filter((social) => social.name !== 'Email');
+const { author, socials } = siteConfig;
+const displaySocials = socials.filter((social) => ['GitHub', 'X', 'Telegram', 'BiliBili'].includes(social.name));
 ---
 
 <BaseLayout title={siteConfig.title} description={siteConfig.description}>
-  <div class="home">
-    <section id="home-section" class="home-hero site-frame" aria-labelledby="home-title" data-island-cue="Home">
-      <div class="hero-plate reveal">
-        <figure class="hero-plate__frame">
-          <img src={withBase('/HP.webp')} alt={author.name + ' portrait illustration'} width="1200" height="1200" fetchpriority="high" decoding="async" />
-        </figure>
-        <p class="hero-credit">illustration · {author.name}</p>
-      </div>
-      <div class="hero-identity reveal">
-        <h1 id="home-title" class="hero-name">{author.name}</h1>
-        <div class="rule-hairline hero-rule"></div>
-        <p class="hero-tagline">
-          <span>Computer enthusiast and software tinkerer.</span>
-          <span>Notes on code, games, tools, and projects.</span>
-          <span>Inquiries / Contact:</span>
-        </p>
-        <ul class="hero-links"><li><a href={'mailto:' + author.email}>{author.email}</a></li></ul>
-        <ul class="hero-socials" aria-label="Social links">
-          {displaySocials.map((social) => {
-            const icon = SOCIAL_ICONS[social.name as keyof typeof SOCIAL_ICONS];
-            return (
-              <li>
-                <a href={social.url} target={social.url.startsWith('mailto:') ? undefined : '_blank'} rel={social.url.startsWith('mailto:') ? undefined : 'noopener noreferrer'} aria-label={social.name} title={social.name}>
-                  {icon && <img src={withBase(icon)} alt="" width="20" height="20" loading="lazy" />}
-                </a>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
-    </section>
-
-    <section id="about-section" class="home-about site-frame" aria-labelledby="about-title" data-island-cue="About">
-      <div class="about-copy reveal">
-        <SectionHeader label="About" title="About me" titleId="about-title" />
-        <ul class="about-switch" aria-label="More site links">
-          <li><a href={withBase(ROUTES.ABOUT)}>More about me</a></li>
-          <li><a href={withBase(ROUTES.ARCHIVE)}>Archive</a></li>
-          <li><a href={withBase(ROUTES.RSS)}>RSS feed</a></li>
-        </ul>
-        <div class="about-prose">
-          <p>I’m <strong>{author.name}</strong>, a computer enthusiast who enjoys taking things apart and figuring out how they work.</p>
-          <p>This blog is where I share notes on software, CS2, Minecraft, development tools, projects, and everyday thoughts.</p>
-          <p>Languages and frameworks: {about.techStack.map((item) => item.name).join(' · ')}.</p>
-          <p>Everyday tools: {about.devTools.map((item) => item.name).join(' · ')}.</p>
-        </div>
-      </div>
-    </section>
-  </div>
-  <script>
-    import '../scripts/home-motion';
-  </script>
+  <section class="home-hero site-frame" aria-labelledby="home-title">
+    <figure class="hero-portrait">
+      <img src={withBase('/HP.webp')} alt={author.name + ' portrait illustration'} width="1200" height="1200" fetchpriority="high" decoding="async" />
+    </figure>
+    <div class="hero-identity">
+      <h1 id="home-title">{author.name}</h1>
+      <p class="hero-description">Computer enthusiast and software tinkerer.<br />Notes on code, games, and everyday discoveries.</p>
+      <a class="hero-email" href={'mailto:' + author.email}>{author.email}</a>
+      <ul class="hero-socials" aria-label="Social links">
+        {displaySocials.map((social) => (
+          <li>
+            <a href={social.url} target="_blank" rel="noopener noreferrer" aria-label={social.name} title={social.name}>
+              <img src={withBase(SOCIAL_ICONS[social.name as keyof typeof SOCIAL_ICONS])} alt="" width="18" height="18" />
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
 </BaseLayout>
 
 <style>
-  .home {
-    --ink: var(--fx-text);
-    --muted: var(--fx-muted);
-    --soft: var(--text-faint);
-    --accent: var(--fx-accent);
-    padding-block: clamp(1.25rem, 3vh, 2rem) clamp(3rem, 7vh, 5rem);
-  }
-
-  .home .home-hero {
+  .home-hero {
     display: grid;
-    width: min(calc(100% - 2rem), 51rem);
-    grid-template-columns: minmax(0, 0.98fr) minmax(0, 1.02fr);
+    width: min(calc(100% - 3rem), 60rem);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
     align-items: center;
-    gap: clamp(1.5rem, 4vw, 2.5rem);
-    padding-block: clamp(0.75rem, 2vw, 1.5rem) clamp(2rem, 5vh, 3.5rem);
+    gap: clamp(2.5rem, 6vw, 5rem);
+    padding-block: clamp(2rem, 6svh, 5rem);
   }
 
-  .hero-plate__frame { aspect-ratio: 4 / 3; margin: 0; overflow: hidden; }
-  .hero-plate__frame img { display: block; width: 100%; height: 100%; object-fit: cover; }
-
-  .hero-credit {
-    margin: 0.55rem 0 0;
-    color: var(--soft);
-    font-size: var(--type-meta);
-    text-align: right;
-  }
-
+  .hero-portrait { width: 100%; margin: 0; }
+  .hero-portrait img { display: block; width: 100%; height: auto; }
   .hero-identity { min-width: 0; }
-  .hero-name {
+  h1 {
     margin: 0;
-    color: var(--ink);
+    color: var(--fx-text);
     font-family: var(--font-display);
-    font-size: clamp(3rem, 5.5vw, 5rem);
+    font-size: clamp(2.75rem, 5.2vw, 4.5rem);
     font-weight: var(--weight-serif);
-    letter-spacing: 0.025em;
-    line-height: 1.08;
+    letter-spacing: -0.035em;
+    line-height: 1.15;
   }
-  .hero-rule { margin: clamp(1rem, 2.2vw, 1.5rem) 0; }
-  .hero-tagline {
-    display: grid;
-    gap: 0.45rem;
-    margin: 0;
-    max-width: 27rem;
-    color: var(--muted);
+  .hero-description {
+    margin: 1.5rem 0 1.25rem;
+    color: var(--fx-muted);
     font-size: var(--type-small);
-    line-height: var(--leading-prose);
+    line-height: 1.9;
   }
-  .hero-links { margin: 1rem 0 0; padding: 0; list-style: none; font-size: var(--type-small); }
-  .hero-links a {
-    color: var(--accent-primary-soft);
+  .hero-email {
+    color: var(--fx-muted);
+    font-size: var(--type-small);
+    overflow-wrap: anywhere;
     text-decoration: underline;
-    text-decoration-color: color-mix(in srgb, var(--accent) 45%, transparent);
+    text-decoration-color: var(--fx-line);
     text-decoration-thickness: 1px;
-    text-underline-offset: 0.24em;
+    text-underline-offset: 0.3em;
     transition: color 0.2s var(--ease), text-decoration-color 0.2s var(--ease);
   }
-  .hero-links a:hover,
-  .hero-links a:focus-visible { color: var(--accent); text-decoration-color: currentColor; }
-
+  .hero-email:hover { color: var(--fx-accent); text-decoration-color: currentColor; }
   .hero-socials {
     display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: clamp(0.75rem, 1vw, 1rem);
-    margin: clamp(2rem, 7vh, 4rem) 0 0;
+    gap: 0.5rem;
+    margin: 1.75rem 0 0 -0.5rem;
     padding: 0;
     list-style: none;
   }
   .hero-socials a {
     display: grid;
-    width: 1.5rem;
-    height: 1.5rem;
+    width: 2.5rem;
+    height: 2.5rem;
     place-items: center;
-    opacity: 0.78;
-    transition: opacity 0.2s var(--ease), transform 0.2s var(--ease);
+    opacity: 0.55;
+    transition: opacity 0.2s var(--ease);
   }
   .hero-socials a:hover,
-  .hero-socials a:focus-visible { opacity: 1; transform: translateY(-2px); }
-  .hero-socials img { display: block; max-width: 1rem; max-height: 1rem; filter: grayscale(1) brightness(0.22); }
-
-  html[data-theme="paper-dark"] .hero-socials img { filter: grayscale(1) brightness(0) invert(1); }
-
-  .home .home-about {
-    width: min(calc(100% - 2rem), 70rem);
-    padding-block: clamp(3rem, 8vh, 6rem) 0;
-  }
-  .about-copy { max-width: 45rem; }
-  .about-switch {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem 1.15rem;
-    margin: -0.6rem 0 1.5rem;
-    padding: 0;
-    list-style: none;
-    font-size: var(--type-meta);
-  }
-  .about-switch a {
-    color: var(--muted);
-    text-decoration: underline;
-    text-decoration-color: color-mix(in srgb, var(--accent) 35%, transparent);
-    text-underline-offset: 0.22em;
-    transition: color 0.2s var(--ease);
-  }
-  .about-switch a:hover,
-  .about-switch a:focus-visible { color: var(--accent); }
-  .about-prose { display: grid; gap: 0.9rem; }
-  .about-prose p {
-    margin: 0;
-    color: var(--muted);
-    font-size: var(--type-body);
-    line-height: var(--leading-prose);
-  }
-  .about-prose strong { color: var(--ink); }
-
-  @media (max-width: 840px) {
-    .home .home-hero {
-      width: min(calc(100% - 2rem), 40rem);
-      grid-template-columns: 1fr;
-      gap: clamp(1.5rem, 4vw, 2.25rem);
-    }
-    .hero-plate,
-    .hero-identity { max-width: 28rem; }
-    .hero-socials { justify-content: flex-start; }
-    .home .home-about { width: min(calc(100% - 2rem), 40rem); }
-  }
+  .hero-socials a:focus-visible { opacity: 1; }
+  .hero-socials img { display: block; filter: grayscale(1); }
+  :global(html[data-theme="paper-dark"]) .hero-socials img { filter: grayscale(1) invert(1); }
 
   @media (max-width: 720px) {
-    .home .home-hero { width: min(calc(100% - 2rem), 30rem); }
-    .hero-name { font-size: clamp(2.5rem, 12vw, 3.6rem); }
-    .home .home-about { width: min(calc(100% - 2rem), 30rem); }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .hero-socials a { transition: none; }
+    .home-hero {
+      width: min(calc(100% - 3rem), 27rem);
+      min-height: auto;
+      grid-template-columns: 1fr;
+      gap: 2rem;
+      padding-block: 2.5rem 4rem;
+    }
+    .hero-portrait { width: min(100%, 19rem); }
+    h1 { font-size: clamp(2.5rem, 10vw, 3.5rem); }
+    .hero-description { margin-top: 1.1rem; }
+    .hero-socials { margin-top: 1.25rem; }
   }
 </style>

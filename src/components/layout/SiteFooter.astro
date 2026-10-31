@@ -1,69 +1,46 @@
 ---
-import { SOCIAL_ICONS, siteConfig } from '../../config/site';
+import { siteConfig } from '../../config/site';
 import { ROUTES } from '../../config/routes';
 import { withBase } from '../../lib/urls';
 
-const { author, socials, navigation } = siteConfig;
-const footerNav = [...navigation, ...siteConfig.secondaryNavigation]
-  .filter((item, index, items) => items.findIndex((candidate) => candidate.href === item.href) === index)
-  .map((item) => ({ href: item.href, text: item.label }));
+interface Props { compact?: boolean; }
+const { compact = false } = Astro.props;
+const { author } = siteConfig;
 ---
 
-<footer class="site-footer">
-  <div class="site-frame relative py-12 md:py-16">
-    <div class="grid gap-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
-      <div>
-        <div class="flex items-start gap-4">
-          <figure class="footer-avatar">
-            <img src={withBase(author.avatar)} alt={author.name} class="h-full w-full object-cover" width="64" height="64" loading="lazy" />
-          </figure>
-          <div>
-            <a href={withBase(ROUTES.HOME)} class="footer-brand">{siteConfig.title}</a>
-            <p class="mt-2 max-w-md text-sm leading-7 text-base-content/80">关注塔菲谢谢喵</p>
-          </div>
-        </div>
-        <p class="footer-caption">A small personal log for software, experiments and everyday thoughts.</p>
-      </div>
-
-      <div class="grid gap-8 sm:grid-cols-2">
-        <div>
-          <p class="footer-label">导航</p>
-          <ul class="mt-4 grid grid-cols-2 gap-x-5 gap-y-2">
-            {footerNav.map((item) => (
-              <li>
-                <a href={withBase(item.href)} class="footer-link">
-                  {item.text}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div>
-          <p class="footer-label">联系</p>
-          <div class="mt-4 flex flex-wrap gap-2">
-            {socials.map((social) => (
-              <a
-                href={social.url}
-                target={social.url.startsWith('mailto:') ? undefined : '_blank'}
-                rel={social.url.startsWith('mailto:') ? undefined : 'noopener noreferrer'}
-                class="footer-social"
-                aria-label={social.name}
-              >
-                {SOCIAL_ICONS[social.name as keyof typeof SOCIAL_ICONS] ? (
-                  <img src={withBase(SOCIAL_ICONS[social.name as keyof typeof SOCIAL_ICONS])} alt="" class="h-3.5 w-3.5 opacity-70" width="14" height="14" loading="lazy" />
-                ) : null}
-                <span>{social.name}</span>
-              </a>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="footer-bottom mt-10 flex flex-col gap-3 border-t border-base-content/10 pt-6 text-xs font-bold uppercase tracking-[0.18em] text-base-content/70 sm:flex-row sm:items-center sm:justify-between">
-      <p>© {new Date().getFullYear()} {author.name}</p>
-      <p class="text-base-content/70"><a class="hover:text-primary" href={withBase(ROUTES.RSS)}>RSS</a> · <a class="hover:text-primary" href={withBase(ROUTES.ATOM)}>Atom</a> · <a class="hover:text-primary" href={withBase(ROUTES.JSON_FEED)}>JSON Feed</a></p>
-    </div>
+<footer class:list={['site-footer', compact && 'site-footer--compact']}>
+  <div class="site-frame footer-inner">
+    <p>© {new Date().getFullYear()}{' '}{author.name}</p>
+    <nav aria-label="页脚导航">
+      {!compact && <>
+        <a href={withBase(ROUTES.ARCHIVE)}>归档</a>
+        <a href={withBase(ROUTES.ABOUT)}>关于</a>
+        <a href={withBase(ROUTES.PRIVACY)}>隐私</a>
+        <a href={'mailto:' + author.email}>联系</a>
+      </>}
+      <a href={withBase(ROUTES.RSS)}>RSS</a>
+    </nav>
   </div>
 </footer>
+
+<style>
+  .footer-inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem 2rem;
+    padding-block: 1.5rem;
+    color: var(--fx-faint);
+    font-size: var(--type-meta);
+  }
+  p { margin: 0; }
+  nav { display: flex; flex-wrap: wrap; gap: 0.25rem 1.25rem; }
+  a { display: inline-flex; align-items: center; min-height: 2rem; }
+  a:hover { color: var(--fx-accent); }
+  .site-footer--compact { border: 0; }
+  .site-footer--compact .footer-inner { width: min(calc(100% - 3rem), 60rem); }
+  @media (max-width: 720px) {
+    .site-footer--compact .footer-inner { max-width: 27rem; }
+  }
+</style>

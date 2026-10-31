@@ -19,7 +19,7 @@ const firstPost = group.posts[0];
 const difficultyLevels = [...new Set(group.posts.map((post) => post.data.difficulty).filter(Boolean))];
 ---
 <BaseLayout title={`系列：${group.name}`} description={`按顺序阅读《${group.name}》系列文章。`}>
-  <div class="site-frame py-5 sm:py-8">
+  <div class="site-frame page-shell">
     <PageHeader label="Series" title={group.name} description={`${group.posts.length} 篇文章，按系列顺序排列。`} />
 
     {group.posts.length === 0 ? <EmptyState message="这个系列还没有文章" /> : (

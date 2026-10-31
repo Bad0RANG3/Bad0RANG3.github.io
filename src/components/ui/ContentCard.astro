@@ -38,13 +38,13 @@ const Heading = headingTag;
       tone === 'coral' && 'hard-card-coral',
     ]}
   >
-    <div class="content-card-top flex min-h-8 items-center justify-between gap-3">
+    {(icon || label) && <div class="content-card-top flex min-h-8 items-center justify-between gap-3">
       <div class="flex items-center gap-3">
         {icon && <span class="card-emoji flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-base-content/10 bg-base-200 text-xl">{icon}</span>}
         {label && <p class:list={['eyebrow', isLatinOnly(label) && 'eyebrow-latin']}>{label}</p>}
       </div>
       <Icon name="arrow-up-right" class="card-arrow h-4 w-4" />
-    </div>
+    </div>}
 
     <Heading class:list={['content-card-title text-xl font-bold leading-tight text-base-content transition-colors group-hover:text-primary sm:text-2xl', (icon || label) && 'mt-5']}>
       {title}

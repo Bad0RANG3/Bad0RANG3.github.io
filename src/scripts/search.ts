@@ -22,7 +22,7 @@ interface SearchUi {
 }
 
 const TYPE_LABELS: Record<string, string> = { all: '全部', post: '文章', thought: '碎碎念', project: '项目', tool: '工具' };
-const MESSAGE_CLASS = 'px-4 py-8 text-center text-sm text-base-content/50';
+const MESSAGE_CLASS = 'px-4 py-8 text-center text-sm text-base-content/70';
 
 let documents: IndexedDocument[] = [];
 let loadPromise: Promise<void> | null = null;
@@ -109,16 +109,18 @@ const render = (ui: SearchUi) => {
   }
   if (!items.length) {
     ui.results.innerHTML = message('没有找到匹配内容。试试标题、标签或正文里的其他关键词。');
-    ui.footer.classList.add('hidden');
+    ui.footer.textContent = '0 个结果';
+    ui.footer.classList.remove('hidden');
     return;
   }
-  ui.results.innerHTML = items.map((item) => `<a href="${escapeHtml(item.url)}" class="block border-b border-base-content/5 px-4 py-3 transition-colors last:border-0 hover:bg-base-200 focus:bg-base-200 focus:outline-none">
-    <div class="flex items-start justify-between gap-3"><span class="text-sm font-bold text-base-content">${highlight(item.title, queryTokens)}</span>${item.date ? `<time class="shrink-0 text-xs text-base-content/40" datetime="${escapeHtml(item.date)}">${escapeHtml(item.date)}</time>` : `<span class="shrink-0 text-xs text-base-content/40">${escapeHtml(TYPE_LABELS[item.type] ?? '')}</span>`}</div>
-    <p class="mt-1 line-clamp-2 text-xs leading-5 text-base-content/55">${highlight(excerpt(item, queryTokens), queryTokens)}</p>
+  const total = items.length;
+  ui.results.innerHTML = items.slice(0, 50).map((item) => `<a href="${escapeHtml(item.url)}" class="block border-b border-base-content/5 px-4 py-3 transition-colors last:border-0 hover:bg-base-200 focus:bg-base-200">
+    <div class="flex items-start justify-between gap-3"><span class="text-sm font-bold text-base-content">${highlight(item.title, queryTokens)}</span>${item.date ? `<time class="shrink-0 text-xs text-base-content/70" datetime="${escapeHtml(item.date)}">${escapeHtml(item.date)}</time>` : `<span class="shrink-0 text-xs text-base-content/70">${escapeHtml(TYPE_LABELS[item.type] ?? '')}</span>`}</div>
+    <p class="mt-1 line-clamp-2 text-xs leading-5 text-base-content/80">${highlight(excerpt(item, queryTokens), queryTokens)}</p>
     <div class="mt-2 flex flex-wrap gap-1.5">${(item.tags || []).slice(0, 4).map((tag) => `<span class="badge badge-ghost badge-xs">#${escapeHtml(tag)}</span>`).join('')}</div>
   </a>`).join('');
   ui.footer.classList.remove('hidden');
-  ui.footer.textContent = `${items.length} 个结果${queryTokens.length ? '' : ' · 输入关键词搜索全文'}`;
+  ui.footer.textContent = `${total} 个结果${total > 50 ? ' · 显示前 50 个，请缩小搜索范围' : queryTokens.length ? ' · ↑↓ 选择，Enter 打开' : ' · 输入关键词搜索全文'}`;
 };
 
 // One in-flight request shared by every open(); a failed load clears it so
@@ -147,8 +149,33 @@ const load = (ui: SearchUi) => {
 const bind = (ui: SearchUi) => {
   if (ui.modal.dataset.bound === '1') return;
   ui.modal.dataset.bound = '1';
-  ui.input.addEventListener('input', () => {
-    if (documents.length) render(ui);
+  ui.input.addEventListener('input', (event) => {
+    if (!(event instanceof InputEvent && event.isComposing) && documents.length) render(ui);
+  });
+  ui.input.addEventListener('compositionend', () => { if (documents.length) render(ui); });
+  ui.modal.querySelector('[data-search-close]')?.addEventListener('click', () => ui.modal.close());
+  ui.modal.addEventListener('close', () => {
+    const desktopSearch = document.getElementById('search-btn');
+    if (!desktopSearch?.getClientRects().length) document.getElementById('mobile-menu-btn')?.focus();
+  });
+  ui.modal.addEventListener('keydown', (event) => {
+    if (event.isComposing) return;
+    const links = [...ui.results.querySelectorAll<HTMLAnchorElement>('a')];
+    const current = links.indexOf(document.activeElement as HTMLAnchorElement);
+    if (event.key === 'ArrowDown' && (document.activeElement === ui.input || current >= 0)) {
+      event.preventDefault();
+      links[Math.min(current + 1, links.length - 1)]?.focus();
+    } else if (event.key === 'ArrowUp' && current >= 0) {
+      event.preventDefault();
+      if (current === 0) ui.input.focus();
+      else links[current - 1]?.focus();
+    } else if (event.key === 'Enter' && document.activeElement === ui.input && links.length) {
+      event.preventDefault();
+      links[0].click();
+    }
+  });
+  ui.results.addEventListener('click', (event) => {
+    if (event.target instanceof Element && event.target.closest('a')) ui.modal.close();
   });
   ui.filters?.addEventListener('click', (event) => {
     const button = event.target instanceof Element ? event.target.closest<HTMLElement>('[data-search-type]') : null;
