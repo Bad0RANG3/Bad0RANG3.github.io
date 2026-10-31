@@ -236,7 +236,7 @@
   flex: 0 0 auto;
   border-radius: 50%;
   background: var(--island-wave);
-  box-shadow: 0 0 0 7px rgb(255 143 182 / 0.12), 0 0 20px rgb(255 143 182 / 0.62);
+  box-shadow: 0 0 0 7px color-mix(in srgb, var(--island-focus) 12%, transparent), 0 0 20px color-mix(in srgb, var(--island-focus) 62%, transparent);
 }
 
 .island-cue-copy {
@@ -685,7 +685,7 @@
 
 .music-island .island-volume-mute:hover,
 .music-island .island-volume-mute:focus-visible {
-  background: rgb(255 143 182 / 0.18);
+  background: color-mix(in srgb, var(--island-focus) 18%, transparent);
   color: var(--island-text-strong);
   outline: 0;
 }
@@ -759,8 +759,8 @@
 
 .header-action:hover,
 .header-action:focus-visible {
-  border-color: rgb(255 143 182 / 0.34);
-  background: rgb(255 143 182 / 0.13);
+  border-color: color-mix(in srgb, var(--island-focus) 34%, transparent);
+  background: color-mix(in srgb, var(--island-focus) 13%, transparent);
   color: var(--island-text-strong);
   outline: none;
   transform: translateY(-1px);
@@ -861,6 +861,6 @@
   }
 
   .island-cue-pulse {
-    box-shadow: 0 0 0 7px rgb(255 143 182 / 0.12);
+    box-shadow: 0 0 0 7px color-mix(in srgb, var(--island-focus) 12%, transparent);
   }
 }

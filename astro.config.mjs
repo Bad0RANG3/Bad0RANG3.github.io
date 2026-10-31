@@ -33,6 +33,11 @@ export default defineConfig({
   markdown: {
     remarkPlugins: [[remarkWithBase, { base }]],
     rehypePlugins: [rehypeWrapTables],
+    // `github-dark`'s comment grey (#6A737D) measures 3.84:1 on this site's code
+    // panel; the `-default` variant's #8B949E clears 4.5:1 in both themes. The
+    // panel itself is `--code-block-bg`, which stays dark in `paper` and
+    // `paper-dark` alike.
+    shikiConfig: { theme: 'github-dark-default' },
   },
   integrations: [sitemap()],
   // With ClientRouter, prefetch same-origin links on hover/tap so navigation

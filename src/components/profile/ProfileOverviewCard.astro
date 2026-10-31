@@ -1,6 +1,7 @@
 ---
 import { siteConfig } from '../../config/site';
 import { withBase } from '../../lib/urls';
+import { isLatinOnly } from '../../lib/text';
 
 interface ProfileMetric {
   label: string;
@@ -31,7 +32,7 @@ const Heading = headingTag;
 
 <section
   class:list={[
-    'profile-card profile-overview reveal relative overflow-hidden rounded-[2rem] border-2 dark-soft-border-strong bg-base-100/80 shadow-hard',
+    'profile-card profile-overview reveal relative overflow-hidden rounded-[1.5rem] border dark-soft-border-strong bg-base-100/80',
     stacked ? 'p-5 sm:p-6' : 'p-6 sm:p-8',
   ]}
 >
@@ -40,10 +41,10 @@ const Heading = headingTag;
     stacked ? 'flex flex-col' : 'grid lg:grid-cols-[auto_1fr] lg:items-center lg:gap-8',
   ]}>
     <div class:list={['relative shrink-0', stacked ? 'mx-auto w-full max-w-[13rem]' : 'mx-auto lg:mx-0']}>
-      <div class="absolute -inset-2 rotate-3 rounded-[1.75rem] bg-gradient-to-br from-primary via-secondary to-accent opacity-80"></div>
+      <div class="absolute -inset-2 rounded-[1.75rem] bg-secondary/25"></div>
       <img
         class:list={[
-          'relative aspect-square rounded-[1.5rem] border-2 dark-soft-border-strong bg-base-100 object-contain shadow-xl',
+          'relative aspect-square rounded-[1.5rem] border dark-soft-border-strong bg-base-100 object-contain',
           stacked ? 'w-full max-w-[13rem]' : 'h-28 w-28 sm:h-36 sm:w-36',
         ]}
         src={withBase(author.avatar)}
@@ -55,9 +56,9 @@ const Heading = headingTag;
     </div>
 
     <div class:list={[stacked ? 'text-center' : 'text-center lg:text-left']}>
-      <p class:list={['eyebrow', !stacked && 'justify-center lg:justify-start', stacked && 'justify-center']}>{eyebrow}</p>
+      <p class:list={['eyebrow', isLatinOnly(eyebrow) && 'eyebrow-latin', !stacked && 'justify-center lg:justify-start', stacked && 'justify-center']}>{eyebrow}</p>
       <Heading class:list={['display-title mt-3', stacked ? 'text-3xl sm:text-4xl' : 'text-4xl sm:text-5xl md:text-6xl']}>{heading}</Heading>
-      {subtitle && <p class="mt-3 text-lg font-black text-primary">{subtitle}</p>}
+      {subtitle && <p class="mt-3 text-lg font-bold text-primary">{subtitle}</p>}
       <p class="mt-4 max-w-2xl text-base leading-8 text-base-content/70">{author.intro}</p>
 
     </div>
@@ -68,13 +69,13 @@ const Heading = headingTag;
       {metrics.map((metric, index) => (
         <div
           class:list={[
-            'rounded-2xl border-2 border-base-content/10 bg-base-100/70 px-2 py-3 text-center',
+            'rounded-2xl border border-base-content/10 bg-base-100/70 px-2 py-3 text-center',
             metrics.length === 3 && 'profile-metric-card--roomy',
             index % 2 === 0 ? 'shadow-[3px_3px_0_0] shadow-primary/50' : 'shadow-[3px_3px_0_0] shadow-accent/50',
           ]}
         >
-          <p class="text-[0.6rem] font-black uppercase tracking-[0.12em] text-base-content/40">{metric.label}</p>
-          <p class="mt-1 text-lg font-black sm:text-xl">{metric.value}</p>
+          <p class="text-[0.6rem] font-bold uppercase tracking-[0.12em] text-base-content/70">{metric.label}</p>
+          <p class="mt-1 text-lg font-bold sm:text-xl">{metric.value}</p>
         </div>
       ))}
     </div>

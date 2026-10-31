@@ -13,7 +13,7 @@ const groups = await getArchiveGroups();
 <BaseLayout title="归档" description="按年份浏览全部文章。">
   <div class="site-frame py-5 sm:py-8">
     <PageHeader
-      label="归档"
+      label="Archive"
       title="归档"
     />
 
@@ -31,15 +31,15 @@ const groups = await getArchiveGroups();
               {group.posts.map((post) => (
                 <a
                   href={withBase(postPath(post.slug))}
-                  class="group flex flex-col gap-2 rounded-[1.25rem] border-2 border-base-content/10 bg-base-100/80 p-4 transition-all hover:-translate-x-1 hover:border-primary/40 hover:bg-secondary/15 sm:flex-row sm:items-center sm:justify-between"
+                  class="group flex flex-col gap-2 rounded-[1.25rem] border border-base-content/10 bg-base-100/80 p-4 transition-all hover:-translate-x-1 hover:border-primary/40 hover:bg-secondary/15 sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div class="min-w-0">
-                    <p class="truncate text-base font-black tracking-tight transition-colors group-hover:text-primary">
+                    <p class="truncate text-base font-bold transition-colors group-hover:text-primary">
                       {post.data.title}
                     </p>
-                    <p class="mt-1 line-clamp-1 text-sm text-base-content/55">{post.data.description}</p>
+                    <p class="mt-1 line-clamp-1 text-sm text-base-content/80">{post.data.description}</p>
                   </div>
-                  <time class="shrink-0 font-mono text-xs font-bold uppercase tracking-[0.14em] text-base-content/40" datetime={post.data.date.toISOString()}>
+                  <time class="shrink-0 font-mono text-xs font-bold uppercase tracking-[0.14em] text-base-content/70" datetime={post.data.date.toISOString()}>
                     {formatDate(post.data.date)}
                   </time>
                 </a>

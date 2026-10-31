@@ -13,10 +13,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       </p>
       <div class="mt-8 flex flex-wrap gap-3">
         <button class="btn-brutal" type="button" onclick="location.reload()">重新加载</button>
-        <a class="btn btn-outline rounded-full border-2" href={withBase('/')}>返回首页</a>
-        <a class="btn btn-outline rounded-full border-2" href={withBase('/posts/')}>查看文章</a>
+        <a class="btn btn-outline rounded-full border" href={withBase('/')}>返回首页</a>
+        <a class="btn btn-outline rounded-full border" href={withBase('/posts/')}>查看文章</a>
       </div>
-      <p class="mt-8 text-sm text-base-content/50">数据只使用浏览器缓存，不会发送额外的统计请求。</p>
+      <p class="mt-8 text-sm text-base-content/70">数据只使用浏览器缓存，不会发送额外的统计请求。</p>
     </section>
   </div>
 </BaseLayout>

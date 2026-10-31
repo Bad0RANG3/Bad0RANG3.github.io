@@ -12,7 +12,9 @@
 }
 .ncm-eyebrow {
   margin: 0;
-  color: color-mix(in srgb, var(--color-primary) 84%, transparent);
+  /* The full-strength accent, not an 84% wash of it: the wash measured 3.73:1 on
+   the light theme's white panel, where 4.5:1 is the floor for 12px text. */
+  color: var(--fx-accent-soft);
   font-size: var(--type-meta);
   font-weight: var(--weight-display);
   letter-spacing: var(--tracking-body);
@@ -30,7 +32,7 @@
 .ncm-copy {
   max-width: 700px;
   margin: .8rem 0 0;
-  color: color-mix(in srgb, var(--color-base-content) 64%, transparent);
+  color: color-mix(in srgb, var(--color-base-content) 70%, transparent);
   line-height: 1.8;
 }
 .ncm-copy code {
@@ -80,7 +82,7 @@
   border: 1px solid color-mix(in srgb, var(--color-base-content) 10%, transparent);
   border-radius: 999px;
   padding: .38rem .65rem;
-  color: color-mix(in srgb, var(--color-base-content) 58%, transparent);
+  color: color-mix(in srgb, var(--color-base-content) 70%, transparent);
   font-size: var(--type-meta);
   font-weight: var(--weight-display);
   white-space: nowrap;
@@ -117,7 +119,9 @@
   height: 3.2rem;
   border-radius: 1rem;
   background: color-mix(in srgb, var(--color-primary) 12%, transparent);
-  color: var(--color-primary);
+  /* A 1.8rem glyph: still text-sized for contrast purposes, and the raw accent
+     measured 2.73:1 here. */
+  color: var(--fx-accent-soft);
   font-size: 1.8rem;
   font-weight: var(--weight-display);
 }
@@ -144,7 +148,7 @@
   padding: .7rem .8rem;
 }
 .ncm-file-name { min-width: 0; flex: 1; overflow: hidden; color: color-mix(in srgb, var(--color-base-content) 82%, transparent); font-size: var(--type-small); font-weight: var(--weight-strong); text-overflow: ellipsis; white-space: nowrap; }
-.ncm-file-size { color: color-mix(in srgb, var(--color-base-content) 45%, transparent); font-size: var(--type-meta); white-space: nowrap; }
+.ncm-file-size { color: color-mix(in srgb, var(--color-base-content) 70%, transparent); font-size: var(--type-meta); white-space: nowrap; }
 .ncm-remove-button,
 .ncm-link-button {
   border: 0;
@@ -172,7 +176,7 @@
 .ncm-checkbox span { display: grid; gap: .18rem; }
 .ncm-checkbox strong { font-size: var(--type-small); }
 .ncm-checkbox small,
-.ncm-option-hint { color: color-mix(in srgb, var(--color-base-content) 50%, transparent); font-size: var(--type-meta); line-height: 1.5; }
+.ncm-option-hint { color: color-mix(in srgb, var(--color-base-content) 70%, transparent); font-size: var(--type-meta); line-height: 1.5; }
 .ncm-option-hint { margin: 0; text-align: right; }
 .ncm-primary-button,
 .ncm-download-button {
@@ -197,7 +201,7 @@
 .ncm-primary-button:hover:not(:disabled) { transform: translateY(-1px); }
 .ncm-primary-button:disabled { cursor: not-allowed; opacity: .42; }
 .ncm-results { display: grid; gap: .75rem; margin-top: 1.25rem; }
-.ncm-empty { display: grid; place-items: center; gap: .5rem; min-height: 150px; border: 1px dashed color-mix(in srgb, var(--color-base-content) 12%, transparent); border-radius: 1rem; color: color-mix(in srgb, var(--color-base-content) 44%, transparent); text-align: center; }
+.ncm-empty { display: grid; place-items: center; gap: .5rem; min-height: 150px; border: 1px dashed color-mix(in srgb, var(--color-base-content) 12%, transparent); border-radius: 1rem; color: color-mix(in srgb, var(--color-base-content) 70%, transparent); text-align: center; }
 .ncm-empty span { font-size: 1.8rem; }
 .ncm-empty p { margin: 0; font-size: var(--type-small); }
 .ncm-result-item { display: grid; grid-template-columns: minmax(0, 1fr) minmax(220px, .7fr) auto; align-items: center; gap: 1rem; border: 1px solid color-mix(in srgb, var(--color-base-content) 10%, transparent); border-radius: 1rem; padding: .9rem; }
@@ -205,13 +209,13 @@
 .ncm-result-meta h3,
 .ncm-result-error h3 { margin: 0; overflow: hidden; color: color-mix(in srgb, var(--color-base-content) 86%, transparent); font-size: var(--type-small); font-weight: var(--weight-display); text-overflow: ellipsis; white-space: nowrap; }
 .ncm-result-meta p,
-.ncm-result-error p { margin: .3rem 0 0; color: color-mix(in srgb, var(--color-base-content) 50%, transparent); font-size: var(--type-meta); }
+.ncm-result-error p { margin: .3rem 0 0; color: color-mix(in srgb, var(--color-base-content) 70%, transparent); font-size: var(--type-meta); }
 .ncm-result-item audio { width: 100%; height: 34px; }
 .ncm-download-button { background: color-mix(in srgb, var(--color-primary) 12%, transparent); padding: .55rem .75rem; color: var(--color-primary); text-decoration: none; white-space: nowrap; }
 .ncm-download-button:hover { background: color-mix(in srgb, var(--color-primary) 20%, transparent); }
 .ncm-result-error { grid-template-columns: 1fr; border-color: color-mix(in srgb, var(--color-error) 25%, transparent); }
 .ncm-result-error h3 { color: var(--color-error); }
-.ncm-back-link { width: fit-content; margin: .25rem auto 0; color: color-mix(in srgb, var(--color-base-content) 55%, transparent); font-size: var(--type-small); font-weight: var(--weight-display); text-decoration: none; }
+.ncm-back-link { width: fit-content; margin: .25rem auto 0; color: color-mix(in srgb, var(--color-base-content) 70%, transparent); font-size: var(--type-small); font-weight: var(--weight-display); text-decoration: none; }
 .ncm-back-link:hover { color: var(--color-primary); }
 @media (max-width: 720px) {
   .ncm-section-head,

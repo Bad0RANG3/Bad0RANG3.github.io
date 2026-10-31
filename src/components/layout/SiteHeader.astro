@@ -3,24 +3,16 @@ import { siteConfig } from '../../config/site';
 import { ROUTES } from '../../config/routes';
 import MobileDrawer from './MobileDrawer.astro';
 import Icon from '../icons/Icon.astro';
-import RailIcon from '../icons/RailIcon.astro';
 import { isActivePath, withBase } from '../../lib/urls';
 
 interface Props { currentPath: string; }
 const { currentPath } = Astro.props;
 const isActive = (href: string) => isActivePath(currentPath, href);
-const islandHrefs = [ROUTES.HOME, ROUTES.POSTS, ROUTES.PROJECTS, ROUTES.TOOLS, ROUTES.ABOUT];
-const islandNavigation = islandHrefs
-  .map((href) => siteConfig.navigation.find((item) => item.href === href))
-  .filter((item): item is (typeof siteConfig.navigation)[number] => Boolean(item));
+/* The header row carries the whole primary navigation. It replaced a fixed
+   icon rail down the left edge: the reference design for this re-skin puts its
+   navigation in the page flow as a row of text buttons, and a rail pinned over
+   the content fights the wide, airy column that look is built on. */
 const player = siteConfig.music;
-const navigationIconByHref = {
-  [ROUTES.HOME]: 'home',
-  [ROUTES.POSTS]: 'posts',
-  [ROUTES.PROJECTS]: 'projects',
-  [ROUTES.TOOLS]: 'tools',
-  [ROUTES.ABOUT]: 'about',
-} as const;
 const playerCover = withBase(player.cover);
 const playerAudio = withBase(player.audio);
 const playerLyrics = withBase(player.lyrics);
@@ -112,23 +104,26 @@ const playerLyrics = withBase(player.lyrics);
   </div>
 </header>
 
-<aside class="site-nav-rail" aria-label="站点导航">
-  <nav>
-    {islandNavigation.map((item) => {
-      const active = isActive(item.href);
-      return (
-        <a href={withBase(item.href)} class:list={['rail-link', active && 'is-active']} aria-current={active ? 'page' : undefined}>
-          <span class="rail-icon"><RailIcon name={navigationIconByHref[item.href as keyof typeof navigationIconByHref]} /></span>
-          <span class="rail-label">{item.label}</span>
-        </a>
-      );
-    })}
-    <span class="rail-divider" aria-hidden="true"></span>
-    <button class="rail-link rail-menu-button" id="rail-menu-btn" type="button" aria-label="打开全部入口" aria-controls="mobile-drawer" aria-expanded="false" data-drawer-trigger>
-      <span class="rail-icon"><RailIcon name="more" /></span>
-      <span class="rail-label">全部入口</span>
-    </button>
-  </nav>
-</aside>
+<nav class="site-nav" aria-label="站点导航">
+  <div class="site-frame site-nav__inner">
+    <a class="site-nav__brand" href={withBase(ROUTES.HOME)} aria-label={`${siteConfig.author.name} 首页`}>
+      <img class="site-nav__mark" src={withBase(siteConfig.author.avatar)} alt="" width="26" height="26" loading="eager" decoding="async" />
+      <span class="site-nav__wordmark">{siteConfig.author.name}</span>
+    </a>
+
+    <ul class="site-nav__links">
+      {siteConfig.navigation.map((item) => {
+        const active = isActive(item.href);
+        return (
+          <li>
+            <a href={withBase(item.href)} class:list={['site-nav__link', active && 'is-active']} aria-current={active ? 'page' : undefined}>
+              {item.label}
+            </a>
+          </li>
+        );
+      })}
+    </ul>
+  </div>
+</nav>
 
 <MobileDrawer currentPath={currentPath} />
