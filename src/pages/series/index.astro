@@ -12,7 +12,7 @@ const totalMinutes = (posts: Post[]) => posts.reduce((sum, post) => sum + getPos
 ---
 
 <BaseLayout title="系列" description="按顺序阅读同一主题的文章。">
-  <div class="site-frame py-5 sm:py-8">
+  <div class="site-frame page-shell">
     <PageHeader label="Series" title="文章系列" description="按顺序阅读同一主题的文章。" />
     {groups.length === 0 ? <EmptyState message="还没有系列文章。" /> : (
       <div class="grid gap-5 md:grid-cols-2">

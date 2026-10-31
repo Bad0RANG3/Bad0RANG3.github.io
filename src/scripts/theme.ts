@@ -32,12 +32,12 @@ const themeColorDark = SITE.THEME_COLOR_DARK;
       }
 
       function updateToggleUI(theme) {
-        var button = document.getElementById('theme-toggle');
-        if (!button) return;
         var isDark = theme === DARK;
+        document.querySelectorAll('#theme-toggle, [data-theme-toggle]').forEach(function (button) {
         button.setAttribute('aria-label', isDark ? '切换亮色模式' : '切换深色模式');
         button.setAttribute('title', isDark ? '切换到亮色' : '切换到深色');
         button.setAttribute('aria-pressed', isDark ? 'true' : 'false');
+        });
       }
 
       function paint(doc, theme) {
@@ -93,7 +93,7 @@ const themeColorDark = SITE.THEME_COLOR_DARK;
       // Delegated so the control keeps working after the header is replaced.
       document.addEventListener('click', function (event) {
         var target = event.target;
-        var button = target instanceof Element ? target.closest('#theme-toggle') : null;
+        var button = target instanceof Element ? target.closest('#theme-toggle, [data-theme-toggle]') : null;
         if (button) applyTheme(currentTheme() === DARK ? LIGHT : DARK, true);
       });
 

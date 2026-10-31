@@ -56,7 +56,7 @@ Astro 5 静态站点（`output: 'static'`），Tailwind CSS 4（通过 `@tailwin
     ├── scripts/                浏览器端入口，由 Astro 打包为可缓存模块
     │   ├── bootstrap.ts          按需加载其余模块的唯一入口
     │   ├── theme.ts              主题控制器（首屏由 BaseLayout 内联小脚本兜底）
-    │   ├── atmosphere.ts         粒子背景（精灵缓存 + 约 30fps，滚动时持续播放）
+    │   ├── atmosphere.ts         粒子背景（原站 SVG 关键帧 + Canvas 约 30fps，滚动时持续播放）
     │   ├── player.ts             动态岛音乐播放器
     │   ├── home.ts               首页资料卡（网易云快照刷新，未配置 API 时只显示构建期快照）
     │   ├── home-motion.ts        首页播放器镜像（读岛状态、转发播放/暂停）
@@ -119,7 +119,7 @@ Astro 5 静态站点（`output: 'static'`），Tailwind CSS 4（通过 `@tailwin
     - `island.css`：按 iPhone 灵动岛规格复刻的独立组件，字号用 `cqw`，字重 560–760 都是规格的一部分。
     - 键盘 / 鼠标示意图的 `scfg-kbd-key`：键帽图例字号受物理键位尺寸约束，缩放会溢出键帽（其 `font-weight` / `letter-spacing` 同样跟着键帽走）。
   - 另外三类**不参与刻度**，别把它们当成漏网之鱼：`.prose` 里的 `em` 相对字号（跟随正文等比缩放）、装饰性图符字号（♪、emoji 等），以及 `BaseLayout` 中 `@font-face` 的 `font-weight: 100 800`（可变字体轴范围）。
-  - 首页按参考站的结构组织，分成三块：**Hero**（插画版位 + 站名 + 发丝分隔线 + 一句话 + 邮箱）、**关于**（左文右卡，右侧保留播放器与账号卡）、**作品**（文章 / 碎碎念 / 项目三种内容各成一组，文章与碎碎念再按年份分组，条目是「版位 + 标题 + 日期」的图格式列表）。没有封面的文章用排版版位（`work__plate`）顶上，它的色相由分类名哈希出三档之一，避免整屏一模一样的浅蓝块。列表页 `/posts/` 仍然是信息流，首页是门面。
+  - 首页保持单组插画与简介、邮箱和社交链接；主内容在导航与页脚之间自适应居中。全站共享导航宽度和位置，内页使用 `page-shell` 统一纵向留白，页脚只保留必要文字入口。
 - 主题切换由两段代码负责：`BaseLayout.astro` `<head>` 里的内联小脚本（首屏前解析 `localStorage` / `prefers-color-scheme` 并上色，避免闪烁），以及打包在 `src/scripts/theme.ts` 的控制器（切换、监听 `astro:before-swap` / `astro:after-swap`、`MutationObserver` 兜底）。改动后请用两种主题分别过一遍所有页面（`pnpm smoke` 不覆盖对比度）。
 
 ---

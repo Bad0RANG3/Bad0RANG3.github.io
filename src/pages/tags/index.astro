@@ -11,7 +11,7 @@ const groups = await getTagGroups();
 ---
 
 <BaseLayout title="标签" description="按主题浏览文章。">
-  <div class="site-frame py-5 sm:py-8">
+  <div class="site-frame page-shell">
     <PageHeader label="Tags" title="标签" description="按主题浏览文章。" />
     {groups.length === 0 ? <EmptyState message="还没有标签。" /> : (
       <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">

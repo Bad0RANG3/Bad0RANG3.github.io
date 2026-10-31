@@ -16,7 +16,7 @@ const rendered = await Promise.all(
 ---
 
 <BaseLayout title="碎碎念" description="随手记录的想法、吐槽和日常。">
-  <div class="site-frame py-5 sm:py-8">
+  <div class="site-frame page-shell">
     <PageHeader label="Thoughts" title="碎碎念" />
 
     {rendered.length === 0 ? (
@@ -26,16 +26,13 @@ const rendered = await Promise.all(
         {rendered.map((t, i) => (
           <article
             id={thoughtAnchor(t.slug)}
-            class:list={[
-              'reveal scroll-mt-24 rounded-[1.5rem] border border-base-content/10 bg-base-100/80 p-5 transition-all hover:-translate-y-0.5',
-              i % 2 === 0 ? 'shadow-[6px_6px_0_0] shadow-primary/35' : 'shadow-[6px_6px_0_0] shadow-accent/35',
-            ]}
+            class="thought-entry reveal scroll-mt-24"
             style={`--reveal-delay:${i * 100}ms`}
           >
             <time class="font-mono text-sm font-medium tabular-nums text-base-content/70" datetime={t.data.date.toISOString()}>
               {formatDate(t.data.date)}
             </time>
-            <div class="mt-3 text-base leading-7 text-base-content/75">
+            <div class="prose mt-3 max-w-none">
               <t.Content />
             </div>
           </article>
