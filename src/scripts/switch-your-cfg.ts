@@ -1,0 +1,384 @@
+// @ts-nocheck
+/* ============================================================
+   SwitchYourCFG — Application Logic
+   Bundled (not inline) so it is cached across visits. ClientRouter swaps in
+   fresh markup on every visit, so the app is initialised per page load, and
+   its window listeners are tied to an AbortController that fires when the
+   visitor leaves — otherwise key presses on other pages kept driving it.
+   ============================================================ */
+function initSwitchYourCfg(){
+var _root=document.getElementById('kbdWrap');
+if(!_root||_root.dataset.bound==='1')return;
+_root.dataset.bound='1';
+var _page=new AbortController();
+document.addEventListener('astro:before-swap',function(){_page.abort();},{once:true});
+var $=function(s){return document.querySelector(s);};
+var $$=function(s){return document.querySelectorAll(s);};
+
+function fmtSize(b){if(b<1024)return b+' B';if(b<1048576)return(b/1024).toFixed(1)+' KB';return(b/1048576).toFixed(1)+' MB';}
+function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+
+var _tt;function toast(m){clearTimeout(_tt);var e=$('.scfg-toast');if(!e)return;e.textContent=m;e.classList.add('show');_tt=setTimeout(function(){e.classList.remove('show');},2200);}
+var _keyTip=$('#keyTooltip');
+function tooltipText(k){
+  if(!k)return '';
+  if(k===_bk)return '当前选中按键：'+k;
+  var saved=S.buyBinds.find(function(b){return b.key===k;});
+  if(saved)return '已绑定：'+saved.cmd;
+  return '点击选择按键：'+k;
+}
+function showKeyTip(t,x,y){
+  if(!_keyTip||!t)return;
+  _keyTip.textContent=t;
+  _keyTip.style.left=Math.min(window.innerWidth-220,Math.max(12,x+14))+'px';
+  _keyTip.style.top=Math.max(12,y+14)+'px';
+  _keyTip.classList.add('show');
+}
+function hideKeyTip(){ if(_keyTip)_keyTip.classList.remove('show'); }
+
+/* VDF Parser — synchronous, optimized for typical VDF file sizes */
+function parseVDF(t){
+  if(t.charCodeAt(0)===0xFEFF)t=t.slice(1);t=t.replace(/\/\/[^\n]*/g,'\n');var p=0;
+  function sw(){while(p<t.length&&(t[p]===' '||t[p]==='\t'||t[p]==='\n'||t[p]==='\r'))p++;}
+  function rs(){sw();if(p>=t.length||t[p]!=='"')return null;p++;var r='';
+    while(p<t.length){if(t[p]==='"'){p++;return r;}
+      if(t[p]==='\\'&&p+1<t.length){p++;var c=t[p];
+        if(c==='"'){var la=p+1;while(la<t.length&&(t[la]===' '||t[la]==='\t'||t[la]==='\n'||t[la]==='\r'))la++;
+          if(la>=t.length||t[la]==='{'||t[la]==='}'||t[la]==='"'){r+='\\';p++;return r;}r+='"';}
+        else if(c==='n')r+='\n';else if(c==='t')r+='\t';else if(c==='\\')r+='\\';else r+=c;}
+      else{r+=t[p];}p++;}return r;}
+  function ro(){sw();var k=rs();if(k===null)return null;sw();if(p>=t.length)return null;
+    if(t[p]==='"'){var v=rs();var o={};o[k]=v;return o;}
+    if(t[p]==='{'){p++;var o={};
+      while(p<t.length){sw();if(t[p]==='}'){p++;var r={};r[k]=o;return r;}var c=ro();if(c===null)break;Object.assign(o,c);}
+      var r={};r[k]=o;return r;}return null;}
+  var root={};while(p<t.length){sw();if(p>=t.length)break;var o=ro();if(o===null)break;Object.assign(root,o);}return root;
+}
+
+/* State */
+var S={machine:null,user:null,keys:null,buyBinds:[],_mN:null,_mS:null,_mE:false,_uN:null,_uS:null,_uE:false,_kN:null,_kS:null,_kE:false};
+var FP={machine:[/^cs2_machine_convars\.vcfg$/i],user:[/^cs2_user_convars.*\.vcfg$/i],keys:[/^cs2_user_keys.*\.vcfg$/i]};
+
+function classifyFile(n){for(var t in FP){var rs=FP[t];for(var i=0;i<rs.length;i++){if(rs[i].test(n))return t;}}return null;}
+
+function loadFiles(fl){
+  S.machine=S.user=S.keys=null;var found={};
+  for(var i=0;i<fl.length;i++){var f=fl[i],t=classifyFile(f.name);if(!t)continue;if(!found[t]||(f.name.indexOf('slot0')!==-1&&found[t].name.indexOf('slot0')===-1))found[t]=f;}
+  var pending=Object.keys(found).length;if(pending===0){updateFileList();updateUI();return;}
+  for(var t in found){(function(type,file){var reader=new FileReader();
+    reader.onload=function(e){
+      try{var parsed=parseVDF(e.target.result);if(!parsed||!parsed.config)throw new Error('Bad');var cfg=parsed.config;
+        if(type==='machine'||type==='user'){if(!cfg.convars||typeof cfg.convars!=='object')throw new Error('No convars');S[type]=cfg.convars;}
+        else{S.keys={bindings:cfg.bindings||{}};}
+        S['_'+type+'N']=file.name;S['_'+type+'S']=file.size;S['_'+type+'E']=false;}
+      catch(err){S[type]=null;S['_'+type+'N']=file.name;S['_'+type+'S']=file.size;S['_'+type+'E']=true;}
+      pending--;if(pending===0){updateFileList();updateUI();}
+    };reader.readAsText(file);})(t,found[t]);
+  }
+  var types=['machine','user','keys'];
+  for(var j=0;j<types.length;j++){var tt=types[j];if(!found[tt]){S[tt]=null;S['_'+tt+'N']=null;S['_'+tt+'S']=null;S['_'+tt+'E']=false;}}
+  updateFileList();
+}
+
+function updateFileList(){
+  $('#filelist').classList.add('show');
+  var types=['machine','user','keys'];
+  for(var i=0;i<types.length;i++){var t=types[i],n=S['_'+t+'N'],s=S['_'+t+'S'],e=S['_'+t+'E'],fi=document.getElementById('fi-'+t);
+    fi.classList.remove('ok','err');
+    if(!n){fi.classList.add('err');fi.children[2].textContent='';fi.children[3].textContent='未找到';}
+    else if(e){fi.classList.add('err');fi.children[2].textContent=fmtSize(s);fi.children[3].textContent='解析失败';}
+    else{fi.classList.add('ok');fi.children[2].textContent=fmtSize(s);fi.children[3].textContent='✓ 已识别';}
+  }
+}
+
+/* Keyboard layout constants */
+var MAIN=[['Esc','ESCAPE','w1'],['F1','F1','w1'],['F2','F2','w1'],['F3','F3','w1'],['F4','F4','w1'],['F5','F5','w1'],['F6','F6','w1'],['F7','F7','w1'],['F8','F8','w1'],['F9','F9','w1'],['F10','F10','w1'],['F11','F11','w1'],['F12','F12','w1']];
+var ROW1=[['`','`','w1'],['1','1','w1'],['2','2','w1'],['3','3','w1'],['4','4','w1'],['5','5','w1'],['6','6','w1'],['7','7','w1'],['8','8','w1'],['9','9','w1'],['0','0','w1'],['-','-','w1'],['=','=','w1'],['⌫','BACKSPACE','w2']];
+var ROW2=[['Tab','TAB','w1d5'],['Q','q','w1'],['W','w','w1'],['E','e','w1'],['R','r','w1'],['T','t','w1'],['Y','y','w1'],['U','u','w1'],['I','i','w1'],['O','o','w1'],['P','p','w1'],['[','[','w1'],[']',']','w1'],['\\','\\','w1d5']];
+var ROW3=[['Caps','CAPSLOCK','w1d8'],['A','a','w1'],['S','s','w1'],['D','d','w1'],['F','f','w1'],['G','g','w1'],['H','h','w1'],['J','j','w1'],['K','k','w1'],['L','l','w1'],[';',';','w1'],["'","'",'w1'],['↵','ENTER','w2d2']];
+var ROW4=[['Shift','SHIFT','w2d5'],['Z','z','w1'],['X','x','w1'],['C','c','w1'],['V','v','w1'],['B','b','w1'],['N','n','w1'],['M','m','w1'],[' , ',',','w1'],['.','.','w1'],['/','/','w1'],['Shift','RSHIFT','w2d8']];
+var ROW5=[['Ctrl','CTRL','w1d5'],['⊞','','w1d2',1],['Alt','ALT','w1d2'],['','SPACE','w6d5'],['Alt','RALT','w1d2'],['⊞','','w1d2',1],['Ctrl','RCTRL','w1d5']];
+var MAIN_ROWS=[[],ROW1,ROW2,ROW3,ROW4,ROW5];MAIN_ROWS[0]=MAIN;
+var SIDE=[
+  {l:'数字键盘',r:[[['NumLk','',0,1],['/','kp_slash'],['*','kp_multiply'],['-','kp_minus']],[['7','kp_home'],['8','kp_uparrow'],['9','kp_pgup'],['+','kp_plus']],[['4','kp_leftarrow'],['5','kp_5'],['6','kp_rightarrow']],[['1','kp_end'],['2','kp_downarrow'],['3','kp_pgdn'],['Ent','kp_enter']],[['0','kp_ins',2],['.','kp_del']]]},
+  {l:'方向键',r:[[['','',0,1],['↑','UPARROW'],['','',0,1]],[['←','LEFTARROW'],['↓','DOWNARROW'],['→','RIGHTARROW']]]},
+  {l:'其他',r:[[['Ins','INS'],['Home','HOME'],['PgUp','PGUP']],[['Del','DEL'],['End','END'],['PgDn','PGDN']]]}
+];
+var MOUSE_ROWS=[[['M1','MOUSE1','w2d2'],['M2','MOUSE2','w2d2']],[['M3','MOUSE3','w2'],['M4','MOUSE4','w2'],['M5','MOUSE5','w2']],[['滚↑','MWHEELUP','w2d2'],['滚↓','MWHEELDOWN','w2d2']]];
+var CATS=[{id:'rifles',l:'步枪',i:[['ak47','AK-47','2700'],['m4a1','M4A1-S','2900'],['awp','AWP','4750'],['ssg08','SSG 08','1700'],['galilar','Galil','1800'],['famas','FAMAS','1950'],['sg556','SG 553','3000'],['aug','AUG','3300'],['g3sg1','G3SG1','5000'],['scar20','SCAR-20','5000']]},{id:'smgs',l:'冲锋枪',i:[['mac10','MAC-10','1050'],['ump45','UMP-45','1200'],['p90','P90','2350'],['bizon','PP-Bizon','1400'],['mp7','MP7','1500'],['mp9','MP9','1250']]},{id:'shotguns',l:'霰弹枪',i:[['xm1014','XM1014','2000'],['mag7','MAG-7','1300'],['sawedoff','Sawed-Off','1100'],['nova','Nova','1050']]},{id:'heavy',l:'重型',i:[['m249','M249','5200'],['negev','Negev','1700']]},{id:'pistols',l:'手枪',i:[['deagle','沙漠之鹰','700'],['p250','P250','300'],['fiveseven','Five-SeveN','500'],['tec9','Tec-9','500'],['glock','Glock','200'],['hkp2000','P2000','200'],['elite','双持贝瑞塔','300']]},{id:'nades',l:'投掷物',i:[['hegrenade','高爆手雷','300'],['flashbang','闪光弹','200'],['smokegrenade','烟雾弹','300'],['molotov','燃烧弹(T)','400'],['incgrenade','燃烧弹(CT)','500'],['decoy','诱饵弹','50']]},{id:'equip',l:'装备',i:[['vest','防弹衣','650'],['vesthelm','头甲','1000'],['defuser','拆弹器','400'],['taser','电击枪','200']]}];
+
+var _bk='',_bi=new Set(),_bc='rifles';
+
+function hasSavedBind(key){return !!S.buyBinds.find(function(b){return b.key===key;});}
+function rKey(l,k,w,d,sm){var c='scfg-kbd-key '+w;if(d)c+=' disabled';if(k===_bk)c+=' on';else if(k&&hasSavedBind(k))c+=' bound';if(sm)c+=' small';else if(k.length>2)c+=' small';return'<button type="button" class="'+c+'" data-key="'+esc(k)+'" aria-label="'+esc(k||l)+'">'+l+'</button>';}
+function rRows(rows,sm){var h='';for(var i=0;i<rows.length;i++){h+='<div class="scfg-kbd-row">';for(var j=0;j<rows[i].length;j++){var r=rows[i][j],w=r[2]||'w1';if(sm&&r[3])w=r[3]===2?'w2':'w1';h+=rKey(r[0],r[1],w,r[3],sm);}h+='</div>';}return h;}
+
+/* State trackers for incremental rendering */
+var _kbdBuilt=false;
+var _buyCatsBuilt=false;
+
+function renderKeyboard(){
+  if(!_kbdBuilt){
+    $('#kbdMain').innerHTML=rRows(MAIN_ROWS);
+    var s='';var extra='';
+    for(var i=0;i<SIDE.length;i++){var p=SIDE[i];var html='<div class="scfg-kbd-label">'+p.l+'</div>'+rRows(p.r,true);if(i===0)s+=html;else extra+=html;}
+    $('#kbdSide').innerHTML=s;
+    var extraEl=$('#kbdExtra');if(extraEl)extraEl.innerHTML=extra;
+    var ms='';
+    for(var j=0;j<MOUSE_ROWS.length;j++){ms+='<div class="scfg-kbd-row">';for(var k=0;k<MOUSE_ROWS[j].length;k++){var r=MOUSE_ROWS[j][k];ms+=rKey(r[0],r[1],r[2]||'w2',0,false);}ms+='</div>';}
+    var mouse=$('#kbdMouse');if(mouse)mouse.innerHTML=ms;
+    _kbdBuilt=true;
+  } else {
+    /* Incremental: only toggle on/bound classes */
+    var allKeys=document.querySelectorAll('#kbdWrap .scfg-kbd-key, #kbdMouse .scfg-kbd-key');
+    for(var ki=0;ki<allKeys.length;ki++){
+      var ke=allKeys[ki],dk=ke.dataset.key;
+      ke.classList.toggle('on',dk===_bk);
+      ke.classList.toggle('bound',!!dk&&hasSavedBind(dk));
+    }
+  }
+  $('#buyKeyDisplay').textContent=_bk||'未选择';
+  updateKeyboardScale();
+}
+
+function renderBuyItems(){
+  /* Category buttons: rebuild on first call, then just toggle .sel */
+  if(!_buyCatsBuilt){
+    var t='';
+    for(var j=0;j<CATS.length;j++){var c=CATS[j];t+='<button class="scfg-buy-cat'+(c.id===_bc?' sel':'')+'" data-cat="'+c.id+'">'+c.l+'</button>';}
+    $('#buyCats').innerHTML=t;
+    _buyCatsBuilt=true;
+  } else {
+    var catBtns=document.querySelectorAll('#buyCats .scfg-buy-cat');
+    for(var b=0;b<catBtns.length;b++){catBtns[b].classList.toggle('sel',catBtns[b].dataset.cat===_bc);}
+  }
+  /* Item grid: always rebuild (content changes per category) */
+  var cat=null;
+  for(var ci=0;ci<CATS.length;ci++){if(CATS[ci].id===_bc){cat=CATS[ci];break;}}
+  var it='';
+  if(cat){for(var k=0;k<cat.i.length;k++){var x=cat.i[k],on=_bi.has(x[0]);it+='<span class="scfg-buy-item'+(on?' on':'')+'" data-item="'+x[0]+'">'+x[1]+'<span class="cost">$'+x[2]+'</span></span>';}}
+  $('#buyGrid').innerHTML=it;
+  updateBuyPreview();
+}
+
+function updateBuyPreview(){
+  var p=$('#buyPreview');if(!_bk||_bi.size===0){p.innerHTML='<span class="scfg-buy-empty">选择按键和武器来生成购买绑定…</span>';return;}
+  var a=[];_bi.forEach(function(x){a.push(x);});p.textContent='bind "'+_bk+'" "'+a.map(function(x){return'buy '+x;}).join('; ')+'"';
+}
+
+function renderSavedBinds(){
+  var e=$('#buySaved');if(!e)return;if(S.buyBinds.length===0){e.innerHTML='';return;}
+  e.innerHTML=S.buyBinds.map(function(b,i){return'<div class="scfg-sv"><span class="scfg-sv-key">'+esc(b.key)+'</span><span class="scfg-sv-cmd">'+esc(b.cmd)+'</span><span class="scfg-sv-del" data-idx="'+i+'">✕</span></div>';}).join('');
+}
+
+function fmtLine(cmd){return cmd.indexOf('\t')!==-1?cmd.replace(/\t/g,'    '):cmd;}
+function escapePre(s){return esc(s).replace(/\n/g,'<br>');}
+
+/* Structured preview (optional — not called from hot path; kept for future use) */
+function bindGroup(key,cmd){
+  if(/^buy /.test(cmd))return '一键买枪';
+  if(/^slot\d+$/i.test(cmd))return 'Slot';
+  if(/\+(forward|back|moveleft|moveright|jump|duck)/i.test(cmd))return '移动';
+  if(/^(lastinv|invnext|invprev|use|drop|reload)$/i.test(cmd))return '交互';
+  if(/^(attack|attack2|lookatweapon|player_ping)$/i.test(cmd)||/^\+?(attack|attack2)/i.test(cmd))return '战斗';
+  if(/^(say|messagemode|messagemode2)/i.test(cmd))return '通信';
+  return '其他绑定';
+}
+function structuredPreview(lines){
+  var groups=[];var current=null;
+  for(var i=0;i<lines.length;i++){
+    var line=lines[i];
+    if(!line)continue;
+    if(line.startsWith('// =====')){current={title:line.replace(/^\/\/ =====\s*/,'').replace(/\s*=====$/,''),items:[]};groups.push(current);continue;}
+    if(!current){current={title:'基础设置',items:[]};groups.push(current);}
+    current.items.push(line);
+  }
+  return groups;
+}
+function renderStructuredPreview(groups){
+  if(!groups.length)return '<span class="scfg-pv-m">// 等待选择文件夹...</span>';
+  return groups.map(function(group){
+    var title=group.title||'未命名分组';
+    var items='';
+    if(title==='按键绑定'){
+      var sub={};
+      for(var i=0;i<group.items.length;i++){
+        var line=group.items[i];
+        var m=line.match(/^bind\t"([^"]+)"\t"([^"]+)"$/);
+        if(!m){(sub['其他']||(sub['其他']=[])).push({raw:line});continue;}
+        var key=m[1],cmd=m[2],g=bindGroup(key,cmd);
+        (sub[g]||(sub[g]=[])).push({key:key,cmd:cmd});
+      }
+      items=Object.keys(sub).map(function(name){
+        return '<div class="scfg-preview-subgroup"><div class="scfg-preview-subtitle">'+esc(name)+'</div>'+sub[name].map(function(entry){
+          if(entry.raw)return '<div class="scfg-preview-row"><code>'+esc(fmtLine(entry.raw))+'</code></div>';
+          return '<div class="scfg-preview-row"><span class="scfg-preview-key">'+esc(entry.key)+'</span><span class="scfg-preview-arrow">→</span><code>'+esc(entry.cmd)+'</code></div>';
+        }).join('')+'</div>';
+      }).join('');
+    } else if(title==='一键买枪') {
+      items=group.items.map(function(line){
+        var m=line.match(/^bind\t"([^"]+)"\t"([^"]+)"$/);
+        if(!m)return '<div class="scfg-preview-row"><code>'+esc(fmtLine(line))+'</code></div>';
+        return '<div class="scfg-preview-row"><span class="scfg-preview-key">'+esc(m[1])+'</span><span class="scfg-preview-arrow">→</span><code>'+esc(m[2])+'</code></div>';
+      }).join('');
+    } else {
+      items=group.items.map(function(line){return '<div class="scfg-preview-row"><code>'+esc(fmtLine(line))+'</code></div>';}).join('');
+    }
+    return '<section class="scfg-preview-group"><header>'+esc(title)+'</header>'+items+'</section>';
+  }).join('');
+}
+
+/* ── CFG Generation ────────────────────────────────────────── */
+function generateCFG(){
+  var lines=[],su=$('#optSkipUnbound').checked,uf=$('#optUserFirst').checked,bc=$('#optBool').checked,ac=$('#optComments').checked,pn=$('#playerName').value.trim(),k=S.keys;
+  lines.push('cfgver\t"1"');lines.push('unbindall');lines.push('bind\t"MOUSE_X"\t"yaw"');lines.push('bind\t"MOUSE_Y"\t"pitch"');if(ac)lines.push('');
+  var nB=2;
+  if(k&&k.bindings){
+    if(ac)lines.push('// ===== 按键绑定 =====');
+    var sk=Object.keys(k.bindings).sort(function(a,b){return/^\d$/.test(a)&&!/^\d$/.test(b)?-1:!/^\d$/.test(a)&&/^\d$/.test(b)?1:a.localeCompare(b);});
+    for(var i=0;i<sk.length;i++){var key=sk[i],cmd=k.bindings[key];if(su&&cmd==='<unbound>')continue;if(cmd&&cmd!=='<unbound>'){lines.push('bind\t"'+key+'"\t"'+cmd+'"');nB++;}}
+  }
+  var nBy=0;if(S.buyBinds.length>0){if(ac){lines.push('');lines.push('// ===== 一键买枪 =====');}for(var j=0;j<S.buyBinds.length;j++){lines.push('bind\t"'+S.buyBinds[j].key+'"\t"'+S.buyBinds[j].cmd+'"');nBy++;}}
+  var mc=S.machine||{},uc=S.user||{},mg=uf?Object.assign({},mc,uc):Object.assign({},uc,mc);if(pn)mg['name']=pn;
+  if(ac&&Object.keys(mg).length>0){lines.push('');lines.push('// ===== 设置参数 =====');}
+  var sc=Object.keys(mg).sort(function(a,b){return a.localeCompare(b);}),nC=0;
+  for(var k2=0;k2<sc.length;k2++){var n=sc[k2],v=mg[n];if(bc){if(v==='true')v='1';if(v==='false')v='0';}lines.push(n+'\t"'+v+'"');nC++;}
+  var cfgText=lines.join('\n');
+  return{
+    cfg:cfgText,
+    plainHtml:escapePre(cfgText),
+    stats:{binds:nB,buy:nBy,machine:Object.keys(mc).length,user:Object.keys(uc).length,merged:nC,lines:lines.length}
+  };
+}
+
+/* ── Keyboard scale (throttled via rAF) ──────────────────── */
+function updateKeyboardScale(){
+  var viewport=$('#kbdViewport'),scaleEl=$('#kbdScale'),wrap=$('#kbdWrap');
+  if(!viewport||!scaleEl||!wrap)return;
+  var naturalWidth=wrap.scrollWidth||1120;
+  var naturalHeight=wrap.scrollHeight||390;
+  var currentWidth=viewport.clientWidth||naturalWidth;
+  /* Fit the whole board (main + numpad + extra keys) into the available width.
+     Below a legibility floor, stop shrinking and let the shell scroll sideways. */
+  var scale=Math.min(currentWidth/naturalWidth,1);
+  if(scale<0.6)scale=0.6;
+  scaleEl.style.setProperty('--keyboard-scale',String(scale));
+  scaleEl.style.width=Math.round(naturalWidth*scale)+'px';
+  scaleEl.style.height=Math.round(naturalHeight*scale)+'px';
+}
+
+var _rsTicking=false;
+function scheduleResize(){
+  if(!_rsTicking){
+    requestAnimationFrame(function(){
+      updateKeyboardScale();
+      _rsTicking=false;
+    });
+    _rsTicking=true;
+  }
+}
+
+/* ── UI update (debounced for rapid input/checkbox changes) ─ */
+var _uiTimer;
+function updateUI(){
+  clearTimeout(_uiTimer);
+  _uiTimer=setTimeout(doUpdateUI,16);
+}
+
+function doUpdateUI(){
+  if(_page.signal.aborted)return;
+  var ha=!!(S.machine||S.user||S.keys);
+  $('#optionsCard').classList.toggle('hidden',!ha);$('#buyCard').classList.toggle('hidden',!ha);$('#outputCard').classList.toggle('hidden',!ha);
+  if(!ha){$('#statsBar').classList.add('hidden');$('#pvPre').innerHTML='<span class="scfg-pv-m">// 等待选择文件夹...</span>';$('#btnDownload').disabled=true;$('#btnCopy').disabled=true;updateKeyboardScale();return;}
+  var r=generateCFG();
+  $('#statsBar').classList.remove('hidden');$('#statBinds').textContent=r.stats.binds;$('#statBuy').textContent=r.stats.buy;$('#statMachine').textContent=r.stats.machine;$('#statUser').textContent=r.stats.user;$('#statMerged').textContent=r.stats.merged;$('#statLines').textContent=r.stats.lines;
+  $('#pvInfo').textContent=r.stats.lines+' 行 · '+r.stats.binds+' 绑定 · '+r.stats.buy+' 买枪 · '+r.stats.merged+' ConVar';
+  $('#pvPre').innerHTML=r.plainHtml;$('#pvBox').scrollTop=0;
+  $('#btnDownload').disabled=false;$('#btnCopy').disabled=false;$('#btnDownload')._r=r;$('#btnCopy')._r=r;
+  updateKeyboardScale();
+}
+
+/* ── Events ────────────────────────────────────────────────── */
+var dz=$('#dropzone'),fin=$('#folderInput');
+if(dz&&fin){
+  dz.addEventListener('click',function(e){if(e.target===dz||(dz.contains(e.target)&&e.target.tagName!=='A')){fin.value='';fin.click();}});
+  fin.addEventListener('click',function(e){e.stopPropagation();});
+  fin.addEventListener('change',function(){if(fin.files.length>0){loadFiles(Array.from(fin.files));dz.classList.add('ready');}});
+  dz.addEventListener('dragover',function(e){e.preventDefault();e.stopPropagation();dz.classList.add('active');});
+  dz.addEventListener('dragleave',function(e){e.preventDefault();e.stopPropagation();dz.classList.remove('active');});
+  dz.addEventListener('drop',function(e){e.preventDefault();e.stopPropagation();dz.classList.remove('active');var items=e.dataTransfer.items;if(!items)return;var files=[];
+    function tr(it){if(it.kind!=='file')return Promise.resolve();var en=it.webkitGetAsEntry?it.webkitGetAsEntry():null;if(en&&en.isDirectory){return rd(en,files);}else{files.push(it.getAsFile());return Promise.resolve();}}
+    function rd(en,out){return new Promise(function(rs){var r=en.createReader(),es=[];
+      function rb(){r.readEntries(function(b){if(b.length===0){var ps=[];for(var i=0;i<es.length;i++){(function(e){if(e.isFile)ps.push(new Promise(function(rr){e.file(function(f){out.push(f);rr();},function(){rr();});}));else if(e.isDirectory)ps.push(rd(e,out));})(es[i]);}Promise.all(ps).then(rs);return;}es.push.apply(es,b);rb();},function(){rs();});}rb();});}
+    var ps=[];for(var i=0;i<items.length;i++)ps.push(tr(items[i]));Promise.all(ps).then(function(){if(files.length>0){loadFiles(files);dz.classList.add('ready');}});});
+}
+
+function chooseKey(k){if(!k)return;_bk=k;renderKeyboard();updateBuyPreview();}
+
+var kw=$('#kbdWrap');
+if(kw){
+  kw.addEventListener('click',function(e){var ke=e.target.closest('.scfg-kbd-key');if(!ke||ke.classList.contains('disabled'))return;chooseKey(ke.dataset.key);});
+  kw.addEventListener('pointermove',function(e){var ke=e.target.closest('.scfg-kbd-key');if(!ke||ke.classList.contains('disabled')){hideKeyTip();return;}showKeyTip(tooltipText(ke.dataset.key),e.clientX,e.clientY);});
+  kw.addEventListener('pointerleave',hideKeyTip);
+}
+var km=$('#kbdMouse');
+if(km){
+  km.addEventListener('click',function(e){var ke=e.target.closest('.scfg-kbd-key');if(!ke||ke.classList.contains('disabled'))return;chooseKey(ke.dataset.key);});
+  km.addEventListener('pointermove',function(e){var ke=e.target.closest('.scfg-kbd-key');if(!ke||ke.classList.contains('disabled')){hideKeyTip();return;}showKeyTip(tooltipText(ke.dataset.key),e.clientX,e.clientY);});
+  km.addEventListener('pointerleave',hideKeyTip);
+}
+
+/* Physical keyboard input mirrors the on-screen keyboard when the user is not typing in a form field. */
+var KEY_CODE_MAP={Escape:'ESCAPE',Backquote:'`',Minus:'-',Equal:'=',BracketLeft:'[',BracketRight:']',Backslash:'\\',Semicolon:';',Quote:"'",Comma:',',Period:'.',Slash:'/',Tab:'TAB',CapsLock:'CAPSLOCK',Backspace:'BACKSPACE',Enter:'ENTER',Space:'SPACE',ShiftLeft:'SHIFT',ShiftRight:'RSHIFT',ControlLeft:'CTRL',ControlRight:'RCTRL',AltLeft:'ALT',AltRight:'RALT',MetaLeft:'',MetaRight:'',ArrowUp:'UPARROW',ArrowDown:'DOWNARROW',ArrowLeft:'LEFTARROW',ArrowRight:'RIGHTARROW',Insert:'INS',Delete:'DEL',Home:'HOME',End:'END',PageUp:'PGUP',PageDown:'PGDN',Numpad0:'kp_ins',Numpad1:'kp_end',Numpad2:'kp_downarrow',Numpad3:'kp_pgdn',Numpad4:'kp_leftarrow',Numpad5:'kp_5',Numpad6:'kp_rightarrow',Numpad7:'kp_home',Numpad8:'kp_uparrow',Numpad9:'kp_pgup',NumpadDecimal:'kp_del',NumpadAdd:'kp_plus',NumpadSubtract:'kp_minus',NumpadMultiply:'kp_multiply',NumpadDivide:'kp_slash',NumpadEnter:'kp_enter'};
+for(var kc=65;kc<=90;kc++)KEY_CODE_MAP['Key'+String.fromCharCode(kc)]=String.fromCharCode(kc+32);
+for(var kd=0;kd<=9;kd++)KEY_CODE_MAP['Digit'+kd]=String(kd);
+for(var kf=1;kf<=12;kf++)KEY_CODE_MAP['F'+kf]='F'+kf;
+window.addEventListener('keydown',function(e){
+  if(e.defaultPrevented||e.isComposing||!e.code||['INPUT','TEXTAREA','SELECT'].indexOf(e.target&&e.target.tagName)!==-1)return;
+  var k=KEY_CODE_MAP[e.code];if(!k)return;
+  var target=null,all=document.querySelectorAll('#kbdWrap .scfg-kbd-key,#kbdMouse .scfg-kbd-key');
+  for(var i=0;i<all.length;i++){if(all[i].dataset.key===k){target=all[i];break;}}
+  if(!target||target.classList.contains('disabled'))return;
+  chooseKey(k);target.classList.add('physical-press');setTimeout(function(){target.classList.remove('physical-press');},140);
+},{signal:_page.signal});
+var bc=$('#buyCats');
+if(bc){bc.addEventListener('click',function(e){var c=e.target.closest('.scfg-buy-cat');if(!c)return;_bc=c.dataset.cat;renderBuyItems();});}
+var bg=$('#buyGrid');
+if(bg){bg.addEventListener('click',function(e){var it=e.target.closest('.scfg-buy-item');if(!it)return;var id=it.dataset.item;_bi.has(id)?_bi.delete(id):_bi.add(id);renderBuyItems();});}
+var ba=$('#buyAdd');
+if(ba){ba.addEventListener('click',function(){if(!_bk){toast('请先在键盘上点击一个按键');return;}if(_bi.size===0){toast('请选择至少一个武器/装备');return;}var a=[];_bi.forEach(function(x){a.push(x);});var cmd=a.map(function(x){return'buy '+x;}).join('; ');var idx=S.buyBinds.findIndex(function(b){return b.key===_bk;});if(idx>=0)S.buyBinds[idx]={key:_bk,cmd:cmd};else S.buyBinds.push({key:_bk,cmd:cmd});_bk='';_bi.clear();renderKeyboard();renderBuyItems();renderSavedBinds();updateUI();toast('已添加绑定');});}
+var bcl=$('#buyClear');
+if(bcl){bcl.addEventListener('click',function(){_bk='';_bi.clear();renderKeyboard();renderBuyItems();});}
+var bsv=$('#buySaved');
+if(bsv){bsv.addEventListener('click',function(e){var d=e.target.closest('.scfg-sv-del');if(!d)return;S.buyBinds.splice(parseInt(d.dataset.idx),1);renderSavedBinds();updateUI();});}
+
+var cbs=document.querySelectorAll('#optionsCard input[type=checkbox]');
+for(var i=0;i<cbs.length;i++){cbs[i].addEventListener('change',updateUI);}
+var pni=$('#playerName');
+if(pni)pni.addEventListener('input',updateUI);
+
+var bd=$('#btnDownload');
+if(bd){bd.addEventListener('click',function(){var r=this._r;if(!r)return;var blob=new Blob([r.cfg],{type:'text/plain;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;var n=$('#playerName').value.trim()||(S.user&&S.user.name)||'Player';a.download=n+'.cfg';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);toast('已下载 CFG 文件');});}
+var bcp=$('#btnCopy');
+if(bcp){bcp.addEventListener('click',function(){var r=this._r;if(!r)return;var t=r.cfg;if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(function(){toast('已复制到剪贴板');}).catch(function(){fc(t);});}else{fc(t);}});}
+function fc(t){var ta=document.createElement('textarea');ta.value=t;ta.style.cssText='position:fixed;opacity:0';document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);toast('已复制到剪贴板');}
+var br=$('#btnReset');
+if(br){br.addEventListener('click',function(){
+  S.machine=S.user=S.keys=null;S.buyBinds=[];var ts=['machine','user','keys'];
+  for(var i=0;i<ts.length;i++){var t=ts[i];S['_'+t+'N']=null;S['_'+t+'S']=null;S['_'+t+'E']=false;}
+  $('#filelist').classList.remove('show');for(var j=0;j<ts.length;j++){var tt=ts[j],el=document.getElementById('fi-'+tt);if(el){el.classList.remove('ok','err');el.children[2].textContent='';el.children[3].textContent='';}}
+  if(dz)dz.classList.remove('ready');if(fin)fin.value='';var p=$('#playerName');if(p)p.value='';
+  _bk='';_bi.clear();_kbdBuilt=false;_buyCatsBuilt=false;
+  renderKeyboard();renderBuyItems();renderSavedBinds();
+  $('#pvPre').innerHTML='<span class="scfg-pv-m">// 等待选择文件夹...</span>';$('#btnDownload').disabled=true;$('#btnCopy').disabled=true;
+  $('#statsBar').classList.add('hidden');$('#optionsCard').classList.add('hidden');$('#buyCard').classList.add('hidden');$('#outputCard').classList.add('hidden');updateKeyboardScale();toast('已重置');
+});}
+
+/* Throttled resize via requestAnimationFrame */
+window.addEventListener('resize',scheduleResize,{signal:_page.signal});
+
+/* Initial render */
+renderKeyboard();renderBuyItems();renderSavedBinds();updateKeyboardScale();
+}
+document.addEventListener('astro:page-load',initSwitchYourCfg);
+initSwitchYourCfg();
