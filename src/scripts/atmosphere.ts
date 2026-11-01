@@ -5,7 +5,19 @@ import tracks from '../data/atmosphere-keyframes.json';
 // position, radius and opacity. The supplied keyframes encode the outward
 // acceleration; do not replace them with a constant-speed particle emitter.
 const PERIOD = 5000;
-const FRAME_INTERVAL = 1000 / 30;
+// The loop rides requestAnimationFrame, so it can follow the panel instead of a
+// hard 30 fps — but a 144 Hz display would then fill 87 ellipses 144 times a
+// second. The cadence is therefore learned from the display and capped: raw rAF
+// deltas are sampled on the first frames (and again after a resize or a tab
+// return), the shortest of them estimates one panel frame, and the loop then
+// steps a whole number of those frames, landing just under the cap. Whole-frame
+// pacing keeps the motion even — no beat judder against the panel — and the cap
+// keeps a high-refresh phone from burning battery on a decorative background.
+const TARGET_FPS = 90;
+const TARGET_INTERVAL = 1000 / TARGET_FPS;
+const PROBE_FRAMES = 12;
+const MIN_FRAME = 1000 / 240;
+const MAX_FRAME = 1000 / 30;
 const sample = (values: number[], progress: number) => {
   const index = progress * (values.length - 1);
   const first = Math.floor(index);
@@ -29,6 +41,12 @@ export const startAtmosphere = () => {
   let lastFrame = 0;
   let elapsed = 0;
   let theme = document.documentElement.dataset.theme;
+  // Cadence learned from the display: the duration of one panel frame, and the
+  // throttled interval the loop actually uses.
+  let displayFrame = 1000 / 60;
+  let frameInterval = TARGET_INTERVAL;
+  let probing = true;
+  let probe: number[] = [];
 
   const resize = () => {
     const ratio = Math.min(window.devicePixelRatio || 1, 1.5);
@@ -72,23 +90,59 @@ export const startAtmosphere = () => {
     controller.abort();
   };
 
+  // Convert the probed deltas into a pacing interval. The shortest delta is the
+  // cleanest read on the panel: a loaded or janky frame only ever stretches a
+  // delta, never shortens it. The estimate is clamped so a wild sample cannot
+  // pretend the display is faster than 240 Hz or slower than 30 Hz, and the
+  // interval is then rounded up to a whole number of panel frames so the loop
+  // stays locked to vsync instead of drifting in and out of phase with it.
+  const settle = () => {
+    const shortest = Math.min(...probe);
+    if (probe.length >= 4 && Number.isFinite(shortest)) {
+      displayFrame = Math.min(Math.max(shortest, MIN_FRAME), MAX_FRAME);
+    }
+    const ratio = TARGET_INTERVAL / displayFrame;
+    // A panel that already sits at the cap keeps its native cadence; anything
+    // faster is stepped down to the next whole frame multiple.
+    frameInterval = displayFrame * (ratio < 1.15 ? 1 : Math.ceil(ratio));
+    probing = false;
+    probe = [];
+  };
+
   const render = (now = performance.now()) => {
     frame = 0;
     if (!canvas.isConnected) { stop(); return; }
-    if (!reduceMotion.matches && lastFrame && now - lastFrame < FRAME_INTERVAL) {
-      frame = requestAnimationFrame(render);
-      return;
+    const motion = !reduceMotion.matches;
+    if (lastFrame && motion) {
+      const delta = now - lastFrame;
+      if (probing) {
+        // Probing paints every raw frame, so the deltas describe the panel
+        // rather than this loop's own throttle.
+        probe.push(delta);
+        if (probe.length === PROBE_FRAMES) settle();
+      } else if (delta + displayFrame / 2 < frameInterval) {
+        // Early frame: leave lastFrame where it is, so the next painted frame
+        // still accounts for the whole elapsed span and the 5s period holds.
+        // The half-frame slack matters: rAF timestamps land a hair either side
+        // of the exact refresh interval, and comparing them head-on would skip
+        // frames that are on time (a 60 Hz panel painting 40 fps).
+        frame = requestAnimationFrame(render);
+        return;
+      }
+      elapsed += delta;
     }
-    if (lastFrame && !reduceMotion.matches) elapsed += now - lastFrame;
     lastFrame = now;
     paint();
-    if (!reduceMotion.matches) frame = requestAnimationFrame(render);
+    if (motion) frame = requestAnimationFrame(render);
   };
 
   const refresh = () => {
     cancelAnimationFrame(frame);
     if (!canvas.isConnected) { stop(); return; }
     lastFrame = 0;
+    // Re-learn the cadence: the window may have moved to another display.
+    probing = true;
+    probe = [];
     resize();
     if (reduceMotion.matches) elapsed = 0;
     if (!document.hidden) render();

@@ -27,7 +27,15 @@ for (const entry of entries) {
 
   for (const asset of assetUrls) {
     if (!asset.startsWith('/')) continue;
-    const assetPath = new URL(`.${asset}`, dist);
+    // Every .css/.js an article references is emitted under `_astro/`. A
+    // project-Pages build writes those URLs base-prefixed
+    // (`/project-pages/_astro/x.css`) while the file itself still sits at the
+    // root of `dist/`, so the prefix has to come off before resolving. Without
+    // this the audit threw ENOENT on every non-root build, which is why it was
+    // never run against one.
+    const buildAsset = asset.indexOf('/_astro/');
+    if (buildAsset < 0) throw new Error(`perf-audit cannot map ${asset} onto a file under dist/; the budget would silently under-count.`);
+    const assetPath = new URL(`.${asset.slice(buildAsset)}`, dist);
     critical += gzipSync(await readFile(assetPath)).byteLength;
   }
 
@@ -51,11 +59,18 @@ if (results.some((result) => result.assetUrls.some((asset) => /atmosphere\.[\w-]
   process.exitCode = 1;
 }
 
-// The BGA runs continuously on reading pages; it must stay cheap (throttled,
-// sprite-cached) instead of freezing while the reader scrolls.
+// The BGA runs continuously on reading pages; it must stay cheap. It paces
+// itself off the panel's own cadence (requestAnimationFrame + a learned
+// interval), capped so a high-refresh display cannot multiply the per-frame
+// fill count, and it must not freeze while the reader scrolls.
 const atmosphere = await readFile(new URL('../src/scripts/atmosphere.ts', import.meta.url), 'utf8');
-if (!/FRAME_INTERVAL/.test(atmosphere) || !/requestAnimationFrame\(render\)/.test(atmosphere)) {
-  console.error('Performance invariant failed: the atmosphere loop must stay throttled with requestAnimationFrame.');
+const cadenceCap = Number(/const TARGET_FPS = (\d+)/.exec(atmosphere)?.[1]);
+if (!/requestAnimationFrame\(render\)/.test(atmosphere) || !/frameInterval/.test(atmosphere)) {
+  console.error('Performance invariant failed: the atmosphere loop must stay cadence-throttled with requestAnimationFrame.');
+  process.exitCode = 1;
+}
+if (!Number.isFinite(cadenceCap) || cadenceCap < 30 || cadenceCap > 120) {
+  console.error('Performance invariant failed: the atmosphere cadence cap must stay declared between 30 and 120 fps.');
   process.exitCode = 1;
 }
 if (/pauseForScroll/.test(atmosphere)) {
