@@ -32,7 +32,7 @@ const playerLyrics = withBase(player.lyrics);
     >
       <img class="island-mini-art" src={playerCover} alt="" width="32" height="32" loading="eager" />
       <span class="island-mini-wave" data-audio-visualizer="compact" aria-hidden="true">
-        {Array.from({ length: 5 }).map((_, index) => <i style={`--visualizer-index:${index}`} />)}
+        {Array.from({ length: 6 }).map(() => <i />)}
       </span>
     </button>
 
@@ -54,7 +54,7 @@ const playerLyrics = withBase(player.lyrics);
           <span class="island-player-status" id="island-player-status" role="status" aria-live="polite"></span>
         </div>
         <span class="island-expanded-wave" data-audio-visualizer="expanded" aria-hidden="true">
-          {Array.from({ length: 5 }).map((_, index) => <i style={`--visualizer-index:${index}`} />)}
+          {Array.from({ length: 6 }).map(() => <i />)}
         </span>
       </div>
       <div class="island-player-timeline">

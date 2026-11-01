@@ -250,6 +250,9 @@ html { scrollbar-gutter: stable; }
   color: var(--fx-text);
 }
 
+/* Keep the navigation aligned while omitting the duplicate identity on home. */
+.page-home .site-nav__brand { visibility: hidden; }
+
 .site-nav__mark {
   width: 1.7rem;
   height: 1.7rem;

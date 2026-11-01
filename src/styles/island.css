@@ -263,45 +263,42 @@
 /* -----------------------------------------------------------------
    Visualiser.
    `data-visualizer` is the honest state of the bars:
-     live  real analyser frames, JS drives --visualizer-height
-     idle  a source exists but nothing is playing -> static rest bars.
-           Deliberately NOT animated: bars that move while no audio is
-           playing read as "audio is playing", which is a lie.
-     off   no playable source at all -> flat dashes
-   Only `live` ever animates.
+     live  six Mel bands, dB levels with fast attack and slower release
+     idle  paused / buffering / not yet started, waveform hidden
+     off   no playable source, waveform hidden
+   Both sizes share normalized levels, so expanding never changes the rhythm.
    ----------------------------------------------------------------- */
 .music-island .island-mini-wave {
   display: flex;
-  /* No audio, no visualiser: the row collapses to zero width and the pill is
-     just the cover art. 22.5px = 5 bars x 2.5px + 4 gaps x 2.5px. */
+  /* Six lines occupy the same small trailing region as before. */
   width: 0;
   height: 18px;
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
-  gap: 2.5px;
+  gap: 2px;
   overflow: hidden;
   opacity: 0;
   transition: width 0.26s var(--island-morph-ease), opacity 0.16s var(--ease);
 }
 
 .music-island[data-visualizer="live"] .island-mini-wave {
-  width: 22.5px;
+  width: 22px;
   opacity: 1;
 }
 
 .music-island .island-mini-wave i {
   display: block;
-  width: 2.5px;
-  height: var(--visualizer-height, 4px);
+  width: 2px;
+  height: calc(var(--visualizer-level, 0.12) * 100%);
+  flex: 0 0 auto;
   border-radius: 999px;
   background: var(--island-wave);
-  opacity: var(--visualizer-opacity, 0.9);
 }
 
 .music-island[data-visualizer="live"] .island-mini-wave i {
   animation: none;
-  transition: height 0.08s linear, opacity 0.08s linear;
+  transition: none;
 }
 
 /* There is deliberately NO idle/off appearance for the bars: when nothing is
@@ -426,26 +423,23 @@
   height: 7cqw;
   align-items: center;
   justify-content: center;
-  gap: 0.8cqw;
+  gap: 0.56cqw;
+  opacity: 0;
+  transition: opacity 0.16s var(--ease);
 }
 
 .music-island .island-expanded-wave i {
   display: block;
-  width: 0.8cqw;
-  height: var(--visualizer-height, 4px);
+  width: 0.6cqw;
+  height: calc(var(--visualizer-level, 0.12) * 100%);
+  flex: 0 0 auto;
   border-radius: 999px;
   background: var(--island-wave);
-  opacity: var(--visualizer-opacity, 0.86);
 }
 
 .music-island[data-visualizer="live"] .island-expanded-wave i {
   animation: none;
-  transition: height 0.08s linear, opacity 0.12s ease;
-}
-
-.music-island .island-expanded-wave {
-  opacity: 0;
-  transition: opacity 0.16s var(--ease);
+  transition: none;
 }
 
 .music-island[data-visualizer="live"] .island-expanded-wave {

@@ -41,21 +41,23 @@ export {};
     let analyser = null;
     let audioSourceNode = null;
     let outputGain = null;
-    let visualizerData = null;
+    let visualizerSpectrum = null;
     let visualizerFrame = 0;
-    let visualizerAutoGain = 1;
+    let visualizerLastTime = null;
+    // Equal steps on the Mel scale give bass, vocals and treble their own room.
+    const visualizerMelLow = Math.log1p(20 / 700);
+    const visualizerMelHigh = Math.log1p(20000 / 700);
+    const visualizerBandEdges = Array.from({ length: 7 }, (_, index) =>
+      index === 0 ? 20 : index === 6 ? 20000
+        : 700 * Math.expm1(visualizerMelLow + (visualizerMelHigh - visualizerMelLow) * index / 6));
+    const visualizerLevels = Array(6).fill(0.12);
     // Output loudness is owned by us, not by the media element. See
     // `applyOutputLevel` for why that matters to the visualiser.
     let userVolume = 0.72;
     let userMuted = false;
-    const visualizerBandEdges = [55, 180, 400, 900, 2200, 6000, 16000];
-    const visualizerBandGains = [0.9, 0.96, 1.04, 1.14, 1.3, 1.48];
     const visualizerGroups = [...document.querySelectorAll('[data-audio-visualizer]')]
       .map((element) => ({
-        element,
-        expanded: element instanceof HTMLElement && element.dataset.audioVisualizer === 'expanded',
         bars: [...element.querySelectorAll('i')],
-        levels: Array.from({ length: element.querySelectorAll('i').length }, () => 4),
       }))
       .filter((group) => group.bars.length > 0);
     const visualizerBars = visualizerGroups.flatMap((group) => group.bars);
@@ -77,13 +79,12 @@ export {};
     };
 
     const setVisualizerBaseline = () => {
-      visualizerAutoGain = 1;
+      visualizerLastTime = null;
+      visualizerLevels.fill(0.12);
       visualizerGroups.forEach((group) => {
-        group.levels.fill(4);
         group.bars.forEach((bar) => {
           if (!(bar instanceof HTMLElement)) return;
-          bar.style.setProperty('--visualizer-height', '4px');
-          bar.style.setProperty('--visualizer-opacity', '0.44');
+          bar.style.setProperty('--visualizer-level', '0.12');
         });
       });
     };
@@ -184,51 +185,48 @@ export {};
       }
     };
 
-    const renderAudioVisualizer = () => {
+    const renderAudioVisualizer = (now) => {
       visualizerFrame = 0;
-      if (!analyser || !visualizerData || audio.paused || !visualizerBars.length) {
+      if (!analyser || !visualizerSpectrum || audio.paused || !visualizerBars.length) {
         setVisualizerBaseline();
         return;
       }
 
-      analyser.getByteFrequencyData(visualizerData);
-      const binWidth = (audioContext?.sampleRate || 48000) / analyser.fftSize;
-      const bandEnergies = visualizerBandGains.map((gain, index) => {
-        const start = Math.max(1, Math.floor(visualizerBandEdges[index] / binWidth));
-        const end = Math.min(
-          visualizerData.length,
-          Math.max(start + 1, Math.ceil(visualizerBandEdges[index + 1] / binWidth)),
-        );
-        let squareTotal = 0;
-        let samples = 0;
-        for (let cursor = start; cursor < end; cursor += 1) {
-          const amplitude = visualizerData[cursor] / 255;
-          squareTotal += amplitude * amplitude;
-          samples += 1;
+      // Average linear power within each perceptual band, then map its dB
+      // level to height. Never average dB values or select a changing bin.
+      analyser.getFloatFrequencyData(visualizerSpectrum);
+      const binWidth = audioContext.sampleRate / analyser.fftSize;
+      const delta = visualizerLastTime === null ? 1000 / 60 : Math.max(0, Math.min(100, now - visualizerLastTime));
+      visualizerLastTime = now;
+      const bands = visualizerBandEdges.slice(0, -1).map((low, index) => {
+        const start = Math.ceil(low / binWidth);
+        const high = visualizerBandEdges[index + 1];
+        // Half-open ranges avoid counting an edge bin twice. Include 20000 Hz
+        // in the last range when it falls exactly on a bin; respect Nyquist.
+        const end = Math.min(visualizerSpectrum.length, index === 5
+          ? Math.floor(high / binWidth) + 1
+          : Math.ceil(high / binWidth));
+        let power = 0;
+        for (let bin = start; bin < end; bin++) {
+          power += Math.pow(10, visualizerSpectrum[bin] / 10);
         }
-        return (samples ? Math.sqrt(squareTotal / samples) : 0) * gain;
+        const bandDb = power > 0 ? 10 * Math.log10(power / Math.max(1, end - start)) : -Infinity;
+        const target = Math.max(0.12, Math.min(1, (bandDb - analyser.minDecibels)
+          / (analyser.maxDecibels - analyser.minDecibels)));
+        // At 60 Hz retain 60% on attack, 90% on release: ~33 / 158 ms
+        // time constants. Scale by elapsed time for the same feel at 120 Hz.
+        const previous = visualizerLevels[index];
+        const retention = Math.pow(target > previous ? 0.6 : 0.9, delta / (1000 / 60));
+        const level = target + (previous - target) * retention;
+        visualizerLevels[index] = level;
+        return level;
       });
-
-      // Keep quiet masters lively without flattening the difference between bands.
-      const loudestBand = Math.max(0.01, ...bandEnergies);
-      const targetGain = Math.min(2.35, Math.max(0.82, 0.72 / loudestBand));
-      visualizerAutoGain += (targetGain - visualizerAutoGain) * (targetGain < visualizerAutoGain ? 0.09 : 0.025);
+      setVisualizerMode('live');
 
       visualizerGroups.forEach((group) => {
         group.bars.forEach((bar, index) => {
           if (!(bar instanceof HTMLElement)) return;
-          const energy = Math.max(0, (bandEnergies[index] || 0) * visualizerAutoGain - 0.035);
-          const intensity = Math.min(1, Math.pow(energy / 0.72, 0.7));
-          const maximum = group.expanded
-            ? Math.max(24, (group.element instanceof HTMLElement ? group.element.clientHeight : 44) * 0.82)
-            : 20;
-          const targetHeight = 4 + intensity * (maximum - 4);
-          const previousHeight = group.levels[index] || 4;
-          const response = targetHeight > previousHeight ? 0.48 : 0.2;
-          const height = previousHeight + (targetHeight - previousHeight) * response;
-          group.levels[index] = height;
-          bar.style.setProperty('--visualizer-height', `${height.toFixed(2)}px`);
-          bar.style.setProperty('--visualizer-opacity', String(0.42 + intensity * 0.58));
+          bar.style.setProperty('--visualizer-level', bands[index].toFixed(4));
         });
       });
       visualizerFrame = window.requestAnimationFrame(renderAudioVisualizer);
@@ -247,11 +245,11 @@ export {};
         try {
           audioContext = new AudioContextConstructor();
           analyser = audioContext.createAnalyser();
-          analyser.fftSize = 512;
-          analyser.minDecibels = -78;
-          analyser.maxDecibels = -18;
-          analyser.smoothingTimeConstant = 0.68;
-          visualizerData = new Uint8Array(analyser.frequencyBinCount);
+          analyser.fftSize = 2048;
+          analyser.minDecibels = -85;
+          analyser.maxDecibels = -15;
+          analyser.smoothingTimeConstant = 0;
+          visualizerSpectrum = new Float32Array(analyser.frequencyBinCount);
           audioSourceNode = audioContext.createMediaElementSource(audio);
           audioSourceNode.connect(analyser);
           // analyser -> gain -> speakers. The analyser therefore sees the
@@ -265,7 +263,7 @@ export {};
           audioContext = null;
           analyser = null;
           audioSourceNode = null;
-          visualizerData = null;
+          visualizerSpectrum = null;
           return;
         }
       }
@@ -323,14 +321,8 @@ export {};
       updateLyric();
     };
 
-    // The island's visualiser is a claim about what you can hear, so the CSS
-    // is told which of three honest states it is in:
-    //   live  frames from the analyser (set by the rAF loop itself)
-    //   idle  a source exists but nothing is playing -> static rest bars
-    //   off   no playable source at all -> flat dashes
-    // Only `live` animates. `idle` used to breathe on a 3.6s loop, which read as
-    // "audio is playing" when it was not; the bars now hold still until the
-    // analyser actually has frames.
+    // Only the analyser loop can mark the waveform live. Loading and buffering
+    // must not claim playback before the media's `playing` event.
     const setVisualizerMode = (mode) => {
       if (island.dataset.visualizer === mode) return;
       island.dataset.visualizer = mode;
@@ -340,9 +332,9 @@ export {};
       island.dataset.playerState = state;
       if (status) status.textContent = message;
       const playing = state === 'playing';
-      const label = `${playing ? '暂停' : '播放'} ${songTitle}`;
+      const label = `${playing || (state === 'loading' && !audio.paused) ? '暂停' : '播放'} ${songTitle}`;
       if (panelPlay instanceof HTMLButtonElement) panelPlay.setAttribute('aria-label', label);
-      setVisualizerMode(playing ? 'live' : (state === 'unavailable' ? 'off' : 'idle'));
+      if (!playing) setVisualizerMode(state === 'unavailable' ? 'off' : 'idle');
     };
 
     // Volume lives on a GainNode *after* the analyser, not on the media element.
@@ -562,10 +554,14 @@ export {};
       if (scrubber instanceof HTMLInputElement) scrubber.disabled = false;
     });
     audio.addEventListener('timeupdate', updateProgress);
-    audio.addEventListener('play', () => {
+    audio.addEventListener('playing', () => {
       setPlayerState('playing', '正在播放');
       updateLyric();
       if (!visualizerFrame) visualizerFrame = window.requestAnimationFrame(renderAudioVisualizer);
+    });
+    audio.addEventListener('waiting', () => {
+      stopAudioVisualizer();
+      if (!audio.paused) setPlayerState('loading', '正在缓冲');
     });
     audio.addEventListener('pause', () => {
       stopAudioVisualizer();
@@ -577,7 +573,10 @@ export {};
       updateProgress();
       setPlayerState('ready', '播放结束');
     });
-    audio.addEventListener('error', () => setPlayerState('unavailable', '音频加载失败'));
+    audio.addEventListener('error', () => {
+      stopAudioVisualizer();
+      setPlayerState('unavailable', '音频加载失败');
+    });
     audio.addEventListener('volumechange', syncVolumeUI);
 
     const pulseSection = (label) => {
