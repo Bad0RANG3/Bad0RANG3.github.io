@@ -193,6 +193,30 @@ try {
     if ((await readFile(filename, 'utf8')).includes('\uFFFD')) fail(`Replacement character found in source file: ${path.relative(rootDir, filename)}`);
   }
 
+  // The ClientRouter replaces the markup on every navigation but evaluates each
+  // module only once per session, so a page controller that binds its listeners
+  // at module scope is wired for the first document and inert for every one
+  // after it. That is not visible in the built output and neither `astro check`
+  // nor a route-level smoke test can see it, so the contract is asserted here.
+  // Two real bugs of exactly this shape shipped before this check existed: the
+  // NCM tool answered nothing after leaving and returning to it, and the
+  // reading-progress bar plus reading history were dead for a whole first visit.
+  const pageControllers = ['ncm.ts', 'switch-your-cfg.ts'];
+  for (const name of pageControllers) {
+    const source = await readFile(path.join(sourceDir, 'scripts', name), 'utf8');
+    if (!/astro:page-load/.test(source)) fail(`Page controller src/scripts/${name} never re-binds on astro:page-load, so it goes inert after a client-side navigation.`);
+    if (!/dataset\.bound/.test(source)) fail(`Page controller src/scripts/${name} has no re-entry guard, so a second astro:page-load would double every listener.`);
+  }
+
+  // `astro:page-load` also fires for the initial document, so this module is
+  // entered twice on a cold load. The guard has to be read before the teardown:
+  // tearing down first and bailing second leaves the article marked as enhanced
+  // with no scroll listener at all.
+  const enhancements = await readFile(path.join(sourceDir, 'scripts', 'article-enhancements.ts'), 'utf8');
+  const guardAt = enhancements.search(/article\.dataset\.enhanced === '1'\) return;/);
+  const cleanupAt = enhancements.indexOf('cleanupArticleEnhancements();');
+  if (guardAt < 0 || cleanupAt < 0 || guardAt > cleanupAt) fail('src/scripts/article-enhancements.ts must check the enhanced guard before tearing the previous instance down, or the first visit to a post loses its progress bar and reading history.');
+
   console.log(`Static budget: ${(distBytes / 1024 / 1024).toFixed(2)} MiB total; largest ${largest.file} (${Math.ceil(largest.size / 1024)} KiB).`);
 } catch (error) {
   console.error(`smoke failed: ${error.message}`);

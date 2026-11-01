@@ -35,6 +35,8 @@ jobs:
         run: pnpm build
       - name: Smoke test build output
         run: pnpm smoke
+      - name: Performance budget audit
+        run: pnpm perf:audit
       - name: Browser compatibility audit
         run: pnpm compat:audit
       - name: Validate project Pages base path
@@ -43,3 +45,4 @@ jobs:
         run: |
           pnpm build
           pnpm smoke -- --base=/project-pages/
+          pnpm perf:audit

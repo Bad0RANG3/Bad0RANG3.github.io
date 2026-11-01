@@ -47,25 +47,31 @@ Astro 5 静态站点（`output: 'static'`），Tailwind CSS 4（通过 `@tailwin
     │   ├── routes.ts             ROUTES —— 全部内部 URL 的唯一来源
     │   ├── site.ts               siteConfig / SITE / SOCIAL_ICONS
     │   ├── ui.ts                 LAYOUT / STAGGER
-    │   └── projects.ts           projects
+    │   ├── projects.ts           projects
+    │   └── tools.ts              tools（工具箱条目 + 搜索元数据）
     ├── content/                Astro 内容集合（路径由框架约定，不要移动）
     │   ├── config.ts             posts / thoughts 的 frontmatter schema
     │   ├── posts/*.md
     │   └── thoughts/*.md
+    ├── data/                   构建期数据（被 import，不是页面）
+    │   └── atmosphere-keyframes.json  粒子背景的 87 条 SVG 关键帧
     ├── layouts/BaseLayout.astro
     ├── scripts/                浏览器端入口，由 Astro 打包为可缓存模块
     │   ├── bootstrap.ts          按需加载其余模块的唯一入口
     │   ├── theme.ts              主题控制器（首屏由 BaseLayout 内联小脚本兜底）
-    │   ├── atmosphere.ts         粒子背景（原站 SVG 关键帧 + Canvas 约 30fps，滚动时持续播放）
+    │   ├── atmosphere.ts         粒子背景（原站 SVG 关键帧 + Canvas，跟随屏幕刷新率、上限 90fps，滚动时持续播放）
     │   ├── player.ts             动态岛音乐播放器
     │   ├── home.ts               首页资料卡（网易云快照刷新，未配置 API 时只显示构建期快照）
     │   ├── home-motion.ts        首页播放器镜像（读岛状态、转发播放/暂停）
+    │   ├── home-hero-motion.ts   首页主视觉的指针视差（跟随可见性 / 动效偏好）
     │   ├── search.ts             站内搜索（首次打开时才由 bootstrap.ts 按需加载）
     │   ├── site.ts               表格包裹 / 回到顶部 / 导航抽屉
     │   ├── article.ts            文章页入口
-    │   ├── article-tools.ts      文章工具条（阅读进度、目录）
-    │   ├── article-enhancements.ts  代码块复制 / 图片灯箱 / 续读按钮
+    │   ├── article-tools.ts      文章工具条（收藏、分享）
+    │   ├── article-enhancements.ts  阅读进度 / 续读 / 代码块复制 / 图片灯箱 / 目录高亮
     │   ├── comments.ts           评论区（IntersectionObserver 懒加载）
+    │   ├── switch-your-cfg.ts    /tools/switch-your-cfg 的页面控制器
+    │   ├── ncm.ts                /tools/ncm 的页面控制器
     │   └── service-worker.ts     注册 Service Worker
     ├── lib/                    运行时工具，只放这一层
     │   ├── content.ts            集合读取（posts / thoughts）+ 单篇统计
@@ -98,8 +104,20 @@ Astro 5 静态站点（`output: 'static'`），Tailwind CSS 4（通过 `@tailwin
 | 由 frontmatter 派生的分组视图 | `src/lib/taxonomy.ts` |
 | 只在构建期跑、不被页面 import 的代码 | `plugins/` |
 | 可被多个脚本或构建期插件复用的逻辑 | `scripts/lib/` |
+| 某个页面自己的浏览器端逻辑 | `src/scripts/<页面名>.ts`，页面里只留 `<script>import …</script>` |
 
-`src/lib/` **不放**构建期插件；`src/` **不放**脚本；组件**不裸放**在 `components/` 根目录。
+`src/lib/` **不放**构建期插件；`src/` **不放**脚本；组件**不裸放**在 `components/` 根目录。工具页过去把几百行逻辑内联在 `.astro` 的 `<script>` 里（`switch-your-cfg` 384 行、`ncm` 224 行），现已分别移入 `src/scripts/switch-your-cfg.ts` 与 `src/scripts/ncm.ts`；这次搬迁用 `dist:fingerprint` 证明过产物逐字节一致。
+
+### 页面控制器的重入契约
+
+**ClientRouter 每次导航都会换掉整页标记，但每个模块在一次会话里只求值一次。** 所以任何"绑定到本页标记"的控制器——`src/scripts/` 里那些按 id/class 找元素并挂监听的文件——都必须遵守下面三条，否则页面会在第一次客户端导航之后变成"看起来正常、点什么都不响应"：
+
+1. 绑定动作写在 `init()` 函数里，**不要写在模块顶层**。
+2. 注册 `document.addEventListener('astro:page-load', init)`，**同时**保留一次即时调用（`DOMContentLoaded` 之前模块就求值完了，只靠 `page-load` 会晚一拍）。
+3. `init()` 开头用标记元素做重入判断（`el.dataset.bound === '1'`）。`astro:page-load` 首屏也会触发一次，没有这个守卫每个监听都会挂两遍。
+
+反过来的坑同样真实：**清理必须发生在守卫之后**。`article-enhancements.ts` 曾经先无条件 `cleanup()`、再判断 `dataset.enhanced`，于是首屏第二次进入时先把刚装好的监听全拆了、然后直接 return——阅读进度条整次访问都不动，阅读历史也一条都没写。`pnpm smoke` 现在会静态断言这两件事（见第 5 节）。
+
 
 ### 主题与颜色
 
@@ -131,6 +149,7 @@ Astro 5 静态站点（`output: 'static'`），Tailwind CSS 4（通过 `@tailwin
 - **`lib/search.ts`** 把文章、碎碎念、项目与工具统一成 `SearchDocument`，供 `/search-index.json` 与 `SearchModal` 使用。
 - **`config/site.ts`** 的 `SOCIAL_ICONS` 键名必须与 `siteConfig.socials` 的 `name` 一一对应。
 - 页面只做「取数 → 组装 → 渲染」；可复用的呈现逻辑下沉到 `components/`。
+- 页面拥有的浏览器端逻辑放 `src/scripts/<页面名>.ts`。这类**页面控制器**（`ncm.ts` / `switch-your-cfg.ts`）必须遵守上面的重入契约；`bootstrap.ts` 那种文档级、事件委托式的模块不受影响。
 
 ---
 
@@ -141,6 +160,11 @@ Astro 5 静态站点（`output: 'static'`），Tailwind CSS 4（通过 `@tailwin
 3. `pnpm validate:content` 在构建前做更深一层校验：日期真实性、标签重复、`seriesOrder` 冲突、封面文件是否存在、正文里的本地图片/链接是否可达、公开 slug 是否重复。
 4. 构建期 `plugins/remark-with-base.mjs` 改写 Markdown 内嵌原始 HTML 的根相对 URL。
 5. `pnpm smoke` 检查产物本身：必需路由、JSON-LD、feed、manifest、sitemap、图片 `alt`、体积预算、base 前缀是否完整等。
+6. `pnpm smoke` 还做两条**源码级**断言，因为下面这类回归在产物里完全看不出来，`astro check` 也管不到：
+   - `src/scripts/ncm.ts` / `switch-your-cfg.ts` 必须同时具备 `astro:page-load` 重绑定与 `dataset.bound` 重入守卫；
+   - `src/scripts/article-enhancements.ts` 必须**先**读 `dataset.enhanced` 守卫、**再**调用清理。
+
+   两者都对应真实发生过的 bug（工具页返回后失效、首访文章进度条与阅读历史全失效）。加断言前请先做反向验证：手动把源码改坏一次，确认 `pnpm smoke` 真的报错——一条从不失败的断言等于没有断言。
 
 ---
 
@@ -169,9 +193,12 @@ pnpm smoke -- --base=/project-pages/
 与 CI 对齐的完整检查（`.github/workflows/ci.yml` 跑的就是这些）：
 
 ```bash
-pnpm validate:content && pnpm check && pnpm build && pnpm smoke
+pnpm validate:content && pnpm check && pnpm build && pnpm smoke && pnpm perf:audit && pnpm compat:audit
+# 然后用 BASE_PATH=/project-pages/ 再跑一次 build + smoke + perf:audit
 ```
 
+> `perf:audit` 以前只在本地手跑，所以 88 KiB 的体积预算实际上没有守门人；它同时在任何非根 base 下直接 ENOENT（把 `/project-pages/_astro/x.css` 当成 `dist/project-pages/_astro/x.css` 去读）。现在它按 `_astro/` 剥掉 base 前缀、解析不到就直接抛错而不是少算，并且已经进了 CI 的两条路径。
+>
 > 指纹覆盖的是 `dist/`，**不覆盖 `scripts/`**。改动脚本时请另行对比 stdout、错误消息与生成文件内容。
 
 指纹只能告诉你「哪个文件变了」，不能告诉你「像素有没有变」。做大范围 CSS 重构时另有一层保护：`.verify/lead-style-diff.mjs` 用 CDP 抓取 19 条代表路由 × 2 个视口 × 2 套主题（76 个用例、约 5.4 万个元素的 130 个计算样式属性），对基线做逐属性比对：
@@ -195,7 +222,7 @@ node .verify/lead-style-diff.mjs --base=http://127.0.0.1:4321 --compare=.verify/
 - **Tailwind v4 默认扫描整个项目**（遵守 `.gitignore`）。`@source not '../content/**'` 把文章正文排除，避免散文里的普通词（`card`、`step`、`stack`…）命中 daisyUI 组件名、把整套组件样式拉进产物。
 - **不要写死 daisyUI 旧版本的变量名。** v5 使用 `--color-primary` / `--color-base-content`（完整 oklch 颜色），不再有 `--p` / `--bc` / `--b1`。工具页里的半透明色统一写成 `color-mix(in srgb, var(--color-primary) 20%, transparent)`。
 - **不要用 `oklch(from … l c h / a)` 这种相对颜色写法。** 它和 `color-mix()` 表达同一件事（同一个颜色、指定 alpha），但相对颜色要 Chrome/Edge 122、Safari 18；`color-mix()` 从 Chrome/Edge 111、Safari 16.2、Firefox 113 就有，正好落在基线内。两者等价性已逐像素验证：冻结动画后在 12 个页面上比对 67,622 个颜色值，零差异（主题切换带过渡，采样前若不禁用过渡会采到中间色，产生 1–2/255 的假差异）。
-- 产物仍集中在单个 `dist/_astro/about.*.css`（约 160 KB / gzip 约 34 KiB，109 个页面全都链接它），工具页样式单独成文件。文件名带内容哈希、且不叫 `global`，容易误认成「只有 about 页用」——它是全站共享包，改任何全局样式都会改名。
+- 产物仍集中在单个 `dist/_astro/about.*.css`（实测 114.8 KB / gzip 20.0 KiB，109 个页面全都链接它；全站 CSS 合计 163.6 KB / gzip 28.7 KiB），工具页样式单独成文件（`switch-your-cfg` 32.4 KB、`ncm` 8.3 KB，只在对应路由加载）。文件名带内容哈希、且不叫 `global`，容易误认成「只有 about 页用」——它是全站共享包，改任何全局样式都会改名。
 
 ### 动态岛（头部音乐胶囊）
 
