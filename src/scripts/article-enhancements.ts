@@ -20,11 +20,19 @@ const cleanupArticleEnhancements = () => {
 };
 
 const initArticleEnhancements = () => {
-  cleanupArticleEnhancements();
-
   const progress = document.querySelector('[data-reading-progress]');
   const article = document.querySelector('article[data-article]');
-  if (!(progress instanceof HTMLElement) || !(article instanceof HTMLElement) || article.dataset.enhanced === '1') return;
+  if (!(progress instanceof HTMLElement) || !(article instanceof HTMLElement)) return;
+  // The guard has to run BEFORE the teardown, not after it. `astro:page-load`
+  // fires for the initial document as well as for every navigation, so on a
+  // cold load this function is entered twice for the same article. Tearing
+  // down first and bailing second left the article marked as enhanced with no
+  // scroll listener at all: the progress bar stayed at scaleX(0) and the whole
+  // first visit to a post was never written to the reading history. A second
+  // call for an element that is already wired is a no-op; an element that has
+  // just been swapped in still tears down whatever the previous one left.
+  if (article.dataset.enhanced === '1') return;
+  cleanupArticleEnhancements();
   article.dataset.enhanced = '1';
 
   const historyKey = SITE.READING_HISTORY_STORAGE_KEY;
