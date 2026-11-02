@@ -21,7 +21,7 @@ export const siteConfig = {
     name: 'Bad0RANG3',
     intro: '喜欢在计算机方面折腾的普通菜鸟。',
     avatar: '/HP-avatar.webp',
-    email: 'badorangeovo@outlook.com',
+    email: 'i@bad0rang3.xyz',
   },
   navigation: [
     { href: ROUTES.HOME, label: '首页' },
@@ -43,7 +43,7 @@ export const siteConfig = {
     { name: 'X', url: 'https://x.com/Bad0RANG3' },
     { name: 'Instagram', url: 'https://instagram.com/Bad0RANG3ovo' },
     { name: '抖音', url: 'https://www.douyin.com/user/MS4wLjABAAAA3y9usLYBic-19MR78rfDbN-VmS3RhnVMmlZMmnt39m8' },
-    { name: 'Email', url: 'mailto:badorangeovo@outlook.com' },
+    { name: 'Email', url: 'mailto:i@bad0rang3.xyz' },
     { name: 'Telegram', url: 'https://t.me/Bad0RANG3' },
     { name: 'YouTube', url: 'https://youtube.com/@Bad0RANG3' },
     { name: 'BiliBili', url: 'https://space.bilibili.com/482966540' },
