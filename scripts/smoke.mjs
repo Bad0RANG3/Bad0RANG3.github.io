@@ -37,6 +37,17 @@ function parseJson(label, source, fail) {
   try { return JSON.parse(source); } catch (error) { fail(`${label} is not valid JSON: ${error.message}`); return null; }
 }
 
+/**
+ * True for URLs the deployment base must never prefix: `https://…`, `mailto:…`,
+ * protocol-relative `//host/…`. This mirrors `withBase` in src/lib/urls.ts, so
+ * the smoke test asserts the contract the build actually applies — a project
+ * card that points at a repository stays a valid search result in a
+ * project-Pages build without gaining a base prefix it must not have.
+ */
+function isAbsoluteUrl(value) {
+  return /^[a-z][a-z\d+.-]*:/i.test(value) || value.startsWith('//');
+}
+
 function extractJsonLd(source, fail, label) {
   const matches = [...source.matchAll(/<script\b[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)];
   if (!matches.length) {
@@ -108,7 +119,7 @@ try {
   }
   const searchIndex = parseJson('search-index.json', await readFile(path.join(options.distDir, 'search-index.json'), 'utf8'), fail);
   if (!Array.isArray(searchIndex) || searchIndex.length === 0) fail('search-index.json is empty or not an array.');
-  if (Array.isArray(searchIndex) && options.base !== '/' && searchIndex.some((item) => typeof item.url === 'string' && !item.url.startsWith(options.base))) fail('Search index contains URLs missing the configured base path.');
+  if (Array.isArray(searchIndex) && options.base !== '/' && searchIndex.some((item) => typeof item.url === 'string' && !isAbsoluteUrl(item.url) && !item.url.startsWith(options.base))) fail('Search index contains URLs missing the configured base path.');
 
   const robots = await readFile(path.join(options.distDir, 'robots.txt'), 'utf8');
   if (!/^Sitemap:\s*https?:\/\//mi.test(robots)) fail('robots.txt has no absolute Sitemap entry.');
