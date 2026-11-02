@@ -40,9 +40,9 @@ Astro 5 静态站点（`output: 'static'`），Tailwind CSS 4（通过 `@tailwin
     │   ├── blog/                PostCard、PostMeta、TagList、ArticleTools、ArticleEnhancements、Comments
     │   ├── icons/               Icon.astro（图标入口）
     │   ├── layout/              SiteHeader、SiteFooter、MobileDrawer
-    │   ├── profile/             ProfileOverviewCard、ProjectCard
+    │   ├── profile/             ProjectCard
     │   ├── search/              SearchModal（只含对话框标记，逻辑在 scripts/search.ts）
-    │   └── ui/                  ContentCard、EmptyState、PageHeader、SectionHeader
+    │   └── ui/                  ContentCard、EmptyState、PageHeader
     ├── config/                 站点静态数据，一个模块一个关注点
     │   ├── routes.ts             ROUTES —— 全部内部 URL 的唯一来源
     │   ├── site.ts               siteConfig / SITE / SOCIAL_ICONS
@@ -61,8 +61,6 @@ Astro 5 静态站点（`output: 'static'`），Tailwind CSS 4（通过 `@tailwin
     │   ├── theme.ts              主题控制器（首屏由 BaseLayout 内联小脚本兜底）
     │   ├── atmosphere.ts         粒子背景（原站 SVG 关键帧 + Canvas，跟随屏幕刷新率、上限 90fps，滚动时持续播放）
     │   ├── player.ts             动态岛音乐播放器
-    │   ├── home.ts               首页资料卡（网易云快照刷新，未配置 API 时只显示构建期快照）
-    │   ├── home-motion.ts        首页播放器镜像（读岛状态、转发播放/暂停）
     │   ├── home-hero-motion.ts   首页主视觉的指针视差（跟随可见性 / 动效偏好）
     │   ├── search.ts             站内搜索（首次打开时才由 bootstrap.ts 按需加载）
     │   ├── site.ts               表格包裹 / 回到顶部 / 导航抽屉
@@ -129,7 +127,7 @@ Astro 5 静态站点（`output: 'static'`），Tailwind CSS 4（通过 `@tailwin
   - 角色：`--font-display` 用于拉丁展示字，`--font-sans` 用于界面与正文，`--font-mono` 只留给代码、按键、数字与小型大写英文标签。
   - **三条栈都必须显式列出中文字体**（`PingFang SC` / `Hiragino Sans GB` / `Noto Sans SC` / `Microsoft YaHei` …）。Roboto、Playfair Display、JetBrains Mono 都没有汉字，栈尾若直接落到 `sans-serif`，中文就交给操作系统决定——Windows 上是 NSimSun（宋体）。这正是过去文章 `h2` 变宋体、正文却还是黑体的原因。`--font-display` 因此**落到无衬线中文字体**而不是衬线：Playfair 只负责标题里的拉丁字母，汉字继续走黑体，和参考站把日文正文交给无衬线是同一个处理。
   - 刻度：字号 8 档（`--type-label` 11px … `--type-display` clamp）、字重 3 档（400 / 600 / 700，另有 `--weight-serif` 供 Playfair 用 400）、字距 4 档（`--tracking-display` / `body` / `label` / `wide`）、行高 4 档（`--leading-display` / `heading` / `ui` / `prose`）。
-  - **`--tracking-wide`（0.3em）只给纯拉丁大写标签用**。汉字字身已占满 em 框，这么大字距会把中文标签拆散。`.eyebrow` 是中性小标签（两种文字都安全），`.eyebrow-latin` 才是宽字距版本，由 `lib/text.ts` 的 `isLatinOnly()` 自动选择——`SectionHeader` / `PageHeader` / `ContentCard` / `ProfileOverviewCard` 都走这个判断，所以调用方传中文标签也不会出问题。
+  - **`--tracking-wide`（0.3em）只给纯拉丁大写标签用**。汉字字身已占满 em 框，这么大字距会把中文标签拆散。`.eyebrow` 是中性小标签（两种文字都安全），`.eyebrow-latin` 才是宽字距版本，由 `lib/text.ts` 的 `isLatinOnly()` 自动选择——`PageHeader` / `ContentCard` 都走这个判断，所以调用方传中文标签也不会出问题。
   - **负字距只用于拉丁展示字**。含中文的标题一律用 `--tracking-body`（0）。
   - 11px 的 `--type-label` 只给英文大写标签用。中文最小用 `--type-meta`（12px）——页脚 / 抽屉的分组标题是中文，所以它们用 `--type-meta` 且不加字距；正文行高 `--leading-prose` 1.8。
   - **工具页（`styles/tools/*.css`）也用同一套刻度**，不要再写裸 `rem` 字号。

@@ -9,23 +9,25 @@ export interface Project {
   tone: ProjectTone;
 }
 
+// The Yukinal / VirtualWait / SOCD Cleaner write-ups were retired from the blog,
+// so those three cards link to the repositories instead of a dead post route.
 export const projects: Project[] = [
   {
     name: 'Yukinal',
     summary: '把远程运维与可审批的 AI Agent 放进同一个桌面工作区。',
-    href: postPath('yukinal'),
+    href: 'https://github.com/Bad0RANG3/Yukinal',
     tone: 'citrus',
   },
   {
     name: 'VirtualWait',
     summary: '给线下机台场地用的虚拟排队系统。',
-    href: postPath('virtualwait-template'),
+    href: 'https://github.com/Bad0RANG3/VirtualWait-Template',
     tone: 'teal',
   },
   {
     name: 'SOCD Cleaner',
     summary: '把普通键盘变成更可控的方向输入工具。',
-    href: postPath('socd-cleaner'),
+    href: 'https://github.com/Bad0RANG3/SOCD_Cleaner',
     tone: 'coral',
   },
   {

@@ -1,7 +1,6 @@
 import { ROUTES } from './routes';
 
 const musicApiBase = (import.meta.env.PUBLIC_NCM_API_BASE ?? '').replace(/\/+$/, '');
-const ncmUserId = import.meta.env.PUBLIC_NCM_USER_ID ?? '1864136351';
 const formatMusicDuration = (seconds: number) => {
   const roundedSeconds = Math.max(0, Math.round(seconds));
   return `${Math.floor(roundedSeconds / 60)}:${String(roundedSeconds % 60).padStart(2, '0')}`;
@@ -49,22 +48,6 @@ export const siteConfig = {
     { name: 'YouTube', url: 'https://youtube.com/@Bad0RANG3' },
     { name: 'BiliBili', url: 'https://space.bilibili.com/482966540' },
   ],
-  netease: {
-    userId: ncmUserId,
-    profileUrl: `https://music.163.com/#/user/home?id=${ncmUserId}`,
-    // Public profile snapshots keep the card useful when the optional API is offline.
-    // Set PUBLIC_NCM_API_BASE to refresh this data from your own API deployment.
-    apiBase: musicApiBase,
-    fallback: {
-      nickname: 'Bad0RANG3',
-      signature: '#错过了落日余晖还可以期待满天繁星#',
-      avatarUrl: 'https://p1.music.126.net/aRpgZx-i37_k7v8pvXoAUw==/109951172597148609.jpg',
-      follows: 67,
-      followeds: 467,
-      listenSongs: 188324,
-      vipLabel: '黑胶VIP',
-    },
-  },
   music: {
     id: 3315349142,
     title: 'main heroine',
