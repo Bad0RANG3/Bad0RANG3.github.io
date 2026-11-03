@@ -4,6 +4,7 @@
 // at build time by plugins/rehype-wrap-tables.mjs. Page transitions
 // themselves are handled by <ClientRouter />.
 import { LAYOUT } from '../config/ui';
+import { onScrollFrame } from '../lib/scroll';
 
 /* Navigation drawer (MobileDrawer.astro). The dialog is replaced on every
    navigation, so everything is delegated from document and bound once. */
@@ -17,11 +18,7 @@ const setDrawerExpanded = (value) => {
 const closeDrawer = (dialog) => {
   const panel = dialog.querySelector('.drawer-panel');
   if (!dialog.open || panel?.classList.contains('animate-out')) return;
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { dialog.close(); return; }
-  if (!panel) {
-    dialog.close();
-    return;
-  }
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || !panel) { dialog.close(); return; }
   panel.classList.add('animate-out');
   panel.addEventListener('animationend', () => {
     panel.classList.remove('animate-out');
@@ -61,13 +58,21 @@ document.addEventListener('close', (event) => {
 }, true);
 
 /* Back to top. The button itself is persisted across navigations, so the
-   listener is bound once here rather than on every page load. */
+   listener is bound once here rather than on every page load. The class is only
+   written when it actually changes: `classList.toggle` on every scroll event
+   invalidated style for the whole document even when the answer was the same,
+   which showed up as a style recalculation on each of the ~80 scroll events a
+   second that a trackpad produces. */
 const backToTop = document.getElementById('back-to-top');
 if (backToTop) {
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-  const toggle = () => backToTop.classList.toggle('visible', window.scrollY > LAYOUT.BACK_TO_TOP_THRESHOLD);
-  window.addEventListener('scroll', toggle, { passive: true });
+  let visible = false;
+  onScrollFrame(() => {
+    const next = window.scrollY > LAYOUT.BACK_TO_TOP_THRESHOLD;
+    if (next === visible) return;
+    visible = next;
+    backToTop.classList.toggle('visible', next);
+  });
   // The CSS reduced-motion rule cannot reach a scripted smooth scroll.
   backToTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: reduceMotion.matches ? 'auto' : 'smooth' }));
-  toggle();
 }

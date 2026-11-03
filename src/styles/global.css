@@ -16,7 +16,20 @@
    markup itself carries a competing Tailwind utility (cards), or where a
    third-party renderer inlines a colour (Shiki on <pre>).
    ================================================================= */
-@import 'tailwindcss';
+/* `source(none)` hands content detection entirely to the `@source` rules at the
+   bottom of this block. Tailwind's automatic detection scans the whole project
+   (respecting `.gitignore`), `pnpm-lock.yaml` and `ARCHITECTURE.md` included,
+   and any ordinary word there that happens to look like a utility compiles
+   into a rule no element can ever match. Turning it off removed seven of the
+   thirty-five never-matched selectors in the shipped stylesheet: `.absolute`,
+   `.backdrop-filter`, `.contents`, `.table`, `.text-white`, `.text-wrap` and
+   `.text-base-content/35`.
+   The ones that survive (`.static`, `.container`, `.blur`, `.filter`,
+   `.transform`, `.italic`, `.resize`) are those very words written inside our
+   own `<style>` blocks, so no scanner setting can remove them.
+   `.verify/perf/dead-css.mjs` lists what is left and, more usefully, reports
+   the reverse direction: a class the markup applies that has lost its rule. */
+@import 'tailwindcss' source(none);
 
 @plugin '@tailwindcss/typography';
 
@@ -386,23 +399,9 @@ html { scrollbar-gutter: stable; }
   text-transform: uppercase;
 }
 
-/* Section titles: Playfair for the Latin glyphs inside them, the sans stack for
-   the Chinese ones, at heading weight. */
-.section-heading h2 {
-  color: var(--fx-text);
-  font-family: var(--font-display);
-  font-weight: var(--weight-display);
-}
-
-.section-heading-row {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.section-heading-row .section-heading { margin-bottom: 1.25rem; }
-
+/* Section headings use Playfair for the Latin glyphs inside them and the sans
+   stack for the Chinese ones. The `.section-heading` / `.section-heading-row`
+   rules that used to live here were matched by nothing in `src/` or `dist/`. */
 .link-underline { color: var(--fx-muted); transition: color 0.25s var(--ease); }
 .link-underline:hover { color: var(--fx-accent-soft); }
 
@@ -423,15 +422,6 @@ html { scrollbar-gutter: stable; }
   background: color-mix(in srgb, var(--fx-accent) 4%, transparent);
 }
 
-.dark-soft-border-strong { border-color: var(--fx-line) !important; }
-
-/* Compatibility shims for Tailwind arbitrary shadows still present in markup
-   (`shadow-[10px_10px_0_0]` in the search dialog). The hard offset shadow is
-   gone from the design, so those utilities are re-pointed at the soft lift. */
-.shadow-hard,
-[class*="shadow-[6px_6px_0_0]"],
-[class*="shadow-[10px_10px_0_0]"] { box-shadow: 0 24px 60px -40px var(--fx-shadow) !important; }
-
 /* Entrance animation. The reference site fades its whole shell in from
    `scale(0.97875)`; this is the same idea per block, driven by `--reveal-delay`
    so lists cascade. */
@@ -451,7 +441,6 @@ html { scrollbar-gutter: stable; }
    outranks a single class selector. */
 .hard-card,
 .profile-card,
-.profile-overview,
 .content-card article {
   border: 1px solid var(--fx-line) !important;
   border-radius: 1.5rem !important;
@@ -466,7 +455,6 @@ html { scrollbar-gutter: stable; }
 
 .hard-card:hover,
 .profile-card:hover,
-.profile-overview:hover,
 .content-card:hover article,
 .content-card:focus-visible article {
   border-color: color-mix(in srgb, var(--fx-accent) 42%, var(--fx-line)) !important;
@@ -513,38 +501,6 @@ article[data-article] > header > h1 { font-family: var(--font-sans); font-size: 
 #search-results a { overflow-wrap: anywhere; }
 #search-results a:focus-visible { outline: 2px solid var(--fx-accent); outline-offset: -3px; }
 #search-filters button[aria-pressed="true"] { border-color: var(--fx-accent); color: var(--accent-primary-soft); background: color-mix(in srgb, var(--fx-accent) 10%, var(--fx-bg)); }
-
-.profile-overview {
-  display: flex;
-  height: 100%;
-  flex-direction: column;
-  padding: 2rem !important;
-}
-
-.profile-overview > div:first-child {
-  flex: 1;
-  justify-content: center;
-}
-
-.profile-overview > div:first-child > div:first-child,
-.profile-overview > div:first-child > div:first-child img { max-width: 11rem !important; }
-
-.profile-overview > div:last-child { margin-top: auto; }
-
-/* The three-item profile summary is the homepage's most compact data row.
-   Give every tile a calmer vertical rhythm without changing four-item grids. */
-.profile-metric-card--roomy {
-  display: grid;
-  min-height: 5.75rem;
-  align-content: center;
-  padding-block: 1rem !important;
-}
-
-[data-live-progress] i {
-  width: var(--live-progress, 0%);
-  animation: none;
-  transition: width 0.22s linear;
-}
 
 /* -----------------------------------------------------------------
    Buttons and chips
@@ -979,8 +935,12 @@ button.chip-signal[aria-pressed="true"] {
     padding: 1rem;
     border: 1px solid var(--fx-line);
     border-radius: 1.5rem;
-    background: color-mix(in srgb, var(--fx-surface) 72%, transparent);
-    backdrop-filter: blur(10px);
+    /* Opaque, and deliberately not frosted. As a sticky panel this is redrawn
+       on every scroll frame of the longest pages on the site, and a
+       `backdrop-filter` on it meant the compositor re-blurred the article
+       behind it each time. Opaque costs one fill and looks the same over the
+       11%-alpha particle field. */
+    background: var(--fx-surface);
     scrollbar-width: thin;
   }
 
@@ -1026,6 +986,11 @@ button.chip-signal[aria-pressed="true"] {
 
 .code-block { position: relative; }
 
+/* One copy button per code block, absolutely positioned over the code panel.
+   It used to frost that panel with a 6 px backdrop blur, which meant a
+   long reference post — dozens of blocks — paid for dozens of backdrop
+   snapshots while scrolling. The surface token is opaque and reads the same on
+   top of `--code-block-bg`. */
 .code-copy {
   position: absolute;
   z-index: 2;
@@ -1034,14 +999,13 @@ button.chip-signal[aria-pressed="true"] {
   border: 1px solid var(--fx-line);
   border-radius: 999px;
   padding: 0.22rem 0.6rem;
-  background: color-mix(in srgb, var(--fx-surface-strong) 88%, transparent);
+  background: var(--fx-surface-strong);
   color: var(--fx-text);
   font-family: var(--md-mono, monospace);
   font-size: var(--type-meta);
   font-weight: var(--weight-strong);
   opacity: 0.55;
   cursor: pointer;
-  backdrop-filter: blur(6px);
   transition: opacity 0.2s ease, background 0.2s ease, transform 0.2s ease;
 }
 
@@ -1204,13 +1168,17 @@ button.chip-signal[aria-pressed="true"] {
   place-items: center;
   border: 1px solid var(--fx-line);
   border-radius: 50%;
-  background: color-mix(in srgb, var(--fx-surface-strong) 88%, transparent);
+  /* Opaque on purpose. This control is `position: fixed` for the whole visit,
+     so a `backdrop-filter` here made the compositor re-blur whatever scrolled
+     underneath it on every frame — for a 43 px circle, on the one element that
+     is always on screen while the reader scrolls. The surface token is already
+     the colour the blur was resolving to. */
+  background: var(--fx-surface-strong);
   color: var(--fx-accent);
   box-shadow: 0 16px 34px -26px var(--fx-shadow);
   opacity: 0;
   pointer-events: none;
   transform: translateY(0.8rem);
-  backdrop-filter: blur(8px);
   transition: opacity 0.3s var(--ease), transform 0.3s var(--spring), border-color 0.25s var(--ease);
 }
 
@@ -1232,10 +1200,7 @@ html:not([data-theme="paper-dark"]) #theme-toggle .theme-icon-moon { display: no
 }
 
 @media (max-width: 720px) {
-  .site-nav { padding-top: calc(4rem + env(safe-area-inset-top, 0px)); }
   .site-frame { width: min(calc(100% - 1.25rem), 76rem); }
-  .section-heading-row { align-items: flex-start; flex-direction: column; gap: 0; }
-  .section-heading-row .section-heading { margin-bottom: 0.55rem; }
 }
 
 @media (max-width: 640px) {

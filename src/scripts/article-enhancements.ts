@@ -1,7 +1,9 @@
-// Article-only progressive enhancements. Keep scroll work inside one animation
-// frame and persist reading history sparingly: localStorage is synchronous and
-// writing it for every scroll event causes visible jank on long posts.
+// Article-only progressive enhancements. Every scroll-driven part of this
+// module rides the shared animation frame from `lib/scroll`, and the reading
+// history is written sparingly: localStorage is synchronous, and writing it for
+// every scroll event causes visible jank on long posts.
 import { SITE } from '../config/site';
+import { onScrollFrame } from '../lib/scroll';
 import { readJsonArray } from '../lib/storage';
 
 declare global {
@@ -35,12 +37,22 @@ const initArticleEnhancements = () => {
   cleanupArticleEnhancements();
   article.dataset.enhanced = '1';
 
+  // One controller owns every listener this module adds to the article, so
+  // teardown is a single call and a listener can never outlive its element.
+  const controller = new AbortController();
+  const { signal } = controller;
   const historyKey = SITE.READING_HISTORY_STORAGE_KEY;
   const slug = article.dataset.slug || '';
-  let frame = 0;
   let historyTimer = 0;
   let pendingHistory: PendingHistory | null = null;
   let lastStoredProgress = -1;
+  // Measured, never read on a scroll frame. `scrollHeight` is a layout read,
+  // and asking for it inside the scroll frame is what forces the engine to
+  // resolve layout on every frame of the gesture. The document only changes
+  // height when something changes it, so it is measured at the moments that can
+  // have happened: first run, resize, and after the images have loaded.
+  let scrollable = 0;
+  const measure = () => { scrollable = Math.max(0, document.documentElement.scrollHeight - window.innerHeight); };
 
   const flushHistory = () => {
     window.clearTimeout(historyTimer);
@@ -67,20 +79,15 @@ const initArticleEnhancements = () => {
   };
 
   const updateProgress = () => {
-    frame = 0;
-    const max = document.documentElement.scrollHeight - window.innerHeight;
-    const value = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
+    const value = scrollable > 0 ? Math.min(1, Math.max(0, window.scrollY / scrollable)) : 0;
     progress.style.transform = `scaleX(${value})`;
     scheduleHistory(value);
   };
-  const scheduleProgressUpdate = () => {
-    if (!frame) frame = window.requestAnimationFrame(updateProgress);
-  };
-
-  window.addEventListener('scroll', scheduleProgressUpdate, { passive: true });
-  window.addEventListener('resize', scheduleProgressUpdate, { passive: true });
-  window.addEventListener('pagehide', flushHistory);
-  scheduleProgressUpdate();
+  measure();
+  const stopScroll = onScrollFrame(updateProgress);
+  window.addEventListener('resize', measure, { passive: true, signal });
+  window.addEventListener('load', measure, { once: true, signal });
+  window.addEventListener('pagehide', flushHistory, { signal });
 
   // Offer to jump back when the reader left this post part-way through. Read
   // before any new history is written, and never when a #fragment already
@@ -102,16 +109,16 @@ const initArticleEnhancements = () => {
       resumeButton.className = 'btn-brutal fixed bottom-6 left-1/2 z-50 -translate-x-1/2 shadow-lg';
       resumeButton.textContent = `继续上次阅读（${Math.round(previous * 100)}%）`;
       resumeButton.addEventListener('click', () => {
-        const max = document.documentElement.scrollHeight - window.innerHeight;
         const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        window.scrollTo({ top: Math.max(0, max * previous), behavior: reduceMotion ? 'auto' : 'smooth' });
+        window.scrollTo({ top: Math.max(0, scrollable * previous), behavior: reduceMotion ? 'auto' : 'smooth' });
         dismissResume();
-      });
+      }, { signal });
       document.body.append(resumeButton);
       resumeTimer = window.setTimeout(dismissResume, 9000);
     }
   } catch {}
 
+  // Code blocks: wrap each one so the copy button has something to sit on.
   article.querySelectorAll('pre').forEach((pre) => {
     if (pre.closest('[data-code-block]')) return;
     const block = document.createElement('div');
@@ -125,17 +132,23 @@ const initArticleEnhancements = () => {
     button.className = 'code-copy';
     button.textContent = '复制';
     button.setAttribute('aria-label', '复制代码');
-    button.addEventListener('click', async () => {
-      try {
-        await navigator.clipboard.writeText(pre.textContent ?? '');
-        button.textContent = '已复制';
-      } catch {
-        button.textContent = '复制失败';
-      }
-      window.setTimeout(() => { button.textContent = '复制'; }, 1600);
-    });
     block.append(button);
   });
+
+  // One delegated listener rather than one closure per block: the maimai
+  // reference post carries 40 code blocks, and every one of them used to keep
+  // its own listener alive for the whole visit.
+  article.addEventListener('click', async (event) => {
+    const button = event.target instanceof Element ? event.target.closest('[data-copy-code]') : null;
+    if (!(button instanceof HTMLButtonElement)) return;
+    try {
+      await navigator.clipboard.writeText(button.parentElement?.querySelector('pre')?.textContent ?? '');
+      button.textContent = '已复制';
+    } catch {
+      button.textContent = '复制失败';
+    }
+    window.setTimeout(() => { button.textContent = '复制'; }, 1600);
+  }, { signal });
 
   article.querySelectorAll('img').forEach((img) => {
     if (img.closest('a') || img.dataset.zoomBound === '1') return;
@@ -169,13 +182,13 @@ const initArticleEnhancements = () => {
       document.body.append(dialog);
       dialog.showModal();
     };
-    img.addEventListener('click', open);
+    img.addEventListener('click', open, { signal });
     img.addEventListener('keydown', (event) => {
       if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
         open();
       }
-    });
+    }, { signal });
   });
 
   const links = [...article.querySelectorAll<HTMLElement>('[data-toc-link]')];
@@ -195,10 +208,8 @@ const initArticleEnhancements = () => {
   }
 
   window.__b0ArticleEnhancementsCleanup = () => {
-    window.removeEventListener('scroll', scheduleProgressUpdate);
-    window.removeEventListener('resize', scheduleProgressUpdate);
-    window.removeEventListener('pagehide', flushHistory);
-    if (frame) window.cancelAnimationFrame(frame);
+    stopScroll();
+    controller.abort();
     dismissResume();
     flushHistory();
     observer?.disconnect();

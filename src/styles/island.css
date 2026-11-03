@@ -196,71 +196,6 @@
    dead weight, and this file is supposed to own exactly what renders. */
 
 /* -----------------------------------------------------------------
-   Section cue: a 1.5s "you scrolled into a new section" morph. It takes
-   over the collapsed pill (the summary cross-fades out) and is gated on
-   `data-open="false"` so it can never fight the expanded panel. It is
-   `aria-hidden` decoration: every section already has a real heading,
-   so nothing is announced twice.
-   ----------------------------------------------------------------- */
-.music-island .island-section-cue {
-  position: absolute;
-  inset: 0;
-  z-index: 4;
-  display: flex;
-  align-items: center;
-  gap: 0.72rem;
-  padding: 0 0.95rem;
-  color: var(--island-text);
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(5px) scale(0.98);
-  transition:
-    opacity 140ms ease,
-    transform 340ms var(--island-morph-ease);
-}
-
-.music-island[data-cue-active="true"][data-open="false"] .island-section-cue {
-  opacity: 1;
-  transform: none;
-}
-
-.music-island[data-cue-active="true"][data-open="false"] .island-summary,
-.music-island[data-cue-active="true"][data-open="false"] .island-mini-wave {
-  opacity: 0;
-  transition-delay: 0s;
-}
-
-.island-cue-pulse {
-  width: 10px;
-  height: 10px;
-  flex: 0 0 auto;
-  border-radius: 50%;
-  background: var(--island-wave);
-  box-shadow: 0 0 0 7px color-mix(in srgb, var(--island-focus) 12%, transparent), 0 0 20px color-mix(in srgb, var(--island-focus) 62%, transparent);
-}
-
-.island-cue-copy {
-  display: grid;
-  min-width: 0;
-  gap: 0.04rem;
-}
-
-.island-cue-copy small {
-  color: var(--island-text-faint);
-  font-size: 0.5rem;
-  font-weight: 760;
-  letter-spacing: 0.18em;
-}
-
-.island-cue-copy strong {
-  overflow: hidden;
-  font-size: 0.75rem;
-  font-weight: 720;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* -----------------------------------------------------------------
    Visualiser.
    `data-visualizer` is the honest state of the bars:
      live  six Mel bands, dB levels with fast attack and slower release
@@ -834,8 +769,7 @@
     transition-timing-function: var(--island-morph-ease) !important;
   }
 
-  .music-island .island-summary,
-  .music-island .island-section-cue {
+  .music-island .island-summary {
     transition-duration: var(--island-fade) !important;
     transition-delay: 0s !important;
   }
@@ -852,9 +786,5 @@
       opacity var(--island-fade) var(--ease),
       transform var(--island-fade) var(--ease),
       visibility 0s linear 0s !important;
-  }
-
-  .island-cue-pulse {
-    box-shadow: 0 0 0 7px color-mix(in srgb, var(--island-focus) 12%, transparent);
   }
 }

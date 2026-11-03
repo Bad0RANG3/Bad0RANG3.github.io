@@ -22,15 +22,12 @@ export {};
     const duration = document.getElementById('island-player-duration');
     const status = document.getElementById('island-player-status');
     const lyric = document.getElementById('island-player-lyric');
-    const cueLabel = document.getElementById('island-section-label');
     const volumeControl = document.getElementById('island-volume-control');
     const volumeButton = document.getElementById('island-volume-button');
     const volumeMute = document.getElementById('island-volume-mute');
     const volumeSlider = document.getElementById('island-volume-slider');
     const volumeValue = document.getElementById('island-volume-value');
     let closeTimer = 0;
-    let cueTimer = 0;
-    let cueCleanup = () => {};
     // Set while we programmatically move focus back to the pill, so the
     // island's own `focusin` handler does not immediately re-open it.
     let restoringFocus = false;
@@ -71,10 +68,6 @@ export {};
       window.clearTimeout(closeTimer);
       island.dataset.open = open ? 'true' : 'false';
       toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-      if (open) {
-        window.clearTimeout(cueTimer);
-        island.dataset.cueActive = 'false';
-      }
       if (!open) setVolumeMenuOpen(false);
     };
 
@@ -312,12 +305,6 @@ export {};
       }
       if (elapsed) elapsed.textContent = formatTime(current);
       if (duration) duration.textContent = `−${formatDuration(Math.max(0, total - current))}`;
-      // One hook, not three: the elapsed/duration mirrors lived only on the
-      // homepage card and went away with its time row, so this runs a single
-      // query per timeupdate instead of three.
-      document.querySelectorAll('[data-live-progress]').forEach((node) => {
-        if (node instanceof HTMLElement) node.style.setProperty('--live-progress', progress);
-      });
       updateLyric();
     };
 
@@ -579,48 +566,7 @@ export {};
     });
     audio.addEventListener('volumechange', syncVolumeUI);
 
-    const pulseSection = (label) => {
-      if (!label || island.dataset.open === 'true') return;
-      if (cueLabel) cueLabel.textContent = label;
-      window.clearTimeout(cueTimer);
-      island.dataset.cueActive = 'true';
-      cueTimer = window.setTimeout(() => { island.dataset.cueActive = 'false'; }, 1500);
-    };
-
-    const bindSectionCues = () => {
-      cueCleanup();
-      cueCleanup = () => {};
-      const cueSections = [...document.querySelectorAll('[data-island-cue]')];
-      if (!cueSections.length) return;
-      let currentSection = '';
-      let frame = 0;
-      const syncSection = () => {
-        frame = 0;
-        const marker = window.innerHeight * 0.42;
-        let active = cueSections[0];
-        cueSections.forEach((section) => {
-          if (section.getBoundingClientRect().top <= marker) active = section;
-        });
-        const label = active instanceof HTMLElement ? active.dataset.islandCue || '' : '';
-        if (!label || label === currentSection) return;
-        currentSection = label;
-        pulseSection(label);
-      };
-      const scheduleSync = () => {
-        if (!frame) frame = requestAnimationFrame(syncSection);
-      };
-      window.addEventListener('scroll', scheduleSync, { passive: true });
-      window.addEventListener('resize', scheduleSync, { passive: true });
-      cueCleanup = () => {
-        window.removeEventListener('scroll', scheduleSync);
-        window.removeEventListener('resize', scheduleSync);
-        if (frame) cancelAnimationFrame(frame);
-      };
-      syncSection();
-    };
-
     const refreshForPage = () => {
-      bindSectionCues();
       updateProgress();
       syncVolumeUI();
     };

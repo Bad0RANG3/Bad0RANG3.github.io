@@ -85,12 +85,35 @@ if (results.some((result) => result.assetUrls.some((asset) => /player\.[\w-]+\.j
 }
 
 const enhancements = await readFile(new URL('../src/scripts/article-enhancements.ts', import.meta.url), 'utf8');
-if (!/requestAnimationFrame\(updateProgress\)/.test(enhancements)) {
-  console.error('Performance invariant failed: article scroll progress is not animation-frame throttled.');
+if (!/onScrollFrame\(updateProgress\)/.test(enhancements)) {
+  console.error('Performance invariant failed: article scroll progress is not on the shared animation-frame scheduler.');
+  process.exitCode = 1;
+}
+if (/requestAnimationFrame/.test(enhancements)) {
+  console.error('Performance invariant failed: article-enhancements must not schedule its own animation frames; it belongs on lib/scroll.ts.');
+  process.exitCode = 1;
+}
+// The scroll callback itself must be layout-free. Scoped to the callback body
+// on purpose: measuring the document height elsewhere in the module (on resize
+// and on load) is the fix, not the bug.
+const updateProgress = /const updateProgress = \(\) => \{([\s\S]*?)\n {2}\};/.exec(enhancements)?.[1] ?? '';
+if (!updateProgress) {
+  console.error('Performance invariant failed: perf-audit could not find the updateProgress callback to inspect; update the pattern with the source.');
+  process.exitCode = 1;
+} else if (/scrollHeight|getBoundingClientRect|offsetHeight|clientHeight|offsetTop/.test(updateProgress)) {
+  console.error('Performance invariant failed: the article scroll callback reads layout, which forces a reflow on every scroll frame.');
   process.exitCode = 1;
 }
 if (!/setTimeout\(flushHistory,\s*4000\)/.test(enhancements)) {
   console.error('Performance invariant failed: reading-history writes are not throttled.');
+  process.exitCode = 1;
+}
+
+// The shared scheduler is what makes the invariant above real: one
+// requestAnimationFrame per scroll burst for every subscriber on the page.
+const scrollScheduler = await readFile(new URL('../src/lib/scroll.ts', import.meta.url), 'utf8');
+if (!/requestAnimationFrame\(flush\)/.test(scrollScheduler)) {
+  console.error('Performance invariant failed: lib/scroll.ts no longer batches subscribers into one animation frame.');
   process.exitCode = 1;
 }
 

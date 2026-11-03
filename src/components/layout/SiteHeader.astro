@@ -21,7 +21,7 @@ const playerLyrics = withBase(player.lyrics);
 <header class="site-header">
   <a href="#main-content" class="skip-link">跳到内容</a>
 
-  <div class="dynamic-island music-island" id="site-island" data-open="false" data-volume-open="false" data-cue-active="false" data-player-state="idle" data-visualizer="idle" data-api-base={player.apiBase} data-audio-src={playerAudio} data-lyrics-src={playerLyrics} data-song-id={String(player.id)} data-song-duration={String(player.durationSeconds)} data-song-title={player.title} transition:persist="site-music-player">
+  <div class="dynamic-island music-island" id="site-island" data-open="false" data-volume-open="false" data-player-state="idle" data-visualizer="idle" data-api-base={player.apiBase} data-audio-src={playerAudio} data-lyrics-src={playerLyrics} data-song-id={String(player.id)} data-song-duration={String(player.durationSeconds)} data-song-title={player.title} transition:persist="site-music-player">
     <button
       class="island-summary"
       id="site-island-toggle"
@@ -35,14 +35,6 @@ const playerLyrics = withBase(player.lyrics);
         {Array.from({ length: 6 }).map(() => <i />)}
       </span>
     </button>
-
-    <div class="island-section-cue" id="island-section-cue" aria-hidden="true">
-      <span class="island-cue-pulse"></span>
-      <span class="island-cue-copy">
-        <small>SECTION</small>
-        <strong id="island-section-label">首页概览</strong>
-      </span>
-    </div>
 
     <div class="island-panel island-player-panel" id="site-island-panel">
       <div class="island-player-heading">
