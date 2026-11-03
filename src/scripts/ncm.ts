@@ -8,7 +8,13 @@
 // 代码不会再跑，新的标记上一个监听都没有，拖放区和「开始解密」会全部失效
 // （表现为页面看起来正常、点什么都不响应）。`astro:page-load` 才是重新绑定的
 // 时机，`data-bound` 保证同一次绑定不会被重复执行两次。
-import { dump } from 'ncmdump-js';
+type DumpOutput = Awaited<ReturnType<typeof import('ncmdump-js').dump>>;
+
+// `ncmdump-js` 是 60 kB 左右的解码器，只有真的点了「开始解密」才有用。静态
+// import 会让每个打开这个页面的人都先下载它；改成首次转换时再取，页面本身
+// 就只剩控制器那点体积。promise 缓存一次，连续解密不会重复请求。
+let decoder: Promise<typeof import('ncmdump-js')> | undefined;
+const loadDecoder = () => (decoder ??= import('ncmdump-js'));
 
 const initNcm = () => {
   const fileInput = document.querySelector<HTMLInputElement>('#ncm-file-input');
@@ -107,7 +113,7 @@ const initNcm = () => {
     downloadAllButton.hidden = true;
   };
 
-  const addResult = ({ file, output, url }: { file: File; output: Awaited<ReturnType<typeof dump>>; url: string }) => {
+  const addResult = ({ file, output, url }: { file: File; output: DumpOutput; url: string }) => {
     emptyResults.hidden = true;
     clearResultsButton.hidden = false;
     downloadAllButton.hidden = false;
@@ -163,6 +169,11 @@ const initNcm = () => {
 
     let completed = 0;
     let failed = 0;
+    // Fetched once, on the first conversion, and reused for the rest of the
+    // queue. Doing it before the loop keeps the per-file status messages
+    // honest: the first one is about the download, not about a file.
+    setStatus('正在准备解密引擎', 'loading');
+    const { dump } = await loadDecoder();
     for (const file of queue) {
       try {
         const output = await dump(file, {
