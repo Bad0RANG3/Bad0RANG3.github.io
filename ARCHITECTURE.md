@@ -60,7 +60,8 @@ Astro 5 静态站点（`output: 'static'`），Tailwind CSS 4（通过 `@tailwin
     ├── scripts/                浏览器端入口，由 Astro 打包为可缓存模块
     │   ├── bootstrap.ts          按需加载其余模块的唯一入口
     │   ├── theme.ts              主题控制器（首屏由 BaseLayout 内联小脚本兜底）
-    │   ├── atmosphere.ts         粒子背景（原站 SVG 关键帧 + Canvas，跟随屏幕刷新率、上限 90fps，滚动时持续播放）
+    │   ├── atmosphere.ts         粒子背景（原站 SVG 关键帧 + Canvas；上限 60fps，
+    │   │                         帧超时自动降到 24fps，弱设备只画静帧。见 §6「粒子背景」）
     │   ├── player.ts             动态岛音乐播放器
     │   ├── home-hero-motion.ts   首页主视觉的指针视差（跟随可见性 / 动效偏好）
     │   ├── search.ts             站内搜索（首次打开时才由 bootstrap.ts 按需加载）
@@ -81,7 +82,8 @@ Astro 5 静态站点（`output: 'static'`），Tailwind CSS 4（通过 `@tailwin
     │   ├── images.ts             图片元信息（尺寸、占位）
     │   ├── og.ts                 OG 图生成（satori + resvg）
     │   ├── text.ts               标签是否纯拉丁（决定要不要上宽字距）
-    │   └── storage.ts            localStorage JSON 读取的唯一实现
+    │   ├── storage.ts            localStorage JSON 读取的唯一实现
+    │   └── scroll.ts             全站共用的滚动帧调度器（见 §6「滚动路径」）
     ├── pages/                  路由（目录结构即 URL 结构）
     └── styles/
         ├── theme.css              设计 token（亮/暗两套）——颜色的唯一来源
@@ -210,23 +212,66 @@ node .verify/lead-style-diff.mjs --base=http://127.0.0.1:4321 --compare=.verify/
 
 它内部对同一状态采样两次，把两次之间会自己动的元素（粒子背景、浮动吉祥物、歌词呼吸点）标记为 `@UNSTABLE@` 并从比对中排除——**空跑两次的差异必须是 0**，否则这次的差异不能作为证据。
 
+### 运行时性能的取证工具（都在 `.verify/perf/`，已被 gitignore）
+
+体积和计算样式都看不见「低端机上卡不卡」，那一层只能实测。这套工具把 `dist/` 用本地 HTTP 起起来，再用 CDP 驱动无头 Chrome，在 **CPU 节流**下按窗口分别采集，并按 trace 事件名归因（`RunTask` / `Commit` / `Layerize` / `UpdateLayoutTree` / `RasterTask` …）——只看 `Performance.getMetrics` 会把「合成器在忙什么」整个漏掉：
+
+| 脚本 | 回答的问题 |
+|---|---|
+| `measure.mjs` | 多条路由的对照表：空转 / 滚动 / 加载三个窗口的主线程耗时、长任务、体积、DOM 节点数 |
+| `idle-probe.mjs` | 空转到底是谁在烧 CPU：把粒子画布、吉祥物、灵动岛逐个摘掉再测一遍 |
+| `instrument.mjs` | 打了桩的 rAF 与 Canvas：真实绘制次数、每帧回调耗时、画布后备分辨率 |
+| `layers.mjs` | 合成层普查（本机无头模式下 LayerTree 域不上报，暂不可用，保留作记录） |
+| `dead-css.mjs` | 产物里永远匹配不到的选择器，以及**反向**的「用到了但没有样式」 |
+| `verify-keyframes.mjs` | 关键帧压缩是否逐点等价 |
+| `shots.mjs` + `diff-shots.py` | 冻结动画后的整页截图逐像素比对（本次重构：32 张里 24 张完全一致，其余 8 张的差异全部落在两类刻意改动的表面上） |
+| `bench.html` + `run-bench.mjs` | 同一帧内几种画法的耗时对比 |
+
+**先量再改**：这套工具第一次跑出来的结论（粒子画布吃掉了空转期间几乎全部主线程，而每帧的绘制本身几乎不花时间）和「把绘制写快一点」的直觉正好相反。
+
 ---
 
 ## 6. 样式编译：Tailwind v4 + daisyUI 5
 
-样式入口是 `src/styles/global.css`：`@import 'tailwindcss'`、`@plugin '@tailwindcss/typography'`、`@plugin 'daisyui' { exclude: ... }`、`@theme`（原 `tailwind.config.mjs` 的扩展）与 `@source`。几个必须记住的点：
+样式入口是 `src/styles/global.css`：`@import 'tailwindcss' source(none)`、`@plugin '@tailwindcss/typography'`、`@plugin 'daisyui' { exclude: ... }`、`@theme`（原 `tailwind.config.mjs` 的扩展）与 `@source`。几个必须记住的点：
 
 - **daisyUI 5 不会自动 tree-shake。** 它的 `addComponents` 默认输出全部组件，所以 `global.css` 用 `exclude` 明确排掉了本站未使用的约 58 个组件。**新增组件类前，先用渲染后的 HTML 确认组件名已在 `exclude` 里移除**，否则会静默丢失样式。当前实际用到的是 `button` / `badge` / `modal`。
-- **Tailwind v4 默认扫描整个项目**（遵守 `.gitignore`）。`@source not '../content/**'` 把文章正文排除，避免散文里的普通词（`card`、`step`、`stack`…）命中 daisyUI 组件名、把整套组件样式拉进产物。
+- **`source(none)` 关掉 Tailwind 的自动内容探测**，只认 `@source` 明确列出的文件。默认探测会扫整个项目（遵守 `.gitignore`），`pnpm-lock.yaml`、`ARCHITECTURE.md` 里任何一个像工具类的普通词都会被编译成一条没人匹配的规则——实测它负责了产物里 35 条「永不匹配」选择器中的 7 条：`.absolute`、`.backdrop-filter`、`.contents`、`.table`、`.text-white`、`.text-wrap`、`.text-base-content/35`。**剩下那些（`.static`、`.container`、`.blur`、`.filter`、`.transform`、`.italic`、`.resize`）扫不掉**，因为它们出在我们自己 `<style>` 块里的 `position: static`、`filter:`、`transform:` 这些声明文本上——不要为了消掉它们去改扫描配置，那是白费劲。`@source not '../content/**'` 继续把文章正文排除，避免散文里的 `card`、`step`、`stack` 命中 daisyUI 组件名把整套组件拉进产物。
+  - 剩下的死选择器（`.verify/perf/dead-css.mjs` 会列出）只有 daisyUI 那几个无法单独排除的（`.modal-*`、`.btn-active`、`.btn-disabled`、`.theme-controller`）和少数确实写在源码 `<style>` 里的词（`blur`、`italic`、`relative`…）。**这个脚本同时会报「用到了但没有样式」**，那是比多几条规则更危险的回归方向；改动样式后跑一次。
 - **不要写死 daisyUI 旧版本的变量名。** v5 使用 `--color-primary` / `--color-base-content`（完整 oklch 颜色），不再有 `--p` / `--bc` / `--b1`。工具页里的半透明色统一写成 `color-mix(in srgb, var(--color-primary) 20%, transparent)`。
 - **不要用 `oklch(from … l c h / a)` 这种相对颜色写法。** 它和 `color-mix()` 表达同一件事（同一个颜色、指定 alpha），但相对颜色要 Chrome/Edge 122、Safari 18；`color-mix()` 从 Chrome/Edge 111、Safari 16.2、Firefox 113 就有，正好落在基线内。两者等价性已逐像素验证：冻结动画后在 12 个页面上比对 67,622 个颜色值，零差异（主题切换带过渡，采样前若不禁用过渡会采到中间色，产生 1–2/255 的假差异）。
-- 产物仍集中在单个 `dist/_astro/about.*.css`（实测 107.5 KB / gzip 19.4 KiB，82 个页面全都链接它；全站 CSS 合计 141.0 KB / gzip 26.1 KiB），工具页样式单独成文件（`sushi` 14.5 KB、`ncm` 8.3 KB，只在对应路由加载）。文件名带内容哈希、且不叫 `global`，容易误认成「只有 about 页用」——它是全站共享包，改任何全局样式都会改名。
+- **`backdrop-filter` 只允许出现在「打开时才存在」的浮层上**：对话框 `::backdrop`、抽屉面板、跳过链接。它曾经也用在三个**滚动期间一直在场**的元素上——返回顶部按钮、代码块复制按钮、粘性文章目录——那意味着每滚一帧，合成器都要把这几块后面的内容重新取景 + 模糊一次。三处现在都是不透明表面（`--fx-surface-strong` / `--fx-surface`），实测差异分别是 15/255 与 3/255。新增滚动期常驻的浮层请用不透明背景。
+- 产物仍集中在单个 `dist/_astro/about.*.css`（重构前 107.5 KB / gzip 19.4 KiB，现在 102.8 KB / gzip 18.8 KiB；全站 CSS 合计 135.7 KB / gzip 23.3 KiB，82 个页面全都链接共享包），工具页样式单独成文件（`sushi` 14.5 KB、`ncm` 8.3 KB，只在对应路由加载）。文件名带内容哈希、且不叫 `global`，容易误认成「只有 about 页用」——它是全站共享包，改任何全局样式都会改名。
+
+### 粒子背景（`src/scripts/atmosphere.ts`）
+
+这一层是**全站唯一在加载后还一直跑的东西**，所以也是低端机上唯一能把主线程吃掉的装饰。用 CDP trace + 打了桩的 `requestAnimationFrame` 量过之后，结论和直觉相反：**画一帧几乎不花时间**（87 个椭圆 fill 的主线程耗时 < 0.1 ms），**花钱的是「帧」本身**——每个 rAF 都会拖着一次样式重算、prepaint、层更新和一次合成提交，画不画都一样。旧实现在无 vsync 的面板上每秒请求 165 帧、只画其中一半，却为全部 165 帧付了流水线。所以现在的设计围绕「帧能少则少」，不是「帧能便宜则便宜」：
+
+1. **上限 60fps**（`TARGET_FPS`），并把间隔对齐到整数个面板帧；`hardwareConcurrency ≤ 4` 的设备上限直接是 30fps。
+2. **早到的帧用定时器等**，不再空转一个 rAF：定时器负责配速、rAF 只负责落帧，一次绘制 = 一个定时器 + 一个动画帧。`elapsed` 累加的是真实发生的 delta，所以 5 秒周期不受影响。
+3. **自适应降帧**：绘制帧比请求的间隔迟到太多，说明设备已经跟不上，间隔按 1.3 倍退让到最低 24fps；恢复正常后再逐步收回来。半帧的宽限是必须的——落在 vsync 另一侧的帧不是设备在挣扎。
+4. **弱设备只画静帧**：`deviceMemory ≤ 2` 或 `hardwareConcurrency ≤ 2` 时停在 `STILL_PROGRESS`（0.34，循环里圆最密的一刻），不启动循环。
+5. **后备缓冲最多 1 个设备像素 / CSS 像素**：这层是 11% alpha 的淡淡一片，砍掉的高分辨率填充与每帧纹理上传在视网膜屏上是白赚的。
+6. 关键帧数据是**列式存储 + 按 track 切 `Float32Array` 视图**。`src/data/atmosphere-keyframes.json` 只存每个属性到「最后一个还在变的帧」（`k[track][property]`），加载时补回 21 帧——**补回去是必须的**：采样器把给它的关键帧摊在整个 5 秒上，只截断不补齐会让本该停下的粒子继续漂。等价性由 `.verify/perf/verify-keyframes.mjs` 逐点比对（87 track × 4 属性 × 2001 个采样点）。
+
+效果（`/posts/maimai-dx-hdd-setup/`，4× CPU 节流，3 秒空转窗口）：主线程 `TaskDuration` 0.446 s → 0.084 s，样式重算 497 → 87 次，合成提交 498 → 88 次。模块体积 47.6 KB / gzip 8.7 KB → 31.1 KB / gzip 6.0 KB。
+
+**改这个文件后请用 `.verify/perf/` 里的工具复核**：`idle-probe.mjs`（空转开销与事件归因）、`instrument.mjs`（真实绘制次数与 rAF 节奏）、`measure.mjs`（多条路由的对照表）。`pnpm perf:audit` 只守住几条文本身就能表达的约束（`TARGET_FPS` 区间、必须走 rAF、不许 `pauseForScroll`），它守不住「帧是不是太多了」。
+
+### 滚动路径
+
+- **滚动回调统一走 `src/lib/scroll.ts` 的 `onScrollFrame`**，不要再各自 `addEventListener('scroll', …)`。一次手势只排一个动画帧，订阅者按注册顺序跑；没有订阅者的页面（归档页、工具页）一个监听都不装。返回顶部按钮、文章阅读进度都挂在它上面。
+- **滚动帧里不许读布局。** `document.documentElement.scrollHeight`、`getBoundingClientRect()` 这类读取会强制解析布局，每个滚动帧都读一次就是每帧一次 reflow。文章进度条的高度改在首屏、`resize` 和 `load` 时各测一次（`measure()`）；`perf:audit` 会切开 `updateProgress` 的函数体，里面出现 `scrollHeight` / `getBoundingClientRect` / `offsetHeight` / `clientHeight` / `offsetTop` 就直接失败。
+- **只在状态真的变了才写 DOM。** 返回顶部按钮原来是每个滚动事件都 `classList.toggle` 一次，答案一样也照样让整个文档的样式失效；实测滚动期间的 `EventDispatch` 因此是 46.5 ms，加上「变了才写」之后降到 13.9 ms。
+- **页面级监听一律委托。** 文章页的 41 个代码块曾经各带一个复制监听（每个一个闭包），现在整个 `<article>` 一个委托监听 + 一个 `AbortController` 管全部拆卸。
+- **`Layerize` 是滚动 trace 里最贵的一项（约 285 ms / 2.6 s 滚动窗口，4× 节流），但它是「每帧提交」本身的代价，不是可以调掉的。** 试过给 `.reading-progress` 加 `will-change: transform`（理由是它的 transform 每帧都改，可能引起层树重建）：`Layerize` 287.5 → 282.0 ms，事件次数一模一样（417），滚动总耗时 0.772 → 0.770 s，全在噪声里。**结论是不要加**——那会常驻提升一个合成层，换不到任何东西。真要降这部分只能降帧数，也就是只用 `lib/scroll.ts` 做节流、不要在滚动回调里堆积工作。
 
 ### 动态岛（头部音乐胶囊）
 
 - 结构与交互在 `src/components/layout/SiteHeader.astro` + `src/scripts/player.ts`；**样式全部归 `src/styles/island.css`**，`global.css` 里不应再出现任何 `.music-island` / `.dynamic-island` / `.header-action` 规则。同一个选择器在两个文件里各写一遍，就得靠 `!important` 打架——这正是重构前的问题。
 - 同一个组件里还渲染主站导航行 `.site-nav`：它是**文档流里的一行**（左侧站名 + 右侧文字链接），不是钉在视口上的图标栏，样式属于站点版式所以写在 `global.css`。这一行用 `padding-top` 为灵动岛预留出顶部那条带，`#main-content` 因此不再自带顶部内边距；改动顶部间距时先看这里，否则灵动岛会压住标题。
-- 形态切换只改 `data-open`、`data-player-state`、`data-visualizer`、`data-cue-active` 这几个属性，动画交给 CSS 过渡；JS 不写内联几何。展开/收起必须**可中断**：中途反向点击要从当前几何继续，而不是先塌成空壳。
+- 形态切换只改 `data-open`、`data-player-state`、`data-visualizer`、`data-volume-open` 这几个属性，动画交给 CSS 过渡；JS 不写内联几何。展开/收起必须**可中断**：中途反向点击要从当前几何继续，而不是先塌成空壳。
+  - 曾经还有第五个属性 `data-cue-active`（滚动到新章节时胶囊变成「小节提示」）。那套东西的触发条件是标记里的 `[data-island-cue]`，而**全站没有任何一个页面写过这个属性**，所以 `bindSectionCues()` 永远在第一行返回：对应的 JS、CSS 和标记都是死的，已一并删除（标记里也没有 `data-live-progress`，播放器里查它的那段同样是死的）。新增这类「滚动提示」请用 `lib/scroll.ts`，并给它一个真实存在的触发源。
 - **视觉规格对齐 iPhone 的灵动岛**，这不是随意调的，改之前先理解这几点：
   - 背景是**不透明纯黑**（`--island-bg: #000`），没有边框、没有 `backdrop-filter`。真机上它本来就是屏幕挖孔，不是一块玻璃面板。所以它和 `paper` / `paper-dark` 两套主题都无关。
   - 比例：紧凑态约 **4.9:1**（196×40，完全胶囊，圆角 = 高度一半）；展开态约 **2.1–2.3:1**（372×176，圆角很大）。这两个数字定了，里面所有尺寸都靠 `cqw` 跟着缩放——面板内的一切用 `cqw` 而不是 `px`，改宽度就是整体缩放。
