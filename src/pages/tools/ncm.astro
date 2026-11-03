@@ -18,13 +18,8 @@ import '../../styles/tools/ncm.css';
           <p class="ncm-eyebrow">本地处理</p>
           <h2 class="ncm-title">把 NCM 文件还原成可播放音频</h2>
           <p class="ncm-copy">
-            选择或拖入一个或多个 <code>.ncm</code> 文件，工具会在当前浏览器中完成处理，并输出原始的 MP3 / FLAC 音频。
-            文件不会上传到服务器。
+            拖入 <code>.ncm</code> 文件，在浏览器本地转成 MP3 / FLAC。
           </p>
-        </div>
-        <div class="ncm-note">
-          <span class="ncm-note-dot" aria-hidden="true"></span>
-          <span>请只处理你有权使用的本地音乐文件。</span>
         </div>
       </section>
 
@@ -41,7 +36,7 @@ import '../../styles/tools/ncm.css';
           <input id="ncm-file-input" type="file" accept=".ncm,audio/ncm" multiple hidden />
           <span class="ncm-drop-icon" aria-hidden="true">♪</span>
           <span class="ncm-drop-title">拖放 .ncm 文件到这里</span>
-          <span class="ncm-drop-copy">或点击选择文件，可一次添加多个文件</span>
+          <span class="ncm-drop-copy">或点击选择，可多选</span>
           <span class="ncm-drop-action">选择文件</span>
         </label>
 
@@ -58,10 +53,9 @@ import '../../styles/tools/ncm.css';
             <input id="ncm-fix-metadata" type="checkbox" checked />
             <span>
               <strong>写入歌曲信息</strong>
-              <small>保留标题、歌手、专辑和 NCM 内置封面</small>
+              <small>标题、歌手、专辑与封面</small>
             </span>
           </label>
-          <p class="ncm-option-hint">默认不会联网补全缺失封面，转换过程保持在本地完成。</p>
         </div>
 
         <button type="button" class="ncm-primary-button" id="ncm-convert" disabled>
@@ -84,7 +78,7 @@ import '../../styles/tools/ncm.css';
         <div id="ncm-results" class="ncm-results" aria-live="polite">
           <div class="ncm-empty" id="ncm-empty-results">
             <span aria-hidden="true">◌</span>
-            <p>转换完成后的音频会显示在这里。</p>
+            <p>转换后的音频会显示在这里。</p>
           </div>
         </div>
       </section>

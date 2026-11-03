@@ -42,26 +42,6 @@
   padding: .1rem .35rem;
   font-size: .86em;
 }
-.ncm-note {
-  display: inline-flex;
-  align-items: center;
-  gap: .55rem;
-  width: fit-content;
-  border: 1px solid color-mix(in srgb, var(--color-success) 22%, transparent);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--color-success) 8%, transparent);
-  padding: .55rem .8rem;
-  color: color-mix(in srgb, var(--color-base-content) 68%, transparent);
-  font-size: var(--type-small);
-  font-weight: var(--weight-strong);
-}
-.ncm-note-dot {
-  width: .5rem;
-  height: .5rem;
-  border-radius: 50%;
-  background: var(--color-success);
-  box-shadow: 0 0 0 .25rem color-mix(in srgb, var(--color-success) 14%, transparent);
-}
 .ncm-card { overflow: hidden; }
 .ncm-result-actions { display: flex; align-items: center; gap: 0.85rem; }
 .ncm-download-all {
@@ -175,9 +155,7 @@
 .ncm-checkbox input { margin-top: .2rem; accent-color: var(--color-primary); }
 .ncm-checkbox span { display: grid; gap: .18rem; }
 .ncm-checkbox strong { font-size: var(--type-small); }
-.ncm-checkbox small,
-.ncm-option-hint { color: color-mix(in srgb, var(--color-base-content) 70%, transparent); font-size: var(--type-meta); line-height: 1.5; }
-.ncm-option-hint { margin: 0; text-align: right; }
+.ncm-checkbox small { color: color-mix(in srgb, var(--color-base-content) 70%, transparent); font-size: var(--type-meta); line-height: 1.5; }
 .ncm-primary-button,
 .ncm-download-button {
   display: inline-flex;
@@ -221,7 +199,6 @@
   .ncm-section-head,
   .ncm-options { align-items: flex-start; flex-direction: column; }
   .ncm-result-actions { flex-wrap: wrap; }
-  .ncm-option-hint { text-align: left; }
   .ncm-result-item { grid-template-columns: 1fr; }
   .ncm-download-button { width: 100%; }
 }

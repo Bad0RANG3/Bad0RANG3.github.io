@@ -1,0 +1,289 @@
+---
+import { withBase } from '../../lib/urls';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/ui/PageHeader.astro';
+import { formatMoney, regions, unlistedRegions } from '../../config/sushiro';
+import '../../styles/tools/sushi.css';
+
+const [firstRegion] = regions;
+---
+
+<BaseLayout
+  title="寿司郎计算器"
+  description="按碟子颜色数碟就出账单：寿司郎日本 / 香港 / 台湾 / 韩国 / 中国大陆五地价目，自动计算服务费、消费税与人均分摊。"
+>
+  <div class="site-frame py-6 sm:py-10">
+    <PageHeader label="Sushiro" title="寿司郎计算器" />
+
+    <div class="sushi-shell" id="sushi-root">
+      <section class="sushi-intro hard-card reveal rounded-[1.75rem] p-6 sm:p-8">
+        <p class="sushi-eyebrow">按碟计价</p>
+        <h2 class="sushi-title">数完碟子，账单就出来了</h2>
+        <p class="sushi-copy">
+          选地区，按碟色点数量，自动算出服务费、税与人均。全部在本地计算。
+        </p>
+      </section>
+
+      <section class="hard-card sushi-card reveal" style="--reveal-delay:40ms">
+        <div class="sushi-section-head">
+          <div>
+            <p class="sushi-eyebrow">第 1 步</p>
+            <h2 class="sushi-section-title">选择地区</h2>
+          </div>
+          <span class="sushi-region-name" id="sushi-region-name">
+            {firstRegion.flag} {firstRegion.nativeName} · {firstRegion.currency.code}
+          </span>
+        </div>
+
+        <div class="sushi-region-bar mt-4" id="sushi-regions" role="group" aria-label="选择地区">
+          {regions.map((region, index) => (
+            <button
+              type="button"
+              class="sushi-region"
+              data-region={region.id}
+              aria-pressed={index === 0 ? 'true' : 'false'}
+            >
+              <span class="sushi-region-flag" aria-hidden="true">{region.flag}</span>
+              <span>{region.name}</span>
+              <span class="sushi-region-meta">{region.currency.code}</span>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {regions.map((region, index) => (
+        <div class="sushi-layout" data-panel={region.id} hidden={index !== 0}>
+          <div class="sushi-main">
+            <section class="hard-card sushi-card reveal" style="--reveal-delay:80ms">
+              <div class="sushi-section-head">
+                <div>
+                  <p class="sushi-eyebrow">第 2 步 · 数碟</p>
+                  <h2 class="sushi-section-title">{region.name}价目</h2>
+                  <p>{region.tierNote}</p>
+                </div>
+              </div>
+
+              {region.bands && (
+                <div class="sushi-band">
+                  <p class="sushi-band-label">店型价格带</p>
+                  <div class="sushi-mode-switch" role="group" aria-label="店型价格带">
+                    {region.bands.map((band) => (
+                      <button
+                        type="button"
+                        class="sushi-mode"
+                        data-band={band.id}
+                        aria-pressed={band.id === region.bands?.[0].id ? 'true' : 'false'}
+                        title={band.note}
+                      >
+                        {band.name}
+                      </button>
+                    ))}
+                  </div>
+                  <p class="sushi-band-note" data-band-note>{region.bands[0].note}</p>
+                </div>
+              )}
+
+              <div class="sushi-tier-list">
+                {region.tiers.map((tier, tierIndex) => (
+                  <div class="sushi-tier" data-tier-row={tier.id} data-row data-active="false">
+                    {tier.color ? (
+                      <span class="sushi-plate-dot" style={`background:${tier.color}`} aria-hidden="true"></span>
+                    ) : (
+                      <span class="sushi-plate-dot sushi-plate-dot-plain" aria-hidden="true">{tierIndex + 1}</span>
+                    )}
+                    <span class="sushi-tier-body">
+                      <span class="sushi-tier-name">{tier.name}</span>
+                      {tier.note && <span class="sushi-tier-note">{tier.note}</span>}
+                    </span>
+                    <span class="sushi-tier-price" data-tier-price={tier.id}>{formatMoney(region, tier.price)} / 碟</span>
+                    <span class="sushi-stepper">
+                      <button type="button" data-step="-1" aria-label={`减少 ${tier.name}`}>−</button>
+                      <input
+                        type="number"
+                        min="0"
+                        max="999"
+                        value="0"
+                        inputmode="numeric"
+                        data-tier={tier.id}
+                        aria-label={`${tier.name} 碟数`}
+                      />
+                      <button type="button" data-step="1" aria-label={`增加 ${tier.name}`}>+</button>
+                    </span>
+                    <span class="sushi-tier-subtotal" data-tier-subtotal={tier.id}>{formatMoney(region, 0)}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section class="hard-card sushi-card reveal" style="--reveal-delay:120ms">
+              <div class="sushi-section-head">
+                <div>
+                  <p class="sushi-eyebrow">第 3 步 · 加项</p>
+                  <h2 class="sushi-section-title">副餐与额外费用</h2>
+                  <p>{region.extraNote}</p>
+                </div>
+              </div>
+
+              {region.extras.length > 0 ? (
+                <div class="sushi-extra-list">
+                  {region.extras.map((extra) => (
+                    <div class="sushi-extra" data-extra-row={extra.id} data-row data-active="false">
+                      <span class="sushi-extra-body">
+                        <span class="sushi-extra-name">{extra.name}</span>
+                      </span>
+                      <span class="sushi-extra-price" data-extra-unit={extra.id}>
+                        {formatMoney(region, extra.price)} / {extra.unit === 'person' ? '人' : '份'}
+                      </span>
+                      <span class="sushi-stepper">
+                        <button type="button" data-step="-1" aria-label={`减少 ${extra.name}`}>−</button>
+                        <input
+                          type="number"
+                          min="0"
+                          max="999"
+                          value="0"
+                          inputmode="numeric"
+                          data-extra={extra.id}
+                          aria-label={`${extra.name} 份数`}
+                        />
+                        <button type="button" data-step="1" aria-label={`增加 ${extra.name}`}>+</button>
+                      </span>
+                      <span class="sushi-extra-subtotal" data-extra-subtotal={extra.id}>{formatMoney(region, 0)}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p class="sushi-empty">该地区没有固定副餐价目。</p>
+              )}
+
+              <form class="sushi-custom-form" data-custom-form>
+                <input class="sushi-input" type="text" name="name" maxlength="24" placeholder="项目名称（如：白碟海鲜价、拉面）" aria-label="临时项目名称" />
+                <input class="sushi-input" type="number" name="amount" min="1" step="1" inputmode="decimal" placeholder={region.currency.code} aria-label="临时项目金额" />
+                <button class="sushi-button" type="submit">＋ 添加</button>
+              </form>
+              <div class="sushi-custom-list" data-custom-list></div>
+              <p class="sushi-empty" data-custom-empty>还没有临时项目。</p>
+
+              <p class="sushi-footnote">
+                价目核对于 {region.updated} ·
+                <a href={region.sources[0].url} target="_blank" rel="noopener noreferrer">来源</a>
+                · 以门店账单为准
+              </p>
+            </section>
+          </div>
+
+          <aside class="sushi-bill hard-card sushi-card reveal" style="--reveal-delay:100ms">
+            <div class="sushi-people" id="sushi-people-row">
+              <span>
+                <span class="sushi-people-label">用餐人数</span>
+                <span class="sushi-people-hint">用于人均与按人计费的项目</span>
+              </span>
+              <span class="sushi-stepper">
+                <button type="button" data-step-people="-1" aria-label="减少人数">−</button>
+                <input
+                  id="sushi-people"
+                  type="number"
+                  min="1"
+                  max="99"
+                  value="1"
+                  inputmode="numeric"
+                  aria-label="用餐人数"
+                />
+                <button type="button" data-step-people="1" aria-label="增加人数">+</button>
+              </span>
+            </div>
+
+            {region.tax.options.length > 1 && (
+              <div>
+                <p class="sushi-band-label">税率档位</p>
+                <div class="sushi-mode-switch" role="group" aria-label="税率档位">
+                  {region.tax.options.map((option, optionIndex) => (
+                    <button
+                      type="button"
+                      class="sushi-mode"
+                      data-tax-mode={option.id}
+                      aria-pressed={optionIndex === 0 ? 'true' : 'false'}
+                      title={option.hint}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <label class="sushi-switch">
+              <input type="checkbox" data-service-toggle checked={Boolean(region.service)} />
+              <span>
+                <strong>计入服务费</strong>
+                <small>{region.serviceNote}</small>
+              </span>
+            </label>
+
+            <div class="sushi-lines">
+              <div class="sushi-line">
+                <span>碟子小计 <em data-bill-plate-count>{formatMoney(region, 0)}</em></span>
+                <span data-bill-plates>{formatMoney(region, 0)}</span>
+              </div>
+              <div class="sushi-line" data-bill-extras-row hidden>
+                <span>副餐与甜品</span>
+                <span data-bill-extras>{formatMoney(region, 0)}</span>
+              </div>
+              <div class="sushi-line" data-bill-custom-row hidden>
+                <span>临时项目</span>
+                <span data-bill-custom>{formatMoney(region, 0)}</span>
+              </div>
+              <div class="sushi-line sushi-line-muted">
+                <span>小计</span>
+                <span data-bill-subtotal>{formatMoney(region, 0)}</span>
+              </div>
+              <div class="sushi-line" data-bill-service-row hidden>
+                <span>服务费 <em data-bill-service-rate></em></span>
+                <span data-bill-service>{formatMoney(region, 0)}</span>
+              </div>
+              <div class="sushi-line sushi-line-muted" data-bill-tax-row hidden>
+                <span data-bill-tax-label>{region.tax.options[0].label}</span>
+                <span data-bill-tax>{formatMoney(region, 0)}</span>
+              </div>
+            </div>
+
+            <div class="sushi-total">
+              <span class="sushi-total-label">应付总计</span>
+              <span class="sushi-total-value" data-bill-total>{formatMoney(region, 0)}</span>
+            </div>
+
+            <div class="sushi-per-person">
+              <span>人均（<em data-bill-people>1 人</em>）</span>
+              <span data-bill-each>{formatMoney(region, 0)}</span>
+            </div>
+
+            <div class="sushi-plate-count" data-bill-badges>
+              <span>还没有点任何东西</span>
+            </div>
+
+            <div class="sushi-actions">
+              <button class="sushi-button" type="button" id="sushi-copy">复制账单文本</button>
+              <button class="sushi-button sushi-button-ghost" type="button" id="sushi-reset">清空当前地区</button>
+            </div>
+
+            <p class="sushi-status" id="sushi-status" role="status" aria-live="polite"></p>
+            <p class="sushi-tax-note">{region.tax.note}</p>
+          </aside>
+        </div>
+      ))}
+
+      <section class="sushi-unlisted reveal" style="--reveal-delay:200ms">
+        <p>
+          <strong>暂未收录：</strong>
+          {unlistedRegions.join('、')}
+          （官网菜单只有图片）· 价格以店内账单为准
+        </p>
+      </section>
+
+      <a class="sushi-back-link" href={withBase('/tools/')}>← 返回工具箱</a>
+    </div>
+  </div>
+</BaseLayout>
+
+<script>
+  import '../../scripts/sushi';
+</script>

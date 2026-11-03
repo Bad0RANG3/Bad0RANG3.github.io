@@ -212,7 +212,7 @@ try {
   // Two real bugs of exactly this shape shipped before this check existed: the
   // NCM tool answered nothing after leaving and returning to it, and the
   // reading-progress bar plus reading history were dead for a whole first visit.
-  const pageControllers = ['ncm.ts', 'switch-your-cfg.ts'];
+  const pageControllers = ['ncm.ts', 'sushi.ts'];
   for (const name of pageControllers) {
     const source = await readFile(path.join(sourceDir, 'scripts', name), 'utf8');
     if (!/astro:page-load/.test(source)) fail(`Page controller src/scripts/${name} never re-binds on astro:page-load, so it goes inert after a client-side navigation.`);

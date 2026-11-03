@@ -42,11 +42,11 @@ html[data-theme="paper"] {
   --color-neutral-content: oklch(98% 0.004 275);
 
   /* Status colours. daisyUI's built-in `light` theme injects these for every
-     theme it does not override, so until now `ncm.css` and
-     `switch-your-cfg.css` got the SAME vivid values in `paper` and
-     `paper-dark`, and they were unreadable on the light theme: 1.7–2.8:1 where
-     WCAG AA wants 4.5:1 for text. Declaring them here keeps `theme.css` the
-     single source of truth and lets each theme carry its own value.
+     theme it does not override, so the tool stylesheets used to get the SAME
+     vivid values in `paper` and `paper-dark`, and they were unreadable on the
+     light theme: 1.7–2.8:1 where WCAG AA wants 4.5:1 for text. Declaring them
+     here keeps `theme.css` the single source of truth and lets each theme carry
+     its own value.
      `paper` uses the lightest value that still clears 4.5:1 on the lightest
      surface it is drawn on (`--fx-surface` over `--fx-bg`); measured worst case
      is 4.62:1 for success, 4.66 warning, 4.72 error, 4.63 info. */

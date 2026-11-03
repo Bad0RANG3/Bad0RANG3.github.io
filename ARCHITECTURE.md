@@ -48,7 +48,8 @@ Astro 5 静态站点（`output: 'static'`），Tailwind CSS 4（通过 `@tailwin
     │   ├── site.ts               siteConfig / SITE / SOCIAL_ICONS
     │   ├── ui.ts                 LAYOUT / STAGGER
     │   ├── projects.ts           projects
-    │   └── tools.ts              tools（工具箱条目 + 搜索元数据）
+    │   ├── tools.ts              tools（工具箱条目 + 搜索元数据）
+    │   └── sushiro.ts            寿司郎计算器的五个地区价目（每条都带来源与核对日期）
     ├── content/                Astro 内容集合（路径由框架约定，不要移动）
     │   ├── config.ts             posts / thoughts 的 frontmatter schema
     │   ├── posts/*.md
@@ -68,8 +69,8 @@ Astro 5 静态站点（`output: 'static'`），Tailwind CSS 4（通过 `@tailwin
     │   ├── article-tools.ts      文章工具条（收藏、分享）
     │   ├── article-enhancements.ts  阅读进度 / 续读 / 代码块复制 / 图片灯箱 / 目录高亮
     │   ├── comments.ts           评论区（IntersectionObserver 懒加载）
-    │   ├── switch-your-cfg.ts    /tools/switch-your-cfg 的页面控制器
     │   ├── ncm.ts                /tools/ncm 的页面控制器
+    │   ├── sushi.ts              /tools/sushi 的页面控制器（寿司郎计算器）
     │   └── service-worker.ts     注册 Service Worker
     ├── lib/                    运行时工具，只放这一层
     │   ├── content.ts            集合读取（posts / thoughts）+ 单篇统计
@@ -104,7 +105,7 @@ Astro 5 静态站点（`output: 'static'`），Tailwind CSS 4（通过 `@tailwin
 | 可被多个脚本或构建期插件复用的逻辑 | `scripts/lib/` |
 | 某个页面自己的浏览器端逻辑 | `src/scripts/<页面名>.ts`，页面里只留 `<script>import …</script>` |
 
-`src/lib/` **不放**构建期插件；`src/` **不放**脚本；组件**不裸放**在 `components/` 根目录。工具页过去把几百行逻辑内联在 `.astro` 的 `<script>` 里（`switch-your-cfg` 384 行、`ncm` 224 行），现已分别移入 `src/scripts/switch-your-cfg.ts` 与 `src/scripts/ncm.ts`；这次搬迁用 `dist:fingerprint` 证明过产物逐字节一致。
+`src/lib/` **不放**构建期插件；`src/` **不放**脚本；组件**不裸放**在 `components/` 根目录。工具页过去把几百行逻辑内联在 `.astro` 的 `<script>` 里（`ncm` 224 行），现已移入 `src/scripts/ncm.ts`；这次搬迁用 `dist:fingerprint` 证明过产物逐字节一致。
 
 ### 页面控制器的重入契约
 
@@ -120,7 +121,7 @@ Astro 5 静态站点（`output: 'static'`），Tailwind CSS 4（通过 `@tailwin
 ### 主题与颜色
 
 - **`src/styles/theme.css` 是颜色的唯一来源**：`paper`（亮色，SSR 默认）与 `paper-dark`（暗色）两套 token 都在这里定义，`BaseLayout.astro` 在 `global.css` 之前引入。整套配色是「白底 + 单一蓝紫强调色」：`--fx-accent` 是粒子背景与悬停色用的那支蓝紫，`--accent-primary-soft` 是它的深色版本（专供白底上的链接文字，4.5:1）；旧配色里的 `--fx-pink` / `--accent-pink` / `--accent-violet` 已按语义改名为 `--fx-accent` / `--accent-primary` / `--accent-secondary`，暗色主题是同一色系入夜后的版本，不是另一套设计。
-  语义色（`--color-success` / `--color-warning` / `--color-error` / `--color-info`）、NCM 资料卡图标色（`--ncm-icon-provider` / `--ncm-icon-meta`）和文本选区色（`--selection-bg` / `--selection-text`）也在这里按主题各声明一次。**这些过去靠 daisyUI 内置 `light` 主题注入**，导致 `ncm.css` / `switch-your-cfg.css` 的 35 处 `var()` 在两种主题下取到同一个值，而亮色主题上实测只有 1.7–2.8:1。现在每套主题各有自己的值，改动时请按主题成对声明，不要只改一边。
+  语义色（`--color-success` / `--color-warning` / `--color-error` / `--color-info`）、NCM 资料卡图标色（`--ncm-icon-provider` / `--ncm-icon-meta`）和文本选区色（`--selection-bg` / `--selection-text`）也在这里按主题各声明一次。**这些过去靠 daisyUI 内置 `light` 主题注入**，导致工具页样式里的 `var()` 在两种主题下取到同一个值，而亮色主题上实测只有 1.7–2.8:1。现在每套主题各有自己的值，改动时请按主题成对声明，不要只改一边。
 - 组件**不允许**写死与主题相关的颜色（如 `#fff`、`text-white`）。文字用 `--fx-text` / `--color-base-content`，次要文字用 `--text-dim` / `--text-faint`，面板用 `--surface*` / `--fx-surface*`，边框用 `--line*` / `--fx-line`。**唯一允许的例外是「强调色上的前景」**：这类地方用 `--color-primary-content`（`paper` 近白、`paper-dark` 深蓝），不要写 `#fff`——亮色强调色配白字在暗色主题上只有 2.4:1。代码块在两种主题下都是深底浅字，统一用 `--code-block-bg` / `--code-block-text`（Shiki 会把底色内联写在 `<pre>` 上，所以 `global.css` 用 `!important` 拉回主题色；Shiki 主题固定为 `github-dark-default`，因为 `github-dark` 的注释色在本站代码底板上只有 3.84:1）。
 - **不用半透明文字代替次级色**。`text-base-content/35`～`/50` 这类写法在两种主题下都过不了 4.5:1（亮色下实测 2.16–3.78:1）。全站的透明度取值已经收敛到 `/70`（次要）与 `/80`（更接近正文）两档，新增文案请沿用这两档或直接用 `--fx-muted` / `--fx-faint`。`.verify/synthion/contrast.mjs` 会在 14 条路由 × 2 套主题上逐元素复核（用 canvas 归一化 `oklch()` / `color(srgb …)` 再比较，直接解析这些新语法会把 0–1 分量当成 0–255，得出满屏假阳性）。
 - **字体：三种角色 + 一套刻度**（`theme.css` 的 `:root` 段）。
@@ -131,9 +132,8 @@ Astro 5 静态站点（`output: 'static'`），Tailwind CSS 4（通过 `@tailwin
   - **负字距只用于拉丁展示字**。含中文的标题一律用 `--tracking-body`（0）。
   - 11px 的 `--type-label` 只给英文大写标签用。中文最小用 `--type-meta`（12px）——页脚 / 抽屉的分组标题是中文，所以它们用 `--type-meta` 且不加字距；正文行高 `--leading-prose` 1.8。
   - **工具页（`styles/tools/*.css`）也用同一套刻度**，不要再写裸 `rem` 字号。
-  - 只有两处允许脱离刻度，改动前请先想清楚是不是又在给自己开例外：
+  - 只有一处允许脱离刻度，改动前请先想清楚是不是又在给自己开例外：
     - `island.css`：按 iPhone 灵动岛规格复刻的独立组件，字号用 `cqw`，字重 560–760 都是规格的一部分。
-    - 键盘 / 鼠标示意图的 `scfg-kbd-key`：键帽图例字号受物理键位尺寸约束，缩放会溢出键帽（其 `font-weight` / `letter-spacing` 同样跟着键帽走）。
   - 另外三类**不参与刻度**，别把它们当成漏网之鱼：`.prose` 里的 `em` 相对字号（跟随正文等比缩放）、装饰性图符字号（♪、emoji 等），以及 `BaseLayout` 中 `@font-face` 的 `font-weight: 100 800`（可变字体轴范围）。
   - 首页保持单组插画与简介、邮箱和社交链接；主内容在导航与页脚之间自适应居中。全站共享导航宽度和位置，内页使用 `page-shell` 统一纵向留白，页脚只保留必要文字入口。
 - 主题切换由两段代码负责：`BaseLayout.astro` `<head>` 里的内联小脚本（首屏前解析 `localStorage` / `prefers-color-scheme` 并上色，避免闪烁），以及打包在 `src/scripts/theme.ts` 的控制器（切换、监听 `astro:before-swap` / `astro:after-swap`、`MutationObserver` 兜底）。改动后请用两种主题分别过一遍所有页面（`pnpm smoke` 不覆盖对比度）。
@@ -147,7 +147,7 @@ Astro 5 静态站点（`output: 'static'`），Tailwind CSS 4（通过 `@tailwin
 - **`lib/search.ts`** 把文章、碎碎念、项目与工具统一成 `SearchDocument`，供 `/search-index.json` 与 `SearchModal` 使用。
 - **`config/site.ts`** 的 `SOCIAL_ICONS` 键名必须与 `siteConfig.socials` 的 `name` 一一对应。
 - 页面只做「取数 → 组装 → 渲染」；可复用的呈现逻辑下沉到 `components/`。
-- 页面拥有的浏览器端逻辑放 `src/scripts/<页面名>.ts`。这类**页面控制器**（`ncm.ts` / `switch-your-cfg.ts`）必须遵守上面的重入契约；`bootstrap.ts` 那种文档级、事件委托式的模块不受影响。
+- 页面拥有的浏览器端逻辑放 `src/scripts/<页面名>.ts`。这类**页面控制器**（`ncm.ts` / `sushi.ts`）必须遵守上面的重入契约；`bootstrap.ts` 那种文档级、事件委托式的模块不受影响。
 
 ---
 
@@ -159,7 +159,7 @@ Astro 5 静态站点（`output: 'static'`），Tailwind CSS 4（通过 `@tailwin
 4. 构建期 `plugins/remark-with-base.mjs` 改写 Markdown 内嵌原始 HTML 的根相对 URL。
 5. `pnpm smoke` 检查产物本身：必需路由、JSON-LD、feed、manifest、sitemap、图片 `alt`、体积预算、base 前缀是否完整等。
 6. `pnpm smoke` 还做两条**源码级**断言，因为下面这类回归在产物里完全看不出来，`astro check` 也管不到：
-   - `src/scripts/ncm.ts` / `switch-your-cfg.ts` 必须同时具备 `astro:page-load` 重绑定与 `dataset.bound` 重入守卫；
+   - `src/scripts/ncm.ts` / `sushi.ts` 必须同时具备 `astro:page-load` 重绑定与 `dataset.bound` 重入守卫；
    - `src/scripts/article-enhancements.ts` 必须**先**读 `dataset.enhanced` 守卫、**再**调用清理。
 
    两者都对应真实发生过的 bug（工具页返回后失效、首访文章进度条与阅读历史全失效）。加断言前请先做反向验证：手动把源码改坏一次，确认 `pnpm smoke` 真的报错——一条从不失败的断言等于没有断言。
@@ -220,7 +220,7 @@ node .verify/lead-style-diff.mjs --base=http://127.0.0.1:4321 --compare=.verify/
 - **Tailwind v4 默认扫描整个项目**（遵守 `.gitignore`）。`@source not '../content/**'` 把文章正文排除，避免散文里的普通词（`card`、`step`、`stack`…）命中 daisyUI 组件名、把整套组件样式拉进产物。
 - **不要写死 daisyUI 旧版本的变量名。** v5 使用 `--color-primary` / `--color-base-content`（完整 oklch 颜色），不再有 `--p` / `--bc` / `--b1`。工具页里的半透明色统一写成 `color-mix(in srgb, var(--color-primary) 20%, transparent)`。
 - **不要用 `oklch(from … l c h / a)` 这种相对颜色写法。** 它和 `color-mix()` 表达同一件事（同一个颜色、指定 alpha），但相对颜色要 Chrome/Edge 122、Safari 18；`color-mix()` 从 Chrome/Edge 111、Safari 16.2、Firefox 113 就有，正好落在基线内。两者等价性已逐像素验证：冻结动画后在 12 个页面上比对 67,622 个颜色值，零差异（主题切换带过渡，采样前若不禁用过渡会采到中间色，产生 1–2/255 的假差异）。
-- 产物仍集中在单个 `dist/_astro/about.*.css`（实测 114.8 KB / gzip 20.0 KiB，109 个页面全都链接它；全站 CSS 合计 163.6 KB / gzip 28.7 KiB），工具页样式单独成文件（`switch-your-cfg` 32.4 KB、`ncm` 8.3 KB，只在对应路由加载）。文件名带内容哈希、且不叫 `global`，容易误认成「只有 about 页用」——它是全站共享包，改任何全局样式都会改名。
+- 产物仍集中在单个 `dist/_astro/about.*.css`（实测 107.5 KB / gzip 19.4 KiB，82 个页面全都链接它；全站 CSS 合计 141.0 KB / gzip 26.1 KiB），工具页样式单独成文件（`sushi` 14.5 KB、`ncm` 8.3 KB，只在对应路由加载）。文件名带内容哈希、且不叫 `global`，容易误认成「只有 about 页用」——它是全站共享包，改任何全局样式都会改名。
 
 ### 动态岛（头部音乐胶囊）
 

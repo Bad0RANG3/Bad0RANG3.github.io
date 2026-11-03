@@ -1,4 +1,4 @@
-import { postPath, toolPath } from './routes';
+import { postPath } from './routes';
 
 export type ProjectTone = 'teal' | 'coral' | 'citrus';
 
@@ -29,12 +29,6 @@ export const projects: Project[] = [
     summary: '把普通键盘变成更可控的方向输入工具。',
     href: 'https://github.com/Bad0RANG3/SOCD_Cleaner',
     tone: 'coral',
-  },
-  {
-    name: 'SwitchYourCFG',
-    summary: 'CS2 配置可视化切换与导出工具。',
-    href: toolPath('switch-your-cfg'),
-    tone: 'citrus',
   },
   {
     name: 'CS2 HLAE Preset',
