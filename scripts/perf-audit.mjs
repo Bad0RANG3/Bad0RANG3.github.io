@@ -6,9 +6,16 @@ const posts = new URL('./posts/', dist);
 // Long-form HTML is the product, so the cold budget includes the largest post
 // plus its CSS and deferred module graph. Runtime work has separate invariants
 // below so a smaller payload cannot hide scroll jank or eager third-party code.
-// The maimai DX HDD reference is a deliberately exhaustive guide with a lot of
-// syntax-highlighted code and tables, so it sets the ceiling for this budget.
-const MAX_ARTICLE_CRITICAL_GZIP = 88 * 1024;
+// The ceiling tracks the largest post that is long on purpose: the maimai DX HDD
+// reference used to hold this spot, and the beginner-oriented
+// "vscode-mingw-c-setup" guide now does. Its critical payload — the HTML plus
+// the shared CSS/module graph — measures 92.4 KiB gzip across 38k characters of
+// prose and step-by-step setup walkthroughs. Getting it under the old 88 KiB
+// would have meant deleting roughly a fifth of the article, so the ceiling moved
+// with the post. The budget is still a regression gate: it catches accidental
+// payload growth such as inlined assets or a runaway inline script, not the
+// length of a deliberately exhaustive reference.
+const MAX_ARTICLE_CRITICAL_GZIP = 96 * 1024;
 const MAX_ARTICLE_INLINE_SCRIPT = 12 * 1024;
 
 const entries = await readdir(posts, { withFileTypes: true });

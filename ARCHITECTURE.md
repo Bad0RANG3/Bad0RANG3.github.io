@@ -197,7 +197,7 @@ pnpm validate:content && pnpm check && pnpm build && pnpm smoke && pnpm perf:aud
 # 然后用 BASE_PATH=/project-pages/ 再跑一次 build + smoke + perf:audit
 ```
 
-> `perf:audit` 以前只在本地手跑，所以 88 KiB 的体积预算实际上没有守门人；它同时在任何非根 base 下直接 ENOENT（把 `/project-pages/_astro/x.css` 当成 `dist/project-pages/_astro/x.css` 去读）。现在它按 `_astro/` 剥掉 base 前缀、解析不到就直接抛错而不是少算，并且已经进了 CI 的两条路径。
+> `perf:audit` 以前只在本地手跑，所以文章体积预算实际上没有守门人（当前数值与标定理由写在 `scripts/perf-audit.mjs` 的常量旁边）；它同时在任何非根 base 下直接 ENOENT（把 `/project-pages/_astro/x.css` 当成 `dist/project-pages/_astro/x.css` 去读）。现在它按 `_astro/` 剥掉 base 前缀、解析不到就直接抛错而不是少算，并且已经进了 CI 的两条路径。
 >
 > 指纹覆盖的是 `dist/`，**不覆盖 `scripts/`**。改动脚本时请另行对比 stdout、错误消息与生成文件内容。
 
