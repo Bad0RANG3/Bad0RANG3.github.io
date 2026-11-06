@@ -7,15 +7,18 @@ const posts = new URL('./posts/', dist);
 // plus its CSS and deferred module graph. Runtime work has separate invariants
 // below so a smaller payload cannot hide scroll jank or eager third-party code.
 // The ceiling tracks the largest post that is long on purpose: the maimai DX HDD
-// reference used to hold this spot, and the beginner-oriented
-// "vscode-mingw-c-setup" guide now does. Its critical payload — the HTML plus
-// the shared CSS/module graph — measures 92.4 KiB gzip across 38k characters of
-// prose and step-by-step setup walkthroughs. Getting it under the old 88 KiB
-// would have meant deleting roughly a fifth of the article, so the ceiling moved
-// with the post. The budget is still a regression gate: it catches accidental
-// payload growth such as inlined assets or a runaway inline script, not the
-// length of a deliberately exhaustive reference.
-const MAX_ARTICLE_CRITICAL_GZIP = 96 * 1024;
+// reference used to hold this spot, then the beginner-oriented
+// "vscode-mingw-c-setup" guide, and now the "vmware-rocky-debian-linux-guide"
+// walkthrough. That one carries two distribution installs, the partitioning and
+// LVM chapter, a practice chapter and a troubleshooting handbook in one piece,
+// which lands at 52 tables and 137 code blocks. Its critical payload measures
+// 126.2 KiB gzip across 359 KiB of HTML: 1.4x the previous holder's HTML on 1.3x
+// its prose, so the growth is the article and not the shell. Getting it under
+// the old 96 KiB would have meant deleting a quarter of the walkthrough, so the
+// ceiling moves with the post again. The budget is still a regression gate: it
+// catches accidental payload growth such as inlined assets or a runaway inline
+// script, not the length of a deliberately exhaustive reference.
+const MAX_ARTICLE_CRITICAL_GZIP = 132 * 1024;
 const MAX_ARTICLE_INLINE_SCRIPT = 12 * 1024;
 
 const entries = await readdir(posts, { withFileTypes: true });
