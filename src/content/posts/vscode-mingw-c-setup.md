@@ -15,6 +15,8 @@ tags:
 category: 教程
 featured: false
 draft: false
+series: '零基础环境搭建'
+seriesOrder: 1
 verifiedDate: 2026-11-04
 difficulty: 入门
 audience: 第一次认真用 Windows、没接触过编程、看到"环境变量"就发懵的人
