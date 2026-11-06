@@ -39,10 +39,36 @@ jobs:
         run: pnpm perf:audit
       - name: Browser compatibility audit
         run: pnpm compat:audit
-      - name: Validate project Pages base path
-        env:
-          BASE_PATH: /project-pages/
-        run: |
-          pnpm build
-          pnpm smoke -- --base=/project-pages/
-          pnpm perf:audit
+
+  # The project-Pages check runs as its own job on purpose. Building twice in one
+  # checkout flips the config digest, so the second `astro build` logs "Astro
+  # config changed", clears its content store mid-run and re-syncs into empty
+  # collections: the runner then emitted 15 pages instead of 89 and smoke failed
+  # on every missing post route, while the same sequence passed locally. A fresh
+  # job creates the store under the same config that reads it, which is also how
+  # a real project-Pages deployment builds.
+  project-base:
+    name: Validate a project Pages base path
+    runs-on: ubuntu-latest
+    env:
+      BASE_PATH: /project-pages/
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Build static site with the project base
+        run: pnpm build
+      - name: Smoke test the project-base build
+        run: pnpm smoke -- --base=/project-pages/
+      - name: Performance budget audit
+        run: pnpm perf:audit
