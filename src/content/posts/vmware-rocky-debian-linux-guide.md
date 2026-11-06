@@ -525,10 +525,10 @@ ip -4 addr show
 **这是本文一个重要的心态转变**：从这一刻起，你不必再对着虚拟机的窗口敲命令了。**在 Windows 的终端里 SSH 进去，体验几乎和连一台真服务器一样**——而且虚拟机窗口可以最小化，省资源。
 
 1. 在 **Windows** 上打开 PowerShell（**Win + X → 终端**）。
-2. 输入（把 IP 换成你刚才记下的）：
+2. 输入下面这行（**把 `虚拟机IP` 换成你刚才记下的那个，例如 `192.168.80.128`**）：
 
 ```powershell
-ssh dev@192.168.80.128
+ssh dev@<虚拟机IP>
 ```
 
 3. 第一次连接会问：
@@ -707,7 +707,7 @@ GRUB 加载安装器的内核和 initramfs → Anaconda 安装器跑起来
 于是：
 
 - **虚拟机能上网**：它的包先给虚拟 NAT，NAT 换成宿主机的地址发出去，回来的包再换回去。和家里路由器给手机做 NAT 是一回事。
-- **宿主机能连虚拟机**：因为 Windows 上有一块 `VMnet8` 网卡，地址就在同一网段，`ssh dev@192.168.x.128` 自然通。
+- **宿主机能连虚拟机**：因为 Windows 上有一块 `VMnet8` 网卡，地址就在同一网段，`ssh dev@<虚拟机IP>` 自然通。
 - **局域网里的其他设备（手机、另一台电脑）连不上虚拟机**：因为在它们看来，流量全是"你的 Windows 发出来的"，虚拟机藏在后面。**想让别人能连，要改桥接或者做端口转发**（[9.4](#94-网络进阶端口转发桥接仅主机)）。
 
 **怎么在 Windows 上确认这些？** 在 PowerShell 里：
@@ -1881,14 +1881,14 @@ ssh-keygen -t ed25519 -C "windows-to-vm"
 **把公钥装到两台虚拟机上**（Windows 上没有 `ssh-copy-id`，用这个写法）：
 
 ```powershell
-type $env:USERPROFILE\.ssh\id_ed25519.pub | ssh dev@192.168.80.128 "mkdir -p ~/.ssh && chmod 700 ~/.ssh && cat >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys"
+type $env:USERPROFILE\.ssh\id_ed25519.pub | ssh dev@<虚拟机IP> "mkdir -p ~/.ssh && chmod 700 ~/.ssh && cat >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys"
 ```
 
 **从 Linux 到 Linux**（比如 Debian 连 Rocky）就简单了：
 
 ```bash
 ssh-keygen -t ed25519
-ssh-copy-id dev@192.168.80.128
+ssh-copy-id dev@<虚拟机IP>
 ```
 
 **然后配 `~/.ssh/config`**（Windows 上也在 `C:\Users\你\.ssh\config`）：
@@ -2415,7 +2415,7 @@ ls ~/hostshare          # 应该能看到 share 目录
 然后从宿主机连：
 
 ```bash
-ssh -p 2222 dev@127.0.0.1
+ssh -p 2222 dev@localhost     # localhost 就是 127.0.0.1
 ```
 
 **好处**：**虚拟机 IP 变了也不影响**，你永远连 `127.0.0.1:2222`。

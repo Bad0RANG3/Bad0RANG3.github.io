@@ -165,6 +165,7 @@ Astro 5 静态站点（`output: 'static'`），Tailwind CSS 4（通过 `@tailwin
    - `src/scripts/article-enhancements.ts` 必须**先**读 `dataset.enhanced` 守卫、**再**调用清理。
 
    两者都对应真实发生过的 bug（工具页返回后失效、首访文章进度条与阅读历史全失效）。加断言前请先做反向验证：手动把源码改坏一次，确认 `pnpm smoke` 真的报错——一条从不失败的断言等于没有断言。
+7. **正文里不要写 `user@主机.域名` 这种字面量**，哪怕是在代码块里。站点前面挂着 Cloudflare，它的 Scrape Shield → Email Address Obfuscation 会把整页 HTML 里长得像邮箱的字符串（`dev@192.168.80.128` 也算）换成 `__cf_email__` 链接，可见文字变成 `[email protected]`——教程里让人照抄的 `ssh` 命令会当场作废，而 `pnpm build` / `smoke` 在本地完全看不出来。写占位符即可绕过（`ssh dev@<虚拟机IP>`、`ssh -p 2222 dev@localhost`），需要给出具体地址时把地址写进注释或正文，不要紧跟在 `@` 后面。发现线上命令"变样"时，先 `curl` 线上页面搜 `email-protection` 再怀疑别的。
 
 ---
 
