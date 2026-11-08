@@ -23,7 +23,6 @@ const posts = defineCollection({
     audience: z.string().optional(),
     hasCode: z.boolean().default(false),
     hasDownload: z.boolean().default(false),
-    polished: z.boolean().default(false),
   }),
 });
 

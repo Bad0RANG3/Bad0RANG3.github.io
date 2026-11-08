@@ -968,22 +968,6 @@ button.chip-signal[aria-pressed="true"] {
 
 .article-tools { display: inline-flex; align-items: center; gap: 0.25rem; }
 
-.polish-note {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.55rem;
-  margin: 0 0 1.6rem;
-  border-left: 2px solid var(--fx-accent);
-  border-radius: 0 0.6rem 0.6rem 0;
-  padding: 0.55rem 0.9rem;
-  background: color-mix(in srgb, var(--fx-accent) 6%, transparent);
-  color: var(--fx-muted);
-  font-size: var(--type-small);
-  line-height: 1.6;
-}
-
-.polish-note__mark { color: var(--accent-primary-soft); line-height: 1.6; }
-
 .code-block { position: relative; }
 
 /* One copy button per code block, absolutely positioned over the code panel.

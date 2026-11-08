@@ -1,6 +1,6 @@
 ---
 title: '如何把玩你拿到的APP原盘🤭'
-description: '从 .app/.opt 解包、segatools 逐项配置、SDEZ/SDGB 区服差异，到 AquaMai 与 Sinmai-Assist 的版本边界和排障，一份尽量讲透细节的 maimai DX HDD 配置笔记。'
+description: '把拿到的 HDD 配到能开机游玩：.app/.opt 解包、segatools 逐项配置、AquaMai 与 Sinmai-Assist 的版本搭配，还有卡住时该先看哪一层。'
 date: 2026-09-18
 updatedDate: 2026-09-25
 verifiedDate: 2026-09-21
@@ -21,25 +21,17 @@ difficulty: 进阶
 audience: 任何一个有IQ的人
 hasCode: true
 hasDownload: false
-polished: true
 ---
 
-这篇文章只处理一件事：把 HDD 里的游戏配置，调到你能实际使用。为了让每一步都经得起核对，我把散落在 segatools、fsdecrypt、AquaMai 和 Sinmai-Assist 源码、tag、release、issue/PR 里的信息重新梳理了一遍，尽量把“哪个盘走哪条路、每一步为什么这样做、卡住时先看哪里”讲清楚，而不是只给一串能抄的命令。
+这篇从解包讲到开机游玩：`segatools` 的每一项、AquaMai 和 Sinmai-Assist 的版本边界、卡住时先看哪一层。只走 SDEZ 和 SDGB 这两条线，别的区服不碰。
 
-先说结论，方便你判断要不要继续读：
-
-- **SDEZ** 有最省事的路线：MaiChartManager 把 MelonLoader、AquaMai 和配置编辑器放在一个界面里，装完就能改设置。
-- **SDEZ 如果还想用 Sinmai-Assist**，必须自己改源码适配，原项目并不能直接编译到 SDEZ。
-- **SDGB** 目前最稳妥的路线是固定一个经过 SDGB 数据版本验证的 AquaMai 构建，再单独处理 Sinmai-Assist，不能直接套最新的 SDEZ 构建。
-- **不要在同一台机器上同时追求“最新 MelonLoader + 最新 AquaMai + 最新配置 + 最新 Sinmai-Assist”**。这套东西的兼容性靠版本组合，不靠每个文件单独最新。
-
-边界也必须放在最前面。本文不提供游戏安装包、`.app`/`.opt`、ICF、keychip、PCB 文件、服务器凭据，也不涉及绕过授权、篡改 protected runtime 或破坏完整性校验。下面默认你已经合法拿到当前这台机器需要使用的系统盘和配套硬件。凡是涉及账号、成绩和服务端行为的操作，请自己承担风险。
+不提供游戏安装包、`.app`/`.opt`、ICF、keychip、PCB 文件或服务器凭据，也不涉及绕过授权、篡改 protected runtime 或破坏完整性校验。下面默认你已经合法拿到这台机器要用的系统盘和配套硬件，账号、成绩和服务端行为自己担风险。
 
 ---
 
 ## 0. 开工前，先写一份版本清单
 
-这套链路里，绝大多数“配置没生效”和“一启动就崩”，根源都是版本没对齐。所以在动手之前，先把下面这份清单填出来，之后每换一次文件就更新一次。
+配置没生效、一启动就崩，很多是版本没对齐。动手前先把下面这份清单填出来，之后每换一次文件就更新一次。
 
 ```text
 game_id:                 SDEZ 或 SDGB
@@ -59,13 +51,13 @@ server host:
 
 读取游戏版本最直接的办法，是用 dnSpy 或 ILSpy 打开目标版本的 `Assembly-CSharp.dll`，查找 `MAI2System.ConstParameter.NowGameVersion` 和 `GameIDStr`。如果目标 AquaMai 构建已经能启动，也可以从它的日志里看 `GameInfo.GameVersion` / `GameInfo.GameId` 的间接输出。
 
-这里有一个很容易踩的坑：社区口头简称和真实版本号不是一回事。`NowGameVersion` 的数值格式大致是 `25500` 对应 1.55、`26500` 对应 1.65；大家说的“SDGB151”未必精确等于某个补丁位。**必须用你手里的 `ConstParameter` 实测，而不是照抄别人的简称。**
+社区口头简称和真实版本号不是一回事：`NowGameVersion` 的数值格式大致是 `25500` 对应 1.55、`26500` 对应 1.65，大家说的“SDGB151”未必精确等于某个补丁位。用你手里 `ConstParameter` 实测出来的值，别照抄别人的简称。
 
 ---
 
-## 1. 术语与组件边界
+## 1. 先把名字对上
 
-先把手里的东西按职责分清楚。下面这些名字会在后文反复出现，弄混一个，排查方向就会跑偏。
+这些名字后文会反复出现，先按职责分清楚：
 
 | 名称 | 作用 |
 | --- | --- |
@@ -85,13 +77,13 @@ server host:
 | `Sinmai-Assist` | 另一套 Sinmai mod，偏 cheat、解锁、FastSkip 与调试 |
 | `Mercury` | segatools 里对应 **WACCA** 的 hook/IO，和 maimai 没有关系 |
 
-最后一条值得单独强调：`dist/mercury/` 里的配置注释写得很清楚，`mercuryio` 是 “custom WACCA IO DLL”，启动目标也是 WACCA 的可执行文件。**不要把 `mercuryhook.dll` 配到 `sinmai.exe`，也不要把 `dist/mercury` 的配置当成 maimai 示例。** 如果某篇教程把 Mercury 写成 maimai 必需组件，先怀疑它把两个游戏混淆了。
+`dist/mercury/` 里的配置注释写得很清楚，`mercuryio` 是 “custom WACCA IO DLL”，启动目标也是 WACCA 的可执行文件。别把 `mercuryhook.dll` 配到 `sinmai.exe`，也别把 `dist/mercury` 的配置当成 maimai 示例。哪篇教程把 Mercury 写成 maimai 必需组件，那它多半是把两个游戏搞混了。
 
 ---
 
-## 2. VFS 与目录语义：最容易搞错的一层
+## 2. VFS：三个路径对应三个盘
 
-segatools 的 `[vfs]` 把 Linux/街机侧的虚拟盘映射到 Windows 目录。它有三个关键路径，各自对应不同的盘符语义：
+segatools 的 `[vfs]` 把 Linux/街机侧的虚拟盘映射到 Windows 目录，三个路径的盘符语义各不相同：
 
 | 配置项 | 对应语义 | 里面应该有什么 |
 | --- | --- | --- |
@@ -99,7 +91,7 @@ segatools 的 `[vfs]` 把 Linux/街机侧的虚拟盘映射到 Windows 目录。
 | `option` | Option 数据 | `Axxx` 子目录（必须是目录，不是文件） |
 | `appdata` | `Y:` 盘语义 | 游戏运行数据，**不是 Windows 的 `%APPDATA%`** |
 
-几个必须记住的点：
+具体到每个路径：
 
 - segatools 的示例注释明确写着 `amfs` 里应包含 `ICF1` 和 `ICF2`；缺文件或路径写错，启动阶段就会报 fatal。
 - `option` 如果配置了但路径不存在，segatools 会直接 fatal；即使某个版本不需要 Option 数据，也建议建一个空目录并把路径指过去，避免路径漂移。
@@ -138,7 +130,7 @@ D:\maimai\SDGB\
   Option\
 ```
 
-这里也有一个反直觉的点：`mai2hook` 内部某些 VFS 路径仍然使用 `SDEZ` 字符串作为内部目录名。**不要因为日志里看到 `SDEZ` 就立刻把它改成 `SDGB` 或重命名目录**，先对照原始 `Package` 和实际日志。
+`mai2hook` 内部有些 VFS 路径仍然拿 `SDEZ` 字符串当内部目录名。日志里看到 `SDEZ` 不代表目录该改名，先对照原始 `Package` 和实际日志。
 
 ---
 
@@ -148,10 +140,10 @@ D:\maimai\SDGB\
 
 ### 3.1 fsdecrypt 的版本和能力
 
-当前推荐 [beerpsi/fsdecrypt](https://gitea.tendokyu.moe/beerpsi/fsdecrypt)。它的两个版本值得记住：
+当前推荐 [beerpsi/fsdecrypt](https://gitea.tendokyu.moe/beerpsi/fsdecrypt)。跟 SDGB 有关的有两个版本：
 
-- **`v0.1.8`**：开始支持在纯 Rust 里直接提取 NTFS（OS/APP）内容，不再需要管理员权限、Hyper-V 或 PowerShell；会自动检测并合并 delta `.app`；提取时会跳过 NTFS 的 8.3 短名别名，避免出现重复的 `NAME~1` 条目。
-- **`v0.1.9`**：修复了处理含零字节文件的 exFAT OPTION 容器时会整体中断的问题。旧版本会报 `InvalidFileEntry(InvalidStreamExtension)`，原因是空文件本来就不占用 cluster，工具却把它当成异常。
+- `v0.1.8`：开始支持在纯 Rust 里直接提取 NTFS（OS/APP）内容，不再需要管理员权限、Hyper-V 或 PowerShell；会自动检测并合并 delta `.app`；提取时会跳过 NTFS 的 8.3 短名别名，避免出现重复的 `NAME~1` 条目。
+- `v0.1.9`：修复了处理含零字节文件的 exFAT OPTION 容器时会整体中断的问题。旧版本会报 `InvalidFileEntry(InvalidStreamExtension)`，原因是空文件本来就不占用 cluster，工具却把它当成异常。
 
 Windows 发行包还附带 `install-context-menu.bat` / `uninstall-context-menu.bat`，可以给 `.app` / `.opt` 加一个右键“Unpack with fsdecrypt”，按用户安装、不需要管理员，在 Windows 11 上位于“显示更多选项”里。这个纯属方便，和流程正确性无关。
 
@@ -181,14 +173,14 @@ Option：
 
 因此：
 
-- **不要只拿最后一个增量包。** 缺一层就接不上。
+- 别只拿最后一个增量包，缺一层就接不上。
 - 链条中间缺文件时，工具会把接不上的增量报告为 orphan，而不是替你猜出缺失内容。
 - 手工逐个运行时，先解基础包，再按版本递增处理增量包，不要把顺序倒过来。
-- 手工 `Set-VHD -ParentPath` 建立 differencing VHD 属于旧流程；使用 `v0.1.8` 或更高版本时通常不需要，也不应把它当成主步骤。
+- 手工 `Set-VHD -ParentPath` 建立 differencing VHD 属于旧流程，用 `v0.1.8` 或更高版本时通常用不上。
 
 ### 3.3 解包结果验收
 
-fsdecrypt 默认在输入文件旁边建立同名目录。验收标准很简单：
+fsdecrypt 默认在输入文件旁边建立同名目录。验收标准就四条：
 
 - APP 最终目录里应有完整的 `Package`；
 - 中间 `.vhd` 会被工具合并处理掉；
@@ -197,15 +189,15 @@ fsdecrypt 默认在输入文件旁边建立同名目录。验收标准很简单�
 
 ### 3.4 备选与旧流程
 
-`unsegaREBORN` 也支持 APP/PACK、OPT、VHD 和 delta，`2026022400`（2026-02-24）修过 exFAT cluster 相关问题。用它的时候，同样以项目当前 README 和 release 为准，不要照抄几年前的旧结论。
+`unsegaREBORN` 也支持 APP/PACK、OPT、VHD 和 delta，`2026022400`（2026-02-24）修过 exFAT cluster 相关问题。用它时以项目当前 README 和 release 为准，几年前的旧结论不能照抄。
 
-旧流程里常见的 `ImDisk` 挂载 + `Set-VHD` 手工父子盘，现在更多是历史知识。工具已经能直接提取和合并时，继续手工挂载只会多一层出错机会。
+旧流程里的 `ImDisk` 挂载加 `Set-VHD` 手工父子盘，现在基本用不上了。工具能直接提取和合并，手工挂载只是多一层出错机会。
 
 ---
 
 ## 4. segatools：版本策略与 `segatools.ini` 逐项
 
-segatools 负责把游戏和虚拟硬件、网络、I/O 接起来。它的版本和配置字段是后面所有 Mod 的地基。
+segatools 负责把游戏和虚拟硬件、网络、I/O 接起来。后面所有 Mod 都建立在它的版本和配置字段上。
 
 ### 4.1 版本策略
 
@@ -217,10 +209,10 @@ segatools 负责把游戏和虚拟硬件、网络、I/O 接起来。它的版本
 | SDGB 旧版 | 使用已验证的旧配置和 hook，不要因为“版本号更大”就盲目替换 |
 | 需要 develop 分支新项 | 必须自行从源码构建并回归测试 |
 
-几个 release 的差异值得单独记住：
+有两个 release 的变化直接影响 maimai：
 
-- **`2025-07-27`**：加入实验性的 maimai DX LED 和触摸模拟；同时把 `start.bat` 改名为 `launch.bat`（所以很多老教程里还写 `start.bat`）。
-- **`2026-04-06`**：补齐 maimai DX 的 LED 控制 API 和 PWN/fade 处理、相机 LED 控制；VFD 增加文本转发和状态回调；修了 maimai DX 的内存泄漏与高 CPU 占用。这些特性直接影响灯板、触摸和 VFD 能否正常工作。
+- `2025-07-27`：加入实验性的 maimai DX LED 和触摸模拟；同时把 `start.bat` 改名为 `launch.bat`（所以很多老教程里还写 `start.bat`）。
+- `2026-04-06`：补齐 maimai DX 的 LED 控制 API 和 PWN/fade 处理、相机 LED 控制；VFD 增加文本转发和状态回调；修了 maimai DX 的内存泄漏与高 CPU 占用。这些特性直接影响灯板、触摸和 VFD 能否正常工作。
 
 ### 4.2 `[vfs]`
 
@@ -313,7 +305,7 @@ subnet=192.168.172.0
 serialNo=<authorized-ALLS-MAIN-ID-without-hyphen>
 ```
 
-这里填 ALLS MAIN ID，**去掉连字符**（连字符不是合法的 Windows 主机名字符）。同一 LAN 内必须唯一。
+这里填 ALLS MAIN ID，把连字符去掉。连字符不是合法的 Windows 主机名字符。同一 LAN 内必须唯一。
 
 ### 4.10 `[system]`
 
@@ -349,7 +341,7 @@ enable=1
 targetAssembly=
 ```
 
-`targetAssembly` 可以指定一个在游戏前运行的 .NET DLL，常用于加载 Mod 框架。**这里和 MelonLoader 的注入路径可能冲突**：如果同时让 segatools 的 `targetAssembly` 和 MelonLoader 的 `version.dll` 注入，可能造成重复加载。一次只保留一种注入路径，先看日志再叠加。
+`targetAssembly` 可以指定一个在游戏前运行的 .NET DLL，常用于加载 Mod 框架。它和 MelonLoader 的注入路径会撞车：同时用 segatools 的 `targetAssembly` 和 MelonLoader 的 `version.dll` 注入，可能重复加载。一次只留一种注入路径，先看日志再叠加。
 
 ### 4.13 输入：`[io4]`、`[button]`、`[touch]`
 
@@ -402,7 +394,7 @@ inject -d -k mai2hook.dll sinmai -screen-fullscreen 0 -popupwindow -screen-width
 taskkill /f /im amdaemon.exe > nul 2>&1
 ```
 
-从这条命令能读出几件事：
+从这几行能看出四件事：
 
 - 先启动 `amdaemon.exe`，并把 `config_common.json`、`config_server.json`、`config_client.json`、`config_hook.json` 四个文件一起传给它。
 - 再启动 `sinmai.exe`。`-popupwindow`、`-screen-width`、`-screen-height` 是示例值，不是兼容性要求，按实际显示布局改。
@@ -428,13 +420,13 @@ taskkill /f /im amdaemon.exe > nul 2>&1
 }
 ```
 
-**不要往这个文件里放账号密码、keychip ID 或来源不明的证书。** 需要更改认证或网络行为时，先看目标服务器的配置规范。也不要从网络上抓一段来路不明的 `config_common.json` 覆盖合法包里的文件——优先使用与游戏版本一致的原始文件。
+**不要往这个文件里放账号密码、keychip ID 或来源不明的证书。** 需要改认证或网络行为时，先看目标服务器的配置规范。也别从网上抓一段来路不明的 `config_common.json` 覆盖合法包里的文件，优先用与游戏版本一致的原始文件。
 
-注意 `config_server.json` / `config_client.json` **不是 segatools 配置**，它们描述的是游戏/服务端角色。`[system] dipsw1` 要和角色一致：LAN 多机时只能有一台 Server，单机不要同时模拟多台 Server。
+`config_server.json` / `config_client.json` 不是 segatools 配置，它们描述的是游戏/服务端角色。`[system] dipsw1` 要和角色一致：LAN 多机时只能有一台 Server，单机不要同时模拟多台 Server。
 
 ---
 
-## 6. SDEZ / SDGB 差异总表
+## 6. SDEZ 和 SDGB 哪里不一样
 
 | 项目 | SDEZ | SDGB |
 | --- | --- | --- |
@@ -448,18 +440,18 @@ taskkill /f /im amdaemon.exe > nul 2>&1
 | MelonLoader | 以 AquaMai README / 构建 tag 为准 | 可能需要更旧的 MelonLoader / Mono |
 | Mercury | 无关 | 无关 |
 
-DNS 部分值得说得更细。segatools 的 `dns.c` 里同时注册了日本和中国的域名族：
+DNS 这块单独说。segatools 的 `dns.c` 里同时注册了日本和中国的域名族：
 
 - SEGA / 日本：`naominet.jp`（startup）、`op.auth.sys-all.net`、`at.auth.sys-all.net`、`at.sys-all.net`、`ib.naominet.jp`（billing）、`aime.naominet.jp`（aimedb）。
 - WAHLAP / 中国：`at.sys-all.cn`、`at.sys-allnet.cn`（startup）、`ai.sys-all.cn`、`ai.sys-allnet.cn`（aimedb）、`bl.sys-all.cn`、`bl.sys-allnet.cn`（billing）。
 
-也就是说，当前 segatools 二进制本身包含通往中国服域名族的重定向入口。但这**不等于**只改 `[dns] default` 就完成了 SDGB 配置——还要一并检查 `gameId`、`region`、游戏数据版本、服务器期待值和 config 文件。
+也就是说，当前 segatools 二进制本身包含通往中国服域名族的重定向入口。但这不等于只改 `[dns] default` 就配好了 SDGB，`gameId`、`region`、游戏数据版本、服务器期待值和 config 文件都要一起看。
 
 ---
 
 ## 7. AquaMai：版本、构建与 SDGB 兼容边界
 
-AquaMai 是目前最主流的 Sinmai mod 套件。它的安装方式在 `v1.7.5` README 里写得很短：
+AquaMai 是 Sinmai 的 mod 套件。`v1.7.5` README 里的安装步骤只有五条：
 
 1. 构建项目，或找到一份现成构建；
 2. 下载 `MelonLoader.x64.zip`（README 链接的是 `v0.7.0`）；
@@ -495,26 +487,24 @@ AquaMai 用 `ConstParameter.NowGameVersion` 和 `GameIDStr` 判断运行环境�
 | `26500` | 新 packet 兼容、部分选曲排序字段 | 会被跳过 |
 | `27000` | 面向 1.70 的设置项 | 会被跳过 |
 
-**“被跳过”只表示模块不会加载，不代表剩下的代码就没有二进制兼容问题。** 这是很多人误判的地方。
+“被跳过”只表示模块不会加载，不等于剩下的代码没有二进制兼容问题。这点很容易误判。
 
 ### 7.3 为什么 SDGB 通常停在旧 AquaMai
 
-把事实和推断分开说。
-
-**已确认的事实：**
+已确认的事实：
 
 - AquaMai 的 CI 长期以 SDEZ 参考程序集构建，`v1.7.5` 的 workflow 直接复制 `build-assets/SDEZ/*` 到 `Libs`，没有看到 SDGB 构建矩阵。
 - PR #114 记录 1.55 以上 `MovieController._moviePlayers` 类型发生变化；PR #126 提到 1.65；当前源码还有 1.70 阈值。新功能依赖不同的程序集结构，不是简单 UI 开关。
 - Issue #88 用 SDEZ 1.56 DLL 构建时缺少 `FestaManager`，说明程序集不是向后兼容的构建参考。
 - 公开的版本配置里只有通用 release / slow / ci，没有 SDGB 专属通道。
 
-**合理推断：**
+合理推断：
 
 - 对 SDGB 最稳妥的历史线是 `v1.5.4` 的官方稳定构建，或 `v1.7.5` 这条包含 SDGB151 实测的 legacy 线。
 - `1.8.x` / `1.9.x` 的新功能、协议和 MuMod 更新逻辑并不天然适配 SDGB 1.51。
-- 更准确的说法不是“SDGB 只能用老版本”，而是：**SDGB 需要一个经过 SDGB 数据版本验证的构建，而不是版本号最高的 SDEZ 构建。**
+- 所以“SDGB 只能用老版本”这个说法不准确。SDGB 需要一份经过 SDGB 数据版本验证的构建，版本号最高的那份 SDEZ 构建不行。
 
-**尚不确定：**
+尚不确定：
 
 - PR #99 的 SDGB151 测试是否覆盖全部模块，还是只覆盖该 PR 新增部分，公开 PR 没有完整回归矩阵。
 - 2026 年 9 月的实际 SDGB 数据版本是否仍为 1.51.x，必须用目标游戏实测。
@@ -522,7 +512,7 @@ AquaMai 用 `ConstParameter.NowGameVersion` 和 `GameIDStr` 判断运行环境�
 
 ### 7.4 SDGB 自建 AquaMai 的流程
 
-固定版本、固定提交，是这条路线的核心。
+先把版本钉死。
 
 ```powershell
 git clone --branch v1.7.5 --depth 1 https://github.com/MuNET-OSS/AquaMai.git
@@ -552,19 +542,19 @@ Copy-Item `
 
 产物在 `Output\AquaMai.dll`。把它复制到 `Mods\AquaMai.dll`。
 
-配置方面，AquaMai `v1.7.5` 使用配置版本 `2.4`。主配置缺失时，它**不会自动创建 `AquaMai.toml`**，只会在工作目录生成 `AquaMai.zh.toml` 和 `AquaMai.en.toml` 两个示例并停止加载配置。选一份复制或改名为 `AquaMai.toml`，确认 `Version = "2.4"` 后再启动。旧配置版本会留下 `AquaMai.toml.old-v{版本}` 备份并尝试迁移，迁移失败时不要继续手改半旧配置。
+配置方面，AquaMai `v1.7.5` 使用配置版本 `2.4`。主配置缺失时，它不会自动创建 `AquaMai.toml`，只会在工作目录生成 `AquaMai.zh.toml` 和 `AquaMai.en.toml` 两个示例并停止加载配置。选一份复制或改名为 `AquaMai.toml`，确认 `Version = "2.4"` 后再启动。旧配置版本会留下 `AquaMai.toml.old-v{版本}` 备份并尝试迁移，迁移失败时不要继续手改半旧配置。
 
-### 7.5 MuMod：冻结旧版时必须注意
+### 7.5 MuMod 会覆盖冻结的版本
 
-`v1.8.0` 引入的 Evergreen / MuMod 会在启动早期从网络读取版本配置，下载并加载签名后的 AquaMai。对 SDGB 冻结旧版来说，这是直接的威胁：自动更新器可能把你已验证的 `v1.5.4` 或 `v1.7.5` 覆盖成最新 CI 构建。冻结旧 DLL 时，应同时记录哈希，并在每次启动前校验，不要让自动更新器接管这个目录。
+`v1.8.0` 引入的 Evergreen / MuMod 会在启动早期从网络读取版本配置，下载并加载签名后的 AquaMai。对冻结在旧版的 SDGB 来说这是实际威胁：自动更新器可能把你验证过的 `v1.5.4` 或 `v1.7.5` 覆盖成最新 CI 构建。冻结旧 DLL 时同时记哈希，每次启动前校验，别让自动更新器接管这个目录。
 
 ---
 
 ## 8. SDEZ 路线一：MaiChartManager
 
-这是四条路线里最省事的一条。MaiChartManager（MCM）把 MelonLoader、AquaMai、Mod 列表和配置编辑器放在一个界面里。对于只改 SDEZ 游戏设置的场景，没有必要自己搭 C# 工程。
+SDEZ 和 SDGB 各有两条路线，这条最省事。MaiChartManager（MCM）把 MelonLoader、AquaMai、Mod 列表和配置编辑器放进一个界面。只改 SDEZ 的游戏设置，不用自己搭 C# 工程。
 
-本节基于 MCM `v26.5.1`。后续版本可能更换 MelonLoader 或改变签名策略，升级后要重新看界面提示。
+下面按 MCM `v26.5.1` 写。新版本可能换 MelonLoader 或改签名策略，升级后重新看界面提示。
 
 ### 8.1 安装前备份
 
@@ -594,13 +584,13 @@ ABF9FBF5F89AC89AE59D45E69CBDD32BB45E0B28BC6876392640409292FC9416
 
 这个摘要在当时对应 `0.6.4.0`，只能用来确认文件是否一致，不能证明任意第三方文件安全。
 
-### 8.2 在线安装与手动安装的边界
+### 8.2 在线安装和手动安装
 
-- **在线安装 / MuMod 缓存安装**：会校验 AquaMai 的 ECDSA 签名。签名不通过时不要绕过界面提示。
-- **手动安装自建 DLL**：MCM 会检查 PE 文件、.NET 目标和程序集里的 `ProductName`，不会因为 DLL 没有有效签名就直接拒绝。界面会显示红色证书警告，但仍然允许确认。
-- **配置读取是另一套逻辑**：MCM 默认拒绝签名无效的配置；要管理自建 AquaMai 的配置，需要在界面里打开跳过签名检查（对应 `skipSignatureCheck`）。
+- 在线安装 / MuMod 缓存安装：会校验 AquaMai 的 ECDSA 签名。签名不通过时不要绕过界面提示。
+- 手动安装自建 DLL：MCM 会检查 PE 文件、.NET 目标和程序集里的 `ProductName`，不会因为 DLL 没有有效签名就直接拒绝。界面会显示红色证书警告，但仍然允许确认。
+- 配置读取是另一套逻辑：MCM 默认拒绝签名无效的配置；要管理自建 AquaMai 的配置，需要在界面里打开跳过签名检查（对应 `skipSignatureCheck`）。
 
-能力边界整理成表：
+两种安装方式的能力对照：
 
 | 能力 | 在线安装 | 手动安装自建 DLL |
 | --- | --- | --- |
@@ -611,7 +601,7 @@ ABF9FBF5F89AC89AE59D45E69CBDD32BB45E0B28BC6876392640409292FC9416
 
 MCM `v26.5.1` 的配置编辑器支持 AquaMai 配置 API `1.1`，而 AquaMai `v1.7.5` 也使用 API `1.1`，所以两者在配置模型上能对上。但配置 API 匹配不等于所有选项都能在任意游戏版本工作。
 
-### 8.3 推荐的 SDEZ 配置顺序
+### 8.3 SDEZ 的安装顺序
 
 1. 只安装 MelonLoader。
 2. 确认游戏能启动到正常界面。
@@ -624,9 +614,9 @@ MCM `v26.5.1` 的配置编辑器支持 AquaMai 配置 API `1.1`，而 AquaMai `v
 
 ---
 
-## 9. Sinmai-Assist：源码现实、风险与适配
+## 9. Sinmai-Assist：源码、风险与适配
 
-Sinmai-Assist 是另一套面向 `Sinmai.exe` 的 MelonLoader mod。它的 README 自己写着 `This is a cheat Mod, using by your own risk.`，功能里包含大量解锁、AutoPlay、FastSkip 和 ChartController。它**不是**启动器，也不负责 HDD 解密、密钥注入或联机服务器，只在游戏被正确启动后修改运行中的托管方法。
+Sinmai-Assist 是另一套面向 `Sinmai.exe` 的 MelonLoader mod。它的 README 自己写着 `This is a cheat Mod, using by your own risk.`，功能集中在解锁、AutoPlay、FastSkip 和 ChartController。它不是启动器，不负责 HDD 解密、密钥注入或联机服务器，只在游戏被正确启动后修改运行中的托管方法。
 
 ### 9.1 许可证与发布状态
 
@@ -676,7 +666,7 @@ Mod 初始化时会创建并维护：
 - 字段不属于目标类：可能报 `Property '...' not found`。
 - 保存时会重新序列化，原 YAML 注释通常不会可靠保留。
 
-仓库里的 `Config.yml` 是易过期示例，CI 打包也只复制 DLL 和 README，不复制它。**第一次运行应让 DLL 自己生成默认配置，不要直接复制仓库示例或别人的旧配置。**
+仓库里的 `Config.yml` 是易过期示例，CI 打包也只复制 DLL 和 README，不复制它。第一次运行让 DLL 自己生成默认配置，别直接复制仓库示例或别人的旧配置。
 
 ### 9.4 默认值、无条件加载与隐私风险
 
@@ -696,7 +686,7 @@ Mod 初始化时会创建并维护：
 | `modSetting.showInfo` / `showPanel` | `true` | 默认显示版本信息和 Mod 面板 |
 | `modSetting.maskTitleServerUrl` | `true` | GUI 中遮蔽标题服务器 URL |
 
-**更需要注意的，是三个在 `Main.cs` 末尾无条件加载、配置里关不掉的 patch：**
+更该注意的是三个在 `Main.cs` 末尾无条件加载、配置里关不掉的 patch：
 
 ```csharp
 Patch(typeof(PrintUserData));
@@ -736,7 +726,7 @@ Sinmai-Assist/UserData/User<ID>.txt
 
 ### 9.6 与 AquaMai 的 patch 重叠
 
-两套 Mod 都是 MelonLoader + Harmony，作用于同一个 `Sinmai.exe`，因此大量 patch 目标重叠。**两边都能加载不代表两边都应该打开。**
+两套 Mod 都是 MelonLoader + Harmony，作用于同一个 `Sinmai.exe`，下表这些目标两边都会碰。
 
 | 目标方法 / 类型 | Sinmai-Assist | AquaMai | 判断 |
 | --- | --- | --- | --- |
@@ -766,7 +756,7 @@ Sinmai-Assist/UserData/User<ID>.txt
 
 问题在编译期，而不是运行期。
 
-- `Sinmai-Assist.csproj` 会**无条件**编译 `Common\DummyChimeLogin.cs`，也会无条件引用 `Libs\ChimeLib.NET.dll`。即使 `Main.cs` 只在 `GameID == "SDGB"` 时走 `DummyChimeLogin`，编译器仍然会解析这个类型，SDEZ 会因 ChimeLib 缺失或类型不匹配而失败。
+- `Sinmai-Assist.csproj` 会无条件编译 `Common\DummyChimeLogin.cs`，也无条件引用 `Libs\ChimeLib.NET.dll`。即使 `Main.cs` 只在 `GameID == "SDGB"` 时走 `DummyChimeLogin`，编译器仍然会解析这个类型，SDEZ 会因 ChimeLib 缺失或类型不匹配而失败。
 - `Common\CustomCameraId.cs` 里，`SetCameraResolution` 只在 `GameID != "SDEZ"` 时初始化 `_qrCameraParam`，后面的 SDEZ 分支却读取 `_qrCameraParam.Width`、`.Height` 和 `.Fps`，开启 `CustomCameraId` 后会空引用。
 
 SDEZ 适配步骤：
@@ -841,7 +831,7 @@ safeMode: true
 
 ### 9.9 版本相关 issue / PR
 
-Sinmai-Assist 没有正式版本矩阵，很多兼容性是靠 issue 报告拼出来的：
+Sinmai-Assist 没有正式版本矩阵，兼容性是从 issue 报告里拼出来的：
 
 | 来源 | 内容 | 结论 |
 | --- | --- | --- |
@@ -855,7 +845,7 @@ Sinmai-Assist 没有正式版本矩阵，很多兼容性是靠 issue 报告拼�
 | Issue #9 | AquaMai `FixSlideAutoPlay` 与 Sinmai-Assist AutoPlay 冲突 | 已实测 |
 | Issue #13 | 两边同时开 `CustomCameraId` 出现异常 | 不建议同时启用 |
 
-另外，CI 依赖 GitHub Secret 里的私有 `LIBRARY_URL` 来下载游戏库，**外部贡献者没有匹配库就无法独立复现构建**。私有库到底对应哪个区域和版本，无法从公开信息确认；Action artifact 也不是永久 Release。
+另外，CI 依赖 GitHub Secret 里的私有 `LIBRARY_URL` 来下载游戏库，外部贡献者没有匹配的库就无法独立复现构建。私有库到底对应哪个区域和版本，公开信息里查不到；Action artifact 也不是永久 Release。
 
 ### 9.10 卸载与回滚
 
@@ -935,7 +925,7 @@ backup/
 
 ### 11.3 MelonLoader 阶段没有日志
 
-先看 `MelonLoader\Latest.log` 的修改时间——旧日志存在不代表这次加载成功。把 `Mods` 整体移走，只保留 MelonLoader，再启动一次。如果游戏能到界面且日志更新，说明 Loader 和游戏本体至少能一起工作。
+先看 `MelonLoader\Latest.log` 的修改时间。旧日志在，不代表这次加载成功。把 `Mods` 整体移走，只留 MelonLoader，再启动一次。如果游戏能到界面且日志更新，说明 Loader 和游戏本体至少能一起工作。
 
 如果移除全部 Mod 后依然黑屏且没有新日志，问题在 Loader 之前的启动层或运行环境。回调原始程序和 `launch.bat`，确认 VC++ 运行库、.NET Framework、显卡驱动和杀毒隔离记录，再重装与当前包配套的 MelonLoader，不要覆盖混装。
 
@@ -1021,7 +1011,7 @@ backup/
 
 ## 13. 来源与核验边界
 
-本文完成于 2026-09-21。下列工具和项目都在持续变化，版本、签名、配置 API 和构建入口以你实际使用的提交为准。
+核对时间 2026-09-21。这些工具和项目都在动，版本、签名、配置 API 和构建入口以你实际用的提交为准。
 
 ### 13.1 解包
 
@@ -1073,13 +1063,11 @@ SHA-256 e738d327bd28f9445d2da27dc751da941b7d6c141df82c3604858d9b6cb155c2
 
 只要这些问题没有现场验证，就不应把“能用”写成全功能兼容。
 
-## 最后
+## 四条路线，各一句话
 
-四条路线的最终做法，可以压缩成一句话：**先固定一组版本，再逐层验证，最后才加功能。**
+1. SDEZ + MCM + AquaMai：用 MCM 装 MelonLoader 和签名有效的 AquaMai，在编辑器里保存并调整 `AquaMai.toml`，先把单 Mod 跑到主界面。
+2. SDEZ + 自建 Sinmai-Assist：固定提交，移除 SDGB 专用文件和 `ChimeLib.NET.dll` 引用，用 SDEZ 的 `Managed` 构建，先跑 `safeMode: true`。
+3. SDGB + 自建 AquaMai：从标签提交构建，把 SDGB 的 `Assembly-CSharp.dll` 和 `AMDaemon.NET.dll` 放进 `Libs`，整理好主配置再启动，并防住 MuMod 自动覆盖。
+4. SDGB + 自建 Sinmai-Assist：保留 ChimeLib 和 SDGB 登录分支，用 SDGB 引用构建，生成全新配置，先安全模式再逐项验证。
 
-1. **SDEZ + MCM + AquaMai**：用 MCM 装 MelonLoader 和签名有效的 AquaMai，在编辑器里保存并调整 `AquaMai.toml`，先把单 Mod 跑到主界面。
-2. **SDEZ + 自建 Sinmai-Assist**：固定提交，移除 SDGB 专用文件和 `ChimeLib.NET.dll` 引用，用 SDEZ 的 `Managed` 构建，先跑 `safeMode: true`。
-3. **SDGB + 自建 AquaMai**：从标签提交构建，把 SDGB 的 `Assembly-CSharp.dll` 和 `AMDaemon.NET.dll` 放进 `Libs`，整理好主配置再启动，并防住 MuMod 自动覆盖。
-4. **SDGB + 自建 Sinmai-Assist**：保留 ChimeLib 和 SDGB 登录分支，用 SDGB 引用构建，生成全新配置，先安全模式再逐项验证。
-
-长期可用的做法，是把每台机器的游戏版本、Loader、DLL、配置版本和已启用 patch 记在同一份清单里。**能启动不等于全功能可用，能编译不等于运行时兼容。**
+每台机器的游戏版本、Loader、DLL、配置版本和已启用 patch 记在同一份清单里。换文件之前先对一遍这份清单。

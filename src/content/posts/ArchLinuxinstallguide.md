@@ -10,18 +10,17 @@ draft: false
 verifiedDate: 2026-07-02
 difficulty: 中等
 audience: 想从 Windows 开始尝试 Linux 的用户
-polished: true
 ---
 
-这套流程的目标很直接：保留原来的 Windows 11，给 Linux 分出一块空间，安装 CachyOS，最后装上 DMS 和 Niri。安装阶段可以在 Live 环境里用 OpenCode 协助处理分区、引导和驱动；出问题时，也能从 TTY 或 Live USB 回去修，而不是推倒重来。
+保留原来的 Windows 11，给 Linux 分一块空间，装 CachyOS，最后装上 DMS 和 Niri。安装阶段可以在这台 Live 环境里让 OpenCode 处理分区、引导和驱动；搞坏了从 TTY 或 Live USB 回来修，不用推倒重来。
 
-下面按实际执行顺序来写：先备份，再改固件设置，然后做启动盘、腾空间、进 Live 环境；装完系统以后，再处理桌面环境。
+顺序是：备份、改固件设置、做启动盘、腾空间、进 Live 环境、装系统，最后配桌面。
 
 ## 开始前准备
 
-需要一台 UEFI 模式的 Windows 11 电脑、一个至少 8 GB 的 U 盘，以及 100 GB 以上可用空间。磁盘最好提前清理，给 Linux 留出足够余量。
+需要一台 UEFI 模式的 Windows 11 电脑、一个至少 8 GB 的 U 盘，以及 100 GB 以上可用空间。磁盘最好提前清理，给 Linux 留出余量。
 
-先备份重要文件。系统和分区操作通常不会碰个人文件，但备份仍然应该放在动手之前——这是唯一一个“做了以后不会后悔”的步骤。
+先备份重要文件。分区操作通常不会碰个人文件，但备份要放在动手之前。
 
 如果 Windows 开了 BitLocker 或设备加密，先进入系统把它关掉。磁盘分区发生变化后，BitLocker 可能要求恢复密钥，这个问题在安装完成后很难绕开，提前关闭最省事。
 
@@ -71,7 +70,7 @@ Secure Boot 会拦截没有进入固件签名数据库的引导程序，关闭�
 6. 其他选项保持默认，点击开始。
 7. 如果 Rufus 询问是否下载额外的 GRUB 文件，选择否。CachyOS 镜像已经包含需要的引导文件。
 
-进度结束后，启动盘就制作完成了。
+进度走完，启动盘就好了。
 
 ## 从 Windows 腾出空间
 
@@ -131,7 +130,7 @@ show me disk partition layout
 
 ## 让 OpenCode 协助安装 CachyOS
 
-现在的目标，是在未分配空间里安装 CachyOS，并保留 Windows 的 EFI 分区。把下面这段提示词交给 OpenCode，尖括号内容换成自己的信息。
+接下来在未分配空间里装 CachyOS，并且保住 Windows 的 EFI 分区。把下面这段提示词交给 OpenCode，尖括号内容换成自己的信息。
 
 ```text
 I want to install CachyOS alongside Windows 11 (dual boot). Do it step by step:

@@ -19,7 +19,6 @@ difficulty: 进阶
 audience: 想自己解析或修改 Phigros 云存档、或对 Android 抓包、il2cpp 反编译与二进制存档格式感兴趣的人
 hasCode: true
 hasDownload: false
-polished: false
 lang: zh-CN
 ---
 
