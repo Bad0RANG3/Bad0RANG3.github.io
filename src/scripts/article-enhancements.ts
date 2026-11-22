@@ -257,6 +257,7 @@ const initArticleEnhancements = () => {
     let index = 0;
     let zoomed = false;
     let trigger: HTMLImageElement | null = null;
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
     // The dialog carries the sentence, the image stays unnamed: one reading of
     // the caption instead of two.
@@ -293,6 +294,11 @@ const initArticleEnhancements = () => {
       index = (index + delta + zoomables.length) % zoomables.length;
       if (zoomed) setZoom(false);
       render();
+      // The next file may still be decoding, so the swap is blended instead of
+      // popping from one screenshot to another.
+      if (!reducedMotion.matches) {
+        enlarged.animate([{ opacity: 0.3 }, { opacity: 1 }], { duration: 180, easing: 'ease-out' });
+      }
     };
 
     const open = (at: number, origin: HTMLImageElement) => {
@@ -303,6 +309,25 @@ const initArticleEnhancements = () => {
       render();
       dialog.showModal();
     };
+
+    // The exit is animated too, so `close()` waits for the fade to finish; a
+    // second attempt while it runs is ignored rather than queued.
+    const closeDialog = () => {
+      if (!dialog.open || dialog.classList.contains('is-closing')) return;
+      if (reducedMotion.matches) dialog.close();
+      else dialog.classList.add('is-closing');
+    };
+
+    // Both events end the fade: a cancelled animation (the reader changes the
+    // motion preference mid-close) must not leave the dialog hanging open.
+    const finishClose = (event: AnimationEvent) => {
+      if (!dialog.classList.contains('is-closing')) return;
+      if (event.animationName !== 'lightbox-fade-out' && event.animationName !== 'lightbox-out') return;
+      dialog.classList.remove('is-closing');
+      dialog.close();
+    };
+    dialog.addEventListener('animationend', finishClose);
+    dialog.addEventListener('animationcancel', finishClose);
 
     if (zoomables.length > 1) {
       (['prev', 'next'] as const).forEach((direction) => {
@@ -319,7 +344,7 @@ const initArticleEnhancements = () => {
     dialog.addEventListener('click', (event) => {
       const target = event.target as HTMLElement | null;
       if (target?.closest('.image-lightbox-close')) {
-        dialog.close();
+        closeDialog();
         return;
       }
       const direction = target?.closest<HTMLElement>('.image-lightbox-nav')?.dataset.direction;
@@ -335,7 +360,12 @@ const initArticleEnhancements = () => {
       // The dark field: leave the zoom first, so a stray tap while panned in
       // does not drop the reader back into the article.
       if (zoomed) setZoom(false);
-      else dialog.close();
+      else closeDialog();
+    });
+    // Escape keeps its default of closing the dialog, but through the fade.
+    dialog.addEventListener('cancel', (event) => {
+      event.preventDefault();
+      closeDialog();
     });
     dialog.addEventListener('keydown', (event) => {
       if (zoomables.length < 2 || (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight')) return;
@@ -343,6 +373,7 @@ const initArticleEnhancements = () => {
       step(event.key === 'ArrowRight' ? 1 : -1);
     });
     dialog.addEventListener('close', () => {
+      dialog.classList.remove('is-closing');
       // Focus returns to the screenshot that opened the dialog, not to <body>.
       if (trigger?.isConnected) trigger.focus({ preventScroll: true });
     });
