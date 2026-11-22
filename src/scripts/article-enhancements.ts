@@ -232,46 +232,146 @@ const initArticleEnhancements = () => {
     window.setTimeout(() => { button.textContent = '复制'; }, 1600);
   }, { signal });
 
-  article.querySelectorAll('img').forEach((img) => {
-    if (img.closest('a') || img.dataset.zoomBound === '1') return;
-    img.dataset.zoomBound = '1';
-    img.tabIndex = 0;
-    // The trigger is an <img>, so role="button" discards its implicit image
-    // role and with it the alt text as a name source. Name the trigger
-    // explicitly. A decorative image (alt="") still needs a name here: once it
-    // is a focusable button, an empty name is a WCAG 4.1.2 failure, so it falls
-    // back to the same generic label the lightbox dialog already uses.
-    img.setAttribute('role', 'button');
-    if (!img.hasAttribute('aria-label')) {
-      const label = img.alt.trim();
-      img.setAttribute('aria-label', label ? `查看大图：${label}` : '查看大图');
-    }
-    const open = () => {
-      const dialog = document.createElement('dialog');
-      dialog.className = 'image-lightbox';
-      dialog.setAttribute('aria-label', img.alt ? `查看大图：${img.alt}` : '查看大图');
-      const close = document.createElement('button');
-      close.type = 'button';
-      close.className = 'image-lightbox-close';
-      close.setAttribute('aria-label', '关闭');
-      close.textContent = '×';
-      const enlarged = document.createElement('img');
-      enlarged.src = img.currentSrc || img.src;
-      enlarged.alt = img.alt || '';
-      dialog.append(close, enlarged);
-      dialog.addEventListener('click', (event) => { if (event.target === dialog || event.target === close) dialog.close(); });
-      dialog.addEventListener('close', () => dialog.remove());
-      document.body.append(dialog);
+  // Images: one dialog per article, built once and reused, so ←/→ walk every
+  // screenshot in document order. An image inside a link keeps its own target.
+  const zoomables = [...article.querySelectorAll<HTMLImageElement>('img')].filter((img) => !img.closest('a'));
+  let closeLightbox: (() => void) | null = null;
+
+  if (zoomables.length) {
+    const dialog = document.createElement('dialog');
+    dialog.className = 'image-lightbox';
+    dialog.setAttribute('aria-modal', 'true');
+    dialog.innerHTML = '<button type="button" class="image-lightbox-close" aria-label="关闭大图">×</button>'
+      + '<div class="image-lightbox-frame">'
+      + '<img class="image-lightbox-image" alt="" decoding="async">'
+      + '<div class="image-lightbox-meta"><p class="image-lightbox-caption"></p><span class="image-lightbox-counter"></span></div>'
+      + '</div>';
+
+    // In the body from the start: a closed dialog renders nothing.
+    document.body.append(dialog);
+    const enlarged = dialog.querySelector('.image-lightbox-image') as HTMLImageElement;
+    const caption = dialog.querySelector('.image-lightbox-caption') as HTMLParagraphElement;
+    const counter = dialog.querySelector('.image-lightbox-counter') as HTMLSpanElement;
+    const meta = dialog.querySelector('.image-lightbox-meta') as HTMLDivElement;
+
+    let index = 0;
+    let zoomed = false;
+    let trigger: HTMLImageElement | null = null;
+
+    // The dialog carries the sentence, the image stays unnamed: one reading of
+    // the caption instead of two.
+    const render = () => {
+      const source = zoomables[index];
+      const text = source.closest('figure')?.querySelector('figcaption')?.textContent?.trim() || source.alt.trim();
+      // Hold the box the article already reserved. Without it the dialog is
+      // empty until the file decodes, then jumps to size under the pointer.
+      const width = Number(source.getAttribute('width')) || source.naturalWidth;
+      const height = Number(source.getAttribute('height')) || source.naturalHeight;
+      if (width > 0 && height > 0) {
+        enlarged.width = width;
+        enlarged.height = height;
+      }
+      enlarged.src = source.currentSrc || source.src;
+      caption.textContent = text;
+      caption.hidden = !text;
+      counter.textContent = `${index + 1} / ${zoomables.length}`;
+      counter.hidden = zoomables.length < 2;
+      meta.hidden = caption.hidden && counter.hidden;
+      dialog.setAttribute('aria-label', `${zoomables.length > 1 ? `图片 ${index + 1} / ${zoomables.length}` : '查看大图'}${text ? `：${text}` : ''}`);
+    };
+
+    // Zoomed, the dialog is the scroll container and the image sits at its
+    // intrinsic size, so the pan is the browser's own scrolling.
+    const setZoom = (value: boolean) => {
+      zoomed = value;
+      dialog.classList.toggle('is-zoomed', zoomed);
+      if (!zoomed) dialog.scrollTo({ top: 0, left: 0 });
+    };
+
+    const step = (delta: number) => {
+      // Wraps around: at the last screenshot the next press starts over.
+      index = (index + delta + zoomables.length) % zoomables.length;
+      if (zoomed) setZoom(false);
+      render();
+    };
+
+    const open = (at: number, origin: HTMLImageElement) => {
+      if (dialog.open) return;
+      index = at;
+      trigger = origin;
+      setZoom(false);
+      render();
       dialog.showModal();
     };
-    img.addEventListener('click', open, { signal });
-    img.addEventListener('keydown', (event) => {
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault();
-        open();
+
+    if (zoomables.length > 1) {
+      (['prev', 'next'] as const).forEach((direction) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'image-lightbox-nav';
+        button.dataset.direction = direction;
+        button.setAttribute('aria-label', direction === 'prev' ? '上一张（← 键）' : '下一张（→ 键）');
+        button.textContent = direction === 'prev' ? '‹' : '›';
+        dialog.append(button);
+      });
+    }
+
+    dialog.addEventListener('click', (event) => {
+      const target = event.target as HTMLElement | null;
+      if (target?.closest('.image-lightbox-close')) {
+        dialog.close();
+        return;
       }
-    }, { signal });
-  });
+      const direction = target?.closest<HTMLElement>('.image-lightbox-nav')?.dataset.direction;
+      if (direction) {
+        step(direction === 'prev' ? -1 : 1);
+        return;
+      }
+      if (target?.closest('.image-lightbox-image')) {
+        setZoom(!zoomed);
+        return;
+      }
+      if (event.target !== dialog) return;
+      // The dark field: leave the zoom first, so a stray tap while panned in
+      // does not drop the reader back into the article.
+      if (zoomed) setZoom(false);
+      else dialog.close();
+    });
+    dialog.addEventListener('keydown', (event) => {
+      if (zoomables.length < 2 || (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight')) return;
+      event.preventDefault();
+      step(event.key === 'ArrowRight' ? 1 : -1);
+    });
+    dialog.addEventListener('close', () => {
+      // Focus returns to the screenshot that opened the dialog, not to <body>.
+      if (trigger?.isConnected) trigger.focus({ preventScroll: true });
+    });
+
+    // A dialog in the top layer survives an Astro swap: it is not inside the
+    // article, so it would stay open over the next page with the document
+    // inert behind it.
+    closeLightbox = () => {
+      if (dialog.open) dialog.close();
+      dialog.remove();
+    };
+
+    zoomables.forEach((img, position) => {
+      img.tabIndex = 0;
+      // role="button" drops the implicit image role and with it `alt` as a
+      // name source, so the label is spelled out; an empty alt still needs one.
+      img.setAttribute('role', 'button');
+      if (!img.hasAttribute('aria-label')) {
+        const label = img.alt.trim();
+        img.setAttribute('aria-label', label ? `查看大图：${label}` : '查看大图');
+      }
+      img.addEventListener('click', () => open(position, img), { signal });
+      img.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        open(position, img);
+      }, { signal });
+    });
+  }
 
   const links = [...article.querySelectorAll<HTMLElement>('[data-toc-link]')];
   const headings = links
@@ -295,6 +395,7 @@ const initArticleEnhancements = () => {
     dismissResume();
     flushHistory();
     observer?.disconnect();
+    closeLightbox?.();
   };
 };
 

@@ -1142,25 +1142,123 @@ button.chip-signal[aria-pressed="true"] {
   .prose .code-tabs :where(pre) { padding: 0.9rem 1rem 1rem; }
 }
 
-.image-lightbox { max-width: min(95vw, 1200px); max-height: 95vh; padding: 0; border: 0; background: transparent; }
-.image-lightbox::backdrop { background: rgb(6 8 20 / 0.78); backdrop-filter: blur(6px); }
-.image-lightbox img { max-width: 95vw; max-height: 90vh; object-fit: contain; border-radius: 1.5rem; }
-.image-lightbox-close {
-  position: absolute;
-  top: -0.75rem;
-  right: -0.75rem;
+/* -----------------------------------------------------------------
+   Image lightbox
+   One dialog per article: frame, caption, counter and arrows, so ←/→
+   walk the whole set. Clicking the image toggles 1:1, which is the only
+   way a full-window terminal grab stays readable.
+   ----------------------------------------------------------------- */
+.prose :where(img[role='button']) { cursor: zoom-in; }
+
+.image-lightbox {
+  /* A content-sized frame centred by its own auto margin. */
+  inset: 0;
+  width: fit-content;
+  height: fit-content;
+  margin: auto;
+  max-width: min(96vw, 76rem);
+  max-height: 96vh;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--fx-text);
+  /* Once zoomed the dialog scrolls; that scroll must not chain outward. */
+  overscroll-behavior: contain;
+}
+.image-lightbox::backdrop { background: rgb(6 8 20 / 0.8); backdrop-filter: blur(6px); }
+
+.image-lightbox-frame { display: flex; max-height: 96vh; flex-direction: column; gap: 0.55rem; }
+.image-lightbox-image {
+  max-width: min(96vw, 76rem);
+  max-height: calc(96vh - 3.4rem);
+  border-radius: 1rem;
+  background: var(--code-block-bg);
+  object-fit: contain;
+  cursor: zoom-in;
+}
+
+.image-lightbox.is-zoomed {
+  width: 100vw;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  overflow: auto;
+}
+.image-lightbox.is-zoomed .image-lightbox-frame { display: block; max-height: none; }
+.image-lightbox.is-zoomed .image-lightbox-image {
+  max-width: none;
+  max-height: none;
+  margin: auto;
+  border-radius: 0;
+  cursor: zoom-out;
+}
+/* The caption would sit on top of whatever the reader has panned to. */
+.image-lightbox.is-zoomed .image-lightbox-meta { display: none; }
+
+.image-lightbox-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 0.85rem;
+  padding-inline: 0.2rem;
+  font-family: var(--font-sans);
+  font-size: var(--type-meta);
+}
+/* `display: flex` above outranks the UA's `[hidden]`, so restate it. */
+.image-lightbox-meta[hidden] { display: none; }
+.image-lightbox-caption { flex: 1; margin: 0; color: var(--fx-muted); }
+.image-lightbox-counter {
+  color: var(--fx-faint);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Pinned to the viewport, not the frame: at 96vw the frame reaches the screen
+   edge, and a button hung outside it is half off-screen on a phone. */
+.image-lightbox-close,
+.image-lightbox-nav {
+  position: fixed;
   z-index: 1;
   display: grid;
-  width: 2rem;
-  height: 2rem;
   place-items: center;
   border: 1px solid var(--fx-line);
-  border-radius: 999px;
+  border-radius: 0.9rem;
   background: var(--fx-surface-strong);
   color: var(--fx-text);
-  font-size: 1.25rem;
-  line-height: 1;
   cursor: pointer;
+  line-height: 1;
+}
+.image-lightbox-close {
+  top: max(0.85rem, env(safe-area-inset-top));
+  right: max(0.85rem, env(safe-area-inset-right));
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 999px;
+  font-size: 1.4rem;
+}
+.image-lightbox-nav { top: 50%; width: 2.5rem; height: 3.4rem; font-size: 1.35rem; transform: translateY(-50%); }
+.image-lightbox-nav[data-direction='prev'] { left: max(0.85rem, env(safe-area-inset-left)); }
+.image-lightbox-nav[data-direction='next'] { right: max(0.85rem, env(safe-area-inset-right)); }
+.image-lightbox-close:hover,
+.image-lightbox-nav:hover { border-color: var(--fx-accent); color: var(--fx-accent); }
+.image-lightbox-close:focus-visible,
+.image-lightbox-nav:focus-visible { outline: 2px solid var(--fx-accent); outline-offset: 2px; }
+
+/* Opacity only: a scale or translate here would make the dialog the containing
+   block of the fixed buttons and shift them for the length of the animation. */
+@media (prefers-reduced-motion: no-preference) {
+  .image-lightbox[open],
+  .image-lightbox[open]::backdrop { animation: lightbox-fade 160ms ease-out; }
+}
+@keyframes lightbox-fade {
+  from { opacity: 0; }
+}
+
+@media (max-width: 720px) {
+  .image-lightbox-image { max-height: calc(96vh - 4.2rem); border-radius: 0.85rem; }
+  .image-lightbox-nav { width: 2.2rem; height: 2.9rem; }
+  .image-lightbox-meta { font-size: 0.72rem; }
 }
 
 /* Expensive below-the-fold embeds do not need layout or paint work until the
