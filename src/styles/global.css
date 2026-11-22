@@ -746,6 +746,29 @@ button.chip-signal[aria-pressed="true"] {
 .prose :where(figure) { margin: 1.6em 0; }
 .prose :where(figcaption) { margin-top: 0.6rem; color: var(--fx-faint); font-size: var(--type-small); text-align: center; }
 
+/* Tutorial screenshots arrive as <figure> from `remark-figure-images`, already
+   carrying width/height, so the box is reserved before the bytes land. They keep
+   their own width instead of being stretched to the column: a 243 px terminal
+   crop blown up to 720 px is exactly the blur this site does not want. */
+.prose .post-figure {
+  width: auto;
+  max-width: min(100%, 46rem);
+  margin: 1.9em auto;
+}
+/* Screenshots here are mostly dark terminals on a dark page. A hairline frame
+   plus a slightly deeper fill keeps them from bleeding into the article
+   background, and the radius matches the code frames. */
+.prose .post-figure :where(img) {
+  width: auto;
+  max-width: 100%;
+  margin: 0 auto;
+  border: 1px solid color-mix(in srgb, var(--fx-line) 80%, transparent);
+  border-radius: 0.75rem;
+  background: #0b0e17;
+  box-shadow: 0 18px 44px -34px var(--fx-shadow);
+}
+.prose .post-figure :where(figcaption) { margin-top: 0.7rem; }
+
 .lyric-block {
   position: relative;
   margin: 1.5rem 0;
@@ -968,34 +991,156 @@ button.chip-signal[aria-pressed="true"] {
 
 .article-tools { display: inline-flex; align-items: center; gap: 0.25rem; }
 
-.code-block { position: relative; }
+/* Every code block — with or without switchable tabs — is one frame with one
+   top bar. The bar carries a label (or the tab pills) on the left and the copy
+   chip on the right; the `pre` underneath is the only part that scrolls. */
+.code-block,
+.code-tabs {
+  position: relative;
+  margin: 1.5em 0;
+  border: 1px solid color-mix(in srgb, var(--fx-accent) 20%, transparent);
+  border-radius: 1rem;
+  background: var(--code-block-bg);
+  box-shadow: 0 22px 60px -46px var(--fx-shadow);
+  overflow: hidden;
+}
 
-/* One copy button per code block, absolutely positioned over the code panel.
-   It used to frost that panel with a 6 px backdrop blur, which meant a
+.code-block-bar,
+.code-tabs-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  /* One height for both kinds of bar: a pill and a language label are not the
+     same height, and a 3 px drift between neighbouring blocks reads as sloppy. */
+  min-height: 3.05rem;
+  padding: 0.45rem 0.55rem;
+  border-bottom: 1px solid rgb(255 255 255 / 0.07);
+  /* Darker than the panel, never lighter: a white wash on top of a dark frame
+     reads as a milky strip, especially once the light theme sets the page
+     around it to #fff. */
+  background: color-mix(in srgb, #070910 60%, var(--code-block-bg));
+}
+
+.code-lang {
+  padding-left: 0.15rem;
+  color: color-mix(in srgb, var(--code-block-text) 45%, transparent);
+  font-family: var(--md-mono, monospace);
+  font-size: var(--type-meta);
+  letter-spacing: 0.04em;
+  text-transform: lowercase;
+}
+
+/* One copy button per code block, sitting at the right end of the bar.
+   It used to frost the panel with a 6 px backdrop blur, which meant a
    long reference post — dozens of blocks — paid for dozens of backdrop
-   snapshots while scrolling. The surface token is opaque and reads the same on
-   top of `--code-block-bg`. */
+   snapshots while scrolling. It also carried the light surface token, which
+   on a dark frame turned into a white pill in the light theme; the chip now
+   tints the code background instead of replacing it. */
 .code-copy {
-  position: absolute;
-  z-index: 2;
-  top: 0.6rem;
-  right: 0.6rem;
-  border: 1px solid var(--fx-line);
+  flex: 0 0 auto;
+  margin-left: auto;
+  border: 1px solid rgb(255 255 255 / 0.14);
   border-radius: 999px;
   padding: 0.22rem 0.6rem;
-  background: var(--fx-surface-strong);
-  color: var(--fx-text);
+  background: rgb(255 255 255 / 0.06);
+  color: color-mix(in srgb, var(--code-block-text) 78%, transparent);
   font-family: var(--md-mono, monospace);
   font-size: var(--type-meta);
   font-weight: var(--weight-strong);
-  opacity: 0.55;
+  opacity: 0.6;
   cursor: pointer;
-  transition: opacity 0.2s ease, background 0.2s ease, transform 0.2s ease;
+  transition: opacity 0.2s ease, background 0.2s ease, color 0.2s ease, transform 0.2s ease;
 }
 
-.code-block:hover .code-copy { opacity: 1; }
-.code-copy:hover { background: var(--fx-surface-strong); transform: translateY(-1px); }
+.code-block:hover .code-copy,
+.code-tabs:hover .code-copy { opacity: 1; }
+.code-copy:hover,
+.code-copy:focus-visible {
+  background: rgb(255 255 255 / 0.13);
+  color: var(--code-block-text);
+  opacity: 1;
+  transform: translateY(-1px);
+}
 @media (hover: none) { .code-copy { opacity: 1; } }
+
+/* -----------------------------------------------------------------
+   Tabbed code groups (fence meta `group="…" tab="…"`)
+   -----------------------------------------------------------------
+   One frame owns the border and radius; the panel is the only thing that
+   scrolls. The bar scrolls horizontally on a phone instead of wrapping into
+   two rows, which is what used to push the code below the fold. */
+/* Only the pill row scrolls. Keeping the copy chip outside it means the chip
+   never slides out of the frame when three long labels do not fit at 390 px. */
+.code-tabs-tabs {
+  display: flex;
+  flex: 1 1 auto;
+  gap: 0.3rem;
+  min-width: 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+.code-tabs-tabs::-webkit-scrollbar { display: none; }
+
+.code-tab {
+  flex: 0 0 auto;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 0.3rem 0.72rem;
+  background: transparent;
+  color: color-mix(in srgb, var(--code-block-text) 62%, transparent);
+  font-family: var(--md-mono, monospace);
+  font-size: var(--type-meta);
+  font-weight: var(--weight-strong);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+}
+.code-tab:hover { color: var(--code-block-text); background: rgb(255 255 255 / 0.07); }
+.code-tab:focus-visible { outline: 2px solid var(--fx-accent); outline-offset: 2px; }
+.code-tab[aria-selected="true"] {
+  border-color: color-mix(in srgb, var(--fx-accent) 60%, transparent);
+  background: color-mix(in srgb, var(--fx-accent) 24%, transparent);
+  color: #fff;
+}
+
+/* The panel sits inside the frame the bar already drew, so the nested `pre`
+   drops its own border, radius and margin — but keeps its horizontal scroll. */
+.prose .code-block > pre,
+.prose .code-tabs :where(pre) {
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  padding: 1rem 1.1rem 1.15rem;
+  background: transparent !important;
+  box-shadow: none;
+}
+
+/* The panel is tabbable so a keyboard user can scroll the code with the arrow
+   keys once it is revealed; the ring stays inside the frame. */
+.code-tab-panel:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--fx-accent) 70%, transparent);
+  outline-offset: -2px;
+}
+
+/* Shiki marks the `pre` tabbable so the code can be scrolled from the keyboard.
+   The frame clips an outset ring, so this one is drawn inside the panel. */
+.prose .code-block > pre:focus-visible,
+.prose .code-tabs :where(pre):focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--fx-accent) 70%, transparent);
+  outline-offset: -2px;
+}
+
+@media (max-width: 720px) {
+  .code-block,
+  .code-tabs { margin-inline: -0.1rem; border-radius: 0.85rem; }
+  .code-block-bar,
+  .code-tabs-bar { min-height: 2.82rem; padding: 0.4rem 0.45rem; }
+  .code-tab { font-size: 0.72rem; padding: 0.26rem 0.6rem; }
+  .prose .code-block > pre,
+  .prose .code-tabs :where(pre) { padding: 0.9rem 1rem 1rem; }
+}
 
 .image-lightbox { max-width: min(95vw, 1200px); max-height: 95vh; padding: 0; border: 0; background: transparent; }
 .image-lightbox::backdrop { background: rgb(6 8 20 / 0.78); backdrop-filter: blur(6px); }

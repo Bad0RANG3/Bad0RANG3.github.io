@@ -2,7 +2,10 @@ import { defineConfig } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
 import tailwindcss from '@tailwindcss/vite';
 import remarkWithBase from './plugins/remark-with-base.mjs';
+import remarkFigureImages from './plugins/remark-figure-images.mjs';
 import rehypeWrapTables from './plugins/rehype-wrap-tables.mjs';
+import rehypeCodeTabs from './plugins/rehype-code-tabs.mjs';
+import shikiCodeTabMeta from './plugins/shiki-code-tab-meta.mjs';
 
 const base = process.env.BASE_PATH || '/';
 
@@ -31,13 +34,17 @@ export default defineConfig({
   base,
   output: 'static',
   markdown: {
-    remarkPlugins: [[remarkWithBase, { base }]],
-    rehypePlugins: [rehypeWrapTables],
+    // Figures carry their intrinsic size, so they must be rewritten before
+    // `remark-with-base` touches the emitted `src`.
+    remarkPlugins: [remarkFigureImages, [remarkWithBase, { base }]],
+    rehypePlugins: [rehypeCodeTabs, rehypeWrapTables],
     // `github-dark`'s comment grey (#6A737D) measures 3.84:1 on this site's code
     // panel; the `-default` variant's #8B949E clears 4.5:1 in both themes. The
     // panel itself is `--code-block-bg`, which stays dark in `paper` and
     // `paper-dark` alike.
-    shikiConfig: { theme: 'github-dark-default' },
+    // The transformer is what carries `group=`/`tab=` from a fence's meta onto
+    // the `<pre>`; Shiki rebuilds that node, so nothing else survives.
+    shikiConfig: { theme: 'github-dark-default', transformers: [shikiCodeTabMeta()] },
   },
   integrations: [sitemap()],
   // With ClientRouter, prefetch same-origin links on hover/tap so navigation
