@@ -20,8 +20,11 @@ Astro 5 静态站点（`output: 'static'`），Tailwind CSS 4（通过 `@tailwin
 ```
 ├── astro.config.mjs          站点与构建配置（Tailwind v4 走 Vite 插件）
 ├── plugins/                  构建期插件，只被 astro.config.mjs 消费
+│   ├── remark-figure-images.mjs  独立成段的图片 → 带固有尺寸的 <figure>（尺寸解析复用 src/lib/images.ts）
 │   ├── remark-with-base.mjs    在 Markdown 渲染前改写原始 HTML 里的根相对 URL
-│   └── rehype-wrap-tables.mjs  给正文表格套一层可横向滚动的容器
+│   ├── rehype-code-tabs.mjs    把相邻且同 group 的代码块合成可切换的 tab 组
+│   ├── rehype-wrap-tables.mjs  给正文表格套一层可横向滚动的容器
+│   └── shiki-code-tab-meta.mjs Shiki transformer：把 ```lang tab=… group=… 元数据写到 <pre> 上
 ├── scripts/                  开发与 CI 脚本
 │   ├── lib/                    脚本共享助手（不要在各脚本里重复实现）
 │   │   ├── paths.mjs             rootDir / fromRoot / normalizeBase
@@ -79,10 +82,11 @@ Astro 5 静态站点（`output: 'static'`），Tailwind CSS 4（通过 `@tailwin
     │   ├── search.ts             搜索文档构建
     │   ├── date.ts               日期格式化
     │   ├── urls.ts               withBase / siteUrl
-    │   ├── images.ts             图片元信息（尺寸、占位）
-    │   ├── og.ts                 OG 图生成（satori + resvg）
-    │   ├── text.ts               标签是否纯拉丁（决定要不要上宽字距）
+    │   ├── images.ts             图片元信息（尺寸、占位）；plugins/remark-figure-images.mjs 也用它
+    │   ├── og.ts                 OG 图生成（satori + resvg；字体子集缓存在 node_modules/.cache/og-font）
+    │   ├── text.ts               标签是否纯拉丁（决定要不要上宽字距）+ JSON-LD 安全序列化
     │   ├── storage.ts            localStorage JSON 读取的唯一实现
+    │   ├── clipboard.ts          剪贴板写入的唯一实现（navigator.clipboard + execCommand 回退）
     │   └── scroll.ts             全站共用的滚动帧调度器（见 §6「滚动路径」）
     ├── pages/                  路由（目录结构即 URL 结构）
     └── styles/
@@ -103,6 +107,9 @@ Astro 5 静态站点（`output: 'static'`），Tailwind CSS 4（通过 `@tailwin
 | 布局阈值、级联延迟 | `src/config/ui.ts` |
 | 读取 content collection | `src/lib/content.ts` |
 | 由 frontmatter 派生的分组视图 | `src/lib/taxonomy.ts` |
+| 写剪贴板（复制代码块 / 分享链接 / 复制账单） | `src/lib/clipboard.ts` 的 `copyText()`，返回 `Promise<boolean>`，不抛错 |
+| 塞进 `<script type="application/ld+json">` 的对象 | `src/lib/text.ts` 的 `serializeJsonLd()`（会把 `<`、`>`、`&` 转成 `\uXXXX`） |
+| 图片的固有宽高 | `src/lib/images.ts` 的 `getPublicImageSize()`，构建期插件也调它，不要另写解析器 |
 | 只在构建期跑、不被页面 import 的代码 | `plugins/` |
 | 可被多个脚本或构建期插件复用的逻辑 | `scripts/lib/` |
 | 某个页面自己的浏览器端逻辑 | `src/scripts/<页面名>.ts`，页面里只留 `<script>import …</script>` |
@@ -158,14 +165,23 @@ Astro 5 静态站点（`output: 'static'`），Tailwind CSS 4（通过 `@tailwin
 1. `pnpm new:post` / `new:thought` / `new:project` 生成符合 schema 的骨架（三个脚本共享 `scripts/lib/`）。
 2. `src/content/config.ts` 定义 frontmatter schema，字段不合规会在 `astro check` / 构建期报错。
 3. `pnpm validate:content` 在构建前做更深一层校验：日期真实性、标签重复、`seriesOrder` 冲突、封面文件是否存在、正文里的本地图片/链接是否可达、公开 slug 是否重复。
-4. 构建期 `plugins/remark-with-base.mjs` 改写 Markdown 内嵌原始 HTML 的根相对 URL。
-5. `pnpm smoke` 检查产物本身：必需路由、JSON-LD、feed、manifest、sitemap、图片 `alt`、体积预算、base 前缀是否完整等。
-6. `pnpm smoke` 还做两条**源码级**断言，因为下面这类回归在产物里完全看不出来，`astro check` 也管不到：
+4. remark 链按顺序跑：先是 `plugins/remark-figure-images.mjs`，把独立成段的图片升级成带 `width`/`height` 的 `<figure>`（尺寸走 `src/lib/images.ts` 的同一套解析；没有尺寸时手机上的长教程会一路抖），然后是 `plugins/remark-with-base.mjs`，改写内嵌原始 HTML 与链接的根相对 URL。**顺序不能反**：figure 里写出的是未加 base 的 `src`，交给后一步去加前缀。
+5. rehype 链：`plugins/shiki-code-tab-meta.mjs`（Shiki transformer，把 ` ```lang tab="…" group="…" ` 读成 `<pre>` 的属性）→ `plugins/rehype-code-tabs.mjs`（把相邻且同 group 的块合成 `role="tablist"` 的 tab 组，单块 group 自动降级为普通代码块）→ `plugins/rehype-wrap-tables.mjs`。插件只产标记与 ARIA，切换与复制在 `src/scripts/article-enhancements.ts`。
+6. `pnpm smoke` 检查产物本身：必需路由、JSON-LD、feed、manifest、sitemap、图片 `alt`、体积预算、base 前缀是否完整等。
+7. `pnpm smoke` 还做两条**源码级**断言，因为下面这类回归在产物里完全看不出来，`astro check` 也管不到：
    - `src/scripts/ncm.ts` / `sushi.ts` 必须同时具备 `astro:page-load` 重绑定与 `dataset.bound` 重入守卫；
    - `src/scripts/article-enhancements.ts` 必须**先**读 `dataset.enhanced` 守卫、**再**调用清理。
 
    两者都对应真实发生过的 bug（工具页返回后失效、首访文章进度条与阅读历史全失效）。加断言前请先做反向验证：手动把源码改坏一次，确认 `pnpm smoke` 真的报错——一条从不失败的断言等于没有断言。
-7. **正文里不要写 `user@主机.域名` 这种字面量**，哪怕是在代码块里。站点前面挂着 Cloudflare，它的 Scrape Shield → Email Address Obfuscation 会把整页 HTML 里长得像邮箱的字符串（`dev@192.168.80.128` 也算）换成 `__cf_email__` 链接，可见文字变成 `[email protected]`——教程里让人照抄的 `ssh` 命令会当场作废，而 `pnpm build` / `smoke` 在本地完全看不出来。写占位符即可绕过（`ssh dev@<虚拟机IP>`、`ssh -p 2222 dev@localhost`），需要给出具体地址时把地址写进注释或正文，不要紧跟在 `@` 后面。发现线上命令"变样"时，先 `curl` 线上页面搜 `email-protection` 再怀疑别的。
+8. **正文里不要写 `user@主机.域名` 这种字面量**，哪怕是在代码块里。站点前面挂着 Cloudflare，它的 Scrape Shield → Email Address Obfuscation 会把整页 HTML 里长得像邮箱的字符串（`dev@192.168.80.128` 也算）换成 `__cf_email__` 链接，可见文字变成 `[email protected]`——教程里让人照抄的 `ssh` 命令会当场作废，而 `pnpm build` / `smoke` 在本地完全看不出来。写占位符即可绕过（`ssh dev@<虚拟机IP>`、`ssh -p 2222 dev@localhost`），需要给出具体地址时把地址写进注释或正文，不要紧跟在 `@` 后面。发现线上命令"变样"时，先 `curl` 线上页面搜 `email-protection` 再怀疑别的。
+
+### 订阅源、搜索索引与分享卡
+
+- `rss.xml` 是**全文 feed**（`content:encoded`），`atom.xml` / `feed.json` 只有摘要。这个不对称是有意的：只肯读全文的阅读器只认 RSS，另外两个格式的存在意义就是"轻"。
+- 全文 feed 里**不带高亮标记**。Shiki 把每颗 token 都写成一段 `<span style="color:#…">`，XML 转义之后光标签就占了 1,524,208 字节里的 1,273,452 字节。`src/pages/rss.xml.ts` 现在做两件事：`<pre>` 内部整体剥成 `<pre><code>文本</code></pre>`（代码文本本身已经是转义过的，一个字符都不动），以及整篇按 `FEED_ATTRIBUTES` 白名单丢掉 `class` / `style` / `data-*`。实测 1,524,208 → 920,925 字节（gzip 314,813 → 276,818），`class=` / `style=` 归零，484 个 `<pre>` 与代码正文一个不少。
+- 这条约束由 `pnpm smoke` 守：`rss.xml` 必须含 `<content:encoded>`，且一旦出现 `&lt;pre …class=`/`style=`、或正文标签带 `class`/`style` 就失败。**不要以"高亮更好看"为由把内联样式放回来**——阅读器不加载本站 CSS，那些标签在那边只是死重。改这个文件时注意正则：第一版用了惰性量词，在 1.3 MB 的正文上回溯爆炸，`pnpm build` 从 4.6 s 涨到 32 s。
+- 搜索索引 `search-index.json`（26 篇、raw 455 KB / gzip 191 KB）**不在首屏加载**：`bootstrap.ts` 只在第一次打开搜索（按钮或 Ctrl/⌘+K）时才 import `search.ts`，后者再 fetch 它。正文全量保留是为了命中长教程里的任意一句——截断正文换来的 150 KB，比"搜不到"更贵。
+- OG 卡片（`dist/og/*.png`，12 张 1200×630，共 2.3 MB）只为**没有封面**的文章生成。Satori 用的 Noto Sans SC 子集来自 Google Fonts，现在**按字符集哈希缓存在 `node_modules/.cache/og-font/`**：缓存命中则构建完全离线、可重复；改标题/分类/摘要会换 key 并重新拉一次。加缓存之前每次构建都要联网，一次失败就静默少 12 张卡、`dist` 平白少 2.3 MB——同一份源码两次构建因此给出过不同的指纹。
 
 ---
 
@@ -201,6 +217,8 @@ pnpm validate:content && pnpm check && pnpm build && pnpm smoke && pnpm perf:aud
 > `perf:audit` 以前只在本地手跑，所以文章体积预算实际上没有守门人（当前数值与标定理由写在 `scripts/perf-audit.mjs` 的常量旁边）；它同时在任何非根 base 下直接 ENOENT（把 `/project-pages/_astro/x.css` 当成 `dist/project-pages/_astro/x.css` 去读）。现在它按 `_astro/` 剥掉 base 前缀、解析不到就直接抛错而不是少算，并且已经进了 CI 的两条路径。
 >
 > 指纹覆盖的是 `dist/`，**不覆盖 `scripts/`**。改动脚本时请另行对比 stdout、错误消息与生成文件内容。
+>
+> **触发分工**：`ci.yml` 只在 `pull_request` 和手动 `workflow_dispatch` 上跑，并带 `concurrency`（同一 ref 的旧跑会被取消）；`push: main` 归 `deploy.yml` 独家负责，它跑完同一串检查再上传 Pages。两条工作流都监听 `push: main` 时，每次合并都会把整站完整构建两遍。
 
 指纹只能告诉你「哪个文件变了」，不能告诉你「像素有没有变」。做大范围 CSS 重构时另有一层保护：`.verify/lead-style-diff.mjs` 用 CDP 抓取 19 条代表路由 × 2 个视口 × 2 套主题（76 个用例、约 5.4 万个元素的 130 个计算样式属性），对基线做逐属性比对：
 

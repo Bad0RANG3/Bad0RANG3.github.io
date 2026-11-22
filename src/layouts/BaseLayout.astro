@@ -8,6 +8,7 @@ import SiteFooter from '../components/layout/SiteFooter.astro';
 import SearchModal from '../components/search/SearchModal.astro';
 import { ROUTES } from '../config/routes';
 import { SITE, siteConfig } from '../config/site';
+import { serializeJsonLd } from '../lib/text';
 import { siteUrl, withBase } from '../lib/urls';
 
 interface Breadcrumb {
@@ -211,7 +212,7 @@ const jsonLd = {
   {keywords.length > 0 && <meta name="keywords" content={keywords.join(', ')}>}
 
   <!-- JSON-LD -->
-  <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)}></script>
+  <script is:inline type="application/ld+json" set:html={serializeJsonLd(jsonLd)}></script>
 </head>
 
   <body class:list={['site-body flex min-h-screen flex-col overflow-x-hidden bg-base-100 text-base-content', isHomePage && 'page-home']}>

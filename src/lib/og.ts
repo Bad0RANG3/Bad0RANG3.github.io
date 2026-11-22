@@ -1,5 +1,8 @@
 import satori from 'satori';
 import { Resvg } from '@resvg/resvg-js';
+import { createHash } from 'node:crypto';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import path from 'node:path';
 import { siteConfig } from '../config/site';
 import { getPublishedPosts, type Post } from './content';
 
@@ -8,10 +11,22 @@ import { getPublishedPosts, type Post } from './content';
  *
  * Satori cannot read the site's woff2 fonts and a full CJK font is too large
  * to commit, so a Noto Sans SC subset containing exactly the characters the
- * cards use is fetched from Google Fonts once per build. If that request fails
- * (offline build, blocked network) `isOgAvailable()` turns false: no cards are
- * emitted and posts keep the default share image, so the build never breaks
- * because of it. Nothing in the generated HTML points at Google.
+ * cards use is fetched from Google Fonts. That request is the build's only
+ * third-party dependency, so the subset is cached on disk under
+ * `node_modules/.cache/og-font`, keyed by the characters it covers:
+ *
+ * - A cache hit makes the build offline and byte-for-byte repeatable, and a
+ *   font Google has since rotated cannot change an unchanged card.
+ * - A cache hit also means a flaky request cannot silently drop all twelve
+ *   cards — without the cache a single failed fetch shrank `dist` by the 2.3 MB
+ *   of cards with no other symptom, which is what made two builds of one commit
+ *   disagree.
+ *
+ * Editing a title, category or description changes the key and refetches once.
+ * If the request and the cache both miss (offline first build) `isOgAvailable()`
+ * turns false: no cards are emitted and posts keep the default share image, so
+ * the build never breaks because of it. Nothing in the generated HTML points at
+ * Google.
  */
 
 export const OG_WIDTH = 1200;
@@ -20,7 +35,28 @@ export const OG_HEIGHT = 630;
 const siteHost = new URL(siteConfig.siteUrl).host;
 const cardText = (post: Post) => [post.data.title, post.data.category ?? '', post.data.description];
 
+const fontCacheDir = path.resolve(process.cwd(), 'node_modules', '.cache', 'og-font');
+const fontCacheFile = (key: string) => path.join(fontCacheDir, `${key}.ttf`);
+
 let fontPromise: Promise<ArrayBuffer | null> | undefined;
+
+const readCachedFont = async (key: string): Promise<ArrayBuffer | null> => {
+  try {
+    const cached = await readFile(fontCacheFile(key));
+    return cached.buffer.slice(cached.byteOffset, cached.byteOffset + cached.byteLength) as ArrayBuffer;
+  } catch {
+    return null;
+  }
+};
+
+const writeCachedFont = async (key: string, font: ArrayBuffer) => {
+  try {
+    await mkdir(fontCacheDir, { recursive: true });
+    await writeFile(fontCacheFile(key), Buffer.from(font));
+  } catch {
+    // A read-only checkout still renders cards; only the next build has to refetch.
+  }
+};
 
 const fetchFont = async (text: string): Promise<ArrayBuffer | null> => {
   try {
@@ -41,8 +77,14 @@ const loadFont = () => {
     const posts = await getPublishedPosts();
     const text = [siteConfig.title, siteHost, '·', ...posts.flatMap(cardText)].join('');
     const unique = [...new Set(text)].join('');
+    const key = createHash('sha256').update(unique).digest('hex').slice(0, 16);
+
+    const cached = await readCachedFont(key);
+    if (cached) return cached;
+
     const font = await fetchFont(unique);
     if (!font) console.warn('[og] Could not load the card font; posts without a cover keep the default share image.');
+    else await writeCachedFont(key, font);
     return font;
   })();
   return fontPromise;

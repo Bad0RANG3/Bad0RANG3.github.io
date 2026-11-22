@@ -107,11 +107,38 @@ try {
 
   const rss = await readFile(path.join(options.distDir, 'rss.xml'), 'utf8');
   if (!/<rss\b/i.test(rss) || !/<channel>/i.test(rss)) fail('RSS output is invalid or empty.');
+  // The feed inlines the whole article, and once XML-escaped the highlighter's
+  // per-token spans were 1.27 MB of a 1.28 MB document. The text of every code
+  // block has to survive that stripping; the markup must not come back.
+  if (!/<content:encoded>/i.test(rss)) fail('rss.xml lost its full-text <content:encoded> payload.');
+  if (/&lt;pre[^>]{0,80}?(?:class|style)=/.test(rss)) fail('rss.xml code blocks still carry highlighter markup; see stripCodeMarkup in src/pages/rss.xml.ts.');
+  if (/&lt;(?:p|div|table|td|span|a|h[1-6])[^>]{0,80}?(?:class|style)=/.test(rss)) fail('rss.xml still carries site-only class/style attributes; see stripPresentation in src/pages/rss.xml.ts.');
   const atom = await readFile(path.join(options.distDir, 'atom.xml'), 'utf8');
   if (!/<feed\b[^>]*http:\/\/www\.w3\.org\/2005\/Atom/i.test(atom)) fail('Atom output is invalid or empty.');
   const feed = parseJson('feed.json', await readFile(path.join(options.distDir, 'feed.json'), 'utf8'), fail);
   if (feed && (feed.version !== 'https://jsonfeed.org/version/1.1' || !Array.isArray(feed.items))) fail('feed.json lacks JSON Feed version or items.');
   if (feed && options.base !== '/' && !feed.home_page_url.includes(options.base)) fail('feed.json home_page_url does not include the configured base path.');
+
+  // Cards are rendered only when the build got its font subset, and the failure
+  // was invisible: the fetch failed, `isOgAvailable()` turned false, no page
+  // referenced a card and no file was written, so the build stayed green and
+  // `dist` was simply 2.3 MB lighter — two builds of one commit then disagreed.
+  // Every card a page points at has to exist on disk, and at least one has to
+  // be pointed at.
+  const referencedCards = new Set();
+  for (const filename of await existingTextFiles(options.distDir, new Set(['.html']))) {
+    const html = await readFile(filename, 'utf8');
+    for (let cursor = html.indexOf('/og/'); cursor !== -1; cursor = html.indexOf('/og/', cursor + 4)) {
+      const end = html.indexOf('.png', cursor);
+      if (end === -1) continue;
+      const candidate = html.slice(cursor + 1, end + 4);
+      if (!candidate.includes('"') && !candidate.includes('<') && !candidate.includes("'")) referencedCards.add(candidate);
+    }
+  }
+  if (referencedCards.size === 0) fail('No page references a generated OG card; the card font subset failed to load (see src/lib/og.ts).');
+  for (const relative of referencedCards) {
+    if (!await isFile(path.join(options.distDir, relative))) fail(`A page references ${relative} but the file was not generated; the OG card font subset failed to load.`);
+  }
   const manifest = parseJson('manifest.webmanifest', await readFile(path.join(options.distDir, 'manifest.webmanifest'), 'utf8'), fail);
   if (manifest) {
     if (!manifest.start_url || !manifest.scope || !Array.isArray(manifest.icons) || manifest.icons.length === 0) fail('manifest.webmanifest is missing install metadata.');

@@ -1,4 +1,5 @@
 import { SITE } from '../config/site';
+import { copyText } from '../lib/clipboard';
 import { readJsonArray } from '../lib/storage';
 
 const initArticleTools = () => {
@@ -27,8 +28,10 @@ const initArticleTools = () => {
       try {
         if (navigator.share) await navigator.share({ title: root.dataset.title || document.title, url: window.location.href });
         else {
-          await navigator.clipboard.writeText(window.location.href);
-          if (copyLabel) copyLabel.textContent = '已复制链接';
+          // `copyText` falls back to the selection trick, so an insecure origin
+          // or a refused permission no longer reports "请手动复制".
+          const copied = await copyText(window.location.href);
+          if (copyLabel) copyLabel.textContent = copied ? '已复制链接' : '请手动复制';
         }
       } catch (error) {
         // Dismissing the native share sheet rejects with AbortError; that is

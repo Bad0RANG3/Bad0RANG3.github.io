@@ -1,4 +1,3 @@
-// @ts-nocheck
 // Progressive chrome that has to survive ClientRouter navigations: the
 // back-to-top control and the navigation drawer. Article tables are wrapped
 // at build time by plugins/rehype-wrap-tables.mjs. Page transitions
@@ -8,14 +7,14 @@ import { onScrollFrame } from '../lib/scroll';
 
 /* Navigation drawer (MobileDrawer.astro). The dialog is replaced on every
    navigation, so everything is delegated from document and bound once. */
-const getDrawer = () => {
+const getDrawer = (): HTMLDialogElement | null => {
   const dialog = document.getElementById('mobile-drawer');
   return dialog instanceof HTMLDialogElement ? dialog : null;
 };
-const setDrawerExpanded = (value) => {
+const setDrawerExpanded = (value: boolean) => {
   document.querySelectorAll('[data-drawer-trigger]').forEach((trigger) => trigger.setAttribute('aria-expanded', String(value)));
 };
-const closeDrawer = (dialog) => {
+const closeDrawer = (dialog: HTMLDialogElement) => {
   const panel = dialog.querySelector('.drawer-panel');
   if (!dialog.open || panel?.classList.contains('animate-out')) return;
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || !panel) { dialog.close(); return; }

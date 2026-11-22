@@ -40,6 +40,13 @@ jobs:
         run: pnpm build
       - name: Smoke test build output
         run: pnpm smoke
+      # These two used to run only in ci.yml, which no longer listens on `main`;
+      # a push to the deployed branch is exactly where the budget regressions
+      # that matter would land.
+      - name: Performance budget audit
+        run: pnpm perf:audit
+      - name: Browser compatibility audit
+        run: pnpm compat:audit
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

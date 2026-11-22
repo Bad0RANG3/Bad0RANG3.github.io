@@ -9,6 +9,7 @@
 // 价目表在构建期就已渲染好，所以关掉 JS 也看得到价格；这里只负责「数碟 → 账单」
 // 的算术与交互。
 import { formatMoney as money, regions, type SushiroRegion } from '../config/sushiro';
+import { copyText } from '../lib/clipboard';
 
 interface RegionState {
   /** 各价位的碟数，键是价位 id。 */
@@ -413,19 +414,9 @@ const initSushi = () => {
       `价格数据更新于 ${region.updated}，仅供参考。`,
     ].filter(Boolean).join('\n');
 
-    try {
-      await navigator.clipboard.writeText(text);
-      setStatus('账单已复制到剪贴板');
-    } catch {
-      const area = document.createElement('textarea');
-      area.value = text;
-      area.style.cssText = 'position:fixed;opacity:0';
-      document.body.append(area);
-      area.select();
-      document.execCommand('copy');
-      area.remove();
-      setStatus('账单已复制到剪贴板');
-    }
+    // 剪贴板回退统一在 `lib/clipboard`：这里不再自己拼 textarea，
+    // 也就不会再触发 `document.execCommand` 的弃用诊断。
+    setStatus((await copyText(text)) ? '账单已复制到剪贴板' : '复制失败，请长按选择文本');
   });
 
   resetButton.addEventListener('click', () => {
