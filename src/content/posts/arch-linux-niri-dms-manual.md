@@ -100,23 +100,20 @@ timedatectl status         # 检查服务状态
 
 ## 四、换镜像源
 
-`/etc/pacman.d/mirrorlist` 里越靠前的源越优先。国内直连官方源会慢到怀疑人生，把这几个加到文件最上面，行首别留 #，被注释掉的条目是无效的：
+这里在11.23日重新编辑一轮，其实我们并不需要手动去填写镜像源地址，arch本身就已经帮我们预置好了只是我们没有用上罢了
 
-```ini group="mirror" tab="国内镜像" tabs="镜像源"
-Server = https://mirrors.ustc.edu.cn/archlinux/$repo/os/$arch          # 中科大
-Server = https://mirrors.tuna.tsinghua.edu.cn/archlinux/$repo/os/$arch # 清华 TUNA
-Server = https://repo.huaweicloud.com/archlinux/$repo/os/$arch         # 华为云
-Server = http://mirror.lzu.edu.cn/archlinux/$repo/os/$arch             # 兰州大学
+现在我们只需要使用`reflector`命令就可以帮助我们更新对我们网络利好的镜像源地址
+
 ```
+reflector -p https -a 12 -c cn --v --sort rate --save /etc/pacman.d/mirrorlist
 
-```ini group="mirror" tab="官方源" tabs="镜像源"
-Server = https://geo.mirror.pkgbuild.com/$repo/os/$arch   # 官方 CDN，自动就近
-Server = https://mirror.rackspace.com/archlinux/$repo/os/$arch
+# -p（protocol） https 指定 https 协议的链接
+# -a（age） 12 指定最近 12 小时更新过的源
+# -c（country） cn 指定国家为中国（可以增加邻国）
+# --v（verbose） 过程可视化
+# --sort rate 按照下载速度排序（经过前面几道筛选，镜像源通常已经足够稳定，所以这里直接按照速度排序即可）
+# --save /etc/pacman.d/mirrorlist 将结果保存到 /etc/pacman.d/mirrorlist
 ```
-
-在海外或者有稳定代理的话，官方 CDN 反而更快。国内源偶尔会同步滞后，遇到「找不到某个包的新版本」，先换源，再怀疑人生。
-
-改完 `pacman -Syy` 刷一次索引。
 
 ## 五、分区：先认清你的盘
 
