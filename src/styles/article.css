@@ -1,0 +1,379 @@
+/* Article metadata belongs to the page, with no separate card around it. */
+.article-brief {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.5rem;
+  color: var(--fx-muted);
+  font-size: var(--type-small);
+  line-height: var(--leading-ui);
+}
+.article-brief strong { color: var(--fx-faint); font-weight: var(--weight-body); }
+.article-reading-meta { color: var(--fx-faint); font-size: var(--type-small); }
+.article-tags .badge {
+  height: auto;
+  border: 0;
+  border-radius: 0;
+  padding: 0.15rem 0;
+  background: transparent;
+  color: var(--fx-faint);
+  font-size: var(--type-small);
+  font-weight: var(--weight-body);
+}
+.article-tags > div { gap: 0.4rem 1rem; }
+.article-tags .badge:hover { color: var(--accent-primary-soft); }
+.article-cover { border-radius: 0.5rem; }
+
+article[data-article] > header > h1 { font-family: var(--font-sans); font-size: clamp(1.75rem, 3.2vw, 2.5rem); font-weight: var(--weight-strong); line-height: 1.45; letter-spacing: var(--tracking-body); text-wrap: pretty; overflow-wrap: break-word; }
+
+/* -----------------------------------------------------------------
+   Article shell: progress, outline, tools, lightbox
+   ----------------------------------------------------------------- */
+.reading-progress {
+  position: fixed;
+  inset: 0 auto auto 0;
+  z-index: 90;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, var(--fx-accent), var(--accent-secondary));
+  transform: scaleX(0);
+  transform-origin: left;
+  pointer-events: none;
+}
+
+.article-page { --article-gap: clamp(2.5rem, 4vw, 4rem); max-width: 46rem; }
+.article-page.has-outline { max-width: calc(59rem + var(--article-gap)); }
+.article-header,
+.article-layout > .prose { max-width: 46rem; }
+.article-layout { min-width: 0; }
+.article-layout .prose :where(h2, h3, h4, h5, h6) { scroll-margin-top: 5.5rem; }
+.article-toc { display: none; }
+
+@media (min-width: 1100px) { .article-toc { display: block; position: sticky; top: 6rem; align-self: start; } }
+
+.article-toc a {
+  display: block;
+  border-left: 1px solid var(--line);
+  padding-left: 0.7rem;
+  color: var(--fx-faint);
+  font-size: var(--type-small);
+  line-height: 1.4;
+  transition: color 0.25s var(--ease), border-color 0.25s var(--ease);
+}
+
+.article-toc a:hover,
+.article-toc a.is-active { border-color: var(--fx-accent); color: var(--fx-accent-soft); }
+
+/* Article content keeps a readable measure while the outline remains genuinely
+   beside it. */
+@media (min-width: 1100px) {
+  .article-layout.has-toc {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 13rem;
+    align-items: start;
+    gap: var(--article-gap);
+  }
+
+  .article-layout.has-toc > .prose { grid-column: 1; grid-row: 1; min-width: 0; }
+  .article-page.has-outline > .article-header { max-width: 46rem; }
+
+  .article-layout.has-toc > .article-toc {
+    grid-column: 2;
+    grid-row: 1;
+    top: 5.5rem;
+    max-height: calc(100vh - 7rem);
+    overflow-y: auto;
+    padding: 0.25rem 0 0.5rem 1.25rem;
+    border-left: 1px solid var(--line-soft);
+    scrollbar-width: thin;
+  }
+
+  .article-toc .eyebrow { font-weight: var(--weight-body); }
+  .article-toc nav { padding-bottom: 0.1rem; }
+  .article-toc li + li { margin-top: 0.15rem; }
+
+  .article-toc a {
+    margin-left: calc(-1.25rem - 1px);
+    padding: 0.3rem 0 0.3rem 1.25rem;
+    border-left-color: transparent;
+    color: var(--fx-faint);
+    line-height: 1.6;
+  }
+  .article-toc li.pl-3 a { font-size: 0.8125rem; }
+
+  .article-toc a:hover,
+  .article-toc a.is-active { border-left-color: var(--fx-accent); color: var(--fx-accent-soft); }
+}
+
+/* Keep the reading column centred when there is no room for a side outline. */
+@media (max-width: 1099px) {
+  .article-page.has-outline { max-width: 46rem; }
+}
+
+/* Phones retain a full 16px reading face and contained code scrolling. */
+@media (max-width: 720px) {
+  .prose :where(pre) { padding: 0.9rem 1rem; }
+  .prose :where(pre code) { font-size: var(--type-small); }
+}
+
+.article-tools { display: inline-flex; align-items: center; gap: 0.25rem; }
+
+/* A single quiet code surface; only the code pane scrolls. */
+.code-block,
+.code-tabs {
+  position: relative;
+  margin: 1.5em 0;
+  border: 1px solid color-mix(in srgb, var(--code-block-text) 12%, var(--code-block-bg));
+  border-radius: 0.4rem;
+  background: var(--code-block-bg);
+  overflow: hidden;
+}
+
+.code-block-bar,
+.code-tabs-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 2.25rem;
+  padding: 0.2rem 0.8rem 0;
+}
+
+.code-lang {
+  padding-left: 0.25rem;
+  color: color-mix(in srgb, var(--code-block-text) 64%, var(--code-block-bg));
+  font-family: var(--md-mono, monospace);
+  font-size: var(--type-meta);
+  letter-spacing: 0.04em;
+  text-transform: lowercase;
+}
+
+/* Copy stays visible without adding another outlined pill to each block. */
+.code-copy {
+  flex: 0 0 auto;
+  margin-left: auto;
+  border: 0;
+  border-radius: 0.2rem;
+  padding: 0.25rem 0.45rem;
+  background: transparent;
+  color: color-mix(in srgb, var(--code-block-text) 72%, var(--code-block-bg));
+  font-family: var(--md-mono, monospace);
+  font-size: var(--type-meta);
+  font-weight: var(--weight-body);
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.code-copy:hover,
+.code-copy:focus-visible {
+  background: color-mix(in srgb, var(--code-block-text) 8%, transparent);
+  color: var(--code-block-text);
+}
+
+/* -----------------------------------------------------------------
+   Tabbed code groups (fence meta `group="…" tab="…"`)
+   -----------------------------------------------------------------
+   One frame owns the border and radius; the panel is the only thing that
+   scrolls. The tabs scroll horizontally on a phone instead of wrapping into
+   two rows, which is what used to push the code below the fold. */
+/* Only the pill row scrolls. Keeping the copy chip outside it means the chip
+   never slides out of the frame when three long labels do not fit at 390 px. */
+.code-tabs-tabs {
+  display: flex;
+  flex: 1 1 auto;
+  gap: 0.3rem;
+  min-width: 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+.code-tabs-tabs::-webkit-scrollbar { display: none; }
+
+.code-tab {
+  flex: 0 0 auto;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  padding: 0.4rem 0.5rem;
+  background: transparent;
+  color: color-mix(in srgb, var(--code-block-text) 64%, var(--code-block-bg));
+  font-family: var(--md-mono, monospace);
+  font-size: var(--type-meta);
+  font-weight: var(--weight-body);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+}
+.code-tab:hover { color: var(--code-block-text); }
+.code-tab:focus-visible { outline: 2px solid var(--fx-accent); outline-offset: 2px; }
+.code-tab[aria-selected="true"] {
+  border-bottom-color: var(--fx-accent);
+  color: var(--code-block-text);
+}
+
+/* The panel sits inside the frame the bar already drew, so the nested `pre`
+   drops its own border, radius and margin — but keeps its horizontal scroll. */
+.prose .code-block > pre,
+.prose .code-tabs :where(pre) {
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  padding: 0.55rem 1.1rem 1.1rem;
+  background: transparent !important;
+  box-shadow: none;
+}
+
+/* The panel is tabbable so a keyboard user can scroll the code with the arrow
+   keys once it is revealed; the ring stays inside the frame. */
+.code-tab-panel:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--fx-accent) 70%, transparent);
+  outline-offset: -2px;
+}
+
+/* Shiki marks the `pre` tabbable so the code can be scrolled from the keyboard.
+   The frame clips an outset ring, so this one is drawn inside the panel. */
+.prose .code-block > pre:focus-visible,
+.prose .code-tabs :where(pre):focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--fx-accent) 70%, transparent);
+  outline-offset: -2px;
+}
+
+@media (max-width: 720px) {
+  .code-block-bar,
+  .code-tabs-bar { padding-inline: 0.65rem; }
+  .code-tab { padding-inline: 0.4rem; }
+  .prose .code-block > pre,
+  .prose .code-tabs :where(pre) { padding: 0.5rem 0.9rem 1rem; }
+}
+
+/* -----------------------------------------------------------------
+   Image lightbox
+   One dialog per article: frame, caption, counter and arrows, so ←/→
+   walk the whole set. Clicking the image toggles 1:1, which is the only
+   way a full-window terminal grab stays readable.
+   ----------------------------------------------------------------- */
+.prose :where(img[role='button']) { cursor: zoom-in; }
+
+.image-lightbox {
+  /* A content-sized frame centred by its own auto margin. */
+  inset: 0;
+  width: fit-content;
+  height: fit-content;
+  margin: auto;
+  max-width: min(96vw, 76rem);
+  max-height: 96vh;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--fx-text);
+  /* Once zoomed the dialog scrolls; that scroll must not chain outward. */
+  overscroll-behavior: contain;
+}
+.image-lightbox::backdrop { background: rgb(6 8 20 / 0.8); backdrop-filter: blur(6px); }
+
+.image-lightbox-frame { display: flex; max-height: 96vh; flex-direction: column; gap: 0.55rem; }
+.image-lightbox-image {
+  max-width: min(96vw, 76rem);
+  max-height: calc(96vh - 3.4rem);
+  border-radius: 1rem;
+  background: var(--code-block-bg);
+  object-fit: contain;
+  cursor: zoom-in;
+}
+
+.image-lightbox.is-zoomed {
+  width: 100vw;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  overflow: auto;
+}
+.image-lightbox.is-zoomed .image-lightbox-frame { display: block; max-height: none; }
+.image-lightbox.is-zoomed .image-lightbox-image {
+  max-width: none;
+  max-height: none;
+  margin: auto;
+  border-radius: 0;
+  cursor: zoom-out;
+}
+/* The caption would sit on top of whatever the reader has panned to. */
+.image-lightbox.is-zoomed .image-lightbox-meta { display: none; }
+
+.image-lightbox-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 0.85rem;
+  padding-inline: 0.2rem;
+  font-family: var(--font-sans);
+  font-size: var(--type-meta);
+}
+/* `display: flex` above outranks the UA's `[hidden]`, so restate it. */
+.image-lightbox-meta[hidden] { display: none; }
+.image-lightbox-caption { flex: 1; margin: 0; color: var(--fx-muted); }
+.image-lightbox-counter {
+  color: var(--fx-faint);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Pinned to the viewport, not the frame: at 96vw the frame reaches the screen
+   edge, and a button hung outside it is half off-screen on a phone. */
+.image-lightbox-close,
+.image-lightbox-nav {
+  position: fixed;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--fx-line);
+  border-radius: 0.9rem;
+  background: var(--fx-surface-strong);
+  color: var(--fx-text);
+  cursor: pointer;
+  line-height: 1;
+}
+.image-lightbox-close {
+  top: max(0.85rem, env(safe-area-inset-top));
+  right: max(0.85rem, env(safe-area-inset-right));
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 999px;
+  font-size: 1.4rem;
+}
+.image-lightbox-nav { top: 50%; width: 2.5rem; height: 3.4rem; font-size: 1.35rem; transform: translateY(-50%); }
+.image-lightbox-nav[data-direction='prev'] { left: max(0.85rem, env(safe-area-inset-left)); }
+.image-lightbox-nav[data-direction='next'] { right: max(0.85rem, env(safe-area-inset-right)); }
+.image-lightbox-close:hover,
+.image-lightbox-nav:hover { border-color: var(--fx-accent); color: var(--fx-accent); }
+.image-lightbox-close:focus-visible,
+.image-lightbox-nav:focus-visible { outline: 2px solid var(--fx-accent); outline-offset: 2px; }
+
+/* The dialog only fades; the frame carries the movement. A transform on the
+   dialog would make it the containing block of the fixed close and arrow
+   buttons and drag them across the screen for the length of the animation. */
+@media (prefers-reduced-motion: no-preference) {
+  .image-lightbox[open],
+  .image-lightbox[open]::backdrop { animation: lightbox-fade 180ms ease-out; }
+  .image-lightbox[open] .image-lightbox-frame { animation: lightbox-in 260ms cubic-bezier(0.22, 0.9, 0.24, 1); }
+  .image-lightbox.is-closing,
+  .image-lightbox.is-closing::backdrop { animation: lightbox-fade-out 150ms ease-in forwards; }
+  .image-lightbox.is-closing .image-lightbox-frame { animation: lightbox-out 150ms ease-in forwards; }
+}
+@keyframes lightbox-fade {
+  from { opacity: 0; }
+}
+@keyframes lightbox-fade-out {
+  to { opacity: 0; }
+}
+/* The screenshot steps forward out of the dark field, then settles. */
+@keyframes lightbox-in {
+  from { opacity: 0; transform: scale(0.94) translateY(0.35rem); }
+}
+@keyframes lightbox-out {
+  to { opacity: 0; transform: scale(0.96); }
+}
+
+@media (max-width: 720px) {
+  .image-lightbox-image { max-height: calc(96vh - 4.2rem); border-radius: 0.85rem; }
+  .image-lightbox-nav { width: 2.2rem; height: 2.9rem; }
+  .image-lightbox-meta { font-size: 0.72rem; }
+}

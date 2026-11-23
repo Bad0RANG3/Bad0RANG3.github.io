@@ -3,11 +3,11 @@
    network-first with revalidation, so a swap never pulls stale HTML that points
    at a previous CSS build. Subresources use stale-while-revalidate, and Range
    requests (the player's audio seeks) bypass the cache entirely. */
-const CACHE_VERSION = 'b0-static-v7';
+const scopeUrl = new URL(self.registration.scope);
+const CACHE_PREFIX = `b0-static:${scopeUrl.pathname}:`;
+const CACHE_VERSION = `${CACHE_PREFIX}v8`;
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
-
-const scopeUrl = new URL(self.registration.scope);
 const scopedPath = (path = '') => new URL(path.replace(/^\/+/, ''), scopeUrl).pathname;
 const OFFLINE_URL = scopedPath('offline/');
 // Only the offline shell is fetched ahead of time. Everything else is stored
@@ -29,12 +29,20 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
-    await Promise.all(keys.filter((key) => key !== STATIC_CACHE && key !== RUNTIME_CACHE).map((key) => caches.delete(key)));
+    const obsolete = keys.filter((key) => {
+      const owned = key.startsWith(CACHE_PREFIX)
+        || (scopeUrl.pathname === '/' && /^b0-static-v\d+-(?:static|runtime)$/.test(key));
+      return owned && key !== STATIC_CACHE && key !== RUNTIME_CACHE;
+    });
+    await Promise.all(obsolete.map((key) => caches.delete(key)));
     await self.clients.claim();
   })());
 });
 
-const isSameOrigin = (request) => new URL(request.url).origin === self.location.origin;
+const isInScope = (request) => {
+  const url = new URL(request.url);
+  return url.origin === scopeUrl.origin && url.pathname.startsWith(scopeUrl.pathname);
+};
 const isCacheableResponse = (response) => response && response.ok && response.type === 'basic';
 
 /**
@@ -59,42 +67,46 @@ const trimRuntimeCache = async () => {
   await Promise.all(keys.slice(0, Math.max(0, keys.length - RUNTIME_CACHE_LIMIT)).map((key) => cache.delete(key)));
 };
 
-const stash = (request, response) => {
-  if (!isCacheableResponse(response)) return response;
-  const copy = response.clone();
-  caches.open(RUNTIME_CACHE)
-    .then((cache) => cache.put(request, copy))
-    .then(trimRuntimeCache)
-    .catch(() => {});
-  return response;
+const matchCached = async (request) => {
+  const runtime = await caches.open(RUNTIME_CACHE);
+  const cached = await runtime.match(request);
+  if (cached) return cached;
+  return (await caches.open(STATIC_CACHE)).match(request);
+};
+
+// Register the write with the event immediately so the worker cannot be
+// terminated after delivering the response but before cache.put completes.
+const fetchAndCache = (event, options) => {
+  const network = fetch(event.request, options);
+  event.waitUntil(network.then(async (response) => {
+    if (!isCacheableResponse(response)) return;
+    const copy = response.clone();
+    const cache = await caches.open(RUNTIME_CACHE);
+    await cache.put(event.request, copy);
+    await trimRuntimeCache();
+  }).catch(() => {}));
+  return network;
 };
 
 self.addEventListener('fetch', (event) => {
   const { request } = event;
-  // Let the browser handle range requests and non-GET traffic directly.
-  if (request.method !== 'GET' || !isSameOrigin(request) || request.headers.has('range')) return;
+  // Media can be large even before the first range request. Keep it out of
+  // the page cache so one song cannot evict the reader's offline articles.
+  if (request.method !== 'GET' || !isInScope(request) || request.headers.has('range')
+    || request.destination === 'audio' || request.destination === 'video'
+    || /\.(?:mp3|m4a|ogg|wav|mp4|webm)$/i.test(new URL(request.url).pathname)) return;
 
   if (isPageRequest(request)) {
-    event.respondWith((async () => {
-      try {
-        // Revalidate instead of trusting the HTTP cache, so a deploy is picked
-        // up immediately and ClientRouter never swaps in an outdated document.
-        const response = await fetch(request, { cache: 'no-cache' });
-        return stash(request, response);
-      } catch {
-        return (await caches.match(request)) || (await caches.match(OFFLINE_URL));
-      }
-    })());
+    const network = fetchAndCache(event, { cache: 'no-cache' });
+    event.respondWith(network.catch(async () => (await matchCached(request))
+      || (await matchCached(OFFLINE_URL)) || Response.error()));
     return;
   }
 
+  const network = fetchAndCache(event);
   event.respondWith((async () => {
-    const cached = await caches.match(request);
-    const network = fetch(request).then((response) => stash(request, response));
-    if (cached) {
-      event.waitUntil(network.catch(() => {}));
-      return cached;
-    }
+    const cached = await matchCached(request);
+    if (cached) return cached;
     try {
       return await network;
     } catch {

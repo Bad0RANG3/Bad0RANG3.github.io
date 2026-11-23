@@ -5,13 +5,19 @@ const root = document.documentElement;
 const isProduction = import.meta.env.PROD;
 const serviceWorkerUrl = root.dataset.serviceWorker || '/sw.js';
 const serviceWorkerScope = root.dataset.serviceWorkerScope || '/';
-if (!isProduction && 'serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then((registrations) => {
-        registrations.forEach((registration) => registration.unregister());
-      }).catch(() => {});
-    } else if ('serviceWorker' in navigator && location.protocol === 'https:') {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register(serviceWorkerUrl, { scope: serviceWorkerScope }).catch(() => {});
-      });
-    }
-  
+if ('serviceWorker' in navigator) {
+  if (!isProduction) {
+    const scope = new URL(serviceWorkerScope, location.href).href;
+    void navigator.serviceWorker.getRegistrations().then((registrations) => Promise.all(
+      registrations.filter((registration) => registration.scope === scope
+        && (registration.active ?? registration.waiting ?? registration.installing)?.scriptURL === new URL(serviceWorkerUrl, location.href).href)
+        .map((registration) => registration.unregister()),
+    )).catch(() => {});
+  } else if (location.protocol === 'https:') {
+    const register = () => {
+      void navigator.serviceWorker.register(serviceWorkerUrl, { scope: serviceWorkerScope }).catch(() => {});
+    };
+    if (document.readyState === 'complete') register();
+    else window.addEventListener('load', register, { once: true });
+  }
+}

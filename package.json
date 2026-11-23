@@ -25,7 +25,6 @@
         "@astrojs/rss": "^4.0.11",
         "@astrojs/sitemap": "^3.4.1",
         "@resvg/resvg-js": "^2.6.2",
-        "@tailwindcss/typography": "0.5.20",
         "@tailwindcss/vite": "4.3.3",
         "daisyui": "5.7.43",
         "satori": "^0.33.5",

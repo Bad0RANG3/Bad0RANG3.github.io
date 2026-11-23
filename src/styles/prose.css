@@ -1,0 +1,314 @@
+/* -----------------------------------------------------------------
+   Prose
+   ----------------------------------------------------------------- */
+/* Reading face: proportional sans for body copy. The interface keeps mono only
+   where it carries meaning (code, keys, numerals), because a monospace Latin
+   face next to a CJK fallback made long Chinese paragraphs look uneven. */
+.prose {
+  --md-font: var(--font-sans);
+  --md-mono: var(--font-mono);
+  font-family: var(--md-font);
+  font-size: 1.0625rem;
+  line-height: 1.9;
+  letter-spacing: var(--tracking-body);
+  color: color-mix(in srgb, var(--fx-text) 88%, var(--fx-muted));
+  overflow-wrap: break-word;
+  text-wrap: pretty;
+}
+
+@media (max-width: 720px) {
+  .prose { font-size: var(--type-body); }
+}
+
+/* Chrome/Safari only, and the one place it matters most: reading text, where
+   a Latin word sitting inside a Chinese sentence otherwise hugs both sides. */
+@supports (text-autospace: normal) {
+  .prose { text-autospace: normal; }
+}
+
+.prose :where(p) { margin: 1.1em 0; }
+.prose :where(p:first-child) { margin-top: 0; }
+.prose :where(p:last-child) { margin-bottom: 0; }
+
+/* Headings take the display face: Playfair for Latin, the sans stack for the
+   Chinese in the same heading. */
+.prose :where(h1, h2, h3, h4, h5, h6) {
+  font-family: var(--font-display);
+  color: var(--fx-text);
+  font-weight: var(--weight-strong);
+  letter-spacing: var(--tracking-body);
+  line-height: var(--leading-heading);
+  text-wrap: balance;
+  scroll-margin-top: 6rem;
+}
+
+.prose :where(h1) { margin: 2.1em 0 0.7em; font-size: var(--type-display); }
+.prose :where(h2) { margin: 2.4em 0 0.85em; font-size: 1.5rem; }
+.prose :where(h3) { margin: 2em 0 0.65em; font-size: var(--type-title); }
+.prose :where(h4) { margin: 1.7em 0 0.55em; font-size: var(--type-lead); }
+.prose :where(h5, h6) { margin: 1.5em 0 0.5em; color: var(--fx-muted); font-size: var(--type-body); }
+.prose :where(h1, h2, h3, h4, h5, h6):first-child { margin-top: 0; }
+
+.prose :where(a) {
+  color: var(--accent-primary-soft);
+  font-weight: var(--weight-body);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--accent-primary) 45%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.22em;
+  overflow-wrap: anywhere;
+  transition: color 0.2s ease, text-decoration-color 0.2s ease;
+}
+
+.prose :where(a:hover) { color: var(--accent-primary); text-decoration-color: currentColor; }
+
+.prose :where(strong) { color: var(--fx-text); font-weight: var(--weight-strong); }
+.prose :where(em) { color: var(--fx-text); }
+.prose :where(mark) { padding: 0.04em 0.12em; background: color-mix(in srgb, var(--fx-accent) 16%, transparent); color: var(--fx-text); }
+.prose :where(del) { color: var(--fx-faint); text-decoration-thickness: 1px; }
+.prose :where(kbd) {
+  font-family: var(--md-mono);
+  font-size: 0.8em;
+  border: 1px solid var(--line);
+  border-bottom-width: 2px;
+  border-radius: 0.35rem;
+  padding: 0.1em 0.35em;
+  background: var(--surface-soft);
+  color: var(--fx-text);
+}
+
+/* Inline code must flow with the paragraph. `inline-block` used to drop the
+   chip onto its own line and break the line rhythm on narrow screens. */
+.prose :where(code):not(:where(pre *)) {
+  font-family: var(--md-mono);
+  font-size: 0.88em;
+  font-weight: var(--weight-body);
+  padding: 0.08em 0.28em;
+  border: 0;
+  border-radius: 0.2rem;
+  background: color-mix(in srgb, var(--fx-text) 5%, transparent);
+  color: inherit;
+  overflow-wrap: anywhere;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.prose :where(ul, ol) { margin: 1.1em 0; padding-left: 1.45em; }
+.prose :where(ul) { list-style: disc; }
+.prose :where(ol) { list-style: decimal; }
+.prose :where(li) { margin: 0.5em 0; padding-left: 0.2em; }
+.prose :where(li)::marker { color: var(--fx-faint); font-weight: var(--weight-body); }
+.prose :where(li > ul, li > ol) { margin: 0.4em 0; }
+.prose :where(ul ul) { list-style: circle; }
+.prose :where(ul ul ul) { list-style: square; }
+.prose :where(li > p) { margin: 0.4em 0; }
+
+.prose :where(blockquote) {
+  margin: 1.75em 0;
+  border-left: 2px solid color-mix(in srgb, var(--fx-accent) 55%, var(--line));
+  padding: 0.15em 1.15em;
+  color: var(--fx-muted);
+  font-style: normal;
+}
+
+.prose :where(blockquote p) { margin: 0; }
+.prose :where(blockquote p + p) { margin-top: 0.7em; }
+.prose :where(blockquote strong) { color: var(--fx-text); }
+
+.prose :where(hr) { margin: 2.4em 0; border: 0; border-top: 1px solid var(--line); }
+
+/* Fenced code scrolls inside its own rounded frame instead of stretching the
+   page; the scrollbar is restyled so it reads as part of the block. Shiki
+   writes the theme's `background-color`/`color` inline on <pre>, so the panel
+   colour needs !important to stay in the site palette. */
+.prose :where(pre) {
+  margin: 1.5em 0;
+  border: 1px solid color-mix(in srgb, var(--code-block-text) 12%, var(--code-block-bg));
+  border-radius: 0.4rem;
+  padding: 1rem 1.1rem;
+  background: var(--code-block-bg) !important;
+  color: var(--code-block-text);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  tab-size: 2;
+}
+
+.prose :where(pre code) {
+  display: block;
+  min-width: max-content;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-family: var(--md-mono);
+  font-size: var(--type-small);
+  font-weight: var(--weight-body);
+  line-height: 1.65;
+  white-space: pre;
+  overflow-wrap: normal;
+  box-decoration-break: slice;
+  -webkit-box-decoration-break: slice;
+}
+
+.prose :where(pre)::-webkit-scrollbar { height: 8px; }
+.prose :where(pre)::-webkit-scrollbar-track { background: transparent; }
+.prose :where(pre)::-webkit-scrollbar-thumb { border-radius: 999px; background: color-mix(in srgb, var(--code-block-text) 24%, transparent); }
+
+/* A restrained edge leaves the image itself in charge of the composition. */
+.prose :where(img) {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 1.5em auto;
+  border: 1px solid var(--fx-line);
+  border-radius: 0.4rem;
+}
+
+.prose :where(p > img:only-child) { margin-block: 1.5em; }
+.prose :where(figure) { margin: 1.6em 0; }
+.prose :where(figcaption) { margin-top: 0.6rem; color: var(--fx-faint); font-size: var(--type-small); text-align: center; }
+
+/* Tutorial screenshots arrive as <figure> from `remark-figure-images`, already
+   carrying width/height, so the box is reserved before the bytes land. They keep
+   their own width instead of being stretched to the column: a 243 px terminal
+   crop blown up to 720 px is exactly the blur this site does not want. */
+.prose .post-figure {
+  width: auto;
+  max-width: min(100%, 46rem);
+  margin: 1.9em auto;
+}
+/* Screenshots here are mostly dark terminals on a dark page. A hairline frame
+   plus a slightly deeper fill keeps them from bleeding into the article
+   background, and the radius matches the code frames. */
+.prose .post-figure :where(img) {
+  width: auto;
+  max-width: 100%;
+  margin: 0 auto;
+  border: 1px solid color-mix(in srgb, var(--fx-line) 80%, transparent);
+  border-radius: 0.4rem;
+  background: #0b0e17;
+}
+.prose .post-figure :where(figcaption) { margin-top: 0.7rem; }
+
+.lyric-block {
+  position: relative;
+  margin: 2em 0;
+  border-left: 1px solid color-mix(in srgb, var(--fx-accent) 45%, var(--line));
+  padding: 0.1em 1.25em;
+  color: var(--fx-muted);
+}
+
+.lyric-block p { margin: 0.5rem 0; }
+.lyric-en,
+.lyric-ja { color: var(--accent-primary-soft); }
+.lyric-cn { color: var(--fx-faint); }
+
+/* Disclosures use the same open, ruled treatment as the reference tables. */
+.prose details {
+  margin: 1.5rem 0;
+  border-block: 1px solid var(--line);
+}
+
+.prose details > summary {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.85rem 0.25rem;
+  color: var(--fx-text);
+  font-size: var(--type-body);
+  font-weight: var(--weight-strong);
+  line-height: 1.4;
+  cursor: pointer;
+  list-style: none;
+  transition: background 0.2s var(--ease), color 0.2s var(--ease);
+}
+
+.prose details > summary::-webkit-details-marker { display: none; }
+
+.prose details > summary::after {
+  margin-left: auto;
+  color: var(--fx-accent);
+  font-size: var(--type-body);
+  font-weight: var(--weight-display);
+  line-height: 1;
+  content: '+';
+  transition: transform 0.22s var(--ease);
+}
+
+.prose details[open] > summary::after { transform: rotate(45deg); }
+.prose details > summary:hover { background: color-mix(in srgb, var(--fx-accent) 6%, transparent); }
+.prose details[open] > summary { border-bottom: 1px solid var(--fx-line); }
+.prose details > :not(summary) { margin-inline: 0.25rem; }
+.prose details > :not(summary):first-of-type { margin-top: 0.9rem; }
+.prose details > :not(summary):last-child { margin-bottom: 0.95rem; }
+.prose details .code-block { margin-block: 0.9rem; }
+.prose details .code-block pre { margin-block: 0; }
+.prose details > pre { margin-block: 0.9rem; }
+
+.prose figure.album-cover { margin: 1.75rem 0; text-align: center; }
+
+.prose figure.album-cover img {
+  display: block;
+  width: 100%;
+  max-width: 30rem;
+  margin-inline: auto;
+  border-radius: 0.4rem;
+}
+
+.prose figure.album-cover figcaption {
+  margin-top: 0.7rem;
+  color: var(--fx-faint);
+  font-size: var(--type-meta);
+  /* Captions are Chinese here: added tracking is for uppercase Latin only. */
+  letter-spacing: var(--tracking-body);
+}
+
+.prose .table-wrapper {
+  position: relative;
+  margin: 1.5em 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  border-block: 1px solid var(--line);
+}
+
+.prose .table-wrapper :where(table) {
+  width: 100%;
+  min-width: 32rem;
+  margin: 0;
+  border-collapse: collapse;
+  font-size: var(--type-small);
+  line-height: var(--leading-prose);
+}
+
+.prose .table-wrapper :where(th, td) {
+  padding: 0.9em 0.85em;
+  border-bottom: 1px solid var(--line-soft);
+  vertical-align: top;
+  text-align: left;
+}
+
+.prose .table-wrapper :where(thead th) {
+  border-bottom: 1px solid var(--line);
+  color: var(--fx-text);
+  font-weight: var(--weight-strong);
+  white-space: nowrap;
+}
+
+.prose .table-wrapper :where(tbody tr:last-child td) { border-bottom: 0; }
+.prose .table-wrapper :where(th, td):first-child { padding-left: 1rem; }
+.prose .table-wrapper :where(th, td):last-child { padding-right: 1rem; }
+.prose .table-wrapper::-webkit-scrollbar { height: 8px; }
+.prose .table-wrapper::-webkit-scrollbar-track { background: transparent; }
+.prose .table-wrapper::-webkit-scrollbar-thumb { border-radius: 999px; background: color-mix(in srgb, var(--fx-text) 16%, transparent); }
+
+/* Phones: tables shrink to the column and wrap long values instead of hiding
+   the right edge of a horizontally scrolling card. */
+@media (max-width: 720px) {
+  .prose .table-wrapper :where(table) { min-width: 0; }
+  .prose .table-wrapper :where(th, td) { padding: 0.6em 0.65em; overflow-wrap: anywhere; }
+  .prose .table-wrapper :where(thead th) { white-space: normal; }
+  .prose .table-wrapper :where(th, td):first-child { min-width: 5.5rem; padding-left: 0.75rem; }
+  .prose .table-wrapper :where(th, td):last-child { padding-right: 0.75rem; }
+}

@@ -71,7 +71,9 @@ Astro 5 静态站点（`output: 'static'`），Tailwind CSS 4（通过 `@tailwin
     │   ├── site.ts               表格包裹 / 回到顶部 / 导航抽屉
     │   ├── article.ts            文章页入口
     │   ├── article-tools.ts      文章工具条（收藏、分享）
-    │   ├── article-enhancements.ts  阅读进度 / 续读 / 代码块复制 / 图片灯箱 / 目录高亮
+    │   ├── article-enhancements.ts  阅读进度 / 续读 / 目录高亮与文章生命周期
+    │   ├── article-code.ts      代码块工具条 / 复制 / 键盘切换代码标签
+    │   ├── article-lightbox.ts  图片灯箱 / 缩放 / 相册导航
     │   ├── comments.ts           评论区（IntersectionObserver 懒加载）
     │   ├── ncm.ts                /tools/ncm 的页面控制器
     │   ├── sushi.ts              /tools/sushi 的页面控制器（寿司郎计算器）
@@ -92,6 +94,8 @@ Astro 5 静态站点（`output: 'static'`），Tailwind CSS 4（通过 `@tailwin
     └── styles/
         ├── theme.css              设计 token（亮/暗两套）——颜色的唯一来源
         ├── global.css             Tailwind v4 入口（@import / @plugin / @theme / @source）+ 全局组件类
+        ├── prose.css              正文排版；仅文章、碎碎念和隐私页引入
+        ├── article.css            文章布局 / 目录 / 代码工具条 / 灯箱；仅文章页引入
         ├── island.css             动态岛（头部胶囊 + 展开面板）的全部样式，唯一归属
         └── tools/*.css           各工具页私有样式
 ```
@@ -252,7 +256,7 @@ node .verify/lead-style-diff.mjs --base=http://127.0.0.1:4321 --compare=.verify/
 
 ## 6. 样式编译：Tailwind v4 + daisyUI 5
 
-样式入口是 `src/styles/global.css`：`@import 'tailwindcss' source(none)`、`@plugin '@tailwindcss/typography'`、`@plugin 'daisyui' { exclude: ... }`、`@theme`（原 `tailwind.config.mjs` 的扩展）与 `@source`。几个必须记住的点：
+样式入口是 `src/styles/global.css`：`@import 'tailwindcss' source(none)`、`@plugin 'daisyui' { exclude: ... }`、`@theme`（原 `tailwind.config.mjs` 的扩展）与 `@source`。正文由 `prose.css` 完整定义，不再叠加 typography 插件生成的默认排版。几个必须记住的点：
 
 - **daisyUI 5 不会自动 tree-shake。** 它的 `addComponents` 默认输出全部组件，所以 `global.css` 用 `exclude` 明确排掉了本站未使用的约 58 个组件。**新增组件类前，先用渲染后的 HTML 确认组件名已在 `exclude` 里移除**，否则会静默丢失样式。当前实际用到的是 `button` / `badge` / `modal`。
 - **`source(none)` 关掉 Tailwind 的自动内容探测**，只认 `@source` 明确列出的文件。默认探测会扫整个项目（遵守 `.gitignore`），`pnpm-lock.yaml`、`ARCHITECTURE.md` 里任何一个像工具类的普通词都会被编译成一条没人匹配的规则——实测它负责了产物里 35 条「永不匹配」选择器中的 7 条：`.absolute`、`.backdrop-filter`、`.contents`、`.table`、`.text-white`、`.text-wrap`、`.text-base-content/35`。**剩下那些（`.static`、`.container`、`.blur`、`.filter`、`.transform`、`.italic`、`.resize`）扫不掉**，因为它们出在我们自己 `<style>` 块里的 `position: static`、`filter:`、`transform:` 这些声明文本上——不要为了消掉它们去改扫描配置，那是白费劲。`@source not '../content/**'` 继续把文章正文排除，避免散文里的 `card`、`step`、`stack` 命中 daisyUI 组件名把整套组件拉进产物。
@@ -260,7 +264,13 @@ node .verify/lead-style-diff.mjs --base=http://127.0.0.1:4321 --compare=.verify/
 - **不要写死 daisyUI 旧版本的变量名。** v5 使用 `--color-primary` / `--color-base-content`（完整 oklch 颜色），不再有 `--p` / `--bc` / `--b1`。工具页里的半透明色统一写成 `color-mix(in srgb, var(--color-primary) 20%, transparent)`。
 - **不要用 `oklch(from … l c h / a)` 这种相对颜色写法。** 它和 `color-mix()` 表达同一件事（同一个颜色、指定 alpha），但相对颜色要 Chrome/Edge 122、Safari 18；`color-mix()` 从 Chrome/Edge 111、Safari 16.2、Firefox 113 就有，正好落在基线内。两者等价性已逐像素验证：冻结动画后在 12 个页面上比对 67,622 个颜色值，零差异（主题切换带过渡，采样前若不禁用过渡会采到中间色，产生 1–2/255 的假差异）。
 - **`backdrop-filter` 只允许出现在「打开时才存在」的浮层上**：对话框 `::backdrop`、抽屉面板、跳过链接。它曾经也用在三个**滚动期间一直在场**的元素上——返回顶部按钮、代码块复制按钮、粘性文章目录——那意味着每滚一帧，合成器都要把这几块后面的内容重新取景 + 模糊一次。三处现在都是不透明表面（`--fx-surface-strong` / `--fx-surface`），实测差异分别是 15/255 与 3/255。新增滚动期常驻的浮层请用不透明背景。
-- 产物仍集中在单个 `dist/_astro/about.*.css`（重构前 107.5 KB / gzip 19.4 KiB，现在 102.8 KB / gzip 18.8 KiB；全站 CSS 合计 135.7 KB / gzip 23.3 KiB，82 个页面全都链接共享包），工具页样式单独成文件（`sushi` 14.5 KB、`ncm` 8.3 KB，只在对应路由加载）。文件名带内容哈希、且不叫 `global`，容易误认成「只有 about 页用」——它是全站共享包，改任何全局样式都会改名。
+- 全站共享包仍可能命名为 `dist/_astro/about.*.css`，它由 `BaseLayout` 引入，文件名不代表只服务关于页。`prose.css` 只在文章、碎碎念和隐私页加载，`article.css` 只在文章页加载；工具页继续各自加载私有样式。不要把这些页面专属样式重新放回共享入口。
+
+### 文章增强与离线缓存
+
+`article-enhancements.ts` 负责文章级的初始化和清理，并把同一个 `AbortSignal` 交给代码块和灯箱模块。阅读进度只按 `[data-article-body]` 正文范围计算，不包含相关文章和评论；目录使用缓存的标题位置与共享滚动帧更新，滚动时不读取布局。图片加载、字体就绪、折叠内容和 `ResizeObserver` 负责重新测量；切页、隐藏页面或关闭页面时保存待写入的阅读进度。
+
+`public/sw.js` 按 Service Worker 的作用域划分缓存，只清理本站拥有的旧版本。页面请求使用网络优先，静态资源使用缓存优先并后台更新，所有缓存写入均由 `event.waitUntil()` 保活。音视频、Range 请求、非 GET 请求及作用域外的资源不进入缓存；运行时缓存保持 120 项上限。
 
 ### 粒子背景（`src/scripts/atmosphere.ts`）
 
