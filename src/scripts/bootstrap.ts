@@ -4,8 +4,9 @@ import './service-worker';
 
 // Decorative animation stays a deferred import so it never blocks first paint.
 // Reading pages keep the BGA too; its SVG keyframes are replayed on a fixed
-// canvas with a throttled loop that stays alive while the reader scrolls.
-// Re-check after ClientRouter navigation because this module itself is cached.
+// canvas, once per native animation frame (no FPS ceiling), and the loop stays
+// alive while the reader scrolls. Re-check after ClientRouter navigation
+// because this module itself is cached.
 const syncAtmosphere = () => {
   if (document.documentElement.dataset.ambientMotion === 'true') {
     void import('./atmosphere').then(({ startAtmosphere }) => startAtmosphere());

@@ -69,18 +69,18 @@ if (results.some((result) => result.assetUrls.some((asset) => /atmosphere\.[\w-]
   process.exitCode = 1;
 }
 
-// The BGA runs continuously on reading pages; it must stay cheap. It paces
-// itself off the panel's own cadence (requestAnimationFrame + a learned
-// interval), capped so a high-refresh display cannot multiply the per-frame
-// fill count, and it must not freeze while the reader scrolls.
+// The BGA runs continuously on reading pages and is deliberately uncapped: one
+// paint per native animation frame, so 144 Hz and 240 Hz panels get the cadence
+// the motion was authored for. What keeps that honest is that no frame is ever
+// asked for twice — no timer pacing, no FPS ceiling, no second rAF per paint —
+// and that the decoration never freezes while the reader scrolls.
 const atmosphere = await readFile(new URL('../src/scripts/atmosphere.ts', import.meta.url), 'utf8');
-const cadenceCap = Number(/const TARGET_FPS = (\d+)/.exec(atmosphere)?.[1]);
-if (!/requestAnimationFrame\(render\)/.test(atmosphere) || !/frameInterval/.test(atmosphere)) {
-  console.error('Performance invariant failed: the atmosphere loop must stay cadence-throttled with requestAnimationFrame.');
+if (!/frame = requestAnimationFrame\(render\)/.test(atmosphere)) {
+  console.error('Performance invariant failed: the atmosphere must paint on the native animation frame via requestAnimationFrame.');
   process.exitCode = 1;
 }
-if (!Number.isFinite(cadenceCap) || cadenceCap < 30 || cadenceCap > 120) {
-  console.error('Performance invariant failed: the atmosphere cadence cap must stay declared between 30 and 120 fps.');
+if (/TARGET_FPS|frameInterval|displayFrame|setTimeout\(/.test(atmosphere)) {
+  console.error('Performance invariant failed: the atmosphere is uncapped by design; timer pacing and FPS ceilings belong out of the loop.');
   process.exitCode = 1;
 }
 if (/pauseForScroll/.test(atmosphere)) {

@@ -37,6 +37,7 @@ Astro 5 静态站点（`output: 'static'`），Tailwind CSS 4（通过 `@tailwin
 │   ├── validate-content.mjs    pnpm validate:content
 │   ├── smoke.mjs               pnpm smoke
 │   ├── perf-audit.mjs          pnpm perf:audit（关键路径体积与运行时不变式）
+│   ├── perf/bga-frames.mjs     pnpm perf:frames（无头 Chrome 实测粒子层帧率）
 │   └── dist-fingerprint.mjs    pnpm dist:fingerprint
 └── src/
     ├── components/            全部按域分目录，不往 components/ 根目录放文件
@@ -63,8 +64,8 @@ Astro 5 静态站点（`output: 'static'`），Tailwind CSS 4（通过 `@tailwin
     ├── scripts/                浏览器端入口，由 Astro 打包为可缓存模块
     │   ├── bootstrap.ts          按需加载其余模块的唯一入口
     │   ├── theme.ts              主题控制器（首屏由 BaseLayout 内联小脚本兜底）
-    │   ├── atmosphere.ts         粒子背景（原站 SVG 关键帧 + Canvas；上限 60fps，
-    │   │                         帧超时自动降到 24fps，弱设备只画静帧。见 §6「粒子背景」）
+    │   ├── atmosphere.ts         粒子背景（原站 SVG 关键帧 + Canvas；不设 FPS 上限，
+    │   │                         每个原生动画帧画一次，弱设备只画静帧。见 §6「粒子背景」）
     │   ├── player.ts             动态岛音乐播放器
     │   ├── home-hero-motion.ts   首页主视觉的指针视差（跟随可见性 / 动效偏好）
     │   ├── search.ts             站内搜索（首次打开时才由 bootstrap.ts 按需加载）
@@ -252,6 +253,16 @@ node .verify/lead-style-diff.mjs --base=http://127.0.0.1:4321 --compare=.verify/
 
 **先量再改**：这套工具第一次跑出来的结论（粒子画布吃掉了空转期间几乎全部主线程，而每帧的绘制本身几乎不花时间）和「把绘制写快一点」的直觉正好相反。
 
+其中「真实绘制次数」这一项已经固化成仓库内的脚本 `scripts/perf/bga-frames.mjs`，因为它守的不是一次性的数字，而是一条长期契约——**粒子层不设帧数上限**：
+
+```bash
+pnpm preview            # 另开一个终端
+pnpm perf:frames        # 默认量 http://127.0.0.1:4321/
+pnpm perf:frames --url http://127.0.0.1:4321/posts/<slug>/ --ms 3000
+```
+
+它用 CDP 驱动无头 Chrome，在 `clearRect` 上打桩、只统计 `#atmosphere-canvas` 的清屏次数，再除以墙钟时间：帧率低于 50 fps、画布后备分辨率为 0、页面有 console 报错或异常，任一出现就以 1 退出。无头 Chrome 不做垂直同步，量出来通常远高于 60 fps（本机 1440×900 下约 165 fps），这正好证明没有任何内部限帧——**如果哪天它掉回 60 附近，说明有人又把配速加回来了**。其余脚本是一次性取证工具，留在 `.verify/perf/`。
+
 ---
 
 ## 6. 样式编译：Tailwind v4 + daisyUI 5
@@ -274,18 +285,18 @@ node .verify/lead-style-diff.mjs --base=http://127.0.0.1:4321 --compare=.verify/
 
 ### 粒子背景（`src/scripts/atmosphere.ts`）
 
-这一层是**全站唯一在加载后还一直跑的东西**，所以也是低端机上唯一能把主线程吃掉的装饰。用 CDP trace + 打了桩的 `requestAnimationFrame` 量过之后，结论和直觉相反：**画一帧几乎不花时间**（87 个椭圆 fill 的主线程耗时 < 0.1 ms），**花钱的是「帧」本身**——每个 rAF 都会拖着一次样式重算、prepaint、层更新和一次合成提交，画不画都一样。旧实现在无 vsync 的面板上每秒请求 165 帧、只画其中一半，却为全部 165 帧付了流水线。所以现在的设计围绕「帧能少则少」，不是「帧能便宜则便宜」：
+这一层是**全站唯一在加载后还一直跑的东西**。按站主要求它**不设 FPS 上限**：每个原生动画帧画一次，144 Hz / 240 Hz 面板按面板自己的节奏播放，不再被压到 60 Hz 的台阶上。`elapsed` 累加的是真实 delta，所以 5 秒周期是墙钟时间——24 Hz 与 240 Hz 上粒子移动的每秒距离一致，无上限只改变平滑度，不改变速度。
 
-1. **上限 60fps**（`TARGET_FPS`），并把间隔对齐到整数个面板帧；`hardwareConcurrency ≤ 4` 的设备上限直接是 30fps。
-2. **早到的帧用定时器等**，不再空转一个 rAF：定时器负责配速、rAF 只负责落帧，一次绘制 = 一个定时器 + 一个动画帧。`elapsed` 累加的是真实发生的 delta，所以 5 秒周期不受影响。
-3. **自适应降帧**：绘制帧比请求的间隔迟到太多，说明设备已经跟不上，间隔按 1.3 倍退让到最低 24fps；恢复正常后再逐步收回来。半帧的宽限是必须的——落在 vsync 另一侧的帧不是设备在挣扎。
-4. **弱设备只画静帧**：`deviceMemory ≤ 2` 或 `hardwareConcurrency ≤ 2` 时停在 `STILL_PROGRESS`（0.34，循环里圆最密的一刻），不启动循环。
-5. **后备缓冲最多 1 个设备像素 / CSS 像素**：这层是 11% alpha 的淡淡一片，砍掉的高分辨率填充与每帧纹理上传在视网膜屏上是白赚的。
-6. 关键帧数据是**列式存储 + 按 track 切 `Float32Array` 视图**。`src/data/atmosphere-keyframes.json` 只存每个属性到「最后一个还在变的帧」（`k[track][property]`），加载时补回 21 帧——**补回去是必须的**：采样器把给它的关键帧摊在整个 5 秒上，只截断不补齐会让本该停下的粒子继续漂。等价性由 `.verify/perf/verify-keyframes.mjs` 逐点比对（87 track × 4 属性 × 2001 个采样点）。
+「无上限」不等于「无预算」，现在守住的是**不为同一帧请求两次**：
 
-效果（`/posts/maimai-dx-hdd-setup/`，4× CPU 节流，3 秒空转窗口）：主线程 `TaskDuration` 0.446 s → 0.084 s，样式重算 497 → 87 次，合成提交 498 → 88 次。模块体积 47.6 KB / gzip 8.7 KB → 31.1 KB / gzip 6.0 KB。
+1. **只走 rAF**：没有定时器配速、没有 `TARGET_FPS`、没有自适应降帧。一次绘制只对应一个动画帧；面板自己跳过的帧不会由脚本补回来，所以高刷屏上的代价随刷新率线性增长，这是无上限的必然结果，不是回归。旧的 60fps + 定时器方案（含 `frameInterval` 与 24fps 退让）已整体删除，`perf:audit` 会拦住它们被重新引入。
+2. **弱设备只画静帧**：`deviceMemory ≤ 2` 或 `hardwareConcurrency ≤ 2` 时停在 `STILL_PROGRESS`（0.34，循环里圆最密的一刻），不启动循环；`prefers-reduced-motion: reduce` 同样只画静帧。两者都是「不跑循环」，不是「跑慢一点的循环」。
+3. **后备缓冲最多 1 个设备像素 / CSS 像素**：这层是 11% alpha 的淡淡一片，砍掉的高分辨率填充与每帧纹理上传在视网膜屏上是白赚的。
+4. 关键帧数据是**列式存储 + 按 track 切 `Float32Array` 视图**。`src/data/atmosphere-keyframes.json` 只存每个属性到「最后一个还在变的帧」（`k[track][property]`），加载时补回 21 帧——**补回去是必须的**：采样器把给它的关键帧摊在整个 5 秒上，只截断不补齐会让本该停下的粒子继续漂。等价性由 `.verify/perf/verify-keyframes.mjs` 逐点比对（87 track × 4 属性 × 2001 个采样点）。
 
-**改这个文件后请用 `.verify/perf/` 里的工具复核**：`idle-probe.mjs`（空转开销与事件归因）、`instrument.mjs`（真实绘制次数与 rAF 节奏）、`measure.mjs`（多条路由的对照表）。`pnpm perf:audit` 只守住几条文本身就能表达的约束（`TARGET_FPS` 区间、必须走 rAF、不许 `pauseForScroll`），它守不住「帧是不是太多了」。
+每帧绘制本身仍然几乎不花钱（87 个椭圆的主线程耗时 < 0.1 ms，见 `.verify/perf/bench.html`）；钱花在「帧」的流水线上，而无上限模式就是明确选择按面板刷新率付这笔钱。旧版的对照数据（`/posts/maimai-dx-hdd-setup/`，4× CPU 节流，3 秒空转：主线程 `TaskDuration` 0.446 s → 0.084 s）属于已删除的限帧实现，不再代表当前行为。
+
+**改这个文件后请复核两层**：`pnpm perf:frames`（`scripts/perf/bga-frames.mjs`，真实绘制次数与帧率——掉到 60 fps 附近就说明配速回来了）和 `.verify/perf/` 里的工具（`idle-probe.mjs` 空转开销与事件归因、`instrument.mjs` 每帧回调耗时、`measure.mjs` 多条路由的对照表）。`pnpm perf:audit` 只守住几条文本身就能表达的约束（必须每帧走 rAF、不许定时器配速或 FPS 上限、不许 `pauseForScroll`），它守不住「帧是不是太多了」——在当前设计里，帧多不多由面板决定。
 
 ### 滚动路径
 
