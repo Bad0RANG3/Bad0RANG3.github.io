@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 
 /**
@@ -45,6 +45,37 @@ const jpegSize = (buffer: Buffer): ImageSize | undefined => {
   return undefined;
 };
 
+/**
+ * Responsive variants of a `public/` image, by the naming convention the build
+ * relies on: `cover.webp` also ships `cover-480.webp`, `cover-736.webp`, and so
+ * on. Only widths whose file actually exists are emitted, so an image without
+ * variants simply renders a plain `src` and nothing else changes.
+ *
+ * The source file itself stays in the set (at its intrinsic width) so a large
+ * viewport can still pick the original.
+ *
+ * Paths stay site-relative; run the result through `withBaseSrcSet` before it
+ * reaches the markup.
+ */
+export function imageSrcSet(sitePath: string | undefined, widths: number[]): string | undefined {
+  if (!sitePath || !sitePath.startsWith('/') || sitePath.startsWith('//')) return undefined;
+  const dot = sitePath.lastIndexOf('.');
+  if (dot <= sitePath.lastIndexOf('/')) return undefined;
+  const stem = sitePath.slice(0, dot);
+  const extension = sitePath.slice(dot);
+
+  const entries: string[] = [];
+  for (const width of widths) {
+    const variant = `${stem}-${width}${extension}`;
+    if (hasPublicFile(variant)) entries.push(`${variant} ${width}w`);
+  }
+  if (entries.length === 0) return undefined;
+
+  const intrinsic = getPublicImageSize(sitePath);
+  entries.push(`${sitePath}${intrinsic ? ` ${intrinsic.width}w` : ''}`);
+  return entries.join(', ');
+}
+
 /** `path` is site-relative, e.g. `/cyanotype.webp`. */
 export function getPublicImageSize(sitePath: string | undefined): ImageSize | undefined {
   if (!sitePath || !sitePath.startsWith('/') || sitePath.startsWith('//')) return undefined;
@@ -59,4 +90,19 @@ export function getPublicImageSize(sitePath: string | undefined): ImageSize | un
   }
   cache.set(sitePath, size);
   return size;
+}
+
+const fileCache = new Map<string, boolean>();
+
+function hasPublicFile(sitePath: string): boolean {
+  const cached = fileCache.get(sitePath);
+  if (cached !== undefined) return cached;
+  let exists = false;
+  try {
+    exists = statSync(path.join(publicDir, decodeURIComponent(sitePath.slice(1)))).isFile();
+  } catch {
+    exists = false;
+  }
+  fileCache.set(sitePath, exists);
+  return exists;
 }

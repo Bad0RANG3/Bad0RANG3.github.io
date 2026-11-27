@@ -31,21 +31,20 @@
    the reverse direction: a class the markup applies that has lost its rule. */
 @import 'tailwindcss' source(none);
 
-/* daisyUI 5 is only compiled for the component classes actually referenced
-   in the source, which keeps the shipped stylesheet small. */
 /* daisyUI 5 does not tree-shake on its own (its addComponents output is kept
-   whole), so the components this site never uses are excluded explicitly.
+   whole), so the shipped stylesheet is narrowed to an explicit allow-list.
    Audit the rendered HTML before removing a name from this list. */
 @plugin 'daisyui' {
   themes: light --default;
   logs: false;
-  exclude: skeleton, mask, status, checkbox, radio, collapse, fieldset, diff,
-    hover3d, textrotate, kbd, avatar, rating, stat, dropdown, filter, megamenu,
-    toggle, swap, link, hovergallery, select, mockup, calendar, divider, steps,
-    list, breadcrumbs, chat, radialprogress, aura, range, stack, fileinput,
-    carousel, alert, drawer, fab, input, toast, menu, tab, navbar, countdown,
-    textarea, card, label, indicator, progress, otp, table, hero, validator,
-    timeline, footer, loading, dock, tooltip, typography;
+  /* `include` rather than `exclude`: the allow-list keeps daisyUI's base layer
+     whole (its `:root` colours, svg reset and scrollbar rules are load-bearing)
+     and emits only the three components the markup actually uses -- `<dialog
+     class="modal">`, `.badge` and `.btn`. Everything else in the component
+     catalogue would be dead weight in the shipped stylesheet. Adding a daisyUI
+     component to a page means adding its name here. */
+  include: rootcolor, svg, scrollbar, properties, rootscrollgutter,
+    rootscrolllock, modal, button, badge;
 }
 
 /* Design tokens (colours, surfaces, type scale, motion) live in theme.css,

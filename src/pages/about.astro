@@ -1,5 +1,6 @@
 ---
-import { withBase } from '../lib/urls';
+import { imageSrcSet } from '../lib/images';
+import { withBase, withBaseSrcSet } from '../lib/urls';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { siteConfig } from '../config/site';
 import { projects } from '../config/projects';
@@ -8,6 +9,8 @@ import { getPublishedPosts } from '../lib/content';
 const { about, author, socials } = siteConfig;
 const posts = await getPublishedPosts();
 const year = new Date().getFullYear();
+
+const avatarSrcSet = withBaseSrcSet(imageSrcSet(author.avatar, [64, 128, 256]));
 
 const tools = [...about.techStack, ...about.devTools];
 const summary = [
@@ -45,6 +48,8 @@ const values = [
       <img
         class="about-avatar"
         src={withBase(author.avatar)}
+        srcset={avatarSrcSet}
+        sizes="112px"
         width="112"
         height="112"
         alt={`${author.name} 的头像`}

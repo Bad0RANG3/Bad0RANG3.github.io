@@ -9,7 +9,8 @@ import SearchModal from '../components/search/SearchModal.astro';
 import { ROUTES } from '../config/routes';
 import { SITE, siteConfig } from '../config/site';
 import { serializeJsonLd } from '../lib/text';
-import { siteUrl, withBase } from '../lib/urls';
+import { imageSrcSet } from '../lib/images';
+import { siteUrl, withBase, withBaseSrcSet } from '../lib/urls';
 
 interface Breadcrumb {
   name: string;
@@ -57,6 +58,10 @@ const siteRootUrl = siteUrl('/');
 const canonicalUrl = canonical ? siteUrl(canonical) : siteUrl(currentPath);
 const socialImageUrl = siteUrl(ogImage);
 const authorImageUrl = siteUrl(siteConfig.author.avatar);
+// The mascot is hidden below 1400px and on the home page, so it must not sit in
+// the critical path: `loading="lazy"` keeps the 30 KiB out of every first paint
+// that can never show it.
+const mascotSrcSet = withBaseSrcSet(imageSrcSet('/mascot/chibi-girl.webp', [176, 352]));
 const themeLight = SITE.THEME;
 const themeDark = SITE.THEME_DARK;
 const themeColorLight = SITE.THEME_COLOR;
@@ -222,10 +227,13 @@ const jsonLd = {
   <img
     class="site-mascot"
     src={withBase('/mascot/chibi-girl.webp')}
+    srcset={mascotSrcSet}
+    sizes="11rem"
     alt=""
-    width="640"
-    height="640"
+    width="448"
+    height="448"
     aria-hidden="true"
+    loading="lazy"
     decoding="async"
     fetchpriority="low"
     transition:persist="site-mascot"

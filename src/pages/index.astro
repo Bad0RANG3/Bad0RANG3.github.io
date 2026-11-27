@@ -1,9 +1,12 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { SOCIAL_ICONS, siteConfig } from '../config/site';
-import { withBase } from '../lib/urls';
+import { imageSrcSet } from '../lib/images';
+import { withBase, withBaseSrcSet } from '../lib/urls';
 
 const { author, socials } = siteConfig;
+// The portrait never renders wider than the left column of a 60rem hero.
+const portraitSrcSet = withBaseSrcSet(imageSrcSet('/HP.webp', [480, 720, 960]));
 const displaySocials = socials.filter((social) => ['GitHub', 'X', 'Telegram', 'BiliBili'].includes(social.name));
 ---
 
@@ -11,7 +14,16 @@ const displaySocials = socials.filter((social) => ['GitHub', 'X', 'Telegram', 'B
   <section class="home-hero site-frame" aria-labelledby="home-title">
     <figure class="hero-portrait" data-hero-portrait>
       <div class="hero-portrait__float">
-      <img src={withBase('/HP.webp')} alt={author.name + ' portrait illustration'} width="1200" height="1200" fetchpriority="high" decoding="async" />
+      <img
+        src={withBase('/HP.webp')}
+        srcset={portraitSrcSet}
+        sizes="(max-width: 720px) 19rem, 26.2rem"
+        alt={author.name + ' portrait illustration'}
+        width="1200"
+        height="1200"
+        fetchpriority="high"
+        decoding="async"
+      />
       </div>
     </figure>
     <div class="hero-identity">

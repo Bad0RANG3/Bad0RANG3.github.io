@@ -267,15 +267,30 @@ pnpm perf:frames --url http://127.0.0.1:4321/posts/<slug>/ --ms 3000
 
 ## 6. 样式编译：Tailwind v4 + daisyUI 5
 
-样式入口是 `src/styles/global.css`：`@import 'tailwindcss' source(none)`、`@plugin 'daisyui' { exclude: ... }`、`@theme`（原 `tailwind.config.mjs` 的扩展）与 `@source`。正文由 `prose.css` 完整定义，不再叠加 typography 插件生成的默认排版。几个必须记住的点：
+样式入口是 `src/styles/global.css`：`@import 'tailwindcss' source(none)`、`@plugin 'daisyui' { include: ... }`、`@theme`（原 `tailwind.config.mjs` 的扩展）与 `@source`。正文由 `prose.css` 完整定义，不再叠加 typography 插件生成的默认排版。几个必须记住的点：
 
-- **daisyUI 5 不会自动 tree-shake。** 它的 `addComponents` 默认输出全部组件，所以 `global.css` 用 `exclude` 明确排掉了本站未使用的约 58 个组件。**新增组件类前，先用渲染后的 HTML 确认组件名已在 `exclude` 里移除**，否则会静默丢失样式。当前实际用到的是 `button` / `badge` / `modal`。
+- **daisyUI 5 不会自动 tree-shake。** 它的 `addComponents` 默认输出全部组件，所以 `global.css` 用**白名单** `include` 只放行本站真正用到的 `modal` / `button` / `badge` 三个组件，外加 `rootcolor`、`svg`、`scrollbar`、`properties`、`rootscrollgutter`、`rootscrolllock` 六个 base 项。**新增组件类前，先把名字加进 `include`**，否则会静默丢失样式（这是白名单相对 `exclude` 黑名单的代价，换来的是「漏加会立刻表现为没样式」而不是「多打了 58 个组件没人发现」）。
+  - **实测：改成白名单并没有缩小产物。** 量过 `@layer daisyui*` 的五个子层，改前改后逐字节一致（合计约 13 KiB 裸文本）。原因是 daisyUI 的组件 CSS 被 Tailwind/Lightning 内联进 `@layer utilities` 那个三十多 KiB 的大块里，和自家工具类交织在同一层（块内还嵌着 `@media(width>=80rem)` 的响应式工具类），无法按 daisyUI 边界整段切除。共享包 gzip 前后是 15612 → 15628 B，属于噪声。**所以这个改动是为了语义清晰，不要期待体积收益**；想真正瘦 CSS 只能减少自己写的工具类用法。
 - **`source(none)` 关掉 Tailwind 的自动内容探测**，只认 `@source` 明确列出的文件。默认探测会扫整个项目（遵守 `.gitignore`），`pnpm-lock.yaml`、`ARCHITECTURE.md` 里任何一个像工具类的普通词都会被编译成一条没人匹配的规则——实测它负责了产物里 35 条「永不匹配」选择器中的 7 条：`.absolute`、`.backdrop-filter`、`.contents`、`.table`、`.text-white`、`.text-wrap`、`.text-base-content/35`。**剩下那些（`.static`、`.container`、`.blur`、`.filter`、`.transform`、`.italic`、`.resize`）扫不掉**，因为它们出在我们自己 `<style>` 块里的 `position: static`、`filter:`、`transform:` 这些声明文本上——不要为了消掉它们去改扫描配置，那是白费劲。`@source not '../content/**'` 继续把文章正文排除，避免散文里的 `card`、`step`、`stack` 命中 daisyUI 组件名把整套组件拉进产物。
   - 剩下的死选择器（`.verify/perf/dead-css.mjs` 会列出）只有 daisyUI 那几个无法单独排除的（`.modal-*`、`.btn-active`、`.btn-disabled`、`.theme-controller`）和少数确实写在源码 `<style>` 里的词（`blur`、`italic`、`relative`…）。**这个脚本同时会报「用到了但没有样式」**，那是比多几条规则更危险的回归方向；改动样式后跑一次。
 - **不要写死 daisyUI 旧版本的变量名。** v5 使用 `--color-primary` / `--color-base-content`（完整 oklch 颜色），不再有 `--p` / `--bc` / `--b1`。工具页里的半透明色统一写成 `color-mix(in srgb, var(--color-primary) 20%, transparent)`。
 - **不要用 `oklch(from … l c h / a)` 这种相对颜色写法。** 它和 `color-mix()` 表达同一件事（同一个颜色、指定 alpha），但相对颜色要 Chrome/Edge 122、Safari 18；`color-mix()` 从 Chrome/Edge 111、Safari 16.2、Firefox 113 就有，正好落在基线内。两者等价性已逐像素验证：冻结动画后在 12 个页面上比对 67,622 个颜色值，零差异（主题切换带过渡，采样前若不禁用过渡会采到中间色，产生 1–2/255 的假差异）。
 - **`backdrop-filter` 只允许出现在「打开时才存在」的浮层上**：对话框 `::backdrop`、抽屉面板、跳过链接。它曾经也用在三个**滚动期间一直在场**的元素上——返回顶部按钮、代码块复制按钮、粘性文章目录——那意味着每滚一帧，合成器都要把这几块后面的内容重新取景 + 模糊一次。三处现在都是不透明表面（`--fx-surface-strong` / `--fx-surface`），实测差异分别是 15/255 与 3/255。新增滚动期常驻的浮层请用不透明背景。
 - 全站共享包仍可能命名为 `dist/_astro/about.*.css`，它由 `BaseLayout` 引入，文件名不代表只服务关于页。`prose.css` 只在文章、碎碎念和隐私页加载，`article.css` 只在文章页加载；工具页继续各自加载私有样式。不要把这些页面专属样式重新放回共享入口。
+
+### 响应式图片（`src/lib/images.ts` + `plugins/remark-responsive-images.mjs`）
+
+图片全部放在 `public/`，没有 `astro:assets` 管线，因此变体是自己用 `sharp` 预生成的静态文件，命名固定为 `<stem>-<width>.<ext>`（例：`public/HP-480.webp`）。三条规则：
+
+- **`imageSrcSet(sitePath, widths)` 只产出站内相对路径**，调用方必须再过 `withBaseSrcSet()`。因为 Markdown 插件看不到 `BASE_PATH`（`/project-pages/` 构建），把 base 转换放在插件里会让同一份逻辑分裂两处。存在性用 `statSync` 逐个探测并缓存——变体不存在就跳过该档，一档都没有就返回 `undefined`，`<img>` 退化成单 `src`，不会产出坏 URL。
+- **原图永远作为最大档追加**（用 `getPublicImageSize()` 读头部得到的真实宽度）。这样 `srcset` 的最小档由现有文件决定，最大档永远是原图，不会因为漏生成某个尺寸而降低上限。
+- **`remark-responsive-images` 只管正文里的 `<img>`**（含 `node.type === 'html'` 的裸标签），模板里的 `<img>` 由各页面自己传 `srcset`。它必须排在 `remarkWithBase` **之前**，且遇到已带 `srcset` 的标签直接跳过。**这条是为同一个文件既当封面又当正文插图的情况准备的**：两处 `src` 若经过不同处理得到不同 URL，浏览器会下载两份；实测 `synthion-cyanotype` 的封面与正文插图现在都解析到 `cyanotype-736.webp`，只下载一次。
+- `sizes` 是估算值，改版式后要重新量。实测结果：首页 hero 在 1440×900 / DPR1 下选中 `HP-480.webp`（CSS 宽 304）；文章封面在 46rem 容器里选中 `736w`；mascot 桌面 1400px 以上选 `176w`（CSS 宽 74）。
+- **mascot 是 `loading="lazy"`**：它在首页和 ≤1399px 下都是 `display:none`，此前仍会以 `fetchpriority="low"` 下载 30 KiB。`fetchpriority` 只降优先级，不阻止请求，`<img>` 的请求在解析到标签时就发出——只有 `lazy` 或「用 JS 事后插入」能避免。
+
+**验收这类改动的方法是截图对比，不是看数字。** 用同一台静态服务器分别服务改动前后两份 `dist` 快照（不要用 `astro preview`，它自带压缩会污染体积读数），CDP 在固定视口 + `deviceScaleFactor` 下截图，然后逐像素差分。判据要设噪声地板：同一版本连拍两次，`home-1440` 因为 atmosphere canvas 在动会有 ~3% 的像素差，其余页面 <0.02%。实际结果（首页 483.1 → 323.2 KiB，-33%）里，`home-390` 的差异 18.8% 全部集中在 hero 圆形人像内部，热力图其余区域为纯 0；人像区域的 SSIM 是 0.981、平均绝对误差 1.94/255。
+
+**已知的剩余浪费**（评估过、暂不处理）：`public/ico.ico` 10952 B 里含 16/32/48 三个 PNG 条目，首页每次加载都取一次；`playfair-display-latin-var.woff2` 37.8 KiB 被 `<link rel="preload">`，而它只服务 2 个元素（站名字标 + 首页 h1）。两者都在首屏关键路径之外，收益 <40 KiB 且会牵动首屏排版策略。
 
 ### 文章增强与离线缓存
 

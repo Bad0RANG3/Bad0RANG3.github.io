@@ -23,8 +23,11 @@ const manifest = {
       purpose: 'any maskable',
     },
     {
-      src: withBase('/HP-avatar.webp'),
-      sizes: '256x256',
+      // Chrome fetches this icon on every page load for the installability
+      // check, so it stays at the smallest size that still satisfies the
+      // 192px requirement instead of the 256px master.
+      src: withBase('/HP-avatar-192.webp'),
+      sizes: '192x192',
       type: 'image/webp',
       purpose: 'any',
     },

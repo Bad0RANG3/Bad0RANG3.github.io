@@ -3,6 +3,7 @@ import sitemap from '@astrojs/sitemap';
 import tailwindcss from '@tailwindcss/vite';
 import remarkWithBase from './plugins/remark-with-base.mjs';
 import remarkFigureImages from './plugins/remark-figure-images.mjs';
+import remarkResponsiveImages from './plugins/remark-responsive-images.mjs';
 import rehypeWrapTables from './plugins/rehype-wrap-tables.mjs';
 import rehypeCodeTabs from './plugins/rehype-code-tabs.mjs';
 import shikiCodeTabMeta from './plugins/shiki-code-tab-meta.mjs';
@@ -36,7 +37,7 @@ export default defineConfig({
   markdown: {
     // Figures carry their intrinsic size, so they must be rewritten before
     // `remark-with-base` touches the emitted `src`.
-    remarkPlugins: [remarkFigureImages, [remarkWithBase, { base }]],
+    remarkPlugins: [remarkFigureImages, [remarkResponsiveImages, { base }], [remarkWithBase, { base }]],
     rehypePlugins: [rehypeCodeTabs, rehypeWrapTables],
     // `github-dark`'s comment grey (#6A737D) measures 3.84:1 on this site's code
     // panel; the `-default` variant's #8B949E clears 4.5:1 in both themes. The

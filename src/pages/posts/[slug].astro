@@ -1,7 +1,7 @@
 ---
 import '../../styles/prose.css';
 import '../../styles/article.css';
-import { withBase } from '../../lib/urls';
+import { withBase, withBaseSrcSet } from '../../lib/urls';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PostMeta from '../../components/blog/PostMeta.astro';
 import TagList from '../../components/blog/TagList.astro';
@@ -13,7 +13,7 @@ import { STAGGER } from '../../config/ui';
 import { postPath } from '../../config/routes';
 import { getPublishedPosts, getPostReadingMinutes, getPostWordCount } from '../../lib/content';
 import { formatDate } from '../../lib/date';
-import { getPublicImageSize } from '../../lib/images';
+import { getPublicImageSize, imageSrcSet } from '../../lib/images';
 import { isOgAvailable, ogImagePath } from '../../lib/og';
 import type { MarkdownHeading } from 'astro';
 
@@ -55,6 +55,7 @@ const wordCount = getPostWordCount(post);
 const headings = (renderedHeadings ?? []).filter((heading: MarkdownHeading) => heading.depth >= 2 && heading.depth <= 3);
 const seriesIndex = seriesPosts.findIndex((item) => item.slug === post.slug);
 const coverSize = getPublicImageSize(post.data.cover);
+const coverSrcSet = withBaseSrcSet(imageSrcSet(post.data.cover, [480, 736]));
 // Posts without a cover share a generated title card when one was built.
 const shareImage = post.data.cover ?? (await isOgAvailable() ? ogImagePath(post.slug) : undefined);
 const seriesPrevious = seriesIndex > 0 ? seriesPosts[seriesIndex - 1] : undefined;
@@ -105,7 +106,7 @@ const seriesNext = seriesIndex >= 0 ? seriesPosts[seriesIndex + 1] : undefined;
       <div class="rule-hairline mt-8"></div>
     </header>
 
-    {post.data.cover && <img src={withBase(post.data.cover)} alt={post.data.coverAlt ?? post.data.title} width={coverSize?.width} height={coverSize?.height} class="article-cover reveal mb-10 h-auto w-full object-cover" style={`--reveal-delay:${STAGGER.POST_COVER}ms`} fetchpriority="high" decoding="async" />}
+    {post.data.cover && <img src={withBase(post.data.cover)} srcset={coverSrcSet} sizes="(max-width: 768px) 100vw, 46rem" alt={post.data.coverAlt ?? post.data.title} width={coverSize?.width} height={coverSize?.height} class="article-cover reveal mb-10 h-auto w-full object-cover" style={`--reveal-delay:${STAGGER.POST_COVER}ms`} fetchpriority="high" decoding="async" />}
 
     <div class:list={['article-layout', headings.length > 0 && 'has-toc']}>
       {headings.length > 0 && (

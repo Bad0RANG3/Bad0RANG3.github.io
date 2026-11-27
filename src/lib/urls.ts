@@ -25,6 +25,24 @@ export function withBase(path = '/'): string {
   return suffix ? `${base}${suffix}` : base;
 }
 
+/**
+ * Applies `withBase` to every URL in a `srcset` string, keeping the width/density
+ * descriptors untouched. `imageSrcSet` returns site-relative paths because the
+ * Markdown plugins cannot see `BASE_URL`; this is where they become real URLs.
+ */
+export function withBaseSrcSet(srcSet: string | undefined): string | undefined {
+  if (!srcSet) return undefined;
+  return srcSet
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+    .map((entry) => {
+      const [href, ...descriptors] = entry.split(/\s+/);
+      return [withBase(href), ...descriptors].join(' ');
+    })
+    .join(', ');
+}
+
 export function siteUrl(path = '/'): string {
   return new URL(withBase(path), import.meta.env.SITE).toString();
 }
