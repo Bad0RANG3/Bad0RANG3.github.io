@@ -49,16 +49,21 @@ export const siteConfig = {
     { name: 'BiliBili', url: 'https://space.bilibili.com/482966540' },
   ],
   music: {
-    id: 3315349142,
-    title: 'main heroine',
+    id: 3453326488,
+    title: 'deep sea adventure',
     artist: 'Synthion',
-    album: 'Lone Wolf',
-    durationSeconds: 266.67,
-    durationLabel: formatMusicDuration(266.67),
-    audio: '/media/main-heroine.mp3',
-    lyrics: '/media/main-heroine.lrc',
-    cover: '/media/main-heroine-cover.webp',
-    officialUrl: 'https://music.163.com/song?id=3315349142',
+    album: 'aquamarine',
+    durationSeconds: 311.43,
+    durationLabel: formatMusicDuration(311.43),
+    // The full lossless master ships as-is: the island shows a byte-accurate
+    // loading ring while it downloads (see `player.ts`), so the extra 66 MiB
+    // buys real fidelity instead of a progress bar with nothing behind it.
+    audio: '/media/deep-sea-adventure.flac',
+    // Only fetched if the browser cannot decode the FLAC at all.
+    audioFallback: '/media/deep-sea-adventure.mp3',
+    lyrics: '/media/deep-sea-adventure.lrc',
+    cover: '/media/deep-sea-adventure-cover.webp',
+    officialUrl: 'https://music.163.com/song?id=3453326488',
     // Set PUBLIC_NCM_API_BASE to your authorised NeteaseCloudMusicApiEnhanced deployment.
     apiBase: musicApiBase,
   },

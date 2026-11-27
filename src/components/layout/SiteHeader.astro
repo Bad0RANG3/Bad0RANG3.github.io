@@ -3,7 +3,8 @@ import { siteConfig } from '../../config/site';
 import { ROUTES } from '../../config/routes';
 import MobileDrawer from './MobileDrawer.astro';
 import Icon from '../icons/Icon.astro';
-import { isActivePath, withBase } from '../../lib/urls';
+import { isActivePath, withBase, withBaseSrcSet } from '../../lib/urls';
+import { imageSrcSet } from '../../lib/images';
 
 interface Props { currentPath: string; }
 const { currentPath } = Astro.props;
@@ -14,14 +15,22 @@ const isActive = (href: string) => isActivePath(currentPath, href);
    the content fights the wide, airy column that look is built on. */
 const player = siteConfig.music;
 const playerCover = withBase(player.cover);
+const playerCoverSrcSet = withBaseSrcSet(imageSrcSet(player.cover, [64, 128, 192]));
+const avatarSrcSet = withBaseSrcSet(imageSrcSet(siteConfig.author.avatar, [64, 128, 256]));
 const playerAudio = withBase(player.audio);
+const playerFallback = withBase(player.audioFallback);
 const playerLyrics = withBase(player.lyrics);
 ---
 
 <header class="site-header">
   <a href="#main-content" class="skip-link">跳到内容</a>
 
-  <div class="dynamic-island music-island" id="site-island" data-open="false" data-volume-open="false" data-player-state="idle" data-visualizer="idle" data-api-base={player.apiBase} data-audio-src={playerAudio} data-lyrics-src={playerLyrics} data-song-id={String(player.id)} data-song-duration={String(player.durationSeconds)} data-song-title={player.title} transition:persist="site-music-player">
+  <div class="dynamic-island music-island" id="site-island" data-open="false" data-volume-open="false" data-player-state="idle" data-visualizer="idle" data-loading="idle" data-api-base={player.apiBase} data-audio-src={playerAudio} data-audio-fallback={playerFallback} data-lyrics-src={playerLyrics} data-song-id={String(player.id)} data-song-duration={String(player.durationSeconds)} data-song-title={player.title} transition:persist="site-music-player">
+    <span class="island-load-ring" aria-hidden="true"><span class="island-load-ring__hole"></span></span>
+    <div class="island-loader" aria-hidden="true">
+      <span class="island-loader__label">Now Loading...</span>
+      <span class="island-loader__percent" id="island-load-percent">0%</span>
+    </div>
     <button
       class="island-summary"
       id="site-island-toggle"
@@ -30,7 +39,7 @@ const playerLyrics = withBase(player.lyrics);
       aria-controls="site-island-panel"
       aria-label={`展开 ${player.title} 的播放器`}
     >
-      <img class="island-mini-art" src={playerCover} alt="" width="32" height="32" loading="eager" />
+      <img class="island-mini-art" src={playerCover} srcset={playerCoverSrcSet} sizes="26px" alt="" width="32" height="32" loading="eager" />
       <span class="island-mini-wave" data-audio-visualizer="compact" aria-hidden="true">
         {Array.from({ length: 6 }).map(() => <i />)}
       </span>
@@ -38,7 +47,7 @@ const playerLyrics = withBase(player.lyrics);
 
     <div class="island-panel island-player-panel" id="site-island-panel">
       <div class="island-player-heading">
-        <img class="island-player-art" src={playerCover} alt={`${player.album} 封面`} width="96" height="96" loading="eager" />
+        <img class="island-player-art" src={playerCover} srcset={playerCoverSrcSet} sizes="60px" alt={`${player.album} 封面`} width="96" height="96" loading="eager" />
         <div class="island-player-copy">
           <span class="island-player-title">{player.title}</span>
           <span class="island-player-artist">{player.artist}</span>
@@ -83,7 +92,11 @@ const playerLyrics = withBase(player.lyrics);
         </div>
       </div>
     </div>
-    <audio id="site-island-audio" src={playerAudio} preload="none" data-source-ready="true"></audio>
+    {/* No `src` here on purpose: `player.ts` streams the file through `fetch`
+        to measure real byte progress, caches it, then hands the blob over. An
+        `src` in the markup would make the browser start a second, unmeasured
+        download of the same 69 MiB the moment the panel opens. */}
+    <audio id="site-island-audio" preload="none"></audio>
   </div>
 
   <div class="header-actions">
@@ -99,7 +112,7 @@ const playerLyrics = withBase(player.lyrics);
 <nav class="site-nav" aria-label="站点导航">
   <div class="site-frame site-nav__inner">
     <a class="site-nav__brand" href={withBase(ROUTES.HOME)} aria-label={`${siteConfig.author.name} 首页`}>
-      <img class="site-nav__mark" src={withBase(siteConfig.author.avatar)} alt="" width="26" height="26" loading="eager" decoding="async" />
+      <img class="site-nav__mark" src={withBase(siteConfig.author.avatar)} srcset={avatarSrcSet} sizes="26px" alt="" width="26" height="26" loading="eager" decoding="async" />
       <span class="site-nav__wordmark">{siteConfig.author.name}</span>
     </a>
 

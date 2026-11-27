@@ -310,7 +310,8 @@ pnpm perf:frames --url http://127.0.0.1:4321/posts/<slug>/ --ms 3000
 
 - 结构与交互在 `src/components/layout/SiteHeader.astro` + `src/scripts/player.ts`；**样式全部归 `src/styles/island.css`**，`global.css` 里不应再出现任何 `.music-island` / `.dynamic-island` / `.header-action` 规则。同一个选择器在两个文件里各写一遍，就得靠 `!important` 打架——这正是重构前的问题。
 - 同一个组件里还渲染主站导航行 `.site-nav`：它是**文档流里的一行**（左侧站名 + 右侧文字链接），不是钉在视口上的图标栏，样式属于站点版式所以写在 `global.css`。这一行用 `padding-top` 为灵动岛预留出顶部那条带，`#main-content` 因此不再自带顶部内边距；改动顶部间距时先看这里，否则灵动岛会压住标题。
-- 形态切换只改 `data-open`、`data-player-state`、`data-visualizer`、`data-volume-open` 这几个属性，动画交给 CSS 过渡；JS 不写内联几何。展开/收起必须**可中断**：中途反向点击要从当前几何继续，而不是先塌成空壳。
+- 形态切换只改 `data-open`、`data-player-state`、`data-visualizer`、`data-volume-open`、`data-loading` 这几个属性，动画交给 CSS 过渡；JS 不写内联几何。展开/收起必须**可中断**：中途反向点击要从当前几何继续，而不是先塌成空壳。
+  - `data-loading` 是**唯一**允许 JS 写进样式系统的标量：`--island-load-progress`（0–1，`player.ts` 每读到一个响应分片就限流写入一次，步长小于 0.4% 的更新直接丢弃）。它和 `--visualizer-level`、`--player-progress` 同类——是状态标量，不是几何，所以不违反「JS 不写内联几何」。
   - 曾经还有第五个属性 `data-cue-active`（滚动到新章节时胶囊变成「小节提示」）。那套东西的触发条件是标记里的 `[data-island-cue]`，而**全站没有任何一个页面写过这个属性**，所以 `bindSectionCues()` 永远在第一行返回：对应的 JS、CSS 和标记都是死的，已一并删除（标记里也没有 `data-live-progress`，播放器里查它的那段同样是死的）。新增这类「滚动提示」请用 `lib/scroll.ts`，并给它一个真实存在的触发源。
 - **视觉规格对齐 iPhone 的灵动岛**，这不是随意调的，改之前先理解这几点：
   - 背景是**不透明纯黑**（`--island-bg: #000`），没有边框、没有 `backdrop-filter`。真机上它本来就是屏幕挖孔，不是一块玻璃面板。所以它和 `paper` / `paper-dark` 两套主题都无关。
@@ -318,6 +319,18 @@ pnpm perf:frames --url http://127.0.0.1:4321/posts/<slug>/ --ms 3000
   - 紧凑态是**两端分置**：左边专辑封面（26px、圆角 6px），右边 5 根白色细条波形，中间留空（真机那里是摄像头）。不要把两者居中凑在一起。
   - 展开态的信息层级是**歌名（白色粗体）→ 歌手（次级灰）→ 歌词（最弱）**，而不是反过来。
   - 波形**只有 `live` 会动**，且高度由 JS 从真实 AnalyserNode 频谱帧算出。`idle` / `off` 一律静止；`idle` 用一组不等高的静态剪影（像暂停的波形），不要用等高的横线——那看起来像加载指示器。
+- **音源是完整的无损母带（`public/media/deep-sea-adventure.flac`，约 69 MiB），不是转码副本**，所以首次加载必须给反馈。`<audio>` 元素没有任何可信的下载计数（`progress` 事件报的是浏览器自己的缓冲估算，`preload="none"` 时更不诚实），因此 `player.ts` 自己用 `fetch` 流式读取：`Content-Length` 作分母、`response.body.getReader()` 的分片累加作分子，读满后拼成 `Blob`、写进 Cache API（`b0-media-v1`）、再以 blob URL 交给元素。**这样总量只下载一次**——如果直接把 URL 塞给 `<audio>` 同时又 `fetch` 一遍，用户会为同一首歌付 2 × 69 MiB，而 Cache API 的命中让第二次访问静默、不闪加载层。
+  - **加载结束就是最后一个字节，没有任何「至少显示 N 毫秒」的人为保持。** 曾有一个 420ms 的下限，理由是「太快闪过不好看」；在不限速的链路上它纯粹是把已经可播的状态按住不放，已删除。要避免闪烁靠的是另一个机制：**缓存命中时根本不进加载态**（`announceProgress` 门控），而不是靠拖时间。
+  - **母带是「意图预取」，不是页面加载即预取。** `pointerenter` / `pointerdown` / `focusin` 三个信号落在岛上时才开始下载，`navigator.connection.saveData` 为真时跳过。理由：这是全站唯一能消费 69 MiB 的东西，指针伸向胶囊是唯一诚实的兴趣信号；再早会让每个只是来读一篇文章的访客都背上这份流量。预取期间**不画任何东西**——`setLoadingState` / `publishLoadProgress` 全被 `announceProgress` 挡住只记账，真正按下播放时 `announceLoadingUi()` 把已经走过的进度一次性回放出来，光条从中途开始，不会先跳 0% 再跳到 60%。
+  - 下载是**单飞 Promise**（`mediaTask` / `mediaTaskUrl`）：「预取正在进行」和「用户点了播放」必须共用同一条流，否则会触发第二次 69 MiB 请求。失败时把 `mediaTask` 清空，允许下次重试。
+
+  - `public/sw.js` 必须把 `.flac` 排除在 shell 缓存之外（`fetch` 的提前 return 正则），否则运行时的 stale-while-revalidate 会把同一份 69 MiB 再存一遍，还会在 `RUNTIME_CACHE_LIMIT`（120 条）里挤掉离线阅读用的文章。
+  - 没有 `Content-Length`（分块传输、某些代理）时不给假百分比：`data-loading` 转成 `indeterminate`，光条改成一圈短弧自转，数字位改显已收到的 MB。
+  - 浏览器不支持 FLAC 解码时，`error` 事件触发一次静默重试，换 `audioFallback`（MP3）。只许一次：否则解码失败会在两个源之间死循环。
+- **加载光条是进度计，不是装饰性 spinner。** 几何 3px 的一圈，贴在胶囊外沿（`inset: calc(-1 * var(--island-ring-band))`），所以紧凑态仍是 196×40、展开态仍按 `cqw` 缩放。它是 `conic-gradient` + 一个同底色实心圆孔（`.island-load-ring__hole`）挖出来的，**不是 `mask`**——`compat:audit` 要求每个 `mask-image` 都有 `-webkit-mask-image` 配对，而 `conic-gradient` 不在任何特性表里，属于安全区。
+  - 外沿与内孔两个圆角都从 `--island-radius` 派生（一个加带宽、一个不加）。这个 token 用 `@property` 注册成 `<length>` 才能参与过渡，否则紧凑 → 展开时两处圆角会跳变而不是插值。注册让它在基线里的成本是 Safari 16.4 / Firefox 128，正好等于 `compat-audit` 的 `BASELINE`，不是额外负担。
+  - 颜色取 `--island-wave`（`applyCoverAccent()` 从封面算出的强调色），因此光条是专辑自己的色调，不是通用的蓝色 spinner。
+- **`prefers-reduced-motion: reduce` 下这三个新部件必须单独写覆盖**：全局 reset 是 `*{transition-duration:.01ms!important; animation-duration:.01ms!important}`，任何非 `!important` 声明都赢不了它。光条与加载层的跨淡改成 120ms 线性、`indeterminate` 的自转放慢到 2.6s（仍在转，但不再是有信息量的运动），加载层的过冲 `transform` 直接去掉。
 - 播放器模块只能按需加载（用户首次交互时才 import），不能进入文档首屏的脚本链——`pnpm perf:audit` 会断言这一点。
 - `prefers-reduced-motion: reduce` 下保留一次短过渡（约 0.2s），不要用全局 reset 的 `0.01ms` 直接跳变。
 

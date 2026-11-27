@@ -7,11 +7,14 @@ import { fromRoot, normalizeBase, rootDir } from './lib/paths.mjs';
 
 const postsDir = fromRoot('src', 'content', 'posts');
 const sourceDir = fromRoot('src');
-// Keep the complete static output within a conservative GitHub Pages budget.
-const MAX_DIST_BYTES = 40 * 1024 * 1024;
-// The homepage player ships one deliberately compressed, browser-ready song.
-// Keep the cap tight enough to catch accidental FLAC/video commits.
-const MAX_SINGLE_ASSET_BYTES = 8 * 1024 * 1024;
+// GitHub Pages serves the whole site from one 1 GiB bucket and refuses any
+// single file above 100 MiB, so both caps are anchored to that ceiling rather
+// than to taste.
+const MAX_DIST_BYTES = 110 * 1024 * 1024;
+// The homepage player ships the lossless master (69 MiB) plus one compressed
+// fallback for browsers that cannot decode FLAC. The cap stays just under the
+// Pages per-file limit so a second master, or a video, still trips the check.
+const MAX_SINGLE_ASSET_BYTES = 96 * 1024 * 1024;
 
 async function existingTextFiles(directory, extensions) {
   const files = await walk(directory);

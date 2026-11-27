@@ -5,7 +5,7 @@
    requests (the player's audio seeks) bypass the cache entirely. */
 const scopeUrl = new URL(self.registration.scope);
 const CACHE_PREFIX = `b0-static:${scopeUrl.pathname}:`;
-const CACHE_VERSION = `${CACHE_PREFIX}v8`;
+const CACHE_VERSION = `${CACHE_PREFIX}v9`;
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const scopedPath = (path = '') => new URL(path.replace(/^\/+/, ''), scopeUrl).pathname;
@@ -92,9 +92,12 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   // Media can be large even before the first range request. Keep it out of
   // the page cache so one song cannot evict the reader's offline articles.
+  // The player streams the lossless master itself and stores it in
+  // `b0-media-v1`, so letting the shell cache it too would spend the quota
+  // twice for the same 69 MiB.
   if (request.method !== 'GET' || !isInScope(request) || request.headers.has('range')
     || request.destination === 'audio' || request.destination === 'video'
-    || /\.(?:mp3|m4a|ogg|wav|mp4|webm)$/i.test(new URL(request.url).pathname)) return;
+    || /\.(?:mp3|m4a|ogg|wav|flac|mp4|webm)$/i.test(new URL(request.url).pathname)) return;
 
   if (isPageRequest(request)) {
     const network = fetchAndCache(event, { cache: 'no-cache' });

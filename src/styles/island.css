@@ -71,6 +71,21 @@
   --island-morph-ease: cubic-bezier(0.32, 0.72, 0, 1);
   --island-fade: 220ms;
   --island-delay: 120ms;
+  /* Loading ring. The band width is the only geometry the ring owns, and
+     `--island-load-progress` is a scalar (0-1) written per read chunk by
+     `player.ts` — same class of state as `--visualizer-level` and
+     `--player-progress`, not a measurement. The ring takes its colour from
+     the cover accent `applyCoverAccent()` publishes, so it lights up in the
+     album's own hue instead of a generic spinner blue. */
+  --island-ring-band: 3px;
+  --island-load-progress: 0;
+  --island-ring-lit: color-mix(in srgb, var(--island-wave) 94%, #fff);
+  --island-ring-track: color-mix(in srgb, var(--island-text) 13%, transparent);
+  /* Authoritative corner radius. The loading ring draws two corners that must
+     stay concentric with this one (outer + band, inner − band); deriving all
+     three from a single token is the only way they stay parallel through the
+     compact → expanded morph. */
+  --island-radius: 20px;
 
   position: fixed;
   top: max(11px, env(safe-area-inset-top));
@@ -82,19 +97,23 @@
      exactly a pill (radius = height / 2). */
   width: 196px;
   height: 40px;
-  overflow: hidden;
+  /* The shell must not clip: the loading overlay pops in with an overshoot and
+     the ring's leading edge is lit right on the boundary. Nothing needs the
+     clip — the panel clips its own contents (`.island-player-panel {
+     overflow: hidden }`) and the pill's children fit inside the box. */
+  overflow: visible;
   transform: translateX(-50%);
   /* No border, no backdrop blur: on the device this is the OLED cutout itself,
      so it is opaque pure black with only a drop shadow to lift it off the page. */
   border: 0;
-  border-radius: 20px;
+  border-radius: var(--island-radius);
   background: var(--island-bg);
   box-shadow: var(--island-shadow);
   container-type: inline-size;
   transition:
     width var(--island-morph) var(--island-morph-ease),
     height var(--island-morph) var(--island-morph-ease),
-    border-radius var(--island-morph) var(--island-morph-ease),
+    --island-radius var(--island-morph) var(--island-morph-ease),
     border-color 320ms var(--ease),
     background 320ms var(--ease),
     box-shadow 360ms var(--ease);
@@ -108,9 +127,147 @@
      whole hierarchy. */
   width: min(23.25rem, calc(100vw - 24px));
   height: min(11rem, calc((100vw - 24px) * 0.473));
-  border-radius: min(2.75rem, calc((100vw - 24px) * 0.118));
+  --island-radius: min(2.75rem, calc((100vw - 24px) * 0.118));
   background: var(--island-bg-open);
   box-shadow: var(--island-shadow-open);
+}
+
+/* -----------------------------------------------------------------
+   Loading ring + "Now Loading..." overlay
+   The master file is lossless and large, so the island has to say something
+   honest while it downloads: `player.ts` streams the file itself, counts real
+   bytes, and writes the fraction into `--island-load-progress`. The ring is
+   therefore a progress meter, never a decorative spinner.
+
+   Geometry: the ring is a 3px band lying *outside* the shell edge, so the pill
+   keeps its exact 196x40 silhouette and the light reads as a halo. It is a
+   conic disc with an opaque hole punched by `.island-load-ring__hole`; the hole
+   is the same colour as the shell and sits below the panel in paint order, so
+   the disc can never bleed through the transparent panel. Both radii derive
+   from `--island-radius` (registered, so it interpolates), which keeps outer
+   and inner corners concentric through the compact → expanded morph.
+   ----------------------------------------------------------------- */
+@property --island-radius {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 20px;
+}
+
+.music-island .island-load-ring {
+  position: absolute;
+  inset: calc(-1 * var(--island-ring-band));
+  z-index: 0;
+  border-radius: calc(var(--island-radius) + var(--island-ring-band));
+  background:
+    conic-gradient(
+      from 0deg,
+      var(--island-ring-lit) 0 calc(var(--island-load-progress) * 1turn),
+      var(--island-ring-track) calc(var(--island-load-progress) * 1turn) 1turn
+    );
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 260ms var(--ease),
+    visibility 0s linear 260ms;
+}
+
+.music-island .island-load-ring__hole {
+  position: absolute;
+  inset: var(--island-ring-band);
+  border-radius: var(--island-radius);
+  background: var(--island-bg);
+}
+
+/* Bytes in flight but no `Content-Length` to divide by: sweep a short arc
+   instead of pretending to know how far along we are. */
+.music-island[data-loading="indeterminate"] .island-load-ring {
+  background:
+    conic-gradient(
+      from 0deg,
+      transparent 0 0.62turn,
+      var(--island-ring-lit) 0.86turn,
+      transparent 0.92turn 1turn
+    );
+  animation: island-ring-sweep 1.15s linear infinite;
+}
+
+.music-island[data-loading="active"] .island-load-ring,
+.music-island[data-loading="indeterminate"] .island-load-ring {
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity 260ms var(--ease),
+    visibility 0s linear 0s;
+}
+
+@keyframes island-ring-sweep {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(1turn); }
+}
+
+.music-island .island-loader {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  border-radius: inherit;
+  background: var(--island-bg);
+  color: var(--island-text);
+  font-family: Inter, "SF Pro Display", "Noto Sans SC", system-ui, sans-serif;
+  /* The pop-in: the overlay grows from slightly small and low, overshooting on
+     the spring curve so it lands with a little weight instead of just fading. */
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(5px) scale(0.9);
+  transition:
+    opacity 200ms var(--ease),
+    transform 320ms var(--spring),
+    visibility 0s linear 320ms;
+}
+
+.music-island[data-loading="active"] .island-loader,
+.music-island[data-loading="indeterminate"] .island-loader {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition:
+    opacity 200ms var(--ease),
+    transform 380ms var(--spring) 40ms,
+    visibility 0s linear 0s;
+}
+
+.music-island .island-loader__label {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+}
+
+.music-island .island-loader__percent {
+  color: var(--island-text-faint);
+  font-size: 11px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  line-height: 1.1;
+}
+
+/* Expanded, the same overlay has room for a bigger voice. */
+.music-island[data-open="true"] .island-loader {
+  gap: 0.9cqw;
+}
+
+.music-island[data-open="true"] .island-loader__label {
+  font-size: 4.4cqw;
+}
+
+.music-island[data-open="true"] .island-loader__percent {
+  font-size: 3.1cqw;
 }
 
 /* -----------------------------------------------------------------
@@ -647,6 +804,16 @@
   text-align: right;
 }
 
+/* The percentage is invisible while the menu is shut, but a laid-out element
+   still makes the browser download its webfont — 31 KiB of JetBrains Mono on
+   every page load for a control nobody has opened yet. Scoping the family to
+   the open state keeps the glyphs identical on screen and drops the font from
+   the critical path. */
+.music-island:not([data-volume-open="true"]) .island-volume-menu output {
+  font-family: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
 /* -----------------------------------------------------------------
    Header action cluster (shares the island's fixed row)
    ----------------------------------------------------------------- */
@@ -718,7 +885,7 @@
   .music-island[data-open="true"] {
     width: calc(100vw - 20px);
     height: calc((100vw - 20px) * 0.473);
-    border-radius: calc((100vw - 20px) * 0.118);
+    --island-radius: calc((100vw - 20px) * 0.118);
   }
 
   /* No type-scale compensation here any more: the island is 372px on desktop
@@ -785,6 +952,34 @@
     transition:
       opacity var(--island-fade) var(--ease),
       transform var(--island-fade) var(--ease),
+      visibility 0s linear 0s !important;
+  }
+
+  /* The ring and the "Now Loading..." card are the only evidence that a 69 MiB
+     master is on its way. Flattened to 0.01ms they would snap into place and
+     read as a frozen screen, so they keep a short crossfade — and the
+     indeterminate sweep keeps rotating, just slowly enough to stop being
+     motion rather than information. */
+  .music-island .island-load-ring {
+    transition: opacity 120ms linear !important;
+  }
+
+  .music-island[data-loading="indeterminate"] .island-load-ring {
+    animation-duration: 2.6s !important;
+  }
+
+  .music-island .island-loader {
+    transform: none !important;
+    transition:
+      opacity 120ms linear,
+      visibility 0s linear 120ms !important;
+  }
+
+  .music-island[data-loading="active"] .island-loader,
+  .music-island[data-loading="indeterminate"] .island-loader {
+    transform: none !important;
+    transition:
+      opacity 120ms linear,
       visibility 0s linear 0s !important;
   }
 }
