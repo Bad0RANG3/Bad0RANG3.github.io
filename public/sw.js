@@ -1,11 +1,12 @@
 /* Offline shell for the static site.
    Page requests (full navigations AND Astro's ClientRouter fetches) are
    network-first with revalidation, so a swap never pulls stale HTML that points
-   at a previous CSS build. Subresources use stale-while-revalidate, and Range
+   at a previous CSS build. Cached pages have a bounded network wait; immutable
+   bundles/fonts use cache-first, other subresources revalidate, and Range
    requests (the player's audio seeks) bypass the cache entirely. */
 const scopeUrl = new URL(self.registration.scope);
 const CACHE_PREFIX = `b0-static:${scopeUrl.pathname}:`;
-const CACHE_VERSION = `${CACHE_PREFIX}v9`;
+const CACHE_VERSION = `${CACHE_PREFIX}v10`;
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const scopedPath = (path = '') => new URL(path.replace(/^\/+/, ''), scopeUrl).pathname;
@@ -44,6 +45,11 @@ const isInScope = (request) => {
   return url.origin === scopeUrl.origin && url.pathname.startsWith(scopeUrl.pathname);
 };
 const isCacheableResponse = (response) => response && response.ok && response.type === 'basic';
+const isImmutableAsset = (request) => {
+  const { pathname } = new URL(request.url);
+  return pathname.startsWith(scopedPath('_astro/'))
+    || pathname.startsWith(scopedPath('fonts/'));
+};
 
 /**
  * A page request is a real navigation OR Astro's ClientRouter fetch. The latter
@@ -92,28 +98,51 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   // Media can be large even before the first range request. Keep it out of
   // the page cache so one song cannot evict the reader's offline articles.
-  // The player streams the lossless master itself and stores it in
-  // `b0-media-v1`, so letting the shell cache it too would spend the quota
-  // twice for the same 69 MiB.
+  // The media element owns streaming and HTTP Range caching; fetching the
+  // whole song here would defeat incremental playback.
   if (request.method !== 'GET' || !isInScope(request) || request.headers.has('range')
     || request.destination === 'audio' || request.destination === 'video'
     || /\.(?:mp3|m4a|ogg|wav|flac|mp4|webm)$/i.test(new URL(request.url).pathname)) return;
 
   if (isPageRequest(request)) {
     const network = fetchAndCache(event, { cache: 'no-cache' });
-    event.respondWith(network.catch(async () => (await matchCached(request))
-      || (await matchCached(OFFLINE_URL)) || Response.error()));
+    const cachedPage = matchCached(request).catch(() => undefined);
+    const response = network.catch(async () => (await cachedPage)
+      || (await matchCached(OFFLINE_URL)) || Response.error());
+    event.respondWith((async () => {
+      const cached = await cachedPage;
+      if (!cached) return response;
+      // A slow connection is not offline: keep refreshing in waitUntil while
+      // allowing a previously visited article to open after at most 2.5 s.
+      let timer;
+      try {
+        return await Promise.race([
+          response,
+          new Promise((resolve) => { timer = setTimeout(() => resolve(cached), 2500); }),
+        ]);
+      } finally {
+        clearTimeout(timer);
+      }
+    })());
     return;
   }
 
-  const network = fetchAndCache(event);
+  // Register the async task before the fetch event returns; cache misses can
+  // then safely call fetchAndCache after the Cache API lookup has completed.
+  let finish;
+  const lifetime = new Promise((resolve) => { finish = resolve; });
+  event.waitUntil(lifetime);
   event.respondWith((async () => {
-    const cached = await matchCached(request);
-    if (cached) return cached;
     try {
+      const cached = await matchCached(request).catch(() => undefined);
+      if (cached && isImmutableAsset(request)) return cached;
+      const network = fetchAndCache(event);
+      if (cached) return cached;
       return await network;
     } catch {
       return Response.error();
+    } finally {
+      finish();
     }
   })());
 });

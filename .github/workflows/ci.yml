@@ -38,6 +38,8 @@ jobs:
         run: pnpm validate:content
       - name: Astro check
         run: pnpm check
+      - name: Service worker cache tests
+        run: pnpm test:cache
       - name: Build static site
         run: pnpm build
       - name: Smoke test build output

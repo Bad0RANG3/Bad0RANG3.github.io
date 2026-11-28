@@ -1,4 +1,4 @@
-export {};
+import { isConstrainedConnection } from '../lib/network';
 
 const initComments = () => {
   document.querySelectorAll<HTMLElement>('[data-comments]').forEach((root) => {
@@ -6,6 +6,15 @@ const initComments = () => {
     root.dataset.bound = '1';
     const container = root.querySelector('[data-giscus-container]');
     if (!(container instanceof HTMLElement)) return;
+    const hint = container.querySelector<HTMLElement>('[data-comments-hint]');
+    const button = container.querySelector<HTMLButtonElement>('[data-comments-load]');
+
+    const offerLoad = (message: string) => {
+      if (!hint || !button) return;
+      hint.textContent = message;
+      button.hidden = false;
+      container.replaceChildren(hint, button);
+    };
 
     const load = () => {
       if (container.dataset.loaded === '1') return;
@@ -14,6 +23,10 @@ const initComments = () => {
       script.src = 'https://giscus.app/client.js';
       script.async = true;
       script.crossOrigin = 'anonymous';
+      script.addEventListener('error', () => {
+        delete container.dataset.loaded;
+        if (root.isConnected) offerLoad('评论暂时无法加载，请重试。');
+      }, { once: true });
       const themeDark = root.dataset.themeDark || 'dark';
       const attributes = {
         'data-repo': root.dataset.repo,
@@ -32,7 +45,11 @@ const initComments = () => {
       container.replaceChildren(script);
     };
 
-    if ('IntersectionObserver' in window) {
+    button?.addEventListener('click', load);
+
+    if (isConstrainedConnection()) {
+      offerLoad('点击下方按钮查看或参与讨论。');
+    } else if ('IntersectionObserver' in window) {
       const observer = new IntersectionObserver((entries) => {
         if (!entries.some((entry) => entry.isIntersecting)) return;
         observer.disconnect();

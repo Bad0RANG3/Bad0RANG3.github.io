@@ -11,8 +11,8 @@ const sourceDir = fromRoot('src');
 // single file above 100 MiB, so both caps are anchored to that ceiling rather
 // than to taste.
 const MAX_DIST_BYTES = 110 * 1024 * 1024;
-// The homepage player ships the lossless master (69 MiB) plus one compressed
-// fallback for browsers that cannot decode FLAC. The cap stays just under the
+// The player streams a compressed copy by default and retains the lossless
+// master (69 MiB) as a decoder fallback. The cap stays just under the
 // Pages per-file limit so a second master, or a video, still trips the check.
 const MAX_SINGLE_ASSET_BYTES = 96 * 1024 * 1024;
 

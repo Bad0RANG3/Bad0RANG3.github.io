@@ -48,9 +48,9 @@ export default defineConfig({
     shikiConfig: { theme: 'github-dark-default', transformers: [shikiCodeTabMeta()] },
   },
   integrations: [sitemap()],
-  // With ClientRouter, prefetch same-origin links on hover/tap so navigation
-  // feels instant without eagerly downloading the whole site.
-  prefetch: true,
+  // Start prefetching on an actual press, avoiding speculative hover traffic
+  // that competes with the current article on a constrained connection.
+  prefetch: { defaultStrategy: 'tap' },
   vite: {
     plugins: [tailwindcss()],
     css: {

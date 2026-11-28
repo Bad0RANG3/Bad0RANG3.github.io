@@ -55,12 +55,10 @@ export const siteConfig = {
     album: 'aquamarine',
     durationSeconds: 311.43,
     durationLabel: formatMusicDuration(311.43),
-    // The full lossless master ships as-is: the island shows a byte-accurate
-    // loading ring while it downloads (see `player.ts`), so the extra 66 MiB
-    // buys real fidelity instead of a progress bar with nothing behind it.
-    audio: '/media/deep-sea-adventure.flac',
-    // Only fetched if the browser cannot decode the FLAC at all.
-    audioFallback: '/media/deep-sea-adventure.mp3',
+    // Stream the 160 kbps copy on demand (5.9 MiB instead of 68.9 MiB).
+    // The original remains available as a decoder fallback, never a network retry.
+    audio: '/media/deep-sea-adventure.mp3',
+    audioFallback: '/media/deep-sea-adventure.flac',
     lyrics: '/media/deep-sea-adventure.lrc',
     cover: '/media/deep-sea-adventure-cover.webp',
     officialUrl: 'https://music.163.com/song?id=3453326488',

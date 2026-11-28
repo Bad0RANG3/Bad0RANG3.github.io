@@ -1,16 +1,11 @@
 // @ts-nocheck
-import {
-  AlwaveCanvasRenderer,
-  DEFAULT_TUNING_PROFILE,
-  SpectrumAnalyzer,
-} from './alwave';
 export {};
 // Extracted from SiteHeader.astro. Bundled and cached by Astro/Vite.
 //
 // `alwave.ts` is the vendored spectrum engine (MIT, kmgcc/apple-like-waves); the
 // packages are not on npm, so the algorithm ships with the site instead of
-// arriving through a dependency. It is bundled into this deferred chunk on
-// purpose: nothing about it may reach the article's critical path.
+// arriving through a dependency. Load it only after an explicit play, without
+// holding up the audio, so opening the island never has to download an FFT.
 (() => {
     const island = document.getElementById('site-island');
     const toggle = document.getElementById('site-island-toggle');
@@ -37,18 +32,14 @@ export {};
     const volumeMute = document.getElementById('island-volume-mute');
     const volumeSlider = document.getElementById('island-volume-slider');
     const volumeValue = document.getElementById('island-volume-value');
-    const loadPercent = document.getElementById('island-load-percent');
     const audioFallback = island.dataset.audioFallback || '';
     let closeTimer = 0;
     // Set while we programmatically move focus back to the pill, so the
     // island's own `focusin` handler does not immediately re-open it.
     let restoringFocus = false;
     let isResolving = false;
-    // Source acquisition. `loadedSource` remembers the object URL handed to the
-    // <audio> element so a second play call reuses the blob instead of pulling
-    // another 69 MiB; `--island-load-progress` drives the ring.
-    let loadedSource = '';
-    let loadingProgress = -1;
+    let loadUiTimer = 0;
+    let lyricsTask = null;
     let fallbackTried = false;
     let lyricTimeline = [];
     let lastLyricText = '';
@@ -60,6 +51,8 @@ export {};
     // vendored pipeline owns the window, the Hann FFT and the band layout.
     let visualizerSamples = null;
     let visualizerAnalyzer = null;
+    let visualizerEngine = null;
+    let visualizerTask = null;
     let visualizerFrame = 0;
     let visualizerLastTime = null;
     // Output loudness is owned by us, not by the media element. See
@@ -90,6 +83,7 @@ export {};
       island.dataset.open = open ? 'true' : 'false';
       toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
       if (!open) setVolumeMenuOpen(false);
+      else void loadLyrics().then(updateLyric);
     };
 
     /* ------------------------------------------------------------------
@@ -137,6 +131,8 @@ export {};
     };
 
     const prepareCanvasVisualizer = () => {
+      if (!visualizerEngine) return;
+      const { AlwaveCanvasRenderer, DEFAULT_TUNING_PROFILE } = visualizerEngine;
       visualizerViews.forEach((view) => {
         if (view.renderer) return;
         try {
@@ -293,6 +289,9 @@ export {};
 
     const renderAudioVisualizer = (now) => {
       visualizerFrame = 0;
+      // While the optional engine downloads, audio can already be playing.
+      // Its completion starts the visualiser; do not spin a silent frame loop.
+      if (!visualizerAnalyzer) return;
       const playing = isVisualizerPlaying();
       const previous = visualizerLastTime;
       visualizerLastTime = now;
@@ -339,6 +338,28 @@ export {};
       if (!visualizerFrame) visualizerFrame = window.requestAnimationFrame(renderAudioVisualizer);
     };
 
+    const loadAudioVisualizer = () => {
+      if (!audioContext || !analyser) return;
+      visualizerTask ??= import('./alwave').then((engine) => {
+        visualizerEngine = engine;
+        visualizerAnalyzer = new engine.SpectrumAnalyzer({
+          bandCount: VISUALIZER_BANDS,
+          sampleRate: audioContext.sampleRate,
+          tuningProfile: engine.DEFAULT_TUNING_PROFILE,
+        });
+        prepareCanvasVisualizer();
+        if (isVisualizerPlaying() && !visualizerFrame) {
+          visualizerFrame = window.requestAnimationFrame(renderAudioVisualizer);
+        }
+      }).catch(() => {
+        // A failed decorative chunk must never interrupt the song. A later
+        // play may retry, while the ordinary transport stays fully usable.
+        visualizerTask = null;
+        resetAudioVisualizer();
+        setVisualizerMode('off');
+      });
+    };
+
     const prepareAudioGraph = async () => {
       if (!analyser) {
         const AudioContextConstructor = window.AudioContext || window['webkitAudioContext'];
@@ -353,11 +374,6 @@ export {};
           // curve, and two smoothers in series would make the capsules lag.
           analyser.smoothingTimeConstant = 0;
           visualizerSamples = new Float32Array(analyser.fftSize);
-          visualizerAnalyzer = new SpectrumAnalyzer({
-            bandCount: VISUALIZER_BANDS,
-            sampleRate: audioContext.sampleRate,
-            tuningProfile: DEFAULT_TUNING_PROFILE,
-          });
           audioSourceNode = audioContext.createMediaElementSource(audio);
           audioSourceNode.connect(analyser);
           // analyser -> gain -> speakers. The analyser therefore sees the
@@ -367,7 +383,6 @@ export {};
           analyser.connect(outputGain);
           outputGain.connect(audioContext.destination);
           applyOutputLevel();
-          prepareCanvasVisualizer();
         } catch (_) {
           audioContext = null;
           analyser = null;
@@ -436,7 +451,9 @@ export {};
       island.dataset.playerState = state;
       if (status) status.textContent = message;
       const playing = state === 'playing';
-      const label = `${playing || (state === 'loading' && !audio.paused) ? '暂停' : '播放'} ${songTitle}`;
+      const active = playing || (state === 'loading' && !audio.paused);
+      island.dataset.playbackActive = String(active);
+      const label = `${active ? '暂停' : '播放'} ${songTitle}`;
       if (panelPlay instanceof HTMLButtonElement) panelPlay.setAttribute('aria-label', label);
       if (!playing) setVisualizerMode(state === 'unavailable' ? 'off' : 'idle');
     };
@@ -493,205 +510,55 @@ export {};
     }
     applyOutputLevel();
 
-    const loadLyrics = async () => {
-      if (!lyricsSource) return;
-      try {
-        const response = await fetch(lyricsSource, { credentials: 'same-origin' });
-        if (!response.ok) return;
-        const source = await response.text();
-        lyricTimeline = source.split(/\r?\n/).flatMap((line) => {
-          const text = line.replace(/\[[^\]]+\]/g, '').trim();
-          if (!text) return [];
-          return [...line.matchAll(/\[(\d{1,2}):(\d{2}(?:\.\d+)?)\]/g)].map((match) => ({
-            time: Number(match[1]) * 60 + Number(match[2]),
-            text,
-          }));
-        }).sort((a, b) => a.time - b.time);
-      } catch (_) {}
-    };
-
-    // ------------------------------------------------------------------
-    // Source loading, with byte-accurate progress
-    // The master ships lossless, so a cold load moves ~69 MiB. An <audio>
-    // element exposes no download counters (only `progress`, which browsers
-    // report for their own buffers and which never fires honestly for a
-    // preload="none" element), so the file is streamed through `fetch`
-    // instead: every chunk is counted against `Content-Length`, written into
-    // the Cache API, and finally handed to the element as a blob URL. Range
-    // requests — what seeking actually needs — are then served from memory.
-    // ------------------------------------------------------------------
-    const MEDIA_CACHE = 'b0-media-v1';
-    const bytesLabel = (bytes) => `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-    // The fallback is an MP3, so the MIME type has to follow the URL rather
-    // than assume the master's codec — a blob labelled audio/flac but holding
-    // MPEG frames is rejected by the decoder with no useful diagnosis.
-    const mediaTypeFor = (url) => (/\.mp3(?:$|\?)/i.test(url) ? 'audio/mpeg' : 'audio/flac');
-
-    // Prefetching starts while the visitor is still reading, so the ring has to
-    // stay invisible until playback is actually requested. `announceProgress`
-    // gates every DOM write on the progress path; the numbers keep advancing
-    // behind it either way, so the moment a listener presses play the ring
-    // picks up at the true byte count instead of restarting from zero.
-    let announceProgress = false;
-    let loadingState = 'idle';
-    let loadingBytes = 0;
-    let mediaTask = null;
-    let mediaTaskUrl = '';
-
-    const setLoadingState = (state) => {
-      loadingState = state;
-      if (!announceProgress) return;
-      if (island.dataset.loading === state) return;
-      island.dataset.loading = state;
-    };
-
-    const publishLoadProgress = (fraction) => {
-      const clamped = Math.max(0, Math.min(1, fraction));
-      // A chunk stream fires hundreds of times; only redraw on a visible step
-      // so the ring never thrashes style recalculation for nothing.
-      if (clamped < 1 && Math.abs(clamped - loadingProgress) < 0.004) return;
-      loadingProgress = clamped;
-      if (!announceProgress) return;
-      island.style.setProperty('--island-load-progress', String(clamped));
-      if (loadPercent) loadPercent.textContent = `${Math.round(clamped * 100)}%`;
-    };
-
-    // Replay the current state into the DOM when the overlay becomes visible.
-    // Without this a prefetch that is already 60% done would animate in at 0%.
-    const announceLoadingUi = () => {
-      announceProgress = true;
-      if (island.dataset.loading !== loadingState) island.dataset.loading = loadingState;
-      island.style.setProperty('--island-load-progress', String(Math.max(0, loadingProgress)));
-      if (!loadPercent) return;
-      if (loadingProgress >= 0) loadPercent.textContent = `${Math.round(loadingProgress * 100)}%`;
-      else if (loadingBytes > 0) loadPercent.textContent = bytesLabel(loadingBytes);
-    };
-
-    const publishLoadBytes = (bytes) => {
-      loadingBytes = bytes;
-      if (!announceProgress) return;
-      if (loadPercent) loadPercent.textContent = bytesLabel(bytes);
-    };
-
-    const attachMediaBlob = (blob) => {
-      const type = blob.type && blob.type.indexOf('audio/') === 0 ? blob.type : 'audio/flac';
-      const typed = blob.type === type ? blob : new Blob([blob], { type });
-      if (loadedSource) URL.revokeObjectURL(loadedSource);
-      loadedSource = URL.createObjectURL(typed);
-      audio.dataset.sourceReady = 'true';
-      audio.src = loadedSource;
-      audio.load();
-      return loadedSource;
-    };
-
-    const readCachedMedia = async (url) => {
-      if (!('caches' in window)) return null;
-      const cache = await caches.open(MEDIA_CACHE);
-      return cache.match(url);
-    };
-
-    const cacheMedia = async (url, blob) => {
-      if (!('caches' in window)) return;
-      try {
-        const cache = await caches.open(MEDIA_CACHE);
-        await cache.put(url, new Response(blob, {
-          headers: { 'content-type': blob.type || 'audio/flac', 'content-length': String(blob.size) },
-        }));
-      } catch (_) {
-        // Quota or a private-mode refusal: the bytes are still in the blob we
-        // just built, so playback works — the next visit simply downloads
-        // again.
-      }
-    };
-
-    const loadLocalMedia = async (url) => {
-      if (loadedSource) return loadedSource;
-      // One download per URL, whoever asks first. The prefetch below normally
-      // owns this promise; a press of play then simply awaits it instead of
-      // racing a second 69 MiB request against the one already in flight.
-      if (mediaTask && mediaTaskUrl === url) return mediaTask;
-      mediaTaskUrl = url;
-      mediaTask = (async () => {
-        // Cache hits are effectively instant, so they stay silent: a loader that
-        // flashes "100%" for 200ms reads as a glitch, not as feedback.
-        const cached = await readCachedMedia(url).catch(() => null);
-        if (cached) {
-          const cachedBlob = await cached.blob();
-          setLoadingState('idle');
-          return attachMediaBlob(cachedBlob);
-        }
-
-        setLoadingState('active');
-        publishLoadProgress(0);
+    const loadLyrics = () => {
+      if (!lyricsSource) return Promise.resolve();
+      if (lyricsTask) return lyricsTask;
+      lyricsTask = (async () => {
         try {
-          // No AbortController: `play()` serialises callers with `isResolving`,
-          // and a load that survives a client-side navigation is a feature — the
-          // bytes are cached, so coming back does not start over.
-          const response = await fetch(url, { credentials: 'same-origin' });
-          if (!response.ok) throw new Error(`media-${response.status}`);
-          const total = Number(response.headers.get('content-length') || 0);
-          if (!total) setLoadingState('indeterminate');
-
-          const chunks = [];
-          let received = 0;
-          if (response.body && typeof response.body.getReader === 'function') {
-            const reader = response.body.getReader();
-            for (;;) {
-              const { done, value } = await reader.read();
-              if (done) break;
-              if (!value) continue;
-              chunks.push(value);
-              received += value.byteLength;
-              // Without a Content-Length there is no honest fraction to show, so
-              // the ring sweeps and the counter reports what has arrived.
-              if (total > 0) publishLoadProgress(received / total);
-              else publishLoadBytes(received);
-            }
-          } else {
-            const fallbackBlob = await response.blob();
-            chunks.push(fallbackBlob);
-            received = fallbackBlob.size;
-            publishLoadProgress(1);
-          }
-
-          const blob = new Blob(chunks, { type: mediaTypeFor(url) });
-          chunks.length = 0;
-          publishLoadProgress(1);
-          void cacheMedia(url, blob);
-          const source = attachMediaBlob(blob);
-          // No artificial hold: the last byte is the finish line. The overlay
-          // bows out on the next frame, so a fast line really does feel instant.
-          setLoadingState('idle');
-          return source;
-        } catch (error) {
-          // Every caller treats a throw as "hand the element the bare URL", and
-          // none of them can see the ring: drop it here so a failed stream never
-          // leaves the pill stuck on "Now Loading...".
-          setLoadingState('idle');
-          mediaTask = null;
-          mediaTaskUrl = '';
-          throw error;
-        }
+          const response = await fetch(lyricsSource, { credentials: 'same-origin' });
+          if (!response.ok) throw new Error(`lyrics-${response.status}`);
+          const source = await response.text();
+          lyricTimeline = source.split(/\r?\n/).flatMap((line) => {
+            const text = line.replace(/\[[^\]]+\]/g, '').trim();
+            if (!text) return [];
+            return [...line.matchAll(/\[(\d{1,2}):(\d{2}(?:\.\d+)?)\]/g)].map((match) => ({
+              time: Number(match[1]) * 60 + Number(match[2]),
+              text,
+            }));
+          }).sort((a, b) => a.time - b.time);
+        } catch (_) { lyricsTask = null; }
       })();
-      return mediaTask;
+      return lyricsTask;
+    };
+
+    // Native streaming starts as soon as enough audio has arrived. Do not fetch
+    // a second copy or turn the entire song into a Blob before pressing play.
+    const setLoadingState = (state) => {
+      window.clearTimeout(loadUiTimer);
+      island.setAttribute('aria-busy', String(state !== 'idle'));
+      if (state === 'idle') {
+        island.dataset.loading = 'idle';
+        return;
+      }
+      // Delay feedback only. A warm cache should never flash a loader, and
+      // playback is never held back to give the animation time on screen.
+      if (island.dataset.loading !== 'idle') return;
+      loadUiTimer = window.setTimeout(() => {
+        if (island.dataset.playerState !== 'loading') return;
+        island.dataset.loading = 'indeterminate';
+      }, 180);
+    };
+
+    const loadLocalMedia = (url) => {
+      audio.src = url;
+      audio.dataset.sourceReady = 'true';
+      audio.load();
+      return audio.src;
     };
 
     const resolveSource = async () => {
       if (audio.dataset.sourceReady === 'true' && audio.src) return audio.src;
-      if (localSource) {
-        try {
-          return await loadLocalMedia(localSource);
-        } catch (_) {
-          // A dropped connection or a blocked Cache API must never strand the
-          // player: hand the element the bare URL and let it stream the file
-          // the ordinary way, unmeasured.
-          setLoadingState('idle');
-          audio.src = localSource;
-          audio.dataset.sourceReady = 'true';
-          audio.load();
-          return audio.src;
-        }
-      }
+      if (localSource) return loadLocalMedia(localSource);
       if (!playbackApiBase) throw new Error('missing-source');
       const response = await fetch(`${playbackApiBase}/song/url/v1?id=${encodeURIComponent(songId)}&level=standard`, {
         credentials: 'omit',
@@ -712,19 +579,19 @@ export {};
     const play = async () => {
       if (isResolving) return;
       isResolving = true;
-      // A click is the moment the overlay earns its place on screen. If the
-      // bytes are already in hand there is nothing to wait for, so the ring
-      // stays hidden instead of blinking 100% at the listener.
-      if (!loadedSource) announceLoadingUi();
+      setLoadingState('indeterminate');
       setPlayerState('loading', '正在载入');
       try {
         await prepareAudioGraph();
         await resolveSource();
         if (scrubber instanceof HTMLInputElement) scrubber.disabled = false;
         await audio.play();
-      } catch (_) {
+      } catch (error) {
+        if (error?.name === 'AbortError') return;
+        setLoadingState('idle');
+        audio.dataset.sourceReady = 'false';
         setOpen(true);
-        setPlayerState('unavailable', '音频不可用');
+        setPlayerState('unavailable', navigator.onLine ? '音频不可用，点击重试' : '网络已断开，联网后重试');
       } finally {
         isResolving = false;
       }
@@ -835,21 +702,34 @@ export {};
     audio.addEventListener('canplay', () => {
       if (scrubber instanceof HTMLInputElement) scrubber.disabled = false;
     });
+    audio.addEventListener('stalled', () => {
+      if (island.dataset.playerState === 'loading' && status) status.textContent = '网络较慢，正在缓冲';
+    });
     audio.addEventListener('timeupdate', updateProgress);
     audio.addEventListener('playing', () => {
+      setLoadingState('idle');
       setPlayerState('playing', '正在播放');
+      loadAudioVisualizer();
       updateLyric();
       if (!visualizerFrame) visualizerFrame = window.requestAnimationFrame(renderAudioVisualizer);
     });
     audio.addEventListener('waiting', () => {
       stopAudioVisualizer();
-      if (!audio.paused) setPlayerState('loading', '正在缓冲');
+      if (!audio.paused) {
+        setPlayerState('loading', '正在缓冲');
+        setLoadingState('indeterminate');
+      }
     });
     audio.addEventListener('pause', () => {
+      setLoadingState('idle');
       stopAudioVisualizer();
-      if (!audio.ended) setPlayerState('paused', '已暂停');
+      // A failed media request can enqueue pause after error. Preserve the
+      // retryable error instead of replacing it with a misleading "paused".
+      if (audio.paused && !audio.ended && !audio.error
+        && island.dataset.playerState !== 'unavailable') setPlayerState('paused', '已暂停');
     });
     audio.addEventListener('ended', () => {
+      setLoadingState('idle');
       stopAudioVisualizer();
       audio.currentTime = 0;
       updateProgress();
@@ -858,17 +738,22 @@ export {};
     audio.addEventListener('error', () => {
       stopAudioVisualizer();
       setLoadingState('idle');
-      // A browser that cannot decode FLAC (rare, but real) gets one silent
-      // retry against the compressed copy before the island admits defeat.
-      if (!fallbackTried && audioFallback) {
+      // Only decoder failures get an alternative. Network failures must never
+      // silently start the much larger lossless copy on a struggling link.
+      // MEDIA_ERR_SRC_NOT_SUPPORTED (4) can also mean a failed HTTP request,
+      // so only a confirmed decoding failure (3) may choose another format.
+      if (!fallbackTried && audioFallback && audio.error?.code === 3) {
         fallbackTried = true;
-        loadedSource = '';
-        audio.dataset.sourceReady = 'false';
-        void loadLocalMedia(audioFallback)
-          .then(() => audio.play())
-          .catch(() => setPlayerState('unavailable', '音频加载失败'));
+        setPlayerState('loading', '正在切换音源');
+        setLoadingState('indeterminate');
+        loadLocalMedia(audioFallback);
+        void audio.play().catch(() => {
+          setLoadingState('idle');
+          setPlayerState('unavailable', '音频加载失败');
+        });
         return;
       }
+      audio.dataset.sourceReady = 'false';
       setPlayerState('unavailable', '音频加载失败');
     });
     audio.addEventListener('volumechange', syncVolumeUI);
@@ -883,25 +768,7 @@ export {};
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', refreshForPage, { once: true });
     else refreshForPage();
 
-    // Start the master on intent, not on page load. The island is the only
-    // thing that can consume it, so a pointer reaching for the pill (or a
-    // keyboard focusing it) is the earliest honest signal that these 69 MiB
-    // are wanted; starting any earlier would tax every reader who never opens
-    // the player. Nothing is drawn here either — the prefetch runs behind
-    // `announceProgress`, so the ring opens mid-flight at the true byte count
-    // and the tail of the download is all that is left to wait for.
-    const prefetchMedia = () => {
-      if (!localSource || loadedSource) return;
-      const connection = navigator.connection;
-      if (connection && connection.saveData) return;
-      void loadLocalMedia(localSource).catch(() => {});
-    };
-
-    island.addEventListener('pointerenter', prefetchMedia, { passive: true });
-    island.addEventListener('pointerdown', prefetchMedia, { passive: true });
-    island.addEventListener('focusin', prefetchMedia);
-
-    void loadLyrics().then(() => updateLyric());
+    // Opening loads lyrics; only an explicit play requests the audio.
     void applyCoverAccent();
     updateProgress();
     syncVolumeUI();

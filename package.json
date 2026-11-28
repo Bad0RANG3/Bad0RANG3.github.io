@@ -14,6 +14,7 @@
         "smoke": "node scripts/smoke.mjs",
         "compat:audit": "node scripts/compat-audit.mjs",
         "perf:audit": "node scripts/perf-audit.mjs",
+        "test:cache": "node --test scripts/sw-cache.test.mjs",
         "perf:frames": "node scripts/perf/bga-frames.mjs",
         "dist:fingerprint": "node scripts/dist-fingerprint.mjs"
     },

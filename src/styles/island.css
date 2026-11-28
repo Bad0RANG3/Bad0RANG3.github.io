@@ -14,8 +14,7 @@
    *after* `global.css` from `BaseLayout.astro`, and declares each
    (selector, property) pair exactly once per at-rule context, so the
    only overrides are deliberate breakpoint ones.
-   `.verify/island-css-dup.mjs` enforces that and censuses the
-   `!important`s; run it if this file is edited.
+   Keep that ownership when extending the loading and transport states.
 
    The only `!important`s left are in the single "Reduced motion" block
    below, where they must beat the `*, *::before, *::after { …
@@ -71,15 +70,9 @@
   --island-morph-ease: cubic-bezier(0.32, 0.72, 0, 1);
   --island-fade: 220ms;
   --island-delay: 120ms;
-  /* Loading ring. The band width is the only geometry the ring owns, and
-     `--island-load-progress` is a scalar (0-1) written per read chunk by
-     `player.ts` — same class of state as `--player-progress`, not a
-     measurement. The ring takes its colour from the cover accent
-     `applyCoverAccent()` publishes, so it lights up in the album's own hue
-     instead of a generic spinner blue. */
-  --island-ring-band: 3px;
-  --island-load-progress: 0;
-  --island-ring-lit: color-mix(in srgb, var(--island-wave) 94%, #fff);
+  /* The halo follows the cover accent and stays concentric during morphs. */
+  --island-ring-band: 2px;
+  --island-ring-lit: color-mix(in srgb, var(--island-wave) 75%, var(--island-text));
   --island-ring-track: color-mix(in srgb, var(--island-text) 13%, transparent);
   /* Authoritative corner radius. The loading ring draws two corners that must
      stay concentric with this one (outer + band, inner − band); deriving all
@@ -133,19 +126,9 @@
 }
 
 /* -----------------------------------------------------------------
-   Loading ring + "Now Loading..." overlay
-   The master file is lossless and large, so the island has to say something
-   honest while it downloads: `player.ts` streams the file itself, counts real
-   bytes, and writes the fraction into `--island-load-progress`. The ring is
-   therefore a progress meter, never a decorative spinner.
-
-   Geometry: the ring is a 3px band lying *outside* the shell edge, so the pill
-   keeps its exact 196x40 silhouette and the light reads as a halo. It is a
-   conic disc with an opaque hole punched by `.island-load-ring__hole`; the hole
-   is the same colour as the shell and sits below the panel in paint order, so
-   the disc can never bleed through the transparent panel. Both radii derive
-   from `--island-radius` (registered, so it interpolates), which keeps outer
-   and inner corners concentric through the compact → expanded morph.
+   Buffering: a fixed capsule with a travelling light and the site's title face.
+   Only the gradient angle rotates; rotating the whole rectangular ring would
+   send its corners outside the shell. No JS frames or layout reads are needed.
    ----------------------------------------------------------------- */
 @property --island-radius {
   syntax: "<length>";
@@ -153,121 +136,105 @@
   initial-value: 20px;
 }
 
+@property --island-ring-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
 .music-island .island-load-ring {
   position: absolute;
   inset: calc(-1 * var(--island-ring-band));
   z-index: 0;
   border-radius: calc(var(--island-radius) + var(--island-ring-band));
-  background:
-    conic-gradient(
-      from 0deg,
-      var(--island-ring-lit) 0 calc(var(--island-load-progress) * 1turn),
-      var(--island-ring-track) calc(var(--island-load-progress) * 1turn) 1turn
-    );
+  background: conic-gradient(
+    from var(--island-ring-angle),
+    var(--island-ring-track) 0turn 0.54turn,
+    color-mix(in srgb, var(--island-wave) 35%, transparent) 0.72turn,
+    var(--island-ring-lit) 0.9turn,
+    var(--island-ring-track) 1turn
+  );
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transition:
-    opacity 260ms var(--ease),
-    visibility 0s linear 260ms;
+  transition: opacity 240ms var(--ease), visibility 0s linear 240ms;
+}
+
+.music-island .island-load-ring::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: inherit;
+  filter: blur(5px);
+  opacity: 0.5;
 }
 
 .music-island .island-load-ring__hole {
   position: absolute;
   inset: var(--island-ring-band);
+  z-index: 1;
   border-radius: var(--island-radius);
   background: var(--island-bg);
 }
 
-/* Bytes in flight but no `Content-Length` to divide by: sweep a short arc
-   instead of pretending to know how far along we are. */
-.music-island[data-loading="indeterminate"] .island-load-ring {
-  background:
-    conic-gradient(
-      from 0deg,
-      transparent 0 0.62turn,
-      var(--island-ring-lit) 0.86turn,
-      transparent 0.92turn 1turn
-    );
-  animation: island-ring-sweep 1.15s linear infinite;
-}
-
-.music-island[data-loading="active"] .island-load-ring,
 .music-island[data-loading="indeterminate"] .island-load-ring {
   opacity: 1;
   visibility: visible;
-  transition:
-    opacity 260ms var(--ease),
-    visibility 0s linear 0s;
+  animation: island-ring-sweep 2.4s linear infinite;
+  transition: opacity 240ms var(--ease), visibility 0s linear 0s;
 }
 
 @keyframes island-ring-sweep {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(1turn); }
+  to { --island-ring-angle: 1turn; }
 }
 
 .music-island .island-loader {
   position: absolute;
   inset: 0;
   z-index: 3;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
+  display: grid;
+  place-items: center;
   border-radius: inherit;
   background: var(--island-bg);
   color: var(--island-text);
-  font-family: Inter, "SF Pro Display", "Noto Sans SC", system-ui, sans-serif;
-  /* The pop-in: the overlay grows from slightly small and low, overshooting on
-     the spring curve so it lands with a little weight instead of just fading. */
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transform: translateY(5px) scale(0.9);
+  transform: translateY(3px) scale(0.96);
   transition:
-    opacity 200ms var(--ease),
-    transform 320ms var(--spring),
-    visibility 0s linear 320ms;
+    opacity 180ms var(--ease),
+    transform 300ms var(--island-morph-ease),
+    visibility 0s linear 300ms;
 }
 
-.music-island[data-loading="active"] .island-loader,
 .music-island[data-loading="indeterminate"] .island-loader {
   opacity: 1;
   visibility: visible;
   transform: none;
   transition:
-    opacity 200ms var(--ease),
-    transform 380ms var(--spring) 40ms,
+    opacity 180ms var(--ease),
+    transform 360ms var(--island-morph-ease),
     visibility 0s linear 0s;
 }
 
 .music-island .island-loader__label {
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  line-height: 1.1;
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: var(--weight-serif);
+  letter-spacing: -0.035em;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
-.music-island .island-loader__percent {
-  color: var(--island-text-faint);
-  font-size: 11px;
-  font-weight: 650;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.02em;
-  line-height: 1.1;
-}
-
-/* Expanded, the same overlay has room for a bigger voice. */
+/* Keep the expanded transport controls visible and usable while buffering. */
 .music-island[data-open="true"] .island-loader {
-  gap: 0.9cqw;
+  inset: 0 0 50%;
+  border-radius: var(--island-radius) var(--island-radius) 0 0;
 }
 
 .music-island[data-open="true"] .island-loader__label {
-  font-size: 4.4cqw;
-}
-
-.music-island[data-open="true"] .island-loader__percent {
-  font-size: 3.1cqw;
+  font-size: 6.4cqw;
 }
 
 /* -----------------------------------------------------------------
@@ -291,6 +258,7 @@
   justify-content: space-between;
   gap: 0.5rem;
   border: 0;
+  border-radius: inherit;
   padding: 0 0.6rem;
   background: transparent;
   color: var(--island-text);
@@ -638,11 +606,11 @@
   display: none;
 }
 
-.music-island[data-player-state="playing"] .player-icon--play {
+.music-island[data-playback-active="true"] .player-icon--play {
   display: none;
 }
 
-.music-island[data-player-state="playing"] .player-icon--pause {
+.music-island[data-playback-active="true"] .player-icon--pause {
   display: block;
 }
 
@@ -930,31 +898,21 @@
       visibility 0s linear 0s !important;
   }
 
-  /* The ring and the "Now Loading..." card are the only evidence that a 69 MiB
-     master is on its way. Flattened to 0.01ms they would snap into place and
-     read as a frozen screen, so they keep a short crossfade — and the
-     indeterminate sweep keeps rotating, just slowly enough to stop being
-     motion rather than information. */
+  /* Reduced motion keeps the status readable without looping or overshoot. */
   .music-island .island-load-ring {
     transition: opacity 120ms linear !important;
   }
 
   .music-island[data-loading="indeterminate"] .island-load-ring {
-    animation-duration: 2.6s !important;
+    animation: none !important;
   }
 
   .music-island .island-loader {
     transform: none !important;
-    transition:
-      opacity 120ms linear,
-      visibility 0s linear 120ms !important;
+    transition: opacity 120ms linear, visibility 0s linear 120ms !important;
   }
 
-  .music-island[data-loading="active"] .island-loader,
   .music-island[data-loading="indeterminate"] .island-loader {
-    transform: none !important;
-    transition:
-      opacity 120ms linear,
-      visibility 0s linear 0s !important;
+    transition: opacity 120ms linear, visibility 0s linear 0s !important;
   }
 }

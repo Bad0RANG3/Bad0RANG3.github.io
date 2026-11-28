@@ -84,10 +84,9 @@ const textFontFaces = [
   ['Playfair Display', 'playfair-display-latin-var.woff2', '400 700', latinRange],
 ].map(([family, file, weight, range]) => `@font-face{font-family:"${family}";src:url("${withBase(`/fonts/${file}`)}") format("woff2");font-weight:${weight};font-style:normal;font-display:swap;unicode-range:${range};}`).join('');
 const fontFaces = `${textFontFaces}${monoFontFaces}`;
-// Only the two text faces are preloaded: every page opens with a Latin heading
-// and a paragraph, while the mono face is used below the fold on most routes.
+// Preload the body face. Let the browser discover the decorative heading face
+// from CSS so it does not compete with content images on a slow connection.
 const primaryFontHref = withBase('/fonts/roboto-latin-var.woff2');
-const displayFontHref = withBase('/fonts/playfair-display-latin-var.woff2');
 const pageBreadcrumbs = breadcrumbs ?? [
   { name: '首页', path: '/' },
   ...(currentPath === withBase(ROUTES.HOME) ? [] : [{ name: title, path: currentPath }]),
@@ -191,7 +190,6 @@ const jsonLd = {
   <link rel="alternate" type="application/atom+xml" title={`${siteConfig.title} Atom`} href={withBase(ROUTES.ATOM)}>
   <link rel="alternate" type="application/feed+json" title={`${siteConfig.title} JSON Feed`} href={withBase(ROUTES.JSON_FEED)}>
   <link rel="preload" as="font" type="font/woff2" crossorigin href={primaryFontHref}>
-  <link rel="preload" as="font" type="font/woff2" crossorigin href={displayFontHref}>
   <link rel="icon" href={withBase('/ico.ico')} type="image/x-icon">
 
   <!-- Open Graph -->

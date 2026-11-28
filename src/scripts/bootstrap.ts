@@ -1,6 +1,16 @@
 import './theme';
 import './site';
 import './service-worker';
+import { isConstrainedConnection } from '../lib/network';
+
+const afterPageLoad = (task: () => void) => {
+  const schedule = () => {
+    if (typeof window.requestIdleCallback === 'function') window.requestIdleCallback(task, { timeout: 1800 });
+    else window.setTimeout(task, 400);
+  };
+  if (document.readyState === 'complete') schedule();
+  else window.addEventListener('load', schedule, { once: true });
+};
 
 // Decorative animation stays a deferred import so it never blocks first paint.
 // Reading pages keep the BGA too; its SVG keyframes are replayed on a fixed
@@ -8,40 +18,42 @@ import './service-worker';
 // alive while the reader scrolls. Re-check after ClientRouter navigation
 // because this module itself is cached.
 const syncAtmosphere = () => {
-  if (document.documentElement.dataset.ambientMotion === 'true') {
-    void import('./atmosphere').then(({ startAtmosphere }) => startAtmosphere());
+  if (document.documentElement.dataset.ambientMotion === 'true' && !isConstrainedConnection()) {
+    void import('./atmosphere').then(({ startAtmosphere }) => startAtmosphere()).catch(() => {});
   }
 };
 
-// The music island is chrome, not reading content. Its controller (~4 KB) is
+// The music island is chrome, not reading content. Its controller is
 // fetched once the page is idle, or immediately if the visitor reaches for the
 // player first, so it never competes with the article's CSS, fonts, or the
 // router on first paint.
-let playerLoaded = false;
+let playerTask: Promise<unknown> | null = null;
 const loadPlayer = () => {
-  if (playerLoaded) return;
-  playerLoaded = true;
-  void import('./player');
+  playerTask ??= import('./player').catch(() => { playerTask = null; });
+  return playerTask;
 };
 const schedulePlayer = () => {
   const island = document.getElementById('site-island');
   if (!(island instanceof HTMLElement) || island.dataset.playerScheduled === '1') return;
   island.dataset.playerScheduled = '1';
   const warm = () => {
-    island.removeEventListener('pointerenter', warm);
-    island.removeEventListener('pointerdown', warm);
-    island.removeEventListener('focusin', warm);
     loadPlayer();
   };
   island.addEventListener('pointerenter', warm, { passive: true });
   island.addEventListener('pointerdown', warm, { passive: true });
   island.addEventListener('focusin', warm);
-  const runWhenIdle = () => {
-    if (typeof window.requestIdleCallback === 'function') window.requestIdleCallback(loadPlayer, { timeout: 1800 });
-    else window.setTimeout(loadPlayer, 400);
-  };
-  if (document.readyState === 'complete') runWhenIdle();
-  else window.addEventListener('load', runWhenIdle, { once: true });
+  // On slow connections the first click can beat the module download. Replay
+  // that intent once its controller is ready, so the pill opens on one click.
+  island.addEventListener('click', (event) => {
+    if (island.dataset.bound === '1' || !(event.target instanceof Element)
+      || !event.target.closest('#site-island-toggle')) return;
+    void loadPlayer().then(() => {
+      if (island.dataset.bound === '1') document.getElementById('site-island-toggle')?.click();
+    });
+  });
+  afterPageLoad(() => {
+    if (!isConstrainedConnection()) loadPlayer();
+  });
 };
 
 // Search is fetched on first use (button or Ctrl/⌘+K) rather than inlined into
@@ -61,8 +73,8 @@ document.addEventListener('keydown', (event) => {
 });
 
 document.addEventListener('astro:page-load', () => {
-  syncAtmosphere();
+  afterPageLoad(syncAtmosphere);
   schedulePlayer();
 });
-syncAtmosphere();
+afterPageLoad(syncAtmosphere);
 schedulePlayer();

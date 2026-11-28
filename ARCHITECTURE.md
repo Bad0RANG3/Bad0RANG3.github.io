@@ -290,13 +290,17 @@ pnpm perf:frames --url http://127.0.0.1:4321/posts/<slug>/ --ms 3000
 
 **验收这类改动的方法是截图对比，不是看数字。** 用同一台静态服务器分别服务改动前后两份 `dist` 快照（不要用 `astro preview`，它自带压缩会污染体积读数），CDP 在固定视口 + `deviceScaleFactor` 下截图，然后逐像素差分。判据要设噪声地板：同一版本连拍两次，`home-1440` 因为 atmosphere canvas 在动会有 ~3% 的像素差，其余页面 <0.02%。实际结果（首页 483.1 → 323.2 KiB，-33%）里，`home-390` 的差异 18.8% 全部集中在 hero 圆形人像内部，热力图其余区域为纯 0；人像区域的 SSIM 是 0.981、平均绝对误差 1.94/255。
 
-**已知的剩余浪费**（评估过、暂不处理）：`public/ico.ico` 10952 B 里含 16/32/48 三个 PNG 条目，首页每次加载都取一次；`playfair-display-latin-var.woff2` 37.8 KiB 被 `<link rel="preload">`，而它只服务 2 个元素（站名字标 + 首页 h1）。两者都在首屏关键路径之外，收益 <40 KiB 且会牵动首屏排版策略。
+**弱网加载策略**：首屏只预加载正文 Roboto，展示字体 Playfair 交给 CSS 按需发现，保持 `font-display: swap`。`src/lib/network.ts` 统一识别省流、2G/3G 或低于 1.5 Mbps 的连接；这些连接不自动导入粒子背景和播放器，播放器在首次交互时加载，首次点击会在模块就绪后继续打开。正常连接的装饰模块在 `load` 后空闲时加载。链接预取改为实际按下时触发，避免经过链接就与正文抢带宽。
 
 ### 文章增强与离线缓存
 
 `article-enhancements.ts` 负责文章级的初始化和清理，并把同一个 `AbortSignal` 交给代码块和灯箱模块。阅读进度只按 `[data-article-body]` 正文范围计算，不包含相关文章和评论；目录使用缓存的标题位置与共享滚动帧更新，滚动时不读取布局。图片加载、字体就绪、折叠内容和 `ResizeObserver` 负责重新测量；切页、隐藏页面或关闭页面时保存待写入的阅读进度。
 
+评论区在正常网络下接近视口时自动加载；省流、2G/3G 或低带宽连接只显示「加载评论」按钮，点击后才请求 Giscus。脚本下载失败时恢复按钮，允许重试。
+
 `public/sw.js` 按 Service Worker 的作用域划分缓存，只清理本站拥有的旧版本。页面请求使用网络优先，静态资源使用缓存优先并后台更新，所有缓存写入均由 `event.waitUntil()` 保活。音视频、Range 请求、非 GET 请求及作用域外的资源不进入缓存；运行时缓存保持 120 项上限。
+
+弱网缓存采用分层策略：带 hash 的 `_astro/` 资源和自托管字体命中后直接返回，避免每次重访都重新联网；字体内容变化时同步升级 Service Worker 缓存版本。普通图片继续后台校验。页面仍优先联网更新，但已缓存页面最多等待 2.5 秒即可打开，网络请求通过 `waitUntil` 继续刷新；未缓存页面不受此超时限制。缓存策略用 `pnpm test:cache` 覆盖根路径、项目子路径、慢连接、离线和媒体绕过。
 
 ### 粒子背景（`src/scripts/atmosphere.ts`）
 
@@ -326,7 +330,7 @@ pnpm perf:frames --url http://127.0.0.1:4321/posts/<slug>/ --ms 3000
 - 结构与交互在 `src/components/layout/SiteHeader.astro` + `src/scripts/player.ts`；**样式全部归 `src/styles/island.css`**，`global.css` 里不应再出现任何 `.music-island` / `.dynamic-island` / `.header-action` 规则。同一个选择器在两个文件里各写一遍，就得靠 `!important` 打架——这正是重构前的问题。
 - 同一个组件里还渲染主站导航行 `.site-nav`：它是**文档流里的一行**（左侧站名 + 右侧文字链接），不是钉在视口上的图标栏，样式属于站点版式所以写在 `global.css`。这一行用 `padding-top` 为灵动岛预留出顶部那条带，`#main-content` 因此不再自带顶部内边距；改动顶部间距时先看这里，否则灵动岛会压住标题。
 - 形态切换只改 `data-open`、`data-player-state`、`data-visualizer`、`data-volume-open`、`data-loading` 这几个属性，动画交给 CSS 过渡；JS 不写内联几何。展开/收起必须**可中断**：中途反向点击要从当前几何继续，而不是先塌成空壳。
-  - `data-loading` 是**唯一**允许 JS 写进样式系统的标量：`--island-load-progress`（0–1，`player.ts` 每读到一个响应分片就限流写入一次，步长小于 0.4% 的更新直接丢弃）。它和 `--player-progress` 同类——是状态标量，不是几何，所以不违反「JS 不写内联几何」。（可视化已经完全走 canvas，`--visualizer-level` 这个标量连同 6 根 `<i>` 细条一起删了，见下。）
+  - `data-loading` 只表示 `idle` / `indeterminate`，由真实媒体播放与缓冲事件驱动。`data-playback-active` 同步播放/暂停按钮的图标与无障碍名称，缓冲时也可暂停；JS 不写动画几何。
   - 曾经还有第五个属性 `data-cue-active`（滚动到新章节时胶囊变成「小节提示」）。那套东西的触发条件是标记里的 `[data-island-cue]`，而**全站没有任何一个页面写过这个属性**，所以 `bindSectionCues()` 永远在第一行返回：对应的 JS、CSS 和标记都是死的，已一并删除（标记里也没有 `data-live-progress`，播放器里查它的那段同样是死的）。新增这类「滚动提示」请用 `lib/scroll.ts`，并给它一个真实存在的触发源。
 - **视觉规格对齐 iPhone 的灵动岛**，这不是随意调的，改之前先理解这几点：
   - 背景是**不透明纯黑**（`--island-bg: #000`），没有边框、没有 `backdrop-filter`。真机上它本来就是屏幕挖孔，不是一块玻璃面板。所以它和 `paper` / `paper-dark` 两套主题都无关。
@@ -338,19 +342,15 @@ pnpm perf:frames --url http://127.0.0.1:4321/posts/<slug>/ --ms 3000
     - CSS 只拥有**盒子**（紧凑 22×18，展开 6.4cqw×7cqw，`display:block`），胶囊宽度、间距、dpr、maxHeightRatio 全部由 `player.ts` 按盒子的 `clientWidth/clientHeight` 现算并写进 renderer 字段（`ResizeObserver` 跟展开动画）。这是「JS 不写内联几何」的延伸：canvas 的内部坐标不是样式，CSS 里没有 `--visualizer-level` 这种标量了。
     - 颜色仍取 `--island-wave`（`applyCoverAccent()` 从封面算出），但 canvas 是位图，token 变了必须显式 `setColor` 重推一次——`syncVisualizerColor()` 在 canvas 初始化与 accent 落定时各读一次，不每帧 `getComputedStyle`。
     - 渲染循环跟着播放状态自己收尾：playing 时排帧并 `setVisualizerMode('live')`；暂停/缓冲/结束只把目标换成全 0 交给弹簧，等 `renderer.settled` 为真就停止排帧并转 `idle`。没有「空转的 rAF」。
-- **音源是完整的无损母带（`public/media/deep-sea-adventure.flac`，约 69 MiB），不是转码副本**，所以首次加载必须给反馈。`<audio>` 元素没有任何可信的下载计数（`progress` 事件报的是浏览器自己的缓冲估算，`preload="none"` 时更不诚实），因此 `player.ts` 自己用 `fetch` 流式读取：`Content-Length` 作分母、`response.body.getReader()` 的分片累加作分子，读满后拼成 `Blob`、写进 Cache API（`b0-media-v1`）、再以 blob URL 交给元素。**这样总量只下载一次**——如果直接把 URL 塞给 `<audio>` 同时又 `fetch` 一遍，用户会为同一首歌付 2 × 69 MiB，而 Cache API 的命中让第二次访问静默、不闪加载层。
-  - **加载结束就是最后一个字节，没有任何「至少显示 N 毫秒」的人为保持。** 曾有一个 420ms 的下限，理由是「太快闪过不好看」；在不限速的链路上它纯粹是把已经可播的状态按住不放，已删除。要避免闪烁靠的是另一个机制：**缓存命中时根本不进加载态**（`announceProgress` 门控），而不是靠拖时间。
-  - **母带是「意图预取」，不是页面加载即预取。** `pointerenter` / `pointerdown` / `focusin` 三个信号落在岛上时才开始下载，`navigator.connection.saveData` 为真时跳过。理由：这是全站唯一能消费 69 MiB 的东西，指针伸向胶囊是唯一诚实的兴趣信号；再早会让每个只是来读一篇文章的访客都背上这份流量。预取期间**不画任何东西**——`setLoadingState` / `publishLoadProgress` 全被 `announceProgress` 挡住只记账，真正按下播放时 `announceLoadingUi()` 把已经走过的进度一次性回放出来，光条从中途开始，不会先跳 0% 再跳到 60%。
-  - 下载是**单飞 Promise**（`mediaTask` / `mediaTaskUrl`）：「预取正在进行」和「用户点了播放」必须共用同一条流，否则会触发第二次 69 MiB 请求。失败时把 `mediaTask` 清空，允许下次重试。
-
-  - `public/sw.js` 必须把 `.flac` 排除在 shell 缓存之外（`fetch` 的提前 return 正则），否则运行时的 stale-while-revalidate 会把同一份 69 MiB 再存一遍，还会在 `RUNTIME_CACHE_LIMIT`（120 条）里挤掉离线阅读用的文章。
-  - 没有 `Content-Length`（分块传输、某些代理）时不给假百分比：`data-loading` 转成 `indeterminate`，光条改成一圈短弧自转，数字位改显已收到的 MB。
-  - 浏览器不支持 FLAC 解码时，`error` 事件触发一次静默重试，换 `audioFallback`（MP3）。只许一次：否则解码失败会在两个源之间死循环。
-- **加载光条是进度计，不是装饰性 spinner。** 几何 3px 的一圈，贴在胶囊外沿（`inset: calc(-1 * var(--island-ring-band))`），所以紧凑态仍是 196×40、展开态仍按 `cqw` 缩放。它是 `conic-gradient` + 一个同底色实心圆孔（`.island-load-ring__hole`）挖出来的，**不是 `mask`**——`compat:audit` 要求每个 `mask-image` 都有 `-webkit-mask-image` 配对，而 `conic-gradient` 不在任何特性表里，属于安全区。
-  - 外沿与内孔两个圆角都从 `--island-radius` 派生（一个加带宽、一个不加）。这个 token 用 `@property` 注册成 `<length>` 才能参与过渡，否则紧凑 → 展开时两处圆角会跳变而不是插值。注册让它在基线里的成本是 Safari 16.4 / Firefox 128，正好等于 `compat-audit` 的 `BASELINE`，不是额外负担。
-  - 颜色取 `--island-wave`（`applyCoverAccent()` 从封面算出的强调色），因此光条是专辑自己的色调，不是通用的蓝色 spinner。
-- **`prefers-reduced-motion: reduce` 下这三个新部件必须单独写覆盖**：全局 reset 是 `*{transition-duration:.01ms!important; animation-duration:.01ms!important}`，任何非 `!important` 声明都赢不了它。光条与加载层的跨淡改成 120ms 线性、`indeterminate` 的自转放慢到 2.6s（仍在转，但不再是有信息量的运动），加载层的过冲 `transform` 直接去掉。
-- 播放器模块只能按需加载（用户首次交互时才 import），不能进入文档首屏的脚本链——`pnpm perf:audit` 会断言这一点。
+- **默认音源改为 MP3（约 5.9 MiB），由原生媒体元素流式播放**：点击播放才设置 `audio.src`，浏览器用 HTTP Range 与自身媒体缓存边收边播。不再先 `fetch` 完整约 69 MiB FLAC、拼 Blob、写一份全曲缓存后才开始。无损原文件保留，只允许确认解码失败时尝试一次；网络错误不会触发更大的音源下载。
+  - 悬停、打开面板不下载音频；歌词在打开时首次加载并复用 Promise。播放元素仍通过 `transition:persist` 跨页保留。
+  - `playing` 清除加载层，`waiting` 显示加载状态，`pause` / `ended` / `error` 退出加载。加载层只显示 `Now loading...`，字体与首页 ID 标题一致（`--font-display` / Playfair Display，`--weight-serif`）；详细播放状态保留在播放器的无障碍状态提示里。
+  - 加载视觉延后 180ms 出现以避免快速播放时闪烁，但不延迟播放。展开时仅覆盖标题区域，保留进度条、时间和暂停控件。
+  - `public/sw.js` 不拦截音视频及 Range 请求，避免二次全量下载。
+- **加载光环是固定胶囊上的流光**：2px 光带与内孔都从 `--island-radius` 派生，封面强调色由 `--island-wave` 提供。用注册的角度属性 `--island-ring-angle` 改变渐变方向，不能旋转整个矩形元素，否则圆角会脱离壳体。文字居中，不搭配额外波形或第二行文案；流光由 CSS 完成，没有 JS 动画循环。
+- **减少动态效果**：`prefers-reduced-motion: reduce` 完全停止加载流光，保留 120ms 淡入淡出以及已有的短形态过渡。
+- 播放器模块不能进入文档首屏的脚本链：正常网络在页面空闲后导入，弱网在用户首次交互时导入；`pnpm perf:audit` 会断言播放器没有直接挂在文档里。
+  - 频谱算法单独成块，仅在真实 `playing` 事件后导入。打开面板只需要播放器控制器；音频不等待 FFT 或画布渲染器下载。频谱模块到达前不启动空转动画帧，加载失败也不打断音频。
 - `prefers-reduced-motion: reduce` 下保留一次短过渡（约 0.2s），不要用全局 reset 的 `0.01ms` 直接跳变。
 
 修改样式后如果只想确认体积变化，直接看 `dist/_astro/about.*.css` 的原始/ gzip 大小即可；`pnpm dist:fingerprint` 会如实列出差异。

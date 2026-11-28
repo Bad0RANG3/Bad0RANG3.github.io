@@ -28,8 +28,7 @@ const playerLyrics = withBase(player.lyrics);
   <div class="dynamic-island music-island" id="site-island" data-open="false" data-volume-open="false" data-player-state="idle" data-visualizer="idle" data-loading="idle" data-api-base={player.apiBase} data-audio-src={playerAudio} data-audio-fallback={playerFallback} data-lyrics-src={playerLyrics} data-song-id={String(player.id)} data-song-duration={String(player.durationSeconds)} data-song-title={player.title} transition:persist="site-music-player">
     <span class="island-load-ring" aria-hidden="true"><span class="island-load-ring__hole"></span></span>
     <div class="island-loader" aria-hidden="true">
-      <span class="island-loader__label">Now Loading...</span>
-      <span class="island-loader__percent" id="island-load-percent">0%</span>
+      <span class="island-loader__label">Now loading...</span>
     </div>
     <button
       class="island-summary"
@@ -91,10 +90,8 @@ const playerLyrics = withBase(player.lyrics);
         </div>
       </div>
     </div>
-    {/* No `src` here on purpose: `player.ts` streams the file through `fetch`
-        to measure real byte progress, caches it, then hands the blob over. An
-        `src` in the markup would make the browser start a second, unmeasured
-        download of the same 69 MiB the moment the panel opens. */}
+    {/* Attach the source only on play. Native media buffering supports Range
+        requests and starts playback before the whole file has downloaded. */}
     <audio id="site-island-audio" preload="none"></audio>
   </div>
 
