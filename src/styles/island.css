@@ -73,10 +73,10 @@
   --island-delay: 120ms;
   /* Loading ring. The band width is the only geometry the ring owns, and
      `--island-load-progress` is a scalar (0-1) written per read chunk by
-     `player.ts` — same class of state as `--visualizer-level` and
-     `--player-progress`, not a measurement. The ring takes its colour from
-     the cover accent `applyCoverAccent()` publishes, so it lights up in the
-     album's own hue instead of a generic spinner blue. */
+     `player.ts` — same class of state as `--player-progress`, not a
+     measurement. The ring takes its colour from the cover accent
+     `applyCoverAccent()` publishes, so it lights up in the album's own hue
+     instead of a generic spinner blue. */
   --island-ring-band: 3px;
   --island-load-progress: 0;
   --island-ring-lit: color-mix(in srgb, var(--island-wave) 94%, #fff);
@@ -354,23 +354,24 @@
 
 /* -----------------------------------------------------------------
    Visualiser.
-   `data-visualizer` is the honest state of the bars:
-     live  six Mel bands, dB levels with fast attack and slower release
-     idle  paused / buffering / not yet started, waveform hidden
-     off   no playable source, waveform hidden
-   Both sizes share normalized levels, so expanding never changes the rhythm.
+   `data-visualizer` is the honest state of the row:
+     live  six log-spaced bands, painted from raw PCM on a canvas
+     idle  paused / buffering / not yet started, row dark
+     off   no playable source, row dark
+   Both sizes share one analyser, so expanding never changes the rhythm.
+   The capsules are painted, not styled: everything about their shape
+   (width, gap, spring, dpr) belongs to `player.ts`, while CSS owns the
+   box they are measured into.
    ----------------------------------------------------------------- */
 .music-island .island-mini-wave {
-  display: flex;
-  /* Six lines occupy the same small trailing region as before. */
+  display: block;
+  /* Six capsules occupy the same small trailing region as before. */
   width: 0;
   height: 18px;
   flex: 0 0 auto;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
   overflow: hidden;
   opacity: 0;
+  pointer-events: none;
   transition: width 0.26s var(--island-morph-ease), opacity 0.16s var(--ease);
 }
 
@@ -379,24 +380,11 @@
   opacity: 1;
 }
 
-.music-island .island-mini-wave i {
-  display: block;
-  width: 2px;
-  height: calc(var(--visualizer-level, 0.12) * 100%);
-  flex: 0 0 auto;
-  border-radius: 999px;
-  background: var(--island-wave);
-}
-
-.music-island[data-visualizer="live"] .island-mini-wave i {
-  animation: none;
-  transition: none;
-}
-
-/* There is deliberately NO idle/off appearance for the bars: when nothing is
-   playing the visualiser does not exist. A frozen or breathing bar row is a lie
-   either way — it claims "audio" when there is none. The pill falls back to the
-   cover art alone, which is what it shows before the first play too. */
+/* There is deliberately NO idle/off appearance for the row: when nothing is
+   playing the capsules fall into their dots and the canvas goes dark. A frozen
+   or breathing bar row is a lie either way — it claims "audio" when there is
+   none. The pill falls back to the cover art alone, which is what it shows
+   before the first play too. */
 
 /* -----------------------------------------------------------------
    Expanded panel
@@ -510,28 +498,15 @@
 }
 
 .music-island .island-expanded-wave {
-  display: flex;
+  display: block;
   width: 6.4cqw;
   height: 7cqw;
-  align-items: center;
-  justify-content: center;
-  gap: 0.56cqw;
+  /* Same six bands as the pill, at the panel's scale — one analyser feeds both,
+     so the rhythm is identical and only the geometry grows. */
+  flex: 0 0 auto;
+  pointer-events: none;
   opacity: 0;
   transition: opacity 0.16s var(--ease);
-}
-
-.music-island .island-expanded-wave i {
-  display: block;
-  width: 0.6cqw;
-  height: calc(var(--visualizer-level, 0.12) * 100%);
-  flex: 0 0 auto;
-  border-radius: 999px;
-  background: var(--island-wave);
-}
-
-.music-island[data-visualizer="live"] .island-expanded-wave i {
-  animation: none;
-  transition: none;
 }
 
 .music-island[data-visualizer="live"] .island-expanded-wave {

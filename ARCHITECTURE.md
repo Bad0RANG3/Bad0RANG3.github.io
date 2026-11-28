@@ -326,14 +326,18 @@ pnpm perf:frames --url http://127.0.0.1:4321/posts/<slug>/ --ms 3000
 - 结构与交互在 `src/components/layout/SiteHeader.astro` + `src/scripts/player.ts`；**样式全部归 `src/styles/island.css`**，`global.css` 里不应再出现任何 `.music-island` / `.dynamic-island` / `.header-action` 规则。同一个选择器在两个文件里各写一遍，就得靠 `!important` 打架——这正是重构前的问题。
 - 同一个组件里还渲染主站导航行 `.site-nav`：它是**文档流里的一行**（左侧站名 + 右侧文字链接），不是钉在视口上的图标栏，样式属于站点版式所以写在 `global.css`。这一行用 `padding-top` 为灵动岛预留出顶部那条带，`#main-content` 因此不再自带顶部内边距；改动顶部间距时先看这里，否则灵动岛会压住标题。
 - 形态切换只改 `data-open`、`data-player-state`、`data-visualizer`、`data-volume-open`、`data-loading` 这几个属性，动画交给 CSS 过渡；JS 不写内联几何。展开/收起必须**可中断**：中途反向点击要从当前几何继续，而不是先塌成空壳。
-  - `data-loading` 是**唯一**允许 JS 写进样式系统的标量：`--island-load-progress`（0–1，`player.ts` 每读到一个响应分片就限流写入一次，步长小于 0.4% 的更新直接丢弃）。它和 `--visualizer-level`、`--player-progress` 同类——是状态标量，不是几何，所以不违反「JS 不写内联几何」。
+  - `data-loading` 是**唯一**允许 JS 写进样式系统的标量：`--island-load-progress`（0–1，`player.ts` 每读到一个响应分片就限流写入一次，步长小于 0.4% 的更新直接丢弃）。它和 `--player-progress` 同类——是状态标量，不是几何，所以不违反「JS 不写内联几何」。（可视化已经完全走 canvas，`--visualizer-level` 这个标量连同 6 根 `<i>` 细条一起删了，见下。）
   - 曾经还有第五个属性 `data-cue-active`（滚动到新章节时胶囊变成「小节提示」）。那套东西的触发条件是标记里的 `[data-island-cue]`，而**全站没有任何一个页面写过这个属性**，所以 `bindSectionCues()` 永远在第一行返回：对应的 JS、CSS 和标记都是死的，已一并删除（标记里也没有 `data-live-progress`，播放器里查它的那段同样是死的）。新增这类「滚动提示」请用 `lib/scroll.ts`，并给它一个真实存在的触发源。
 - **视觉规格对齐 iPhone 的灵动岛**，这不是随意调的，改之前先理解这几点：
   - 背景是**不透明纯黑**（`--island-bg: #000`），没有边框、没有 `backdrop-filter`。真机上它本来就是屏幕挖孔，不是一块玻璃面板。所以它和 `paper` / `paper-dark` 两套主题都无关。
   - 比例：紧凑态约 **4.9:1**（196×40，完全胶囊，圆角 = 高度一半）；展开态约 **2.1–2.3:1**（372×176，圆角很大）。这两个数字定了，里面所有尺寸都靠 `cqw` 跟着缩放——面板内的一切用 `cqw` 而不是 `px`，改宽度就是整体缩放。
-  - 紧凑态是**两端分置**：左边专辑封面（26px、圆角 6px），右边 5 根白色细条波形，中间留空（真机那里是摄像头）。不要把两者居中凑在一起。
+  - 紧凑态是**两端分置**：左边专辑封面（26px、圆角 6px），右边一小排白色胶囊波形，中间留空（真机那里是摄像头）。不要把两者居中凑在一起。
   - 展开态的信息层级是**歌名（白色粗体）→ 歌手（次级灰）→ 歌词（最弱）**，而不是反过来。
-  - 波形**只有 `live` 会动**，且高度由 JS 从真实 AnalyserNode 频谱帧算出。`idle` / `off` 一律静止；`idle` 用一组不等高的静态剪影（像暂停的波形），不要用等高的横线——那看起来像加载指示器。
+  - 波形是 **canvas 上的 `apple-like-waves` 胶囊频谱**（`src/scripts/alwave.ts`，MIT，源自 `kmgcc/apple-like-waves`；两个包都没发到 npm，所以算法是 vendor 进仓库的，不是依赖）。紧凑态和展开态各一块 canvas、**共用同一个 `SpectrumAnalyzer`**：同一个六带切分、同一套弹簧，所以展开只放大几何，节奏一模一样。管线是「AnalyserNode 取 2048 点**时域** PCM → Hann 实数 FFT → 对数八度分带 → 三拍参考包络的起音加成 + 慢跟随门控 → 二阶阻尼弹簧（ζ=0.83、ω≈27.5 rad/s，过冲约 0.9%）」，不是浏览器的 `getFloatFrequencyData`：`minDecibels`/`maxDecibels` 那套已经无意义，`smoothingTimeConstant` 保持 0，平滑只由引擎的 release 曲线负责。
+    - **静止态是「圆点」而不是零高**：胶囊的最矮高度等于自身宽度，所以暂停时这一排会平滑塌缩成六个点（用更慢的临界阻尼求解器，`pauseDuration` 0.6），塌完之后 `data-visualizer` 才转 `idle` —— 冻结在最后一帧能量上是假信息，会声称有音频。因此**没有 idle 剪影**：canvas 没被点亮之前就是透明的，胶囊回落到封面。`data-visualizer` 仍只有 `live`/`idle`/`off`，仍然是「只有 live 会发光」。
+    - CSS 只拥有**盒子**（紧凑 22×18，展开 6.4cqw×7cqw，`display:block`），胶囊宽度、间距、dpr、maxHeightRatio 全部由 `player.ts` 按盒子的 `clientWidth/clientHeight` 现算并写进 renderer 字段（`ResizeObserver` 跟展开动画）。这是「JS 不写内联几何」的延伸：canvas 的内部坐标不是样式，CSS 里没有 `--visualizer-level` 这种标量了。
+    - 颜色仍取 `--island-wave`（`applyCoverAccent()` 从封面算出），但 canvas 是位图，token 变了必须显式 `setColor` 重推一次——`syncVisualizerColor()` 在 canvas 初始化与 accent 落定时各读一次，不每帧 `getComputedStyle`。
+    - 渲染循环跟着播放状态自己收尾：playing 时排帧并 `setVisualizerMode('live')`；暂停/缓冲/结束只把目标换成全 0 交给弹簧，等 `renderer.settled` 为真就停止排帧并转 `idle`。没有「空转的 rAF」。
 - **音源是完整的无损母带（`public/media/deep-sea-adventure.flac`，约 69 MiB），不是转码副本**，所以首次加载必须给反馈。`<audio>` 元素没有任何可信的下载计数（`progress` 事件报的是浏览器自己的缓冲估算，`preload="none"` 时更不诚实），因此 `player.ts` 自己用 `fetch` 流式读取：`Content-Length` 作分母、`response.body.getReader()` 的分片累加作分子，读满后拼成 `Blob`、写进 Cache API（`b0-media-v1`）、再以 blob URL 交给元素。**这样总量只下载一次**——如果直接把 URL 塞给 `<audio>` 同时又 `fetch` 一遍，用户会为同一首歌付 2 × 69 MiB，而 Cache API 的命中让第二次访问静默、不闪加载层。
   - **加载结束就是最后一个字节，没有任何「至少显示 N 毫秒」的人为保持。** 曾有一个 420ms 的下限，理由是「太快闪过不好看」；在不限速的链路上它纯粹是把已经可播的状态按住不放，已删除。要避免闪烁靠的是另一个机制：**缓存命中时根本不进加载态**（`announceProgress` 门控），而不是靠拖时间。
   - **母带是「意图预取」，不是页面加载即预取。** `pointerenter` / `pointerdown` / `focusin` 三个信号落在岛上时才开始下载，`navigator.connection.saveData` 为真时跳过。理由：这是全站唯一能消费 69 MiB 的东西，指针伸向胶囊是唯一诚实的兴趣信号；再早会让每个只是来读一篇文章的访客都背上这份流量。预取期间**不画任何东西**——`setLoadingState` / `publishLoadProgress` 全被 `announceProgress` 挡住只记账，真正按下播放时 `announceLoadingUi()` 把已经走过的进度一次性回放出来，光条从中途开始，不会先跳 0% 再跳到 60%。

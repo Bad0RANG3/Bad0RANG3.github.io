@@ -1,6 +1,16 @@
 // @ts-nocheck
+import {
+  AlwaveCanvasRenderer,
+  DEFAULT_TUNING_PROFILE,
+  SpectrumAnalyzer,
+} from './alwave';
 export {};
 // Extracted from SiteHeader.astro. Bundled and cached by Astro/Vite.
+//
+// `alwave.ts` is the vendored spectrum engine (MIT, kmgcc/apple-like-waves); the
+// packages are not on npm, so the algorithm ships with the site instead of
+// arriving through a dependency. It is bundled into this deferred chunk on
+// purpose: nothing about it may reach the article's critical path.
 (() => {
     const island = document.getElementById('site-island');
     const toggle = document.getElementById('site-island-toggle');
@@ -46,26 +56,29 @@ export {};
     let analyser = null;
     let audioSourceNode = null;
     let outputGain = null;
-    let visualizerSpectrum = null;
+    // The capsules come from raw PCM, not from the browser's own spectrum: the
+    // vendored pipeline owns the window, the Hann FFT and the band layout.
+    let visualizerSamples = null;
+    let visualizerAnalyzer = null;
     let visualizerFrame = 0;
     let visualizerLastTime = null;
-    // Equal steps on the Mel scale give bass, vocals and treble their own room.
-    const visualizerMelLow = Math.log1p(20 / 700);
-    const visualizerMelHigh = Math.log1p(20000 / 700);
-    const visualizerBandEdges = Array.from({ length: 7 }, (_, index) =>
-      index === 0 ? 20 : index === 6 ? 20000
-        : 700 * Math.expm1(visualizerMelLow + (visualizerMelHigh - visualizerMelLow) * index / 6));
-    const visualizerLevels = Array(6).fill(0.12);
     // Output loudness is owned by us, not by the media element. See
     // `applyOutputLevel` for why that matters to the visualiser.
     let userVolume = 0.72;
     let userMuted = false;
-    const visualizerGroups = [...document.querySelectorAll('[data-audio-visualizer]')]
-      .map((element) => ({
-        bars: [...element.querySelectorAll('i')],
-      }))
-      .filter((group) => group.bars.length > 0);
-    const visualizerBars = visualizerGroups.flatMap((group) => group.bars);
+    // One analyser feeds every canvas. The compact pill and the expanded panel
+    // draw the same six bands at two scales, so expanding never changes the
+    // rhythm — and both canvases only ever report what the samples contain.
+    const VISUALIZER_BANDS = 6;
+    const visualizerSilence = new Array(VISUALIZER_BANDS).fill(0);
+    // The last frame handed to the renderers, kept so a refit (the island
+    // morphing, a DPR change) can repaint at the new geometry without either
+    // blanking the row or asking the engine for another tick.
+    let visualizerTargets = visualizerSilence;
+    const visualizerViews = [...document.querySelectorAll('[data-audio-visualizer]')]
+      .filter((element) => element instanceof HTMLCanvasElement)
+      .map((canvas) => ({ canvas, renderer: null, fittedWidth: 0, fittedHeight: 0 }));
+    let visualizerObserver = null;
 
     const setVolumeMenuOpen = (open) => {
       island.dataset.volumeOpen = open ? 'true' : 'false';
@@ -79,15 +92,104 @@ export {};
       if (!open) setVolumeMenuOpen(false);
     };
 
-    const setVisualizerBaseline = () => {
-      visualizerLastTime = null;
-      visualizerLevels.fill(0.12);
-      visualizerGroups.forEach((group) => {
-        group.bars.forEach((bar) => {
-          if (!(bar instanceof HTMLElement)) return;
-          bar.style.setProperty('--visualizer-level', '0.12');
-        });
+    /* ------------------------------------------------------------------
+       Canvas visualiser.
+
+       Two canvases (the pill's tail and the expanded panel) draw the same six
+       bands through one analyser, so expanding never changes the rhythm. CSS
+       owns both boxes; this only reads them. The capsules start as dots and
+       collapse back into dots when playback stops, which is why there is still
+       no idle silhouette: an unlit canvas is transparent.
+       ----------------------------------------------------------------- */
+    // `paused` alone is not enough: a stalled stream keeps the element
+    // un-paused while no samples arrive, and `data-player-state` is the honest
+    // "the media says it is playing" signal. Both must agree.
+    const isVisualizerPlaying = () => island.dataset.playerState === 'playing' && !audio.paused && !audio.ended;
+
+    // `--island-wave` is the artwork's accent, so the capsules follow the token
+    // instead of hardcoding a theme colour. Read on change, never per frame.
+    const syncVisualizerColor = () => {
+      const wave = window.getComputedStyle(island).getPropertyValue('--island-wave').trim();
+      if (!wave) return;
+      visualizerViews.forEach((view) => {
+        if (view.renderer) view.renderer.setColor(wave);
       });
+    };
+
+    // Six capsules must fit the box with air on both sides, and each one rests
+    // as a dot exactly its own width tall — so the width is what the layout
+    // budget is really about. The pitch splits the box; the capsule takes most
+    // of it and the rest becomes the gap.
+    const fitVisualizerView = (view) => {
+      const renderer = view.renderer;
+      if (!renderer) return;
+      const width = view.canvas.clientWidth;
+      const height = view.canvas.clientHeight;
+      renderer.dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+      renderer.resize(width, height);
+      view.fittedWidth = width;
+      view.fittedHeight = height;
+      if (width <= 0 || height <= 0) return;
+      const pitch = width / VISUALIZER_BANDS;
+      renderer.capsuleWidth = Math.min(height * 0.42, pitch * 0.62);
+      renderer.capsuleSpacing = Math.max(0, pitch - renderer.capsuleWidth);
+      renderer.maxHeightRatio = 0.92;
+    };
+
+    const prepareCanvasVisualizer = () => {
+      visualizerViews.forEach((view) => {
+        if (view.renderer) return;
+        try {
+          view.renderer = new AlwaveCanvasRenderer(view.canvas, {
+            bandCount: VISUALIZER_BANDS,
+            color: '#ffffff',
+            capsuleWidth: 2,
+            capsuleSpacing: 1.4,
+            maxHeightRatio: 0.92,
+            widthExpansion: DEFAULT_TUNING_PROFILE.spring.widthExpansion,
+            springDuration: DEFAULT_TUNING_PROFILE.spring.duration,
+            springDamping: DEFAULT_TUNING_PROFILE.spring.damping,
+            pauseDuration: DEFAULT_TUNING_PROFILE.spring.pauseDuration,
+            pauseDamping: DEFAULT_TUNING_PROFILE.spring.pauseDamping,
+          });
+          // A canvas that has never been lit must not draw its dots yet.
+          view.renderer.setPlaying(false);
+        } catch {
+          view.renderer = null;
+        }
+        // A renderer is born sized from its own attributes, which are only the
+        // fallback for the first frame; the CSS box is the truth.
+        fitVisualizerView(view);
+      });
+      syncVisualizerColor();
+      // The island morphs between 196x40 and 372x176 and the canvases ride
+      // `cqw`, so follow the box rather than guessing its end size.
+      if (!visualizerObserver && typeof ResizeObserver === 'function') {
+        visualizerObserver = new ResizeObserver(() => {
+          visualizerViews.forEach((view) => {
+            if (view.canvas.clientWidth === view.fittedWidth && view.canvas.clientHeight === view.fittedHeight) return;
+            fitVisualizerView(view);
+            // Repaint at the new geometry with whatever the springs hold now.
+            if (view.renderer) view.renderer.render(visualizerTargets, 0, isVisualizerPlaying());
+          });
+        });
+        visualizerViews.forEach((view) => visualizerObserver.observe(view.canvas));
+      }
+    };
+
+    // Snap both canvases shut without animating: used before the first play and
+    // when the audio graph turns out to be unavailable.
+    const resetAudioVisualizer = () => {
+      visualizerLastTime = null;
+      if (visualizerAnalyzer) visualizerAnalyzer.reset();
+      visualizerViews.forEach((view) => {
+        if (!view.renderer) return;
+        view.renderer.setPlaying(false);
+        view.renderer.reset();
+        view.renderer.render(visualizerSilence, 0, false);
+      });
+      if (visualizerFrame) window.cancelAnimationFrame(visualizerFrame);
+      visualizerFrame = 0;
     };
 
     /* ------------------------------------------------------------------
@@ -181,6 +283,9 @@ export {};
         const hex = `#${[r, g, b].map((v) => v.toString(16).padStart(2, '0')).join('')}`;
         island.style.setProperty('--island-wave', hex);
         island.dataset.accent = hex;
+        // The capsules are painted by canvas, so the token change has to be
+        // pushed into them; CSS alone cannot recolour a painted bitmap.
+        syncVisualizerColor();
       } catch {
         // Tainted canvas / decode failure: keep the default white bars.
       }
@@ -188,55 +293,50 @@ export {};
 
     const renderAudioVisualizer = (now) => {
       visualizerFrame = 0;
-      if (!analyser || !visualizerSpectrum || audio.paused || !visualizerBars.length) {
-        setVisualizerBaseline();
+      const playing = isVisualizerPlaying();
+      const previous = visualizerLastTime;
+      visualizerLastTime = now;
+      // One tick is the frame we actually got, clamped the way the springs
+      // expect it: a tab restored after a minute must not integrate a minute.
+      const delta = previous === null ? 1 / 60 : Math.max(0.001, Math.min(1 / 30, (now - previous) / 1000));
+
+      let targets = visualizerSilence;
+      if (playing && analyser && visualizerSamples && visualizerAnalyzer) {
+        // The engine wants the raw waveform, not the browser's dB spectrum:
+        // its own Hann window and log-spaced bands do the rest.
+        analyser.getFloatTimeDomainData(visualizerSamples);
+        visualizerAnalyzer.pushSamples(visualizerSamples);
+        targets = visualizerAnalyzer.step(delta);
+      }
+      visualizerTargets = targets;
+
+      let collapsing = false;
+      visualizerViews.forEach((view) => {
+        if (!view.renderer) return;
+        view.renderer.render(targets, delta, playing);
+        if (!playing && !view.renderer.settled) collapsing = true;
+      });
+
+      if (playing) {
+        setVisualizerMode('live');
+        visualizerFrame = window.requestAnimationFrame(renderAudioVisualizer);
         return;
       }
-
-      // Average linear power within each perceptual band, then map its dB
-      // level to height. Never average dB values or select a changing bin.
-      analyser.getFloatFrequencyData(visualizerSpectrum);
-      const binWidth = audioContext.sampleRate / analyser.fftSize;
-      const delta = visualizerLastTime === null ? 1000 / 60 : Math.max(0, Math.min(100, now - visualizerLastTime));
-      visualizerLastTime = now;
-      const bands = visualizerBandEdges.slice(0, -1).map((low, index) => {
-        const start = Math.ceil(low / binWidth);
-        const high = visualizerBandEdges[index + 1];
-        // Half-open ranges avoid counting an edge bin twice. Include 20000 Hz
-        // in the last range when it falls exactly on a bin; respect Nyquist.
-        const end = Math.min(visualizerSpectrum.length, index === 5
-          ? Math.floor(high / binWidth) + 1
-          : Math.ceil(high / binWidth));
-        let power = 0;
-        for (let bin = start; bin < end; bin++) {
-          power += Math.pow(10, visualizerSpectrum[bin] / 10);
-        }
-        const bandDb = power > 0 ? 10 * Math.log10(power / Math.max(1, end - start)) : -Infinity;
-        const target = Math.max(0.12, Math.min(1, (bandDb - analyser.minDecibels)
-          / (analyser.maxDecibels - analyser.minDecibels)));
-        // At 60 Hz retain 60% on attack, 90% on release: ~33 / 158 ms
-        // time constants. Scale by elapsed time for the same feel at 120 Hz.
-        const previous = visualizerLevels[index];
-        const retention = Math.pow(target > previous ? 0.6 : 0.9, delta / (1000 / 60));
-        const level = target + (previous - target) * retention;
-        visualizerLevels[index] = level;
-        return level;
-      });
-      setVisualizerMode('live');
-
-      visualizerGroups.forEach((group) => {
-        group.bars.forEach((bar, index) => {
-          if (!(bar instanceof HTMLElement)) return;
-          bar.style.setProperty('--visualizer-level', bands[index].toFixed(4));
-        });
-      });
-      visualizerFrame = window.requestAnimationFrame(renderAudioVisualizer);
+      // Paused, the capsules fall into their dots under the slower, critically
+      // damped solver. Only once they have stopped is the row allowed to go
+      // dark — a frozen row at the last energy would claim audio that is gone.
+      if (collapsing) {
+        visualizerFrame = window.requestAnimationFrame(renderAudioVisualizer);
+        return;
+      }
+      setVisualizerMode('idle');
     };
 
+    // Called on every transition out of playback. It does not cut the row: it
+    // hands the collapse to the springs and lets them finish it.
     const stopAudioVisualizer = () => {
-      if (visualizerFrame) window.cancelAnimationFrame(visualizerFrame);
-      visualizerFrame = 0;
-      setVisualizerBaseline();
+      if (!visualizerViews.some((view) => view.renderer)) return;
+      if (!visualizerFrame) visualizerFrame = window.requestAnimationFrame(renderAudioVisualizer);
     };
 
     const prepareAudioGraph = async () => {
@@ -246,25 +346,34 @@ export {};
         try {
           audioContext = new AudioContextConstructor();
           analyser = audioContext.createAnalyser();
+          // 2048 samples is the engine's window too, so one frame of the graph
+          // is exactly one FFT window and nothing is resampled on the way in.
           analyser.fftSize = 2048;
-          analyser.minDecibels = -85;
-          analyser.maxDecibels = -15;
+          // No smoothing at the browser's end: the engine has its own release
+          // curve, and two smoothers in series would make the capsules lag.
           analyser.smoothingTimeConstant = 0;
-          visualizerSpectrum = new Float32Array(analyser.frequencyBinCount);
+          visualizerSamples = new Float32Array(analyser.fftSize);
+          visualizerAnalyzer = new SpectrumAnalyzer({
+            bandCount: VISUALIZER_BANDS,
+            sampleRate: audioContext.sampleRate,
+            tuningProfile: DEFAULT_TUNING_PROFILE,
+          });
           audioSourceNode = audioContext.createMediaElementSource(audio);
           audioSourceNode.connect(analyser);
           // analyser -> gain -> speakers. The analyser therefore sees the
-          // unattenuated track, so the bars keep moving when the user turns the
-          // volume down or mutes.
+          // unattenuated track, so the capsules keep moving when the user turns
+          // the volume down or mutes.
           outputGain = audioContext.createGain();
           analyser.connect(outputGain);
           outputGain.connect(audioContext.destination);
           applyOutputLevel();
+          prepareCanvasVisualizer();
         } catch (_) {
           audioContext = null;
           analyser = null;
           audioSourceNode = null;
-          visualizerSpectrum = null;
+          visualizerSamples = null;
+          visualizerAnalyzer = null;
           return;
         }
       }
@@ -796,7 +905,9 @@ export {};
     void applyCoverAccent();
     updateProgress();
     syncVolumeUI();
-    setVisualizerBaseline();
+    // Nothing paints until the analyser exists, so the row starts dark rather
+    // than showing a resting silhouette that claims audio.
+    resetAudioVisualizer();
     setPlayerState(localSource || playbackApiBase ? 'ready' : 'unavailable', localSource ? '本地音频' : (playbackApiBase ? 'API 音源' : '无播放源'));
   })();
 
